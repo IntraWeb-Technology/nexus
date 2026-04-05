@@ -1,4 +1,5 @@
 import { HubSpotSummaryCard } from '@/components/portal/HubSpotSummaryCard'
+import { PortalLiveDataCard } from '@/components/portal/PortalLiveDataCard'
 import { PortalDataUnavailable } from '@/components/portal/PortalDataUnavailable'
 import { PlanSummary } from '@/components/portal/PlanSummary'
 import { ProgressBar } from '@/components/portal/ProgressBar'
@@ -71,6 +72,17 @@ export default async function DashboardPage() {
         <StatCard label="Deposit paid" value={money(paidCents)} />
         <StatCard label="Balance due" value={money(balanceDue)} />
       </div>
+
+      <PortalLiveDataCard
+        projectSlug={bundle.project.slug}
+        projectId={bundle.project.id}
+        plan={bundle.project.plan}
+        hubspotDealId={bundle.project.hubspot_deal_id}
+        hubspotContactId={bundle.client.hubspot_contact_id}
+        invoiceCount={invoices.length}
+        milestoneCount={milestones.length}
+        notificationCount={notifications.length}
+      />
 
       <HubSpotSummaryCard />
 

@@ -23,11 +23,12 @@ export const getPortalBundle = cache(async (): Promise<PortalBundle | null> => {
     .maybeSingle()
   if (cErr || !client) return null
 
+  // Newest project first — clients with multiple engagements see their current one.
   const { data: project, error: pErr } = await supabase
     .from('projects')
     .select('*')
     .eq('client_id', client.id)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
   if (pErr || !project) return null

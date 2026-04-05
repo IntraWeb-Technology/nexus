@@ -90,6 +90,8 @@ export interface Invoice {
   stripe_payment_intent_id: string | null
   /** Defaults to `usd` in DB after migration `003_stripe_columns`. */
   currency?: string
+  /** When set, matches HubSpot CRM invoice id — used to dedupe merged billing view. */
+  hubspot_invoice_id?: string | null
 }
 
 export interface ActivityLogRow {

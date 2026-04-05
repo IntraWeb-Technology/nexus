@@ -2,7 +2,9 @@ import { PortalDataUnavailable } from '@/components/portal/PortalDataUnavailable
 import { InvoiceTable } from '@/components/portal/InvoiceTable'
 import { Card } from '@/components/ui/Card'
 import { StatCard } from '@/components/ui/StatCard'
+import { billingTotals, mergeBillingRows } from '@/lib/billing/types'
 import { getPortalBundle } from '@/lib/data/portal'
+import { fetchHubSpotBillingInvoices } from '@/lib/hubspot/invoices'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { Invoice } from '@/lib/supabase/types'
 
@@ -24,15 +26,16 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     .select('*')
     .eq('project_id', bundle.project.id)
     .order('created_at', { ascending: true })
-  const invoices = (data ?? []) as Invoice[]
+  const supabaseInvoices = (data ?? []) as Invoice[]
 
-  const paid = invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + i.amount_cents, 0)
-  const balance = invoices
-    .filter((i) => i.status === 'pending' || i.status === 'overdue')
-    .reduce((s, i) => s + i.amount_cents, 0)
-  const total = invoices.reduce((s, i) => s + i.amount_cents, 0)
+  const hubspotInvoices = await fetchHubSpotBillingInvoices({
+    hubspotDealId: bundle.project.hubspot_deal_id,
+    hubspotContactId: bundle.client.hubspot_contact_id,
+  })
+  const invoiceRows = mergeBillingRows(supabaseInvoices, hubspotInvoices)
+  const { paid, balance, total } = billingTotals(invoiceRows)
 
-  const retainer = invoices.find((i) => i.sku?.includes('MRR'))
+  const retainer = supabaseInvoices.find((i) => i.sku?.includes('MRR'))
 
   return (
     <div className="space-y-6">
@@ -53,7 +56,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         <StatCard label="Paid to date" value={money(paid)} />
         <StatCard label="Balance due" value={money(balance)} />
       </div>
-      <InvoiceTable invoices={invoices} />
+      <InvoiceTable rows={invoiceRows} />
       {retainer ? (
         <Card>
           <p className="iw-label mb-2">Recurring retainer</p>
