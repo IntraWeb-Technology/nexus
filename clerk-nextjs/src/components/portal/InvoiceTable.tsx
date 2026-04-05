@@ -1,3 +1,4 @@
+import { InvoicePayButton } from '@/components/portal/InvoicePayButton'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { BillingInvoiceRow } from '@/lib/billing/types'
@@ -55,7 +56,11 @@ export function InvoiceTable({ rows }: { rows: BillingInvoiceRow[] }) {
                   <td className="p-3">
                     <Badge variant={statusVariant(inv.status)}>{inv.status}</Badge>
                   </td>
-                  <td className="p-3" />
+                  <td className="p-3">
+                    {inv.status === 'pending' || inv.status === 'overdue' ? (
+                      <InvoicePayButton invoiceId={inv.id} />
+                    ) : null}
+                  </td>
                 </tr>
               )
             }
