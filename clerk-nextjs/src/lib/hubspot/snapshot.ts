@@ -1,4 +1,3 @@
-import { unstable_cache } from 'next/cache'
 import {
   CONTACT_SUMMARY_PROPERTIES,
   DEAL_SUMMARY_PROPERTIES,
@@ -52,14 +51,9 @@ async function loadSnapshot(dealId: string | null, contactId: string | null): Pr
   }
 }
 
-/** Short TTL to respect HubSpot rate limits while keeping the dashboard fresh. */
 export function getHubSpotPortalSnapshot(
   dealId: string | null,
   contactId: string | null,
 ): Promise<HubSpotPortalSnapshot> {
-  return unstable_cache(
-    async () => loadSnapshot(dealId, contactId),
-    ['hubspot-portal-snapshot', dealId ?? 'none', contactId ?? 'none'],
-    { revalidate: 300 },
-  )()
+  return loadSnapshot(dealId, contactId)
 }

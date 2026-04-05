@@ -26,10 +26,9 @@ export function InvoiceTable({ rows }: { rows: BillingInvoiceRow[] }) {
   }
   return (
     <div className="overflow-x-auto rounded-[12px] border border-[var(--iw-border)] bg-[var(--iw-slate-3)]">
-      <table className="w-full min-w-[760px] text-left text-sm">
+      <table className="w-full min-w-[680px] text-left text-sm">
         <thead className="border-b border-[var(--iw-border)] text-[var(--iw-text-3)]">
           <tr>
-            <th className="p-3 iw-label">Source</th>
             <th className="p-3 iw-label">Invoice</th>
             <th className="p-3 iw-label">Description</th>
             <th className="p-3 iw-label">Date</th>
@@ -44,9 +43,6 @@ export function InvoiceTable({ rows }: { rows: BillingInvoiceRow[] }) {
               const inv = row.invoice
               return (
                 <tr key={inv.id} className="border-b border-[var(--iw-border)] last:border-0">
-                  <td className="p-3">
-                    <Badge variant="gray">Portal</Badge>
-                  </td>
                   <td className="p-3 iw-mono text-[var(--iw-text)]">{inv.invoice_number}</td>
                   <td className="p-3 text-[var(--iw-text-2)]">{inv.description}</td>
                   <td className="p-3 text-[var(--iw-text-2)]">
@@ -66,9 +62,6 @@ export function InvoiceTable({ rows }: { rows: BillingInvoiceRow[] }) {
             }
             return (
               <tr key={`hs-${row.hubspotId}`} className="border-b border-[var(--iw-border)] last:border-0">
-                <td className="p-3">
-                  <Badge variant="gray">HubSpot</Badge>
-                </td>
                 <td className="p-3 iw-mono text-[var(--iw-text)]">{row.invoice_number}</td>
                 <td className="p-3 text-[var(--iw-text-2)]">{row.description}</td>
                 <td className="p-3 text-[var(--iw-text-2)]">

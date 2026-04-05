@@ -67,9 +67,6 @@ function parseIsoDate(raw: string | null | undefined, fallback: string): string 
 
 function mapInvoiceObject(o: HubSpotCrmObject): HubSpotBillingInvoice | null {
   const p = o.properties ?? {}
-  const hsStatus = (p.hs_invoice_status ?? '').toLowerCase()
-  if (hsStatus === 'draft') return null
-
   const status = mapHsStatus(p.hs_invoice_status)
   const amount_cents = pickAmountCents(p, status)
   const created = parseIsoDate(
@@ -102,6 +99,12 @@ function mapInvoiceObject(o: HubSpotCrmObject): HubSpotBillingInvoice | null {
   }
 }
 
+function pagingAfter(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const after = (data as { paging?: { next?: { after?: string } } }).paging?.next?.after
+  return typeof after === 'string' && after.length > 0 ? after : undefined
+}
+
 function parseAssociationResults(data: unknown): string[] {
   if (!data || typeof data !== 'object') return []
   const results = (data as { results?: unknown[] }).results
@@ -113,17 +116,61 @@ function parseAssociationResults(data: unknown): string[] {
     const id =
       o.toObjectId != null
         ? String(o.toObjectId)
-        : o.id != null
-          ? String(o.id)
-          : o.to && typeof o.to === 'object' && (o.to as { id?: unknown }).id != null
-            ? String((o.to as { id: unknown }).id)
-            : ''
+        : o.to_object_id != null
+          ? String(o.to_object_id)
+          : o.id != null
+            ? String(o.id)
+            : o.to && typeof o.to === 'object' && (o.to as { id?: unknown }).id != null
+              ? String((o.to as { id: unknown }).id)
+              : ''
     if (id) ids.push(id)
   }
   return [...new Set(ids)]
 }
 
-async function fetchAssociationInvoiceIds(
+/** Invoice IDs embedded on a CRM object read (`?associations=invoices`). */
+function parseInvoiceIdsFromAssociationsPayload(associations: unknown): string[] {
+  if (!associations || typeof associations !== 'object') return []
+  const a = associations as Record<string, unknown>
+  for (const key of ['invoices', 'invoice']) {
+    const bucket = a[key]
+    if (!bucket || typeof bucket !== 'object') continue
+    const results = (bucket as { results?: unknown[] }).results
+    if (!Array.isArray(results)) continue
+    const ids: string[] = []
+    for (const r of results) {
+      if (!r || typeof r !== 'object') continue
+      const o = r as Record<string, unknown>
+      if (o.id != null) ids.push(String(o.id))
+    }
+    if (ids.length > 0) return [...new Set(ids)]
+  }
+  return []
+}
+
+async function fetchInvoiceIdsFromObjectRead(
+  objectType: 'contacts' | 'deals',
+  objectId: string,
+): Promise<string[]> {
+  const t = token()
+  if (!t || !objectId.trim()) return []
+  const encoded = encodeURIComponent(objectId)
+  const params = new URLSearchParams()
+  params.set('associations', 'invoices')
+  const res = await fetch(
+    `${HUBSPOT_API}/crm/v3/objects/${objectType}/${encoded}?${params.toString()}`,
+    { headers: { Authorization: `Bearer ${t}` }, cache: 'no-store' },
+  )
+  if (!res.ok) return []
+  const data = (await res.json()) as { associations?: unknown }
+  return parseInvoiceIdsFromAssociationsPayload(data.associations)
+}
+
+/**
+ * Lists invoice IDs via association APIs (v4 then v3), following paging.
+ * HubSpot paginates when there are many associations; a single invoice can be missed without paging.
+ */
+async function fetchAssociationInvoiceIdsPaged(
   objectType: 'deals' | 'contacts',
   objectId: string,
 ): Promise<string[]> {
@@ -131,23 +178,41 @@ async function fetchAssociationInvoiceIds(
   if (!t || !objectId.trim()) return []
 
   const encoded = encodeURIComponent(objectId)
-  const urls = [
-    `${HUBSPOT_API}/crm/v4/objects/${objectType}/${encoded}/associations/invoices`,
-    `${HUBSPOT_API}/crm/v3/objects/${objectType}/${encoded}/associations/invoices`,
+  const builders = [
+    (after: string | undefined) => {
+      const url = new URL(
+        `${HUBSPOT_API}/crm/v4/objects/${objectType}/${encoded}/associations/invoices`,
+      )
+      url.searchParams.set('limit', '500')
+      if (after) url.searchParams.set('after', after)
+      return url.toString()
+    },
+    (after: string | undefined) => {
+      const url = new URL(
+        `${HUBSPOT_API}/crm/v3/objects/${objectType}/${encoded}/associations/invoices`,
+      )
+      url.searchParams.set('limit', '100')
+      if (after) url.searchParams.set('after', after)
+      return url.toString()
+    },
   ]
 
-  for (const url of urls) {
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${t}` },
-      cache: 'no-store',
-    })
-    if (!res.ok) continue
-    const data = await res.json()
-    const ids = parseAssociationResults(data)
-    if (ids.length > 0) return ids
+  for (const buildUrl of builders) {
+    const ids = new Set<string>()
+    let after: string | undefined
+    do {
+      const res = await fetch(buildUrl(after), {
+        headers: { Authorization: `Bearer ${t}` },
+        cache: 'no-store',
+      })
+      if (!res.ok) break
+      const data = await res.json()
+      for (const id of parseAssociationResults(data)) ids.add(id)
+      after = pagingAfter(data)
+    } while (after)
+    if (ids.size > 0) return [...ids]
   }
 
-  console.warn('[hubspot/invoices] no invoice associations for', objectType, objectId)
   return []
 }
 
@@ -192,14 +257,20 @@ export async function fetchHubSpotBillingInvoices(opts: {
 }): Promise<HubSpotBillingInvoice[]> {
   if (!token()) return []
 
-  const dealIds = opts.hubspotDealId
-    ? await fetchAssociationInvoiceIds('deals', opts.hubspotDealId)
-    : []
-  const contactIds = opts.hubspotContactId
-    ? await fetchAssociationInvoiceIds('contacts', opts.hubspotContactId)
-    : []
+  const [dealAssoc, dealRead, contactAssoc, contactRead] = await Promise.all([
+    opts.hubspotDealId
+      ? fetchAssociationInvoiceIdsPaged('deals', opts.hubspotDealId)
+      : Promise.resolve([] as string[]),
+    opts.hubspotDealId ? fetchInvoiceIdsFromObjectRead('deals', opts.hubspotDealId) : Promise.resolve([] as string[]),
+    opts.hubspotContactId
+      ? fetchAssociationInvoiceIdsPaged('contacts', opts.hubspotContactId)
+      : Promise.resolve([] as string[]),
+    opts.hubspotContactId
+      ? fetchInvoiceIdsFromObjectRead('contacts', opts.hubspotContactId)
+      : Promise.resolve([] as string[]),
+  ])
 
-  const unique = [...new Set([...dealIds, ...contactIds])]
+  const unique = [...new Set([...dealAssoc, ...dealRead, ...contactAssoc, ...contactRead])]
   if (unique.length === 0) return []
 
   const objects = await batchReadInvoices(unique)

@@ -20,7 +20,11 @@ export function InvoicePayButton({ invoiceId }: { invoiceId: string }) {
       if (!res.ok) throw new Error(data.error || 'Could not start checkout')
       if (data.url) window.location.href = data.url
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Checkout failed')
+      if (e instanceof Error && e.message === 'Stripe is not configured') {
+        setError('Payments are unavailable for these demo invoices.')
+      } else {
+        setError(e instanceof Error ? e.message : 'Checkout failed')
+      }
     } finally {
       setLoading(false)
     }
@@ -29,7 +33,7 @@ export function InvoicePayButton({ invoiceId }: { invoiceId: string }) {
   return (
     <div className="min-w-[5rem]">
       <Button variant="primary" className="px-3 py-1 text-xs" disabled={loading} onClick={pay}>
-        {loading ? '…' : 'Pay'}
+        {loading ? '…' : 'Make a payment'}
       </Button>
       {error ? <p className="mt-1 max-w-[200px] text-xs text-red-400">{error}</p> : null}
     </div>

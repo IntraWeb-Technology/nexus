@@ -17,6 +17,62 @@ config({ path: resolve(process.cwd(), '.env.local') })
 
 const EMAIL = 'jschibelli@gmail.com'
 const PROJECT_SLUG = 'jschibelli-portal-2026'
+const HUBSPOT_API = 'https://api.hubapi.com'
+
+function hubspotToken(): string {
+  const token = process.env.HUBSPOT_PRIVATE_APP_TOKEN
+  if (!token) {
+    throw new Error('Missing HUBSPOT_PRIVATE_APP_TOKEN')
+  }
+  return token
+}
+
+async function fetchHubSpotJson<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${hubspotToken()}`,
+      'Content-Type': 'application/json',
+      ...(init?.headers ?? {}),
+    },
+  })
+  if (!res.ok) {
+    throw new Error(`HubSpot request failed: ${res.status} ${res.statusText}`)
+  }
+  return res.json() as Promise<T>
+}
+
+async function resolveHubSpotContactId(): Promise<string> {
+  if (process.env.HUBSPOT_JSCHIBELLI_CONTACT_ID) return process.env.HUBSPOT_JSCHIBELLI_CONTACT_ID
+
+  const data = await fetchHubSpotJson<{
+    results?: Array<{ id: string }>
+  }>(`${HUBSPOT_API}/crm/v3/objects/contacts/search`, {
+    method: 'POST',
+    body: JSON.stringify({
+      filterGroups: [{ filters: [{ propertyName: 'email', operator: 'EQ', value: EMAIL }] }],
+      properties: ['email', 'hs_object_id'],
+      limit: 1,
+    }),
+  })
+
+  const id = data.results?.[0]?.id
+  if (!id) {
+    throw new Error(`No HubSpot contact found for ${EMAIL}`)
+  }
+  return id
+}
+
+async function resolveHubSpotDealId(contactId: string): Promise<string | null> {
+  if (process.env.HUBSPOT_JSCHIBELLI_DEAL_ID) return process.env.HUBSPOT_JSCHIBELLI_DEAL_ID
+
+  const data = await fetchHubSpotJson<{
+    results?: Array<{ toObjectId?: number | string }>
+  }>(`${HUBSPOT_API}/crm/v4/objects/contacts/${encodeURIComponent(contactId)}/associations/deals?limit=500`)
+
+  const id = data.results?.[0]?.toObjectId
+  return id != null ? String(id) : null
+}
 
 async function main() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -40,9 +96,8 @@ async function main() {
     process.exit(1)
   }
 
-  const hubspotContact =
-    process.env.HUBSPOT_JSCHIBELLI_CONTACT_ID ?? 'hubspot_contact_jschibelli'
-  const hubspotDeal = process.env.HUBSPOT_JSCHIBELLI_DEAL_ID ?? 'hubspot_deal_jschibelli'
+  const hubspotContact = await resolveHubSpotContactId()
+  const hubspotDeal = await resolveHubSpotDealId(hubspotContact)
 
   const sb = createClient(url, service, { auth: { persistSession: false } })
 
@@ -74,34 +129,44 @@ async function main() {
     .limit(1)
     .maybeSingle()
 
+  let projectId: string
   if (existing?.id) {
-    console.log('Project already exists for client. client_id=', client.id, 'project_id=', existing.id)
-    console.log('Supabase URL:', url)
-    console.log('Done.')
-    return
-  }
-
-  const { data: project, error: pErr } = await sb
-    .from('projects')
-    .insert({
-      client_id: client.id,
-      slug: PROJECT_SLUG,
-      plan: 'growth',
-      status: 'build',
-      progress_pct: 45,
-      start_date: new Date().toISOString().slice(0, 10),
-      estimated_launch: null,
-      hubspot_deal_id: hubspotDeal,
-    })
-    .select('id')
-    .single()
-
-  if (pErr || !project) {
-    if (pErr?.code === '23505') {
-      console.error('Slug conflict — change PROJECT_SLUG in script or delete existing project row.')
+    const { error: updateErr } = await sb
+      .from('projects')
+      .update({
+        slug: PROJECT_SLUG,
+        hubspot_deal_id: hubspotDeal,
+      })
+      .eq('id', existing.id)
+    if (updateErr) {
+      console.error('projects update failed:', updateErr.message ?? updateErr)
+      process.exit(1)
     }
-    console.error('projects insert failed:', pErr?.message ?? pErr)
-    process.exit(1)
+    projectId = existing.id
+  } else {
+    const { data: project, error: pErr } = await sb
+      .from('projects')
+      .insert({
+        client_id: client.id,
+        slug: PROJECT_SLUG,
+        plan: 'growth',
+        status: 'build',
+        progress_pct: 45,
+        start_date: new Date().toISOString().slice(0, 10),
+        estimated_launch: null,
+        hubspot_deal_id: hubspotDeal,
+      })
+      .select('id')
+      .single()
+
+    if (pErr || !project) {
+      if (pErr?.code === '23505') {
+        console.error('Slug conflict — change PROJECT_SLUG in script or delete existing project row.')
+      }
+      console.error('projects insert failed:', pErr?.message ?? pErr)
+      process.exit(1)
+    }
+    projectId = project.id
   }
 
   await sb.from('notification_preferences').upsert(
@@ -118,12 +183,12 @@ async function main() {
   const { count } = await sb
     .from('milestones')
     .select('*', { count: 'exact', head: true })
-    .eq('project_id', project.id)
+    .eq('project_id', projectId)
 
   if ((count ?? 0) === 0) {
     await sb.from('milestones').insert([
       {
-        project_id: project.id,
+        project_id: projectId,
         title: 'Discovery & scoping',
         description: null,
         status: 'done',
@@ -133,7 +198,7 @@ async function main() {
         sort_order: 1,
       },
       {
-        project_id: project.id,
+        project_id: projectId,
         title: 'Onboarding & setup',
         description: null,
         status: 'active',
@@ -143,7 +208,7 @@ async function main() {
         sort_order: 2,
       },
       {
-        project_id: project.id,
+        project_id: projectId,
         title: 'Integration build',
         description: null,
         status: 'pending',
@@ -159,7 +224,7 @@ async function main() {
   console.log('  Supabase:', url)
   console.log('  clerk_user_id:', clerkUserId)
   console.log('  client_id:', client.id)
-  console.log('  project_id:', project.id)
+  console.log('  project_id:', projectId)
   console.log('  slug:', PROJECT_SLUG)
 }
 

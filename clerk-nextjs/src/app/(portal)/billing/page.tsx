@@ -48,7 +48,8 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       ) : null}
       {q.canceled === '1' ? (
         <p className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-3)] px-4 py-3 text-sm text-[var(--iw-text-2)]">
-          Checkout was canceled. You can pay anytime from the Pay button on a pending invoice.
+          Checkout was canceled. You can retry any time from the Make a payment button on a pending
+          invoice.
         </p>
       ) : null}
       <div className="grid gap-4 sm:grid-cols-3">
