@@ -1,5 +1,12 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm -C clerk-nextjs install --frozen-lockfile",
-  "buildCommand": "pnpm -C clerk-nextjs run build"
+  "buildCommand": "pnpm -C clerk-nextjs run build",
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "portal.intrawebtech.com" }],
+      "destination": "/:path*"
+    }
+  ]
 }
