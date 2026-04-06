@@ -1,5 +1,5 @@
 import { EmptyState } from '@/components/ui/EmptyState'
-import type { ActivityLogRow } from '@/lib/supabase/types'
+import type { ActivityFeedItem } from '@/lib/activity/types'
 
 function sym(type: string) {
   switch (type) {
@@ -13,12 +13,23 @@ function sym(type: string) {
       return '▤'
     case 'task':
       return '☑'
+    case 'hubspot_note':
+      return '◇'
+    case 'hubspot_task':
+      return '☑'
+    case 'hubspot_call':
+      return '☎'
+    case 'hubspot_meeting':
+      return '◷'
+    case 'hubspot_email':
+      return '✉'
     default:
+      if (type.startsWith('hubspot_')) return '☆'
       return '•'
   }
 }
 
-export function ActivityFeed({ items }: { items: ActivityLogRow[] }) {
+export function ActivityFeed({ items }: { items: ActivityFeedItem[] }) {
   if (items.length === 0) {
     return (
       <EmptyState
@@ -39,9 +50,7 @@ export function ActivityFeed({ items }: { items: ActivityLogRow[] }) {
             <div>
               <p className="font-medium text-[var(--iw-text)]">{a.label}</p>
               {a.detail ? <p className="mt-1 text-sm text-[var(--iw-text-2)]">{a.detail}</p> : null}
-              <p className="mt-2 text-xs text-[var(--iw-text-3)]">
-                {formatRelative(a.created_at)}
-              </p>
+              <p className="mt-2 text-xs text-[var(--iw-text-3)]">{formatRelative(a.created_at)}</p>
             </div>
           </div>
         </li>
