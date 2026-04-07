@@ -39,6 +39,18 @@ export default async function SettingsPage() {
             <dt className="text-[var(--iw-text-3)]">Project</dt>
             <dd className="iw-mono text-[var(--iw-text)]">{bundle.project.slug}</dd>
           </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-[var(--iw-text-3)]">Contact reference</dt>
+            <dd className="break-all iw-mono text-xs text-[var(--iw-text)]">
+              {bundle.client.hubspot_contact_id ?? '—'}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-[var(--iw-text-3)]">Engagement reference</dt>
+            <dd className="break-all iw-mono text-xs text-[var(--iw-text)]">
+              {bundle.project.hubspot_deal_id ?? '—'}
+            </dd>
+          </div>
         </dl>
       </Card>
       <SettingsPreferences clientId={bundle.client.id} initial={p} />

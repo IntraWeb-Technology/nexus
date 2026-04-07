@@ -34,7 +34,7 @@ export function ActivityFeed({ items }: { items: ActivityFeedItem[] }) {
     return (
       <EmptyState
         title="No activity yet"
-        description="Updates from your project, HubSpot, and the team will appear here."
+        description="Updates from your project and our team will appear here."
       />
     )
   }

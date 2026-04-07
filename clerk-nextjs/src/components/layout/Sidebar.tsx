@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { NavItem } from '@/components/layout/NavItem'
+import { ProjectSwitcher } from '@/components/portal/ProjectSwitcher'
 import { Badge } from '@/components/ui/Badge'
+import type { Project } from '@/lib/supabase/types'
 
 const icon = (d: string) => (
   <span className="inline-block h-4 w-4 text-center text-xs" aria-hidden>
@@ -9,12 +11,14 @@ const icon = (d: string) => (
 )
 
 export function Sidebar({
-  projectSlug,
+  projects,
+  activeSlug,
   planLabel,
   unreadMessages,
   unreadNotifications,
 }: {
-  projectSlug: string
+  projects: Project[]
+  activeSlug: string
   planLabel: string
   unreadMessages: number
   unreadNotifications: number
@@ -22,8 +26,13 @@ export function Sidebar({
   return (
     <aside className="fixed bottom-0 left-0 top-0 z-30 hidden w-[210px] flex-col border-r border-[var(--iw-border)] bg-[var(--iw-slate-2)] pt-[54px] md:flex">
       <div className="border-b border-[var(--iw-border)] p-4">
-        <p className="iw-mono text-sm font-medium text-[var(--iw-text)]">{projectSlug}</p>
-        <Badge variant="teal">{planLabel}</Badge>
+        <p className="iw-mono text-sm font-medium text-[var(--iw-text)]">{activeSlug}</p>
+        <div className="mt-2">
+          <ProjectSwitcher projects={projects} activeSlug={activeSlug} />
+        </div>
+        <div className="mt-2">
+          <Badge variant="teal">{planLabel}</Badge>
+        </div>
       </div>
       <nav className="flex-1 space-y-6 overflow-y-auto p-3 text-sm">
         <div>

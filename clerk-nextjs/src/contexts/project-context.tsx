@@ -5,7 +5,10 @@ import { createContext, useContext, type ReactNode } from 'react'
 
 export interface ProjectContextValue {
   client: Client
+  /** Active project (portal session). */
   project: Project
+  /** All projects for this client — each may map to a distinct engagement. */
+  projects: Project[]
   unreadMessages: number
   unreadNotifications: number
 }

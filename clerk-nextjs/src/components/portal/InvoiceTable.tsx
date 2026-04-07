@@ -20,7 +20,7 @@ export function InvoiceTable({ rows }: { rows: BillingInvoiceRow[] }) {
     return (
       <EmptyState
         title="No invoices"
-        description="Invoices from HubSpot and the portal will show here as they are issued."
+        description="Issued invoices and payments will appear here as they are posted."
       />
     )
   }

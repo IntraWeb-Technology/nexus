@@ -24,7 +24,7 @@ export default async function ProgressPage() {
         <p className="iw-label mb-2">Overall</p>
         <ProgressBar value={bundle.project.progress_pct} />
         <p className="mt-2 text-sm text-[var(--iw-text-2)]">
-          Current phase emphasis follows your milestones below — we keep this aligned with HubSpot and
+          Current phase emphasis follows your milestones below — we keep this aligned with your engagement plan and
           delivery checkpoints.
         </p>
       </Card>

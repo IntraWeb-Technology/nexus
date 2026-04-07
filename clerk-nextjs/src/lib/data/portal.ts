@@ -1,10 +1,16 @@
 import { auth } from '@clerk/nextjs/server'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { Client, Project } from '@/lib/supabase/types'
+import { cookies } from 'next/headers'
 import { cache } from 'react'
+
+const PROJECT_COOKIE = 'iw_portal_project_slug'
 
 export interface PortalBundle {
   client: Client
+  /** All projects for this client (newest first). Each may map to a distinct engagement. */
+  projects: Project[]
+  /** Active project (from cookie when valid, else newest). */
   project: Project
   unreadMessages: number
   unreadNotifications: number
@@ -23,15 +29,20 @@ export const getPortalBundle = cache(async (): Promise<PortalBundle | null> => {
     .maybeSingle()
   if (cErr || !client) return null
 
-  // Newest project first — clients with multiple engagements see their current one.
-  const { data: project, error: pErr } = await supabase
+  const { data: projectRows, error: pErr } = await supabase
     .from('projects')
     .select('*')
     .eq('client_id', client.id)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  if (pErr || !project) return null
+  if (pErr || !projectRows?.length) return null
+
+  const projects = projectRows as Project[]
+  const cookieStore = await cookies()
+  const preferredSlug = cookieStore.get(PROJECT_COOKIE)?.value
+  const project =
+    preferredSlug && projects.some((p) => p.slug === preferredSlug)
+      ? projects.find((p) => p.slug === preferredSlug)!
+      : projects[0]
 
   const [{ count: mc }, { count: nc }] = await Promise.all([
     supabase
@@ -49,7 +60,8 @@ export const getPortalBundle = cache(async (): Promise<PortalBundle | null> => {
 
   return {
     client: client as Client,
-    project: project as Project,
+    projects,
+    project,
     unreadMessages: mc ?? 0,
     unreadNotifications: nc ?? 0,
   }

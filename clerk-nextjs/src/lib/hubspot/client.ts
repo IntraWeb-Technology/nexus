@@ -8,6 +8,8 @@ export const DEAL_SUMMARY_PROPERTIES = [
   'closedate',
   'pipeline',
   'hs_object_id',
+  'createdate',
+  'description',
 ] as const
 
 /** Requested on contact read-through for the portal summary. */
@@ -19,6 +21,8 @@ export const CONTACT_SUMMARY_PROPERTIES = [
   'company',
   'lifecyclestage',
   'hs_object_id',
+  'jobtitle',
+  'website',
 ] as const
 
 export interface HubSpotCrmObject {

@@ -85,7 +85,7 @@ function mapInvoiceObject(o: HubSpotCrmObject): HubSpotBillingInvoice | null {
   const description =
     (p.hs_title && String(p.hs_title).trim()) ||
     (p.hs_comments && String(p.hs_comments).trim()) ||
-    'HubSpot invoice'
+    'Invoice'
 
   return {
     hubspotId: String(o.id),

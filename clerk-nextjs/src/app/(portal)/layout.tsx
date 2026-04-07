@@ -8,6 +8,9 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 
+/** Fresh server render each request (auth, project cookie, Supabase + CRM-backed stats). */
+export const dynamic = 'force-dynamic'
+
 export default async function PortalLayout({ children }: { children: ReactNode }) {
   const { userId } = await auth()
   if (!userId) redirect('/sign-in')
@@ -40,14 +43,16 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     <ProjectProvider value={bundle}>
       <div className="min-h-screen bg-[var(--iw-slate)] pb-20 md:pb-0">
         <Sidebar
-          projectSlug={bundle.project.slug}
+          projects={bundle.projects}
+          activeSlug={bundle.project.slug}
           planLabel={planLabel}
           unreadMessages={bundle.unreadMessages}
           unreadNotifications={bundle.unreadNotifications}
         />
         <Topbar
           clientName={bundle.client.name}
-          projectSlug={bundle.project.slug}
+          projects={bundle.projects}
+          activeSlug={bundle.project.slug}
           unreadNotifications={bundle.unreadNotifications}
         />
         <main className="mx-auto max-w-6xl px-4 pb-8 pt-[54px] md:pl-[calc(210px+1rem)] md:pr-6">

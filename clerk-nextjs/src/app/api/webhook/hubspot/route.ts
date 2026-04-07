@@ -96,7 +96,7 @@ async function handleDealStageChange(
     project_id: project.id,
     type: 'system',
     label: 'Deal stage updated',
-    detail: `HubSpot deal stage mapped to ${mapped.portalStatus} (${mapped.progressPct}%)`,
+    detail: `Engagement stage synced — status ${mapped.portalStatus} (${mapped.progressPct}%)`,
   })
 
   await supabase.from('notifications').insert({
