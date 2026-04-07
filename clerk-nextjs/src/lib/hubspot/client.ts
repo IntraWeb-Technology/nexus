@@ -1,3 +1,5 @@
+import { requireHubSpotToken } from '@/lib/hubspot/config'
+
 const HUBSPOT_API = 'https://api.hubapi.com'
 
 /** Requested on deal read-through for the portal summary. */
@@ -31,9 +33,7 @@ export interface HubSpotCrmObject {
 }
 
 function token(): string {
-  const t = process.env.HUBSPOT_PRIVATE_APP_TOKEN
-  if (!t) throw new Error('HUBSPOT_PRIVATE_APP_TOKEN is not set')
-  return t
+  return requireHubSpotToken()
 }
 
 function propertiesQuery(properties?: readonly string[]): string {

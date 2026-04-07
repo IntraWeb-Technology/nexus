@@ -1,7 +1,10 @@
 import type {
+  ChangeOrderRequestedPayload,
   DocumentRequestPayload,
+  DocumentSignedPayload,
   InvoicePaidPayload,
   LoginEventPayload,
+  MilestoneApprovedPayload,
   StaffAlertPayload,
 } from '@/lib/n8n/webhooks'
 
@@ -52,5 +55,29 @@ export function triggerInvoicePaid(payload: InvoicePaidPayload): void {
     fireAndForget(`${baseUrl()}/webhook/portal-invoice-paid`, payload)
   } catch (e) {
     console.error('[n8n] triggerInvoicePaid', e)
+  }
+}
+
+export function triggerDocumentSigned(payload: DocumentSignedPayload): void {
+  try {
+    fireAndForget(`${baseUrl()}/webhook/portal-document-signed`, payload)
+  } catch (e) {
+    console.error('[n8n] triggerDocumentSigned', e)
+  }
+}
+
+export function triggerMilestoneApproved(payload: MilestoneApprovedPayload): void {
+  try {
+    fireAndForget(`${baseUrl()}/webhook/portal-milestone-approved`, payload)
+  } catch (e) {
+    console.error('[n8n] triggerMilestoneApproved', e)
+  }
+}
+
+export function triggerChangeOrderRequested(payload: ChangeOrderRequestedPayload): void {
+  try {
+    fireAndForget(`${baseUrl()}/webhook/portal-change-order`, payload)
+  } catch (e) {
+    console.error('[n8n] triggerChangeOrderRequested', e)
   }
 }

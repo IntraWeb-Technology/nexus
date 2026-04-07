@@ -72,6 +72,31 @@ export interface Document {
   file_size_kb: number | null
   requires_signature: boolean
   signed: boolean
+  signed_at: string | null
+  signed_by: string | null
+  created_at: string
+}
+
+export interface MilestoneApproval {
+  id: string
+  milestone_id: string
+  project_id: string
+  approved_by_name: string
+  approved_at: string
+  notes: string | null
+  created_at: string
+}
+
+export type ChangeOrderStatus = 'pending' | 'reviewed' | 'approved' | 'declined'
+
+export interface ChangeOrderRow {
+  id: string
+  project_id: string
+  title: string
+  description: string
+  requested_at: string
+  status: ChangeOrderStatus
+  staff_notes: string | null
   created_at: string
 }
 

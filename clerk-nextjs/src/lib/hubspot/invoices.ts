@@ -1,6 +1,7 @@
 import type { HubSpotBillingInvoice } from '@/lib/billing/types'
-import type { InvoiceStatus } from '@/lib/supabase/types'
 import type { HubSpotCrmObject } from '@/lib/hubspot/client'
+import { isHubSpotConfigured, requireHubSpotToken } from '@/lib/hubspot/config'
+import type { InvoiceStatus } from '@/lib/supabase/types'
 
 const HUBSPOT_API = 'https://api.hubapi.com'
 
@@ -22,7 +23,8 @@ const INVOICE_READ_PROPERTIES = [
 ] as const
 
 function token(): string | null {
-  return process.env.HUBSPOT_PRIVATE_APP_TOKEN ?? null
+  if (!isHubSpotConfigured()) return null
+  return requireHubSpotToken()
 }
 
 function parseAmountToCents(raw: string | null | undefined): number {

@@ -1,4 +1,4 @@
-import type { NotificationType, Plan, ProjectStatus } from '@/lib/supabase/types'
+import type { NotificationType, Plan } from '@/lib/supabase/types'
 
 export type N8nInboundAction =
   | 'update_milestone'
@@ -111,4 +111,25 @@ export interface InvoicePaidPayload {
   invoice_number: string
   amount_cents: number
   stripe_checkout_session_id: string
+}
+
+export interface DocumentSignedPayload {
+  project_slug: string
+  document_name: string
+  signed_by: string
+  signed_at: string
+}
+
+export interface MilestoneApprovedPayload {
+  project_slug: string
+  milestone_title: string
+  approved_by_name: string
+  notes: string | null
+}
+
+export interface ChangeOrderRequestedPayload {
+  project_slug: string
+  title: string
+  description: string
+  client_name: string
 }

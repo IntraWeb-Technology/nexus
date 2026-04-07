@@ -1,8 +1,23 @@
+'use client'
+
 import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { Document } from '@/lib/supabase/types'
 
-export function DocumentList({ documents }: { documents: Document[] }) {
+function downloadHref(d: Document): string {
+  const u = d.file_url
+  if (u.startsWith('http://') || u.startsWith('https://')) return u
+  return `/api/documents/download?id=${encodeURIComponent(d.id)}`
+}
+
+export function DocumentList({
+  documents,
+  onRequestSign,
+}: {
+  documents: Document[]
+  onRequestSign?: (d: Document) => void
+}) {
   if (documents.length === 0) {
     return (
       <EmptyState
@@ -24,13 +39,23 @@ export function DocumentList({ documents }: { documents: Document[] }) {
               {new Date(d.created_at).toLocaleDateString()}
               {d.file_size_kb != null ? ` · ${d.file_size_kb} KB` : ''}
             </p>
+            {d.signed ? (
+              <p className="mt-1 text-xs text-[var(--iw-text-2)]">
+                Signed by {d.signed_by ?? '—'}
+                {d.signed_at ? ` on ${new Date(d.signed_at).toLocaleString()}` : ''}
+              </p>
+            ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {d.requires_signature && !d.signed ? (
-              <Badge variant="amber">Sign required</Badge>
+            {d.signed ? <Badge variant="green">Signed</Badge> : null}
+            {d.requires_signature && !d.signed ? <Badge variant="amber">Sign required</Badge> : null}
+            {d.requires_signature && !d.signed && onRequestSign ? (
+              <Button type="button" variant="primary" className="text-xs" onClick={() => onRequestSign(d)}>
+                Sign document
+              </Button>
             ) : null}
             <a
-              href={d.file_url}
+              href={downloadHref(d)}
               target="_blank"
               rel="noreferrer"
               className="text-sm text-[var(--iw-teal-light)] hover:underline"

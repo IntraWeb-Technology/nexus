@@ -1,6 +1,8 @@
 import { AccountSummaryCard } from '@/components/portal/AccountSummaryCard'
 import { DashboardQuickLinks } from '@/components/portal/DashboardQuickLinks'
 import { EngagementsCard } from '@/components/portal/EngagementsCard'
+import { HubSpotAccountFallback } from '@/components/portal/HubSpotAccountFallback'
+import { HubSpotGate } from '@/components/portal/HubSpotGate'
 import { PortalLiveDataCard } from '@/components/portal/PortalLiveDataCard'
 import { PortalDataUnavailable } from '@/components/portal/PortalDataUnavailable'
 import { PlanSummary } from '@/components/portal/PlanSummary'
@@ -10,6 +12,7 @@ import { Card } from '@/components/ui/Card'
 import { StatCard } from '@/components/ui/StatCard'
 import { billingTotals, mergeBillingRows } from '@/lib/billing/types'
 import { getPortalBundle } from '@/lib/data/portal'
+import { isHubSpotConfigured } from '@/lib/hubspot/config'
 import { fetchHubSpotBillingInvoices } from '@/lib/hubspot/invoices'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { Invoice, Milestone, NotificationRow } from '@/lib/supabase/types'
@@ -41,10 +44,12 @@ export default async function DashboardPage() {
     supabase.from('milestones').select('*').eq('project_id', pid).order('sort_order', { ascending: true }),
     supabase.from('invoices').select('*').eq('project_id', pid),
     supabase.from('notifications').select('*').eq('project_id', pid).order('created_at', { ascending: false }),
-    fetchHubSpotBillingInvoices({
-      hubspotDealId: bundle.project.hubspot_deal_id,
-      hubspotContactId: bundle.client.hubspot_contact_id,
-    }),
+    isHubSpotConfigured()
+      ? fetchHubSpotBillingInvoices({
+          hubspotDealId: bundle.project.hubspot_deal_id,
+          hubspotContactId: bundle.client.hubspot_contact_id,
+        })
+      : Promise.resolve([]),
   ])
 
   const milestones = (msRes.data ?? []) as Milestone[]
@@ -57,8 +62,10 @@ export default async function DashboardPage() {
   const invoiceCount = billingRows.length
 
   const start = bundle.project.start_date ? new Date(bundle.project.start_date) : null
+  /* Server component: wall clock for “days since start” — not a pure function by design. */
+  const nowMs = new Date().getTime()
   const daysSince = start
-    ? Math.max(0, Math.floor((Date.now() - start.getTime()) / 86400000))
+    ? Math.max(0, Math.floor((nowMs - start.getTime()) / 86400000))
     : 0
 
   const recent = [...milestones].sort((a, b) => a.sort_order - b.sort_order).slice(-4).reverse()
@@ -151,10 +158,12 @@ export default async function DashboardPage() {
         <p className="text-sm text-[var(--iw-text-2)]">
           Details we sync for your relationship with us — same information whether you have one project or several.
         </p>
-        <div className="space-y-6">
-          <AccountSummaryCard />
-          <EngagementsCard />
-        </div>
+        <HubSpotGate fallback={<HubSpotAccountFallback />}>
+          <div className="space-y-6">
+            <AccountSummaryCard />
+            <EngagementsCard />
+          </div>
+        </HubSpotGate>
       </section>
 
       <div className="flex flex-col gap-3 border-t border-[var(--iw-border)] pt-8 sm:flex-row sm:items-center sm:justify-between">

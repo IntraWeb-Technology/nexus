@@ -4,6 +4,7 @@ import {
   fetchContact,
   fetchDeal,
 } from '@/lib/hubspot/client'
+import { isHubSpotConfigured } from '@/lib/hubspot/config'
 
 export type HubSpotPortalSnapshot =
   | { ok: false; reason: 'not_configured' | 'no_ids' }
@@ -15,7 +16,7 @@ export type HubSpotPortalSnapshot =
   | { ok: false; reason: 'error'; message: string }
 
 async function loadSnapshot(dealId: string | null, contactId: string | null): Promise<HubSpotPortalSnapshot> {
-  if (!process.env.HUBSPOT_PRIVATE_APP_TOKEN) {
+  if (!isHubSpotConfigured()) {
     return { ok: false, reason: 'not_configured' }
   }
   if (!dealId && !contactId) {

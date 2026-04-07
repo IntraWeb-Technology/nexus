@@ -4,18 +4,25 @@ import { ProgressBar } from '@/components/portal/ProgressBar'
 import { Card } from '@/components/ui/Card'
 import { getPortalBundle } from '@/lib/data/portal'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
-import type { Milestone } from '@/lib/supabase/types'
+import type { Milestone, MilestoneApproval } from '@/lib/supabase/types'
 
 export default async function ProgressPage() {
   const bundle = await getPortalBundle()
   const supabase = await createServerSupabaseForUser()
   if (!bundle || !supabase) return <PortalDataUnavailable />
-  const { data } = await supabase
-    .from('milestones')
-    .select('*')
-    .eq('project_id', bundle.project.id)
-    .order('sort_order', { ascending: true })
-  const milestones = (data ?? []) as Milestone[]
+  const pid = bundle.project.id
+
+  const [{ data: msData }, { data: apprData }] = await Promise.all([
+    supabase.from('milestones').select('*').eq('project_id', pid).order('sort_order', { ascending: true }),
+    supabase.from('milestone_approvals').select('*').eq('project_id', pid),
+  ])
+
+  const milestones = (msData ?? []) as Milestone[]
+  const approvals = (apprData ?? []) as MilestoneApproval[]
+  const approvalsByMilestoneId: Record<string, MilestoneApproval> = {}
+  for (const a of approvals) {
+    approvalsByMilestoneId[a.milestone_id] = a
+  }
 
   return (
     <div className="space-y-6">
@@ -30,7 +37,7 @@ export default async function ProgressPage() {
       </Card>
       <div>
         <h2 className="mb-3 text-base font-medium text-[var(--iw-text)]">Milestones</h2>
-        <MilestoneTimeline milestones={milestones} />
+        <MilestoneTimeline milestones={milestones} approvalsByMilestoneId={approvalsByMilestoneId} />
       </div>
       <Card>
         <p className="iw-label mb-2">What&apos;s included</p>
@@ -49,8 +56,8 @@ export default async function ProgressPage() {
           </ul>
         )}
         <p className="mt-3 text-sm text-[var(--iw-text-3)]">
-          Exclusions: third-party subscription fees, paid media spend, and out-of-scope custom software
-          outside your statement of work.
+          Exclusions: third-party subscription fees, paid media spend, and out-of-scope custom software outside your
+          statement of work.
         </p>
       </Card>
     </div>

@@ -59,6 +59,7 @@ export function Sidebar({
         <div>
           <p className="iw-label mb-2 px-2">Project</p>
           <NavItem href="/documents" icon={icon('▤')} label="Documents" />
+          <NavItem href="/change-orders" icon={icon('±')} label="Change orders" />
           <NavItem href="/scope" icon={icon('◎')} label="Scope of Work" />
         </div>
         <div>

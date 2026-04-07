@@ -1,4 +1,5 @@
 import type { HubSpotCrmObject } from '@/lib/hubspot/client'
+import { isHubSpotConfigured, requireHubSpotToken } from '@/lib/hubspot/config'
 import { cache } from 'react'
 
 const HUBSPOT_API = 'https://api.hubapi.com'
@@ -15,7 +16,8 @@ const DEAL_READ_PROPERTIES = [
 ] as const
 
 function token(): string | null {
-  return process.env.HUBSPOT_PRIVATE_APP_TOKEN ?? null
+  if (!isHubSpotConfigured()) return null
+  return requireHubSpotToken()
 }
 
 function pagingAfter(data: unknown): string | undefined {

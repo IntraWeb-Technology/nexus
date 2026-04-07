@@ -8,6 +8,7 @@
  *
  * Run: pnpm exec tsx scripts/upsert-jschibelli-portal.ts
  */
+import { requireHubSpotToken } from '../src/lib/hubspot/config'
 import { config } from 'dotenv'
 import { createClerkClient } from '@clerk/backend'
 import { createClient } from '@supabase/supabase-js'
@@ -20,11 +21,7 @@ const PROJECT_SLUG = 'jschibelli-portal-2026'
 const HUBSPOT_API = 'https://api.hubapi.com'
 
 function hubspotToken(): string {
-  const token = process.env.HUBSPOT_PRIVATE_APP_TOKEN
-  if (!token) {
-    throw new Error('Missing HUBSPOT_PRIVATE_APP_TOKEN')
-  }
-  return token
+  return requireHubSpotToken()
 }
 
 async function fetchHubSpotJson<T>(url: string, init?: RequestInit): Promise<T> {

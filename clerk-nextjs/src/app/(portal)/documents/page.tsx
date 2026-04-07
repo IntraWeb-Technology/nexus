@@ -1,4 +1,4 @@
-import { DocumentList } from '@/components/portal/DocumentList'
+import { DocumentsSection } from '@/components/portal/DocumentsSection'
 import { PortalDataUnavailable } from '@/components/portal/PortalDataUnavailable'
 import { getPortalBundle } from '@/lib/data/portal'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
@@ -19,12 +19,11 @@ export default async function DocumentsPage() {
   return (
     <div className="space-y-6">
       <h1>Documents</h1>
-      <DocumentList documents={documents} />
+      <DocumentsSection initialDocuments={documents} />
       <div className="rounded-[12px] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] p-4">
         <p className="iw-label mb-2">Request a document</p>
         <p className="mb-3 text-sm text-[var(--iw-text-2)]">
-          Need something uploaded or a template shared? Send a request — our team is notified via
-          automation.
+          Need something uploaded or a template shared? Send a request — our team is notified via automation.
         </p>
         <DocumentRequestForm />
       </div>

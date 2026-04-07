@@ -1,4 +1,5 @@
 import type { HubSpotCrmObject } from '@/lib/hubspot/client'
+import { isHubSpotConfigured, requireHubSpotToken } from '@/lib/hubspot/config'
 import type { ActivityFeedItem } from '@/lib/activity/types'
 
 const HUBSPOT_API = 'https://api.hubapi.com'
@@ -8,7 +9,8 @@ const ASSOCIATION_OBJECT_TYPES = ['notes', 'tasks', 'calls', 'meetings', 'emails
 type AssociationObjectType = (typeof ASSOCIATION_OBJECT_TYPES)[number]
 
 function token(): string | null {
-  return process.env.HUBSPOT_PRIVATE_APP_TOKEN ?? null
+  if (!isHubSpotConfigured()) return null
+  return requireHubSpotToken()
 }
 
 function pagingAfter(data: unknown): string | undefined {
