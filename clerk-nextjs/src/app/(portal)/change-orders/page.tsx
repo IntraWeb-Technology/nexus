@@ -3,6 +3,11 @@ import { PortalDataUnavailable } from '@/components/portal/PortalDataUnavailable
 import { getPortalBundle } from '@/lib/data/portal'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { ChangeOrderRow } from '@/lib/supabase/types'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Scope changes',
+}
 
 export default async function ChangeOrdersPage() {
   const bundle = await getPortalBundle()

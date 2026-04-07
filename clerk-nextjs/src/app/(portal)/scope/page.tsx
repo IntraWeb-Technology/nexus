@@ -77,11 +77,12 @@ export default async function ScopePage() {
       </Card>
 
       <Card>
-        <p className="iw-label mb-2">Change orders</p>
+        <p className="iw-label mb-2">Scope changes</p>
         <p className="text-sm text-[var(--iw-text-2)]">
-          Any work outside this scope — including new features, extra pages, additional integrations, or expanded
-          timelines — requires a written change order with updated timeline and fees. Verbal requests do not change scope
-          until documented and approved.
+          Work outside what is listed here — new features, extra pages, more integrations, or different timelines —
+          needs a written agreement with updated schedule and fees. Verbal requests do not change scope until they are
+          documented and approved. Use <span className="font-medium text-[var(--iw-text)]">Scope changes</span> in the
+          sidebar when you are ready to request an update.
         </p>
       </Card>
 

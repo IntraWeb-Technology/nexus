@@ -25,8 +25,78 @@ Implemented webhooks (see `src/lib/n8n/client.ts`):
 | `/webhook/portal-login` | Client login event |
 | `/webhook/portal-document-request` | Document request flow |
 | `/webhook/portal-invoice-paid` | Stripe Checkout completed; invoice marked paid in Supabase (`triggerInvoicePaid`) |
+| `/webhook/portal-change-order` | Client submits **contractual change order** (PDF + HubSpot form + Supabase); see below |
 
 Create matching **Webhook** (or **Respond to Webhook**) nodes in n8n at those URL paths on your n8n host.
+
+### Change order: `portal-change-order`
+
+After a successful portal submission, the app POSTs JSON matching `ChangeOrderRequestedPayload` in `src/lib/n8n/webhooks.ts` (including `co_number`, `pdf_signed_url`, `hubspot_deal_id`, `summary`, etc.). Use the same `x-intrawebtech-secret` header as other outbound webhooks.
+
+**Recommended n8n workflow**
+
+Reference implementation (Workflow SDK — import via n8n “Create workflow from code” or the n8n MCP): [`docs/n8n-workflows/portal-change-order-hubspot-note.workflow.ts`](n8n-workflows/portal-change-order-hubspot-note.workflow.ts).
+
+1. On the n8n host, set environment variable **`WEBHOOK_SECRET`** to the same value as the portal / Vercel (used by the Code node in that workflow to validate `x-intrawebtech-secret`).
+2. **Webhook** — Path: `portal-change-order` on your n8n host (full URL = `N8N_BASE_URL/webhook/portal-change-order`).
+3. Validate the secret (the reference workflow uses a **Code** node).
+4. **HTTP Request** to `POST https://api.hubapi.com/crm/v3/objects/notes` with Bearer auth (private app token with note + deal permissions). The reference workflow builds `hs_note_body` from `summary`, `co_number`, `pdf_signed_url`, and associates to the deal (`associationTypeId` **214** is the default HubSpot note→deal mapping — adjust if your portal uses custom association labels).
+5. **Respond to Webhook** with `200` + `{ ok: true }` on success.
+6. Optional: Slack/email to PM; optional **Task** for legal review.
+
+**Example body** (shape only; use real IDs and URLs from the webhook item):
+
+```json
+{
+  "project_slug": "acme-redesign",
+  "title": "Add ecommerce module",
+  "description": "Master agreement reference: SOW 2026-01\n\nCurrent scope...",
+  "client_name": "Jane Doe",
+  "client_email": "jane@example.com",
+  "co_number": "CO-acme-redesign-A1B2C3",
+  "change_order_id": "550e8400-e29b-41d4-a716-446655440000",
+  "hubspot_deal_id": "67890123456",
+  "hubspot_contact_id": "12345",
+  "pdf_signed_url": "https://.....supabase.co/storage/v1/object/sign/change-order-packets/....",
+  "summary": "Add ecommerce module\nSOW ref: SOW 2026-01\nEffective: 2026-05-01 · Cost: increase\nSigner: Jane Doe (VP Operations)"
+}
+```
+
+If `hubspot_deal_id` is null, branch on contact ID or log-only path. **`pdf_signed_url`** may be null if PDF generation failed.
+
+### Approve / decline in HubSpot → update portal status
+
+HubSpot does not call the portal directly. Use **n8n** (or any server) to `POST` to the portal when a reviewer approves or declines:
+
+**URL:** `POST https://<your-portal-host>/api/webhook/n8n`  
+**Headers:** `Content-Type: application/json`, `x-intrawebtech-secret: <WEBHOOK_SECRET>`
+
+**Body:**
+
+```json
+{
+  "action": "update_change_order",
+  "project_slug": "jschibelli-portal-2026",
+  "data": {
+    "change_order_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "approved",
+    "staff_notes": "Approved as proposed. Legal cc'd."
+  }
+}
+```
+
+- **`change_order_id`** — UUID from the portal (also sent on outbound `portal-change-order` as `change_order_id`; you can store it on the HubSpot deal, task, or note via n8n).
+- **`project_slug`** — Must match the portal project that owns the change order (prevents cross-project updates).
+- **`status`** — One of: `pending`, `reviewed`, `approved`, `declined`, `cancelled`.
+- **`staff_notes`** — Optional; shown to the client on the Change orders page when present.
+
+**Typical HubSpot automation**
+
+1. **Change order submitted** → existing `portal-change-order` n8n workflow creates a HubSpot **task** or **note** on the deal and copies `change_order_id` into a custom deal or task property (or into the task body).
+2. When the task is marked complete or a deal property is set to “Approved”, a second **HubSpot workflow** triggers **Send webhook** to n8n (or n8n’s HubSpot trigger reads the property).
+3. n8n **HTTP Request** node calls `/api/webhook/n8n` with `update_change_order` as above.
+
+After a successful call, the client sees the new **status** badge on **Change orders** after refresh; they also get a portal **notification**.
 
 ## Inbound (n8n → portal)
 
@@ -39,7 +109,7 @@ Create matching **Webhook** (or **Respond to Webhook**) nodes in n8n at those UR
 - `Content-Type: application/json`
 - `x-intrawebtech-secret: <WEBHOOK_SECRET>` — required; validated by `validateIntrawebSecret` in `src/lib/webhooks/secret.ts`
 
-**Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `add_invoice`, `update_milestone`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
+**Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `add_invoice`, `update_milestone`, `update_change_order`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
 
 ### Example: HubSpot → `provision_client`
 

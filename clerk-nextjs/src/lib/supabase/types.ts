@@ -87,17 +87,27 @@ export interface MilestoneApproval {
   created_at: string
 }
 
-export type ChangeOrderStatus = 'pending' | 'reviewed' | 'approved' | 'declined'
+export type ChangeOrderStatus = 'pending' | 'reviewed' | 'approved' | 'declined' | 'cancelled'
+
+/** Canonical contractual payload (matches zod schema in change-order/schema). */
+export type ChangeOrderPayloadJSON = Record<string, unknown>
 
 export interface ChangeOrderRow {
   id: string
   project_id: string
+  /** Present after DB migration `006_change_order_contract.sql`. */
+  co_number?: string | null
   title: string
   description: string
+  payload?: ChangeOrderPayloadJSON | null
   requested_at: string
   status: ChangeOrderStatus
   staff_notes: string | null
   created_at: string
+  pdf_storage_path?: string | null
+  hubspot_submission_id?: string | null
+  hubspot_sync_status?: string | null
+  hubspot_sync_error?: string | null
 }
 
 export interface Invoice {

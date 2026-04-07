@@ -162,6 +162,73 @@ export async function POST(request: Request) {
         })
         return NextResponse.json({ ok: true })
       }
+      case 'update_change_order': {
+        const d = payload as Extract<N8nInboundPayload, { action: 'update_change_order' }>
+        const slug = d.project_slug?.trim()
+        if (!slug) {
+          return NextResponse.json({ error: 'project_slug required' }, { status: 400 })
+        }
+        const allowed = new Set(['pending', 'reviewed', 'approved', 'declined', 'cancelled'])
+        if (!allowed.has(d.data.status)) {
+          return NextResponse.json({ error: 'invalid status' }, { status: 400 })
+        }
+        const coId = d.data.change_order_id?.trim()
+        if (!coId) {
+          return NextResponse.json({ error: 'change_order_id required' }, { status: 400 })
+        }
+
+        const { data: co } = await supabase
+          .from('change_orders')
+          .select('id, project_id, title, co_number')
+          .eq('id', coId)
+          .maybeSingle()
+        if (!co) return NextResponse.json({ error: 'change order not found' }, { status: 404 })
+
+        const { data: proj } = await supabase
+          .from('projects')
+          .select('id, slug')
+          .eq('id', co.project_id)
+          .maybeSingle()
+        if (!proj || proj.slug !== slug) {
+          return NextResponse.json({ error: 'change order not found' }, { status: 404 })
+        }
+
+        const rawNotes = d.data.staff_notes
+        const notes =
+          rawNotes === undefined || rawNotes === null || String(rawNotes).trim() === ''
+            ? null
+            : String(rawNotes).slice(0, 8000)
+
+        const { error: upErr } = await supabase
+          .from('change_orders')
+          .update({ status: d.data.status, staff_notes: notes })
+          .eq('id', coId)
+          .eq('project_id', proj.id)
+        if (upErr) {
+          console.error('[webhook/n8n] update_change_order', upErr)
+          return NextResponse.json({ error: 'update failed' }, { status: 500 })
+        }
+
+        const ref = co.co_number ?? coId.slice(0, 8)
+        const statusLabel = d.data.status
+        await supabase.from('activity_log').insert({
+          project_id: proj.id,
+          type: 'task',
+          label: 'Scope change request updated',
+          detail: `${ref} → ${statusLabel}`,
+        })
+
+        const { title: nTitle, body: nBody } = changeOrderStatusNotification(ref, co.title, d.data.status)
+        await supabase.from('notifications').insert({
+          project_id: proj.id,
+          type: 'milestone',
+          title: nTitle,
+          body: nBody,
+          read: false,
+        })
+
+        return NextResponse.json({ ok: true })
+      }
       case 'provision_client': {
         const d = payload as Extract<N8nInboundPayload, { action: 'provision_client' }>
         const slug = projectSlug
@@ -307,4 +374,25 @@ async function recalcMilestoneProgress(
   const done = ms?.filter((m) => m.status === 'done').length ?? 0
   const pct = progressFromMilestones(done, total)
   await supabase.from('projects').update({ progress_pct: pct }).eq('id', projectId)
+}
+
+function changeOrderStatusNotification(
+  ref: string,
+  title: string,
+  status: string,
+): { title: string; body: string } {
+  const short = title.length > 80 ? `${title.slice(0, 77)}…` : title
+  if (status === 'approved') {
+    return { title: 'Your scope change was approved', body: `${ref} — ${short}` }
+  }
+  if (status === 'declined') {
+    return { title: 'Your scope change request was not approved', body: `${ref} — ${short}` }
+  }
+  if (status === 'reviewed') {
+    return { title: 'We are reviewing your scope change', body: `${ref} — ${short}` }
+  }
+  if (status === 'cancelled') {
+    return { title: 'Scope change request cancelled', body: `${ref} — ${short}` }
+  }
+  return { title: 'Update on your scope change request', body: `${ref} — status: ${status}` }
 }

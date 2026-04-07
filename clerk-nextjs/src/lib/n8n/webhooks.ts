@@ -1,4 +1,4 @@
-import type { NotificationType, Plan } from '@/lib/supabase/types'
+import type { ChangeOrderStatus, NotificationType, Plan } from '@/lib/supabase/types'
 
 export type N8nInboundAction =
   | 'update_milestone'
@@ -9,6 +9,7 @@ export type N8nInboundAction =
   | 'add_invoice'
   | 'log_activity'
   | 'provision_client'
+  | 'update_change_order'
 
 export interface N8nEnvelope<T extends N8nInboundAction, D> {
   action: T
@@ -75,6 +76,13 @@ export type ProvisionClientData = {
   clerk_user_id?: string
 }
 
+/** HubSpot / n8n: set portal row status after staff approval (or decline). `project_slug` must match the change order's project. */
+export type UpdateChangeOrderData = {
+  change_order_id: string
+  status: ChangeOrderStatus
+  staff_notes?: string | null
+}
+
 export type N8nInboundPayload =
   | N8nEnvelope<'update_milestone', UpdateMilestoneData>
   | N8nEnvelope<'update_progress', UpdateProgressData>
@@ -84,6 +92,7 @@ export type N8nInboundPayload =
   | AddInvoiceInboundPayload
   | N8nEnvelope<'log_activity', LogActivityData>
   | N8nEnvelope<'provision_client', ProvisionClientData>
+  | N8nEnvelope<'update_change_order', UpdateChangeOrderData>
 
 export interface StaffAlertPayload {
   project_slug: string
@@ -132,4 +141,13 @@ export interface ChangeOrderRequestedPayload {
   title: string
   description: string
   client_name: string
+  client_email: string
+  co_number: string
+  change_order_id: string
+  hubspot_deal_id: string | null
+  hubspot_contact_id: string | null
+  /** Time-limited signed URL to the PDF packet (e.g. 48h). */
+  pdf_signed_url: string | null
+  /** Plain-text summary for HubSpot deal notes / Slack. */
+  summary: string
 }
