@@ -13,11 +13,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { getN8nWorkflowsRoot } from "./n8n-workflows-root.mjs";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 const DEFAULT_WF = path.join(
-  REPO_ROOT,
-  "n8n-workflows",
+  getN8nWorkflowsRoot(),
   "01_lead-generation",
   "SYS 01.5 — Client Intake Brief (Real-Time).json"
 );

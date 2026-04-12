@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const WF_ROOT = path.resolve("n8n-workflows");
+import { getN8nWorkflowsRoot } from "./n8n-workflows-root.mjs";
+
+const WF_ROOT = getN8nWorkflowsRoot();
 
 function walk(dir, out = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {

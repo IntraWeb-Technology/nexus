@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+import { getN8nWorkflowsRoot, resolveWorkflowPath } from "./n8n-workflows-root.mjs";
+
 function getArg(flag) {
   const idx = process.argv.indexOf(flag);
   if (idx === -1) return null;
@@ -139,7 +141,10 @@ async function getDescendantFolderIds({ baseUrl, apiKey, rootFolderId }) {
 }
 
 async function main() {
-  const outDir = getArg("--out") || "n8n-workflows/internal-ops";
+  const outArg = getArg("--out");
+  const outDir = outArg
+    ? resolveWorkflowPath(outArg)
+    : path.join(getN8nWorkflowsRoot(), "internal-ops");
   const excludeArchived = hasFlag("--exclude-archived");
   const parentFolderId = getArg("--parent-folder-id"); // filter root (best-effort unless folders endpoint available)
 

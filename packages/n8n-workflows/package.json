@@ -1,0 +1,10 @@
+{
+  "name": "@repo/n8n-workflows",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"require('fs').mkdirSync('dist',{recursive:true});require('fs').writeFileSync('dist/.gitkeep','')\"",
+    "lint": "node -e \"process.exit(0)\"",
+    "check-types": "node -e \"process.exit(0)\""
+  }
+}

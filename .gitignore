@@ -36,3 +36,6 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Local staging clones (not part of the monorepo)
+tmp/

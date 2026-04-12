@@ -11,6 +11,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { resolveWorkflowPath } from "./n8n-workflows-root.mjs";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
 
@@ -48,7 +50,7 @@ if (!res.ok) {
 }
 const data = JSON.parse(text);
 
-const outPath = path.join(REPO_ROOT, outRel);
+const outPath = resolveWorkflowPath(outRel);
 await fs.promises.mkdir(path.dirname(outPath), { recursive: true });
 await fs.promises.writeFile(outPath, JSON.stringify(data, null, 2) + "\n", "utf8");
 console.log(

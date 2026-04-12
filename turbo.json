@@ -1,11 +1,38 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
+  "globalEnv": ["NODE_ENV", "CI"],
+  "globalPassThroughEnv": [
+    "N8N_API_KEY",
+    "N8N_API_URL",
+    "N8N_MCP_JSON",
+    "N8N_BASE_URL",
+    "N8N_WEBHOOK_SECRET",
+    "WEBHOOK_SECRET",
+    "HUBSPOT_ACCESS_TOKEN",
+    "HUBSPOT_TOKEN",
+    "CLERK_SECRET_KEY",
+    "STRIPE_SECRET_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "RESEND_API_KEY",
+    "DATABASE_URL",
+    "NEXTAUTH_SECRET"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_GA_ID",
+        "NEXT_PUBLIC_HUBSPOT_ID",
+        "NEXT_PUBLIC_RECAPTCHA_SITE_KEY",
+        "NEXT_PUBLIC_CAL_KICKOFF_CAL_LINK",
+        "ANALYZE"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]

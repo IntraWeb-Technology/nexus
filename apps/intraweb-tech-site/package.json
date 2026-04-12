@@ -1,5 +1,5 @@
 {
-  "name": "nextjs",
+  "name": "@repo/intraweb-tech-site",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,6 +17,7 @@
     "sync:n8n": "node scripts/sync-workflows-to-n8n.mjs"
   },
   "dependencies": {
+    "@repo/n8n-workflows": "workspace:*",
     "@auth/prisma-adapter": "^2.9.1",
     "@google-cloud/recaptcha-enterprise": "^6.1.0",
     "@hookform/resolvers": "^5.0.1",

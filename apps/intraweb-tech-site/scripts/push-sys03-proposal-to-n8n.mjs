@@ -1,8 +1,14 @@
-import fs from "fs";
+import fs from "node:fs";
+import path from "node:path";
+
+import { getN8nWorkflowsRoot } from "./n8n-workflows-root.mjs";
 
 const MCP = "C:/Users/jschi/.cursor/mcp.json";
-const WF =
-  "n8n-workflows/03_sales/SYS 03 — Proposal and Contract Delivery.json";
+const WF = path.join(
+  getN8nWorkflowsRoot(),
+  "03_sales",
+  "SYS 03 — Proposal and Contract Delivery.json"
+);
 const WORKFLOW_ID = "1aX9pLXOuVelq3sK";
 
 const raw = fs.readFileSync(MCP, "utf8");

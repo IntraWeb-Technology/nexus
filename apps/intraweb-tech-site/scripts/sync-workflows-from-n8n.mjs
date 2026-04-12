@@ -17,9 +17,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { getN8nWorkflowsRoot, resolveWorkflowPath } from "./n8n-workflows-root.mjs";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "..");
-const WF_ROOT = path.join(REPO_ROOT, "n8n-workflows");
+const WF_ROOT = getN8nWorkflowsRoot();
 
 function getArg(flag) {
   const idx = process.argv.indexOf(flag);
@@ -104,7 +106,7 @@ async function main() {
 
   let files = collectWorkflowFiles(WF_ROOT);
   if (onlyRel) {
-    const abs = path.resolve(REPO_ROOT, onlyRel);
+    const abs = resolveWorkflowPath(onlyRel);
     if (!files.includes(abs)) {
       console.error(`--only path not found or not a workflow JSON: ${onlyRel}`);
       process.exit(1);

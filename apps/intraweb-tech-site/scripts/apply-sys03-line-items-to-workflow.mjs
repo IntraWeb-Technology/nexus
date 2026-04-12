@@ -6,11 +6,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { getN8nWorkflowsRoot } from "./n8n-workflows-root.mjs";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "..");
 const WF = path.join(
-  ROOT,
-  "n8n-workflows",
+  getN8nWorkflowsRoot(),
   "03_sales",
   "SYS 03 — Proposal and Contract Delivery.json"
 );
