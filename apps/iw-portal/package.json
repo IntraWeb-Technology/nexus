@@ -1,0 +1,20 @@
+{
+  "name": "iw-portal",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "db:link": "pnpm exec supabase link",
+    "db:push": "pnpm exec supabase db push"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["supabase"]
+  },
+  "dependencies": {
+    "next": "16.2.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "supabase": "^2.84.10"
+  }
+}
