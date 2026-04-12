@@ -55,7 +55,105 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
 
-  apps/intraweb-tech-site:
+  apps/iw-portal:
+    dependencies:
+      next:
+        specifier: 16.2.2
+        version: 16.2.2(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
+    devDependencies:
+      supabase:
+        specifier: ^2.84.10
+        version: 2.89.1
+
+  apps/iw-portal/clerk-nextjs:
+    dependencies:
+      '@clerk/backend':
+        specifier: ^3.2.4
+        version: 3.2.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@clerk/nextjs':
+        specifier: ^7.0.8
+        version: 7.0.12(next@16.2.2(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@supabase/ssr':
+        specifier: ^0.10.0
+        version: 0.10.2(@supabase/supabase-js@2.103.0)
+      '@supabase/supabase-js':
+        specifier: ^2.101.1
+        version: 2.103.0
+      next:
+        specifier: 16.2.2
+        version: 16.2.2(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      pdfkit:
+        specifier: ^0.18.0
+        version: 0.18.0
+      react:
+        specifier: 19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
+      resend:
+        specifier: ^6.10.0
+        version: 6.10.0(@react-email/render@1.1.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+      stripe:
+        specifier: ^22.0.0
+        version: 22.0.1(@types/node@20.19.39)
+      svix:
+        specifier: ^1.90.0
+        version: 1.90.0
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4
+        version: 4.2.2
+      '@types/node':
+        specifier: ^20
+        version: 20.19.39
+      '@types/pdfkit':
+        specifier: ^0.17.5
+        version: 0.17.5
+      '@types/pg':
+        specifier: ^8.20.0
+        version: 8.20.0
+      '@types/react':
+        specifier: ^19
+        version: 19.2.2
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.2(@types/react@19.2.2)
+      dotenv:
+        specifier: ^17.4.0
+        version: 17.4.1
+      eslint:
+        specifier: ^9
+        version: 9.39.1(jiti@2.6.1)
+      eslint-config-next:
+        specifier: 16.2.2
+        version: 16.2.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.2)
+      pg:
+        specifier: ^8.20.0
+        version: 8.20.0
+      tailwindcss:
+        specifier: ^4
+        version: 4.2.2
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@20.19.39)(typescript@5.9.2)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5
+        version: 5.9.2
+
+  apps/iw-site:
     dependencies:
       '@auth/prisma-adapter':
         specifier: ^2.9.1
@@ -265,104 +363,6 @@ importers:
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.19.39)(typescript@5.9.2)
-      typescript:
-        specifier: ^5
-        version: 5.9.2
-
-  apps/iw-portal:
-    dependencies:
-      next:
-        specifier: 16.2.2
-        version: 16.2.2(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      react:
-        specifier: 19.2.4
-        version: 19.2.4
-      react-dom:
-        specifier: 19.2.4
-        version: 19.2.4(react@19.2.4)
-    devDependencies:
-      supabase:
-        specifier: ^2.84.10
-        version: 2.89.1
-
-  apps/iw-portal/clerk-nextjs:
-    dependencies:
-      '@clerk/backend':
-        specifier: ^3.2.4
-        version: 3.2.8(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@clerk/nextjs':
-        specifier: ^7.0.8
-        version: 7.0.12(next@16.2.2(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@supabase/ssr':
-        specifier: ^0.10.0
-        version: 0.10.2(@supabase/supabase-js@2.103.0)
-      '@supabase/supabase-js':
-        specifier: ^2.101.1
-        version: 2.103.0
-      next:
-        specifier: 16.2.2
-        version: 16.2.2(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      pdfkit:
-        specifier: ^0.18.0
-        version: 0.18.0
-      react:
-        specifier: 19.2.4
-        version: 19.2.4
-      react-dom:
-        specifier: 19.2.4
-        version: 19.2.4(react@19.2.4)
-      resend:
-        specifier: ^6.10.0
-        version: 6.10.0(@react-email/render@1.1.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
-      stripe:
-        specifier: ^22.0.0
-        version: 22.0.1(@types/node@20.19.39)
-      svix:
-        specifier: ^1.90.0
-        version: 1.90.0
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@tailwindcss/postcss':
-        specifier: ^4
-        version: 4.2.2
-      '@types/node':
-        specifier: ^20
-        version: 20.19.39
-      '@types/pdfkit':
-        specifier: ^0.17.5
-        version: 0.17.5
-      '@types/pg':
-        specifier: ^8.20.0
-        version: 8.20.0
-      '@types/react':
-        specifier: ^19
-        version: 19.2.2
-      '@types/react-dom':
-        specifier: ^19
-        version: 19.2.2(@types/react@19.2.2)
-      dotenv:
-        specifier: ^17.4.0
-        version: 17.4.1
-      eslint:
-        specifier: ^9
-        version: 9.39.1(jiti@2.6.1)
-      eslint-config-next:
-        specifier: 16.2.2
-        version: 16.2.2(eslint@9.39.1(jiti@2.6.1))(typescript@5.9.2)
-      pg:
-        specifier: ^8.20.0
-        version: 8.20.0
-      tailwindcss:
-        specifier: ^4
-        version: 4.2.2
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@types/node@20.19.39)(typescript@5.9.2)
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
       typescript:
         specifier: ^5
         version: 5.9.2

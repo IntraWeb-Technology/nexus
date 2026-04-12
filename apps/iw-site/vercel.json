@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=@repo/intraweb-tech-site"
+  "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=@repo/iw-site"
 }
