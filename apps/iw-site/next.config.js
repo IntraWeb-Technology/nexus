@@ -1,3 +1,10 @@
+const path = require('path');
+const { loadEnvConfig } = require('@next/env');
+
+// Single root `.env.local` for the monorepo (see repo `.gitignore`).
+const monorepoRoot = path.join(__dirname, '..', '..');
+loadEnvConfig(monorepoRoot, process.env.NODE_ENV !== 'production', undefined, true);
+
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });

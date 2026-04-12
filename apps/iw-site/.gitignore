@@ -43,3 +43,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# next-sitemap (postbuild)
+/public/sitemap.xml
+/public/sitemap-*.xml
+/public/robots.txt
+
+# Script outputs (regenerated locally)
+/scripts/*.log
+/scripts/stripe-*-output.json
+
+# Local scratch / debug at app root
+/_*.json
+/_*.txt
+/test_output*.txt
+/app_test_output.txt
+/.tmp*
