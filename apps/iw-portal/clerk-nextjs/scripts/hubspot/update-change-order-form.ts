@@ -12,10 +12,11 @@ import {
   buildChangeOrderFormFieldGroups,
   CHANGE_ORDER_FORM_NAME,
 } from './change-order-form-fields'
+import path from 'node:path'
 import { config } from 'dotenv'
-import { resolve } from 'path'
+import { resolveMonorepoRoot } from '../lib/repo-root'
 
-config({ path: resolve(process.cwd(), '.env.local') })
+config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
 
 const HUBSPOT_API = 'https://api.hubapi.com'
 const TOKEN = process.env.HUBSPOT_PRIVATE_APP_TOKEN

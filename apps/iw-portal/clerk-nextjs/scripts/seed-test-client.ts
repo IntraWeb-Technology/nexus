@@ -10,15 +10,16 @@
  *
  * HubSpot: replace HUBSPOT_CONTACT_ID / HUBSPOT_DEAL_PRIMARY with IDs from your portal (or set env vars).
  */
+import path from 'node:path'
 import { config } from 'dotenv'
 import { createClerkClient } from '@clerk/backend'
 import { createClient } from '@supabase/supabase-js'
-import { resolve } from 'path'
 import { invoicesForPlan } from '../src/lib/invoice-templates'
 import { milestonesForPlan } from '../src/lib/milestones-templates'
 import { exitIfPortalSchemaMissing } from './lib/supabase-schema-check'
+import { resolveMonorepoRoot } from './lib/repo-root'
 
-config({ path: resolve(process.cwd(), '.env.local') })
+config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
 config()
 
 const TEST_EMAIL = 'testuser@gmail.com'

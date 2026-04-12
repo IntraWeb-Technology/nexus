@@ -12,12 +12,14 @@
  * Run from clerk-nextjs:
  *   pnpm exec tsx scripts/apply-portal-schema-postgres.ts
  */
+import path from 'node:path'
 import { config } from 'dotenv'
 import { readFileSync } from 'fs'
-import { join, resolve } from 'path'
+import { join } from 'path'
 import { Client } from 'pg'
+import { resolveMonorepoRoot } from './lib/repo-root'
 
-config({ path: resolve(process.cwd(), '.env.local') })
+config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
 
 const conn =
   process.env.POSTGRES_URL_NON_POOLING ??

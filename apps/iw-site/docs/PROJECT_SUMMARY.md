@@ -24,7 +24,7 @@ The IntraWeb Technologies website is a modern, accessible, and high-performance 
 - **About & process**: About page (mission, vision, values, story, team, CTA); Process page with client-side timeline and static params for SEO.
 - **Legal & compliance**: Privacy Policy, Terms of Service, and Accessibility Statement; cookie consent banner; cookie audit script.
 - **404**: Custom animated 404 page (Pages Router `pages/404.tsx`) with brand-aligned visuals, accessibility, and recovery options.
-- **SEO & performance**: Metadata, Open Graph, Twitter cards, JSON-LD, sitemap (next-sitemap postbuild), robots.txt, image optimization. Scripts: Lighthouse audit, link checker, SEO compliance check, bundle analyzer, reCAPTCHA token helper.
+- **SEO & performance**: Metadata, Open Graph, Twitter cards, JSON-LD, sitemap (`app/sitemap.ts`), robots (`app/robots.ts`), image optimization. Scripts: Lighthouse audit, link checker, SEO compliance check, bundle analyzer, reCAPTCHA token helper.
 - **Deployment**: Vercel with preview and production; custom domain and analytics (e.g. GA) support documented.
 
 ---

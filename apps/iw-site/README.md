@@ -103,7 +103,7 @@
   - Lighthouse: target 90+ across categories
   - Web vitals: LCP < 2.5s, FID < 100ms, CLS < 0.1
 - **SEO**:
-  - OpenGraph, meta tags, `next-sitemap`, optional structured data
+  - OpenGraph, meta tags, `app/sitemap.ts` + `app/robots.ts`, optional structured data
 
 ---
 

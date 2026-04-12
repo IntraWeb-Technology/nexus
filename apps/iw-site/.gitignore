@@ -44,11 +44,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# next-sitemap (postbuild)
-/public/sitemap.xml
-/public/sitemap-*.xml
-/public/robots.txt
-
 # Script outputs (regenerated locally)
 /scripts/*.log
 /scripts/stripe-*-output.json

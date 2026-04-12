@@ -8,6 +8,8 @@ node_modules
 # Local env files
 .env
 .env.local
+.env.iw-portal.local
+.env.iw-site.local
 .env.development.local
 .env.test.local
 .env.production.local

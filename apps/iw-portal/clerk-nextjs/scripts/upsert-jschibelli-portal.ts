@@ -8,13 +8,14 @@
  *
  * Run: pnpm exec tsx scripts/upsert-jschibelli-portal.ts
  */
+import path from 'node:path'
 import { requireHubSpotToken } from '../src/lib/hubspot/config'
 import { config } from 'dotenv'
 import { createClerkClient } from '@clerk/backend'
 import { createClient } from '@supabase/supabase-js'
-import { resolve } from 'path'
+import { resolveMonorepoRoot } from './lib/repo-root'
 
-config({ path: resolve(process.cwd(), '.env.local') })
+config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
 
 const EMAIL = 'jschibelli@gmail.com'
 const PROJECT_SLUG = 'jschibelli-portal-2026'
