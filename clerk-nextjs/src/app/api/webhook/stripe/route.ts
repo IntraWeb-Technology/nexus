@@ -1,4 +1,8 @@
-import { triggerInvoicePaid } from '@/lib/n8n/client'
+import { triggerInvoicePaid, triggerStripeCatalogCheckout } from '@/lib/n8n/client'
+import {
+  buildStripeCatalogCheckoutPayload,
+  shouldForwardCatalogPayment,
+} from '@/lib/stripe/catalog-checkout-n8n'
 import { getStripe, getStripeWebhookSecret } from '@/lib/stripe/server'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import type { Invoice } from '@/lib/supabase/types'
@@ -111,6 +115,9 @@ export async function POST(request: Request) {
       const session = event.data.object as Stripe.Checkout.Session
       if (session.mode === 'payment' && session.payment_status === 'paid') {
         await markInvoicePaidFromSession(session)
+      }
+      if (shouldForwardCatalogPayment(session)) {
+        triggerStripeCatalogCheckout(buildStripeCatalogCheckoutPayload(session))
       }
     }
   } catch (e) {

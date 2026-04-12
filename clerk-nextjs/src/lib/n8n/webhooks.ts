@@ -122,6 +122,35 @@ export interface InvoicePaidPayload {
   stripe_checkout_session_id: string
 }
 
+/** Discount / promo summary for catalog checkouts (Payment Links). */
+export interface StripeCatalogDiscountSummary {
+  amount_discount_cents: number | null
+  promotion_code_id: string | null
+  coupon_id: string | null
+}
+
+/**
+ * Fired when a catalog Payment Link (or similar) completes in Stripe and the session
+ * is not a portal invoice checkout. n8n uses this to PATCH HubSpot / notify staff.
+ *
+ * Payment Link metadata is copied onto the session; standard keys: `sku`, `type`,
+ * optional `hubspot_deal_id`, `project_slug`.
+ */
+export interface StripeCatalogCheckoutPayload {
+  event: 'stripe_catalog_checkout_completed'
+  stripe_checkout_session_id: string
+  stripe_payment_intent_id: string | null
+  stripe_payment_link_id: string | null
+  stripe_subscription_id: string | null
+  mode: 'payment' | 'subscription'
+  amount_total: number | null
+  currency: string | null
+  customer_email: string | null
+  /** Full Stripe session metadata (sku, type, hubspot_deal_id, project_slug, …). */
+  metadata: Record<string, string>
+  discounts?: StripeCatalogDiscountSummary | null
+}
+
 export interface DocumentSignedPayload {
   project_slug: string
   document_name: string

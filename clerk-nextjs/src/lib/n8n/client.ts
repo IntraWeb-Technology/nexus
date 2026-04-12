@@ -6,6 +6,7 @@ import type {
   LoginEventPayload,
   MilestoneApprovedPayload,
   StaffAlertPayload,
+  StripeCatalogCheckoutPayload,
 } from '@/lib/n8n/webhooks'
 
 function baseUrl(): string {
@@ -55,6 +56,15 @@ export function triggerInvoicePaid(payload: InvoicePaidPayload): void {
     fireAndForget(`${baseUrl()}/webhook/portal-invoice-paid`, payload)
   } catch (e) {
     console.error('[n8n] triggerInvoicePaid', e)
+  }
+}
+
+/** Catalog Payment Link (or subscription link) checkout → n8n → HubSpot. */
+export function triggerStripeCatalogCheckout(payload: StripeCatalogCheckoutPayload): void {
+  try {
+    fireAndForget(`${baseUrl()}/webhook/portal-stripe-catalog-payment`, payload)
+  } catch (e) {
+    console.error('[n8n] triggerStripeCatalogCheckout', e)
   }
 }
 

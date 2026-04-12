@@ -25,9 +25,78 @@ Implemented webhooks (see `src/lib/n8n/client.ts`):
 | `/webhook/portal-login` | Client login event |
 | `/webhook/portal-document-request` | Document request flow |
 | `/webhook/portal-invoice-paid` | Stripe Checkout completed; invoice marked paid in Supabase (`triggerInvoicePaid`) |
+| `/webhook/portal-stripe-catalog-payment` | Stripe **catalog** Payment Link checkout completed (`triggerStripeCatalogCheckout`); HubSpot sync in n8n |
 | `/webhook/portal-change-order` | Client submits **contractual change order** (PDF + HubSpot form + Supabase); see below |
 
 Create matching **Webhook** (or **Respond to Webhook**) nodes in n8n at those URL paths on your n8n host.
+
+### Catalog Payment Links: `portal-stripe-catalog-payment`
+
+When Stripe sends `checkout.session.completed` to `POST /api/webhook/stripe`, the app may also POST to **`N8N_BASE_URL/webhook/portal-stripe-catalog-payment`** with header `x-intrawebtech-secret: <WEBHOOK_SECRET>` (same as other outbound calls).
+
+**When it fires**
+
+- Session `status` is `complete`, and either `mode === 'payment'` with `payment_status === 'paid'`, or `mode === 'subscription'` (completed subscription checkout).
+- Session metadata does **not** include both `invoice_id` and `project_id` (those are reserved for portal invoice Checkout).
+- And at least one of: `payment_link` is set, or metadata includes `sku`, or metadata includes `type`.
+
+**Payment Link metadata contract** (Stripe copies link metadata onto the Checkout Session)
+
+| Key | Required for HubSpot deal PATCH | Notes |
+|-----|--------------------------------|--------|
+| `sku` | No | e.g. `IW-WEB-STR` |
+| `type` | No | e.g. `deposit`, `balance`, `full`, `subscription` |
+| `hubspot_deal_id` | Yes for direct deal update | HubSpot deal object ID |
+| `project_slug` | No | Lets n8n call `POST /api/webhook/n8n` (`add_invoice`, `log_activity`, …) without deal lookup |
+
+Static Payment Links in the Stripe Dashboard cannot vary `hubspot_deal_id` per customer; use the API to set metadata per link, or add a future portal redirect that creates Checkout with metadata.
+
+**Example body** (shape matches `StripeCatalogCheckoutPayload` in `src/lib/n8n/webhooks.ts`):
+
+```json
+{
+  "event": "stripe_catalog_checkout_completed",
+  "stripe_checkout_session_id": "cs_live_...",
+  "stripe_payment_intent_id": "pi_live_...",
+  "stripe_payment_link_id": "plink_...",
+  "stripe_subscription_id": null,
+  "mode": "payment",
+  "amount_total": 350000,
+  "currency": "usd",
+  "customer_email": "payer@example.com",
+  "metadata": {
+    "sku": "IW-WEB-STR",
+    "type": "deposit",
+    "hubspot_deal_id": "12345678901"
+  },
+  "discounts": {
+    "amount_discount_cents": 25000,
+    "promotion_code_id": "promo_...",
+    "coupon_id": "KPXZsqm0"
+  }
+}
+```
+
+`discounts` is omitted when there was no promotion. Use it for referral / promo reporting (e.g. `JUSTIN15`).
+
+**Idempotency**
+
+Stripe retries webhooks. In n8n, dedupe on `stripe_checkout_session_id` before PATCHing HubSpot or creating notes so retries do not double-apply payments.
+
+**n8n responsibilities**
+
+- If `metadata.hubspot_deal_id` is set: HubSpot CRM API to update deal amount / stage / custom payment fields and optionally create a **Note** on the deal.
+- If only `customer_email` is available: resolve contact → open deal (your business rules; not implemented in the portal).
+- Optionally call `POST https://<portal-host>/api/webhook/n8n` with `add_invoice` + `hubspot_deal_id` or `project_slug` to mirror paid lines in the client portal.
+
+**Reference workflow (import in n8n)**
+
+SDK source: [`docs/n8n-workflows/portal-stripe-catalog-payment.workflow.ts`](n8n-workflows/portal-stripe-catalog-payment.workflow.ts). It implements:
+
+1. **Webhook** — `POST` path `portal-stripe-catalog-payment`, `responseMode` = response node.
+2. **Code** — Compare `x-intrawebtech-secret` to `$env.WEBHOOK_SECRET`; dedupe with `$getWorkflowStaticData('global').stripeCatalogSessions` keyed by `stripe_checkout_session_id`; if `metadata.hubspot_deal_id` is set, build HubSpot `PATCH` body (custom deal properties listed in that file’s header — create them in HubSpot or edit `propertyMap` in the Code node).
+3. **IF** — Only the `flow === 'patch'` branch runs **HTTP Request** `PATCH https://api.hubapi.com/crm/v3/objects/deals/{id}` with Bearer **HubSpot private app** credential (`crm.objects.deals.write`).
+4. **Respond to Webhook** — `200` + JSON (`ok`, `flow`, `patched` / `dedupe` / `no_deal`); errors use `httpStatus` from the Code node (401/400).
 
 ### Change order: `portal-change-order`
 
@@ -215,7 +284,7 @@ Expect `{"ok":true}`. The client should see the invoice on `/billing` after refr
 
 ### Example: post-payment branch (Stripe)
 
-The portal updates invoices on `POST /api/webhook/stripe` (Stripe signing secret). It also notifies n8n at `N8N_BASE_URL/webhook/portal-invoice-paid` with:
+The portal updates invoices on `POST /api/webhook/stripe` (Stripe signing secret). For **portal** invoice Checkout (metadata includes `invoice_id` and `project_id`), it notifies n8n at `N8N_BASE_URL/webhook/portal-invoice-paid` with:
 
 ```json
 {
@@ -227,6 +296,8 @@ The portal updates invoices on `POST /api/webhook/stripe` (Stripe signing secret
 ```
 
 In n8n, listen on that webhook to send Slack/email, update HubSpot deal stage, or call other systems. **Do not** duplicate invoice state updates here if the portal webhook is already authoritative for “paid” in Supabase.
+
+For **catalog** Payment Links (and subscription links with `sku` / `type` / `payment_link`), the same Stripe webhook handler notifies **`/webhook/portal-stripe-catalog-payment`** — see [Catalog Payment Links](#catalog-payment-links-portal-stripe-catalog-payment) above.
 
 ## Related routes
 
@@ -241,3 +312,5 @@ Configure in Stripe Dashboard → Webhooks:
 - **Signing secret:** `STRIPE_WEBHOOK_SECRET` in the app environment
 
 The handler uses the **raw** request body for signature verification.
+
+Implementation: [`src/app/api/webhook/stripe/route.ts`](../src/app/api/webhook/stripe/route.ts). After verifying the event, it marks portal invoices when metadata includes `invoice_id` and `project_id`, then forwards catalog sessions to n8n per [`src/lib/stripe/catalog-checkout-n8n.ts`](../src/lib/stripe/catalog-checkout-n8n.ts).
