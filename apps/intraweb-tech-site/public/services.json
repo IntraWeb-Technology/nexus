@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Automated Workflow Sequences",
+    "description": "Approvals, routing, escalation—the multi-step processes that currently require manual coordination.",
+    "icon": "Code"
+  },
+  {
+    "title": "Agent Integrations",
+    "description": "Connecting your AI tools to your systems with proper error handling and fallbacks.",
+    "icon": "Sparkles"
+  },
+  {
+    "title": "Exception Handling Logic",
+    "description": "What happens when automation fails. Alerts, fallbacks, human-in-the-loop escalation.",
+    "icon": "Cloud"
+  },
+  {
+    "title": "Documentation & Handoff",
+    "description": "Everything written down so your team can maintain and extend it.",
+    "icon": "Palette"
+  }
+]
