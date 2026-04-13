@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import {
   clerkAfterSignOutUrl,
   clerkProviderSatelliteProps,
+  clerkRequestOriginFromHeaders,
   clerkSatelliteHostFallback,
 } from '@/lib/clerk-satellite'
 import type { ReactNode } from 'react'
@@ -15,9 +16,13 @@ export default async function ClerkProviderFromRequest({ children }: { children:
   const h = await headers()
   const requestHost =
     h.get('x-forwarded-host')?.split(',')[0]?.trim() || h.get('host') || clerkSatelliteHostFallback()
+  const forwardedOrigin = clerkRequestOriginFromHeaders(h)
 
   return (
-    <ClerkProvider {...clerkProviderSatelliteProps(requestHost)} afterSignOutUrl={clerkAfterSignOutUrl()}>
+    <ClerkProvider
+      {...clerkProviderSatelliteProps(requestHost, forwardedOrigin)}
+      afterSignOutUrl={clerkAfterSignOutUrl()}
+    >
       {children}
     </ClerkProvider>
   )

@@ -10,10 +10,58 @@ import type { NextRequest } from 'next/server'
  * hostnames (e.g. `portal.*` and `dashboard.*`). If you set `NEXT_PUBLIC_CLERK_DOMAIN`
  * to a single host but users open another, Clerk will not sync and you get a loop.
  *
+ * **Frontend API host:** Without a DNS record for `clerk.{your-satellite-host}`, the SDK tries
+ * that URL and you get `ERR_NAME_NOT_RESOLVED`. Fix by either adding Clerk’s satellite CNAME
+ * or enabling a same-origin proxy (`/__clerk`) — see `NEXT_PUBLIC_CLERK_PROXY_URL` and
+ * `NEXT_PUBLIC_CLERK_SATELLITE_FAPI_PROXY` below and
+ * https://clerk.com/docs/guides/dashboard/dns-domains/proxy-fapi#proxying-for-satellite-domains
+ *
  * @see https://clerk.com/docs/advanced-usage/satellite-domains
  */
 export function isClerkSatelliteMode(): boolean {
   return process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true'
+}
+
+const CLERK_FAPI_PROXY_PATH = '/__clerk/'
+
+/** `https://dashboard.example.com` from forwarding headers (no trailing slash). */
+export function clerkRequestOriginFromHeaders(h: Headers): string {
+  const host = h.get('x-forwarded-host')?.split(',')[0]?.trim() || h.get('host') || ''
+  if (!host) return ''
+  const proto = h.get('x-forwarded-proto')?.split(',')[0]?.trim() || 'https'
+  return `${proto}://${host}`
+}
+
+function clerkSatelliteExplicitProxyUrl(): string {
+  const u = normalizeClerkAuthUrl(process.env.NEXT_PUBLIC_CLERK_PROXY_URL)
+  if (!u) return ''
+  return u.endsWith('/') ? u : `${u}/`
+}
+
+/**
+ * Same-origin Clerk Frontend API proxy URL. When set, Clerk must not also receive satellite `domain`
+ * (see Clerk “proxying for satellite domains”).
+ */
+export function clerkSatelliteResolveFapiProxyUrl(opts: {
+  /** `req.nextUrl.origin` in middleware */
+  nextOrigin?: string
+  /** `clerkRequestOriginFromHeaders(await headers())` in the root layout path */
+  forwardedOrigin?: string
+}): string {
+  const explicit = clerkSatelliteExplicitProxyUrl()
+  if (explicit) return explicit
+  if (process.env.NEXT_PUBLIC_CLERK_SATELLITE_FAPI_PROXY !== 'true') return ''
+  const origin = (opts.forwardedOrigin || opts.nextOrigin || '').replace(/\/$/, '')
+  if (!origin) return ''
+  return `${origin}${CLERK_FAPI_PROXY_PATH}`
+}
+
+function clerkSatelliteUsesFapiProxy(reqOrOrigin: NextRequest | { forwardedOrigin: string }): boolean {
+  const url =
+    'forwardedOrigin' in reqOrOrigin
+      ? clerkSatelliteResolveFapiProxyUrl({ forwardedOrigin: reqOrOrigin.forwardedOrigin })
+      : clerkSatelliteResolveFapiProxyUrl({ nextOrigin: reqOrOrigin.nextUrl.origin })
+  return Boolean(url)
 }
 
 /**
@@ -97,32 +145,65 @@ function satelliteDomainFromEnvOrRequestHost(requestHost: string): string {
 /** Second argument to `clerkMiddleware` when running as a satellite app. */
 export function clerkSatelliteMiddlewareOptions(req: NextRequest) {
   if (!clerkSatelliteConfigured()) return {}
+  const signInUrl = clerkSatelliteSignInUrl()
+  const signUpUrl = clerkSatelliteSignUpUrl()
+
+  if (clerkSatelliteUsesFapiProxy(req)) {
+    return {
+      isSatellite: true as const,
+      signInUrl,
+      signUpUrl,
+      frontendApiProxy: { enabled: true as const },
+    }
+  }
+
   const requestHost = req.nextUrl.host
   const domain = satelliteDomainFromEnvOrRequestHost(requestHost)
   if (!domain) return {}
   return {
     isSatellite: true as const,
     domain,
-    signInUrl: clerkSatelliteSignInUrl(),
-    signUpUrl: clerkSatelliteSignUpUrl(),
+    signInUrl,
+    signUpUrl,
   }
 }
 
 /**
  * Props for `<ClerkProvider>` on the satellite deployment.
  * @param requestHostHeader `Host` or `x-forwarded-host` (first segment), e.g. `dashboard.intrawebtech.com` — should match middleware `req.nextUrl.host` when `NEXT_PUBLIC_CLERK_DOMAIN` is unset.
+ * @param forwardedOrigin Full origin from `clerkRequestOriginFromHeaders` (used with `NEXT_PUBLIC_CLERK_SATELLITE_FAPI_PROXY`).
  */
-export function clerkProviderSatelliteProps(requestHostHeader: string):
+export function clerkProviderSatelliteProps(
+  requestHostHeader: string,
+  forwardedOrigin?: string,
+):
   | { signInUrl: string; signUpUrl: string }
   | {
       isSatellite: true
-      domain: string
       signInUrl: string
       signUpUrl: string
+      domain: string
+    }
+  | {
+      isSatellite: true
+      signInUrl: string
+      signUpUrl: string
+      proxyUrl: string
     } {
   if (!clerkSatelliteConfigured()) {
     return { signInUrl: '/sign-in', signUpUrl: '/sign-up' }
   }
+
+  const proxyUrl = clerkSatelliteResolveFapiProxyUrl({ forwardedOrigin })
+  if (proxyUrl) {
+    return {
+      isSatellite: true,
+      proxyUrl,
+      signInUrl: clerkSatelliteSignInUrl(),
+      signUpUrl: clerkSatelliteSignUpUrl(),
+    }
+  }
+
   const rawForwarded = requestHostHeader.trim()
   const domain =
     satelliteDomainFromEnvOrRequestHost(rawForwarded) || clerkSatelliteHostFallback()

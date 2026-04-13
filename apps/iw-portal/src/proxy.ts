@@ -22,6 +22,7 @@ export const config = {
   matcher: [
     // Exclude `api/health` so diagnostics run without Clerk (clerkMiddleware asserts keys before public-route checks).
     '/((?!_next|api/health(?:/|$)|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api(?!/health)|trpc)(.*)',
+    // `__clerk` is Clerk’s Frontend API proxy path when `frontendApiProxy` is enabled (satellite + no `clerk.{host}` DNS).
+    '/(api(?!/health)|trpc|__clerk)(.*)',
   ],
 }
