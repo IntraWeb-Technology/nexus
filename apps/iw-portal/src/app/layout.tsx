@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { DM_Sans } from 'next/font/google'
 import { ThemeProvider } from '@/contexts/theme-context'
@@ -14,8 +14,13 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: 'IntraWeb OS — Client Portal',
   description: 'IntraWeb Technologies LLC client project dashboard',
-  // viewport-fit=cover enables env(safe-area-inset-*) for iPhone notch / home-indicator clearance
-  viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
+}
+
+/** Next.js 16: viewport must be a separate export (not inside metadata). */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
