@@ -31,13 +31,15 @@ This happens when sign-in completes on **`accounts.intrawebtech.com`** (Clerk pr
 
 1. In the [Clerk Dashboard](https://dashboard.clerk.com/) → your application → **Domains** → **Satellites**, add **`portal.intrawebtech.com`** and complete DNS if Clerk asks for it.
 2. On the **primary** host (where `/sign-in` lives — e.g. accounts), allow redirects back to the portal: **`ClerkProvider`** `allowedRedirectOrigins` including `https://portal.intrawebtech.com`, or the equivalent Clerk Dashboard “allowed redirect” settings for your setup ([satellite domains](https://clerk.com/docs/advanced-usage/satellite-domains)).
-3. In **Vercel** for **nexus-iw-portal** (Production), set either **all** of the following or **none** (single-host mode uses `/sign-in` on the portal only):
+3. In **Vercel** for **nexus-iw-portal** (Production), set satellite mode **or** leave it off (single-host mode uses `/sign-in` on the app host only):
 
 | Variable | Example (production) |
 |----------|----------------------|
 | `NEXT_PUBLIC_CLERK_IS_SATELLITE` | `true` |
-| `NEXT_PUBLIC_CLERK_DOMAIN` | `portal.intrawebtech.com` (hostname only, no `https://`) |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | `https://accounts.intrawebtech.com/sign-in` |
 | `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | `https://accounts.intrawebtech.com/sign-up` |
+| `NEXT_PUBLIC_CLERK_DOMAIN` | **Optional.** If unset, Clerk uses the **actual browser host** (good when one deployment serves **both** `portal.*` and `dashboard.*`). If set to a single hostname (e.g. `portal.intrawebtech.com`) but users open **`dashboard.intrawebtech.com`**, auth will loop — either **clear** this variable or set it only when you have a single satellite hostname. |
+
+4. In Clerk → **Configure → Allowed subdomains**, every hostname that loads the app must be listed (`portal`, `dashboard`, `accounts`, …). Typos (e.g. `dasshboard` instead of `dashboard`) cause **403** on `clerk.*` API calls and broken or looping auth.
 
 Redeploy after changing these. Server-side redirects use Clerk’s `redirectToSignIn()` so the return/sync flow matches the middleware configuration.

@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { DM_Sans } from 'next/font/google'
+import { headers } from 'next/headers'
 import { ThemeProvider } from '@/contexts/theme-context'
-import { clerkAfterSignOutUrl, clerkProviderSatelliteProps } from '@/lib/clerk-satellite'
+import {
+  clerkAfterSignOutUrl,
+  clerkProviderSatelliteProps,
+  clerkSatelliteHostFallback,
+} from '@/lib/clerk-satellite'
 import { portalThemeBootScript } from '@/lib/theme-storage'
 import './globals.css'
 
@@ -24,11 +29,15 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const h = await headers()
+  const requestHost =
+    h.get('x-forwarded-host')?.split(',')[0]?.trim() || h.get('host') || clerkSatelliteHostFallback()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${dmSans.variable} min-h-screen antialiased`}>
@@ -37,7 +46,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: portalThemeBootScript() }}
         />
         <ThemeProvider>
-          <ClerkProvider {...clerkProviderSatelliteProps()} afterSignOutUrl={clerkAfterSignOutUrl()}>
+          <ClerkProvider {...clerkProviderSatelliteProps(requestHost)} afterSignOutUrl={clerkAfterSignOutUrl()}>
             {children}
           </ClerkProvider>
         </ThemeProvider>
