@@ -44,4 +44,12 @@ This happens when sign-in completes on **`accounts.intrawebtech.com`** (Clerk pr
 
 4. In Clerk → **Configure → Allowed subdomains**, every hostname that loads the app must be listed (`portal`, `dashboard`, `accounts`, …). Typos (e.g. `dasshboard` instead of `dashboard`) cause **403** on `clerk.*` API calls and broken or looping auth.
 
+### Clerk JSON error `host_invalid` (“Invalid host” / publishable key)
+
+Clerk returns this when the **HTTP host** (or **Frontend API proxy URL** host) for the request is **not** registered on the **same** Clerk application as your **`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`**.
+
+1. **Vercel → Production:** `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` must be copied from **one** Clerk app, **Production** instance, and both **live** or both **test** (see `/api/health` → `clerk.requestHost` shows the host your edge sees).
+2. **Clerk Dashboard → Domains:** Add **`dashboard.intrawebtech.com`** and **`portal.intrawebtech.com`** (and any other origins users hit) as required for your setup — **Frontend** and/or **Satellite** rows must match how you deploy (satellite + proxy means the **proxy URL** Clerk shows for that satellite must match **`NEXT_PUBLIC_CLERK_PROXY_URL`** or your **`…/__clerk/`** path, per [proxy + satellite](https://clerk.com/docs/guides/dashboard/dns-domains/proxy-fapi#proxying-for-satellite-domains)).
+3. **Wrong Clerk app:** Keys from app “A” while domains are only on app “B” always produce `host_invalid`.
+
 Redeploy after changing these. Server-side redirects use Clerk’s `redirectToSignIn()` so the return/sync flow matches the middleware configuration.
