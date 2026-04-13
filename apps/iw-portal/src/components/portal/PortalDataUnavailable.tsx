@@ -3,7 +3,7 @@
  */
 export function PortalDataUnavailable() {
   return (
-    <div className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)] p-6 text-sm text-[var(--iw-text-2)]">
+    <div role="alert" className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)] p-6 text-sm text-[var(--iw-text-2)]">
       <p className="font-medium text-[var(--iw-text)]">Unable to load this page</p>
       <p className="mt-2">
         Refresh the page. If it keeps happening, confirm{' '}

@@ -41,6 +41,10 @@ export default async function PortalLayout({ children }: { children: ReactNode }
 
   return (
     <ProjectProvider value={bundle}>
+      {/* Skip-to-content: visually hidden until keyboard-focused (WCAG 2.4.1) */}
+      <a href="#portal-main" className="skip-link">
+        Skip to main content
+      </a>
       {/* calc combines BottomNav clearance (5rem) + iPhone home-indicator safe area on mobile */}
       <div className="min-h-screen bg-[var(--iw-slate)] pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-0">
         <Sidebar
@@ -63,7 +67,7 @@ export default async function PortalLayout({ children }: { children: ReactNode }
          * Max-w-[960px] keeps line-length comfortable on wide desktops while the sidebar
          * occupies the left 256px — total used: 256 + 960 = 1216px at 1440px viewport.
          */}
-        <main className="pt-[var(--iw-topbar-height)] md:ml-[var(--iw-sidebar-width)]">
+        <main id="portal-main" className="pt-[var(--iw-topbar-height)] md:ml-[var(--iw-sidebar-width)]">
           <div className="mx-auto max-w-[960px] px-4 pb-10 pt-8 sm:px-6 md:px-8 md:pt-10">
             {children}
           </div>

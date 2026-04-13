@@ -66,7 +66,7 @@ export function ApprovePhaseButton({ milestone }: { milestone: Milestone }) {
             className="w-full rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-3 py-2 text-sm text-[var(--iw-text)]"
             disabled={busy}
           />
-          {error ? <p className="text-sm text-[var(--iw-red)]">{error}</p> : null}
+          {error ? <p role="alert" className="text-sm text-[var(--iw-red)]">{error}</p> : null}
           <div className="flex gap-2">
             <Button type="button" variant="primary" loading={busy} onClick={() => void submit()}>
               Confirm approval

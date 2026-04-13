@@ -95,7 +95,7 @@ export function MessageThread({
           )}
         </div>
       </div>
-      {error ? <p className="text-sm text-[var(--iw-red)]">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-[var(--iw-red)]">{error}</p> : null}
       <div className="rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] p-3 shadow-[var(--iw-shadow-1)] sm:p-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
           <Input
