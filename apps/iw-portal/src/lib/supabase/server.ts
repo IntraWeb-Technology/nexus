@@ -30,7 +30,9 @@ function getUrlKey() {
  * Prefers the service role when `SUPABASE_SERVICE_ROLE_KEY` is set so queries work without
  * Clerk JWT ↔ Supabase RLS configuration; callers must scope by `userId` from `auth()` or
  * by `project_id` derived from that user’s data.
- * Falls back to anon + Clerk JWT when no service key (e.g. local dev).
+ * Falls back to anon + Clerk bearer token when no service key (e.g. local dev): first a
+ * named JWT template (`CLERK_SUPABASE_JWT_TEMPLATE`, default `supabase`), then the default
+ * session JWT (Clerk’s “Supabase” integration adds `role` there for third-party auth).
  *
  * Wrapped in `cache()` so layout + page share one client per request (avoids inconsistent nulls).
  */
@@ -51,12 +53,14 @@ async function createServerSupabaseWithClerkJwt(): Promise<SupabaseClient | null
   const { url, anon } = getUrlKey()
   if (!url || !anon) return null
   const { getToken } = await auth()
-  let token: string | null
+  let token: string | null = null
   try {
     token = await getToken({ template: supabaseJwtTemplate })
   } catch (e: unknown) {
-    if (isClerkJwtTemplateMissing(e)) return null
-    throw e
+    if (!isClerkJwtTemplateMissing(e)) throw e
+  }
+  if (!token) {
+    token = await getToken()
   }
   if (!token) return null
   return createClient(url, anon, {
