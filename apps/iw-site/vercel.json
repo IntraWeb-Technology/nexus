@@ -2,5 +2,5 @@
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=@repo/iw-site",
-  "ignoreCommand": "cd ../.. && npx -y turbo@2.9.6 query affected --packages @repo/iw-site --tasks build --exit-code"
+  "ignoreCommand": "cd ../.. && npx -y turbo@2.9.6 query affected --base=\"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\" --packages @repo/iw-site --tasks build --exit-code"
 }
