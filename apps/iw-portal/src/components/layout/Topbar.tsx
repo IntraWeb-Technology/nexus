@@ -1,6 +1,6 @@
 import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
-import { IwLogoMark } from '@/components/layout/IwLogoMark'
+import { IwLogo } from '@/components/layout/IwLogo'
 import { ProjectSwitcher } from '@/components/portal/ProjectSwitcher'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import type { Project } from '@/lib/supabase/types'
@@ -25,14 +25,17 @@ export function Topbar({
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 flex h-[var(--iw-topbar-height)] items-center justify-between border-b border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-4 transition-[background-color,border-color] duration-300 md:left-[var(--iw-sidebar-width)]">
-      <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center md:gap-3">
-        <div className="flex items-center gap-2">
-          <IwLogoMark />
-          <span className="truncate text-sm font-medium text-[var(--iw-text)]">
-            IntraWeb OS — Client Portal
+      {/* Single-row layout on all screen sizes — prevents 2-row overflow in 64px header */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-3">
+          {/* Logo visible on mobile only — desktop shows it in the sidebar header */}
+          <IwLogo height={26} className="md:hidden" />
+          <span className="hidden text-sm font-medium text-[var(--iw-text-2)] md:block">
+            Client Portal
           </span>
         </div>
-        <div className="w-full max-w-[220px] md:hidden">
+        {/* Project switcher visible on mobile only (desktop shows it in the sidebar) */}
+        <div className="w-full max-w-[200px] md:hidden">
           <ProjectSwitcher projects={projects} activeSlug={activeSlug} />
         </div>
       </div>

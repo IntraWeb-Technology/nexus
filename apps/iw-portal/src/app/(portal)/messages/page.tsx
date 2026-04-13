@@ -16,8 +16,17 @@ export default async function MessagesPage() {
   const messages = (data ?? []) as Message[]
 
   return (
-    <div className="space-y-4">
-      <h1>Messages</h1>
+    <div className="iw-animate-slide-up space-y-8">
+      <header className="border-b border-[var(--iw-border)] pb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-[var(--iw-text)] md:text-[1.75rem]">
+          Messages
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--iw-text-2)] md:text-[15px]">
+          Thread with the IntraWeb team for{' '}
+          <span className="iw-mono font-medium text-[var(--iw-text)]">{bundle.project.slug}</span>. Replies appear
+          here in real time when you keep this page open.
+        </p>
+      </header>
       <MessageThread projectId={bundle.project.id} initialMessages={messages} />
     </div>
   )

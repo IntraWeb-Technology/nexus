@@ -3,7 +3,7 @@ import { SkeletonCard } from '@/components/ui/SkeletonCard'
 /** Full-page loading skeleton that mirrors the typical portal page structure. */
 export default function PortalLoading() {
   return (
-    <div className="space-y-10" aria-busy="true" aria-label="Loading page content">
+    <div className="space-y-8 md:space-y-10" aria-busy="true" aria-label="Loading page content">
       {/* Page header skeleton */}
       <header className="border-b border-[var(--iw-border)] pb-8">
         <div className="iw-shimmer-bar h-7 w-56 rounded-md" />

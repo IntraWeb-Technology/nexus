@@ -36,7 +36,7 @@ export function InvoicePayButton({ invoiceId }: { invoiceId: string }) {
         {loading ? 'Loading…' : 'Make a payment'}
       </Button>
       {error ? (
-        <p className="mt-1 max-w-[220px] text-xs leading-snug text-[var(--iw-red)]">{error}</p>
+        <p role="alert" className="mt-1 max-w-[220px] text-xs leading-snug text-[var(--iw-red)]">{error}</p>
       ) : null}
     </div>
   )

@@ -65,6 +65,7 @@ export function SignatureModal({ document, open, onClose, onSigned }: SignatureM
       role="dialog"
       aria-modal="true"
       aria-labelledby="sign-doc-title"
+      aria-describedby="sign-legal-notice"
     >
       {/* Header */}
       <div className="mb-4 flex items-start justify-between gap-3">
@@ -87,8 +88,11 @@ export function SignatureModal({ document, open, onClose, onSigned }: SignatureM
         </button>
       </div>
 
-      {/* Legal notice */}
-      <div className="mb-4 rounded-[var(--iw-radius-control)] bg-[var(--iw-slate-2)] px-3 py-2.5 text-xs text-[var(--iw-text-3)]">
+      {/* Legal notice — referenced by aria-describedby on the dialog */}
+      <div
+        id="sign-legal-notice"
+        className="mb-4 rounded-[var(--iw-radius-control)] bg-[var(--iw-slate-2)] px-3 py-2.5 text-xs text-[var(--iw-text-3)]"
+      >
         By typing your full name below you are providing a legally binding electronic signature for
         this document.
       </div>
@@ -112,7 +116,7 @@ export function SignatureModal({ document, open, onClose, onSigned }: SignatureM
       </label>
 
       {error ? (
-        <p className="mt-2 flex items-center gap-1.5 text-sm text-[var(--iw-red)]">
+        <p role="alert" className="mt-2 flex items-center gap-1.5 text-sm text-[var(--iw-red)]">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5" />
             <path d="M7 4v3.5M7 9.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

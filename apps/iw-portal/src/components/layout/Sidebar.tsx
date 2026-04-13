@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { NavItem } from '@/components/layout/NavItem'
 import { ProjectSwitcher } from '@/components/portal/ProjectSwitcher'
 import { Badge } from '@/components/ui/Badge'
+import { IwLogo } from '@/components/layout/IwLogo'
 import type { Project } from '@/lib/supabase/types'
 import type { ReactNode } from 'react'
 
@@ -126,7 +127,11 @@ export function Sidebar({
   unreadNotifications: number
 }) {
   return (
-    <aside className="fixed bottom-0 left-0 top-0 z-30 hidden w-[var(--iw-sidebar-width)] flex-col border-r border-[var(--iw-border)] bg-[var(--iw-slate-2)] pt-[var(--iw-topbar-height)] transition-[background-color,border-color] duration-300 md:flex">
+    <aside className="fixed bottom-0 left-0 top-0 z-30 hidden w-[var(--iw-sidebar-width)] flex-col border-r border-[var(--iw-border)] bg-[var(--iw-slate-2)] transition-[background-color,border-color] duration-300 md:flex">
+      {/* Logo header — fills the same height as the topbar, aligned with it */}
+      <div className="flex h-[var(--iw-topbar-height)] shrink-0 items-center border-b border-[var(--iw-border)] px-4">
+        <IwLogo height={26} />
+      </div>
       <div className="border-b border-[var(--iw-border)] p-4">
         <p className="iw-mono text-sm font-medium text-[var(--iw-text)]">{activeSlug}</p>
         <div className="mt-2">

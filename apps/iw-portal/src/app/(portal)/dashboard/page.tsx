@@ -72,12 +72,12 @@ export default async function DashboardPage() {
   const pendingAction = notifications.find((n) => n.type === 'action_required' && !n.read)
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-xl font-semibold text-[var(--iw-text)] md:text-2xl">
+    <div className="iw-animate-slide-up space-y-8 md:space-y-12">
+      <header className="border-b border-[var(--iw-border)] pb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-[var(--iw-text)] md:text-[1.75rem]">
           {partOfDay()}, {greetingName(bundle.client.name)}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--iw-text-2)]">
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--iw-text-2)] md:text-[15px]">
           Here’s where you stand on{' '}
           <span className="iw-mono font-medium text-[var(--iw-text)]">{bundle.project.slug}</span>
           {multiProject ? (
@@ -88,9 +88,9 @@ export default async function DashboardPage() {
           ) : null}{' '}
           — updated {new Date().toLocaleDateString(undefined, { dateStyle: 'medium' })}.
         </p>
-      </div>
+      </header>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="iw-enter-stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Overall progress" value={`${bundle.project.progress_pct}%`} />
         <StatCard label="Days since start" value={String(daysSince)} />
         <StatCard label="Paid to date" value={money(paidCents)} />
@@ -99,8 +99,13 @@ export default async function DashboardPage() {
 
       <DashboardQuickLinks />
 
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-[var(--iw-text)]">Project overview</h2>
+      <section className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-[var(--iw-text)]">Project overview</h2>
+          <p className="mt-1 max-w-2xl text-sm text-[var(--iw-text-2)]">
+            Progress, milestones, and anything that needs your review for this project.
+          </p>
+        </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <PortalLiveDataCard
             projectSlug={bundle.project.slug}
@@ -115,21 +120,24 @@ export default async function DashboardPage() {
             <Card>
               <p className="iw-label mb-2">Phase progress</p>
               <ProgressBar value={bundle.project.progress_pct} />
-              <p className="mt-3 text-sm text-[var(--iw-text-2)]">
-                Status: <span className="text-[var(--iw-text)]">{bundle.project.status}</span>
+              <p className="mt-4 text-sm text-[var(--iw-text-2)]">
+                Status:{' '}
+                <span className="font-medium text-[var(--iw-text)]">{bundle.project.status}</span>
               </p>
-              <p className="mt-4 iw-label">Recent milestones</p>
+              <p className="mt-5 iw-label">Recent milestones</p>
               {recent.length === 0 ? (
                 <p className="mt-2 text-sm text-[var(--iw-text-3)]">No milestones listed yet.</p>
               ) : (
-                <ul className="mt-2 space-y-2 text-sm text-[var(--iw-text)]">
+                <ul className="mt-3 space-y-2">
                   {recent.map((m) => (
                     <li
                       key={m.id}
-                      className="flex justify-between gap-2 border-b border-[var(--iw-border)] pb-2 last:border-0"
+                      className="flex items-start justify-between gap-3 rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)]/50 px-3 py-2.5 text-sm transition-[border-color,background-color] duration-200 hover:border-[var(--iw-border-2)]"
                     >
-                      <span>{m.title}</span>
-                      <span className="text-[var(--iw-text-3)]">{m.status}</span>
+                      <span className="font-medium text-[var(--iw-text)]">{m.title}</span>
+                      <span className="shrink-0 rounded-md bg-[var(--iw-slate-3)] px-2 py-0.5 text-xs text-[var(--iw-text-3)]">
+                        {m.status}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -137,14 +145,20 @@ export default async function DashboardPage() {
             </Card>
 
             {pendingAction ? (
-              <Card>
-                <p className="iw-label mb-1">Needs your attention</p>
+              <Card className="border-l-4 border-l-[var(--iw-teal)] shadow-[var(--iw-shadow-2)]">
+                <p className="iw-label mb-2 text-[var(--iw-teal-light)]">Needs your attention</p>
                 <p className="font-medium text-[var(--iw-text)]">{pendingAction.title}</p>
-                <p className="mt-1 text-sm text-[var(--iw-text-2)]">{pendingAction.body}</p>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--iw-text-2)]">{pendingAction.body}</p>
+                <Link
+                  href="/notifications"
+                  className="mt-4 inline-flex text-sm font-medium text-[var(--iw-teal-light)] transition-colors hover:text-[var(--iw-teal)]"
+                >
+                  View in notifications →
+                </Link>
               </Card>
             ) : (
               <Card>
-                <p className="iw-label mb-1">Needs your attention</p>
+                <p className="iw-label mb-2">Needs your attention</p>
                 <p className="text-sm text-[var(--iw-text-2)]">Nothing pending right now.</p>
               </Card>
             )}
@@ -153,22 +167,26 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="text-base font-semibold text-[var(--iw-text)]">Account & engagements</h2>
-        <p className="text-sm text-[var(--iw-text-2)]">
-          Details we sync for your relationship with us — same information whether you have one project or several.
-        </p>
+      <section className="space-y-6 border-t border-[var(--iw-border)] pt-8 md:pt-10">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-[var(--iw-text)]">Account & engagements</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--iw-text-2)]">
+            Details we sync for your relationship with us — same information whether you have one project or
+            several.
+          </p>
+        </div>
         <HubSpotGate fallback={<HubSpotAccountFallback />}>
           <div className="space-y-6">
             <AccountSummaryCard />
+            <div className="h-px w-full bg-[var(--iw-border)]" aria-hidden />
             <EngagementsCard />
           </div>
         </HubSpotGate>
       </section>
 
-      <div className="flex flex-col gap-3 border-t border-[var(--iw-border)] pt-8 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-t border-[var(--iw-border)] pt-8 sm:flex-row sm:items-center sm:justify-between md:pt-10">
         <p className="text-sm text-[var(--iw-text-2)]">Questions? Message your team anytime.</p>
-        <Link href="/messages">
+        <Link href="/messages" className="w-full sm:w-auto">
           <Button variant="primary" className="w-full sm:w-auto">
             Send a message
           </Button>
