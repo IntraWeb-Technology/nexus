@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkSatelliteMiddlewareOptions } from '@/lib/clerk-satellite'
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -8,11 +9,14 @@ const isPublicRoute = createRouteMatcher([
   '/api/health',
 ])
 
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect()
-  }
-})
+export default clerkMiddleware(
+  async (auth, request) => {
+    if (!isPublicRoute(request)) {
+      await auth.protect()
+    }
+  },
+  (req) => clerkSatelliteMiddlewareOptions(req),
+)
 
 export const config = {
   matcher: [

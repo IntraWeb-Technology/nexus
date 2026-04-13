@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import { DM_Sans } from 'next/font/google'
 import { ThemeProvider } from '@/contexts/theme-context'
+import { clerkAfterSignOutUrl, clerkProviderSatelliteProps } from '@/lib/clerk-satellite'
 import { portalThemeBootScript } from '@/lib/theme-storage'
 import './globals.css'
 
@@ -36,7 +37,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: portalThemeBootScript() }}
         />
         <ThemeProvider>
-          <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up" afterSignOutUrl="/sign-in">
+          <ClerkProvider {...clerkProviderSatelliteProps()} afterSignOutUrl={clerkAfterSignOutUrl()}>
             {children}
           </ClerkProvider>
         </ThemeProvider>

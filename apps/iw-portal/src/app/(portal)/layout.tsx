@@ -5,15 +5,14 @@ import { ProjectProvider } from '@/contexts/project-context'
 import { PortalEmptySignOut } from '@/components/auth/PortalEmptySignOut'
 import { getPortalBundle } from '@/lib/data/portal'
 import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import type { ReactNode } from 'react'
 
 /** Fresh server render each request (auth, project cookie, Supabase + CRM-backed stats). */
 export const dynamic = 'force-dynamic'
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
-  const { userId } = await auth()
-  if (!userId) redirect('/sign-in')
+  const { userId, redirectToSignIn } = await auth()
+  if (!userId) return redirectToSignIn()
 
   const bundle = await getPortalBundle()
   if (!bundle) {
