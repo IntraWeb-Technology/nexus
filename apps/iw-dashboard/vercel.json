@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=free-nextjs-admin-dashboard",
+  "ignoreCommand": "cd ../.. && npx -y turbo@2.9.6 query affected --packages free-nextjs-admin-dashboard --tasks build --exit-code"
+}

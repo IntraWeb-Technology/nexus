@@ -1,5 +1,6 @@
 {
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=@repo/iw-site"
+  "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=@repo/iw-site",
+  "ignoreCommand": "cd ../.. && npx -y turbo@2.9.6 query affected --packages @repo/iw-site --tasks build --exit-code"
 }
