@@ -21,15 +21,17 @@ function getUrlKey() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anon =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const service =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY
   return { url, anon, service }
 }
 
 /**
  * Server-only: Supabase for the signed-in Clerk user.
- * Prefers the service role when `SUPABASE_SERVICE_ROLE_KEY` is set so queries work without
- * Clerk JWT ↔ Supabase RLS configuration; callers must scope by `userId` from `auth()` or
- * by `project_id` derived from that user’s data.
+ * Prefers a server-side admin key when available so queries work without Clerk JWT ↔ Supabase
+ * RLS configuration. Supports both the legacy `SUPABASE_SERVICE_ROLE_KEY` and newer
+ * `SUPABASE_SECRET_KEY`; callers must still scope by `userId` from `auth()` or by `project_id`
+ * derived from that user’s data.
  * Falls back to anon + Clerk bearer token when no service key (e.g. local dev): first a
  * named JWT template (`CLERK_SUPABASE_JWT_TEMPLATE`, default `supabase`), then the default
  * session JWT (Clerk’s “Supabase” integration adds `role` there for third-party auth).
@@ -73,7 +75,9 @@ async function createServerSupabaseWithClerkJwt(): Promise<SupabaseClient | null
 export function createServiceSupabase(): SupabaseClient {
   const { url, service } = getUrlKey()
   if (!url || !service) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+    throw new Error(
+      'Missing NEXT_PUBLIC_SUPABASE_URL and a server key (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY)',
+    )
   }
   return createClient(url, service, {
     auth: { persistSession: false, autoRefreshToken: false },

@@ -8,6 +8,10 @@ function keyKind(value: string, livePrefix: string, testPrefix: string): 'live' 
   return 'unknown'
 }
 
+function present(value: string): boolean {
+  return Boolean(value.trim())
+}
+
 /**
  * Unauthenticated health probe for production debugging (Clerk keys present + live/test match).
  * Does not expose secret values.
@@ -19,6 +23,11 @@ export async function GET() {
 
   const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''
   const sk = process.env.CLERK_SECRET_KEY ?? ''
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+  const supabaseAnon =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? ''
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+  const supabaseSecret = process.env.SUPABASE_SECRET_KEY ?? ''
   const publishable = keyKind(pk, 'pk_live_', 'pk_test_')
   const secret = keyKind(sk, 'sk_live_', 'sk_test_')
   const mismatchedPair =
@@ -32,7 +41,9 @@ export async function GET() {
     secret !== 'missing' &&
     publishable !== 'unknown' &&
     secret !== 'unknown' &&
-    !mismatchedPair
+    !mismatchedPair &&
+    present(supabaseUrl) &&
+    present(supabaseAnon)
 
   return NextResponse.json(
     {
@@ -43,6 +54,16 @@ export async function GET() {
         mismatchedLiveTestPair: mismatchedPair,
         /** Helps debug Clerk `host_invalid`: this host must exist on the Clerk app for that publishable key. */
         requestHost,
+      },
+      supabase: {
+        urlConfigured: present(supabaseUrl),
+        anonKeyConfigured: present(supabaseAnon),
+        prefersServerKey: present(supabaseServiceRole) || present(supabaseSecret),
+        serverKeySource: present(supabaseServiceRole)
+          ? 'service_role'
+          : present(supabaseSecret)
+            ? 'secret'
+            : 'none',
       },
     },
     { status: ok ? 200 : 503 },
