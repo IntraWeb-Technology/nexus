@@ -68,7 +68,7 @@ export function ApprovePhaseButton({ milestone }: { milestone: Milestone }) {
           />
           {error ? <p className="text-sm text-[var(--iw-red)]">{error}</p> : null}
           <div className="flex gap-2">
-            <Button type="button" variant="primary" disabled={busy} onClick={() => void submit()}>
+            <Button type="button" variant="primary" loading={busy} onClick={() => void submit()}>
               Confirm approval
             </Button>
             <Button type="button" variant="ghost" disabled={busy} onClick={() => setExpanded(false)}>
