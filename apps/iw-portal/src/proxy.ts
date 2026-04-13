@@ -1,5 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { clerkSatelliteMiddlewareOptions } from '@/lib/clerk-satellite'
+import { NextResponse } from 'next/server'
+
+const LEGACY_PORTAL_HOST = 'portal.intrawebtech.com'
+const CANONICAL_PORTAL_HOST = 'dashboard.intrawebtech.com'
 
 const isPublicRoute = createRouteMatcher([
   '/',
@@ -11,6 +15,12 @@ const isPublicRoute = createRouteMatcher([
 
 export default clerkMiddleware(
   async (auth, request) => {
+    if (request.nextUrl.host === LEGACY_PORTAL_HOST) {
+      const url = request.nextUrl.clone()
+      url.host = CANONICAL_PORTAL_HOST
+      return NextResponse.redirect(url, 308)
+    }
+
     if (!isPublicRoute(request)) {
       await auth.protect()
     }
