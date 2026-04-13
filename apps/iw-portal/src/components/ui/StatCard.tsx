@@ -10,10 +10,10 @@ export function StatCard({
   hint?: ReactNode
 }) {
   return (
-    <div className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)] p-4">
-      <p className="iw-label mb-1">{label}</p>
-      <p className="text-lg font-medium text-[var(--iw-text)]">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-[var(--iw-text-3)]">{hint}</p> : null}
+    <div className="rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] p-5 shadow-[var(--iw-shadow-1)] transition-[box-shadow,transform,border-color] duration-300 hover:scale-[1.02] hover:shadow-[var(--iw-shadow-2)]">
+      <p className="text-sm font-medium text-[var(--iw-text-2)]">{label}</p>
+      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-[var(--iw-text)]">{value}</p>
+      {hint ? <p className="mt-2 text-xs leading-snug text-[var(--iw-text-3)]">{hint}</p> : null}
     </div>
   )
 }

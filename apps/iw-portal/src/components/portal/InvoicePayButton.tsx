@@ -32,10 +32,12 @@ export function InvoicePayButton({ invoiceId }: { invoiceId: string }) {
 
   return (
     <div className="min-w-[5rem]">
-      <Button variant="primary" className="px-3 py-1 text-xs" disabled={loading} onClick={pay}>
-        {loading ? '…' : 'Make a payment'}
+      <Button variant="primary" className="px-3 py-1 text-xs" loading={loading} onClick={pay}>
+        {loading ? 'Loading…' : 'Make a payment'}
       </Button>
-      {error ? <p className="mt-1 max-w-[200px] text-xs text-red-400">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="mt-1 max-w-[220px] text-xs leading-snug text-[var(--iw-red)]">{error}</p>
+      ) : null}
     </div>
   )
 }

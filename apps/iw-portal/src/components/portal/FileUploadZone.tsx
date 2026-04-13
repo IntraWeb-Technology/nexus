@@ -213,7 +213,7 @@ export function FileUploadZone({ onUploaded }: FileUploadZoneProps) {
         }}
       />
       {error ? (
-        <p className="mt-3 flex items-center gap-1.5 text-sm text-[var(--iw-red)]">
+        <p role="alert" className="mt-3 flex items-center gap-1.5 text-sm text-[var(--iw-red)]">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5" />
             <path d="M7 4v3.5M7 9.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

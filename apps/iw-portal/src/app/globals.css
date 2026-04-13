@@ -1,38 +1,228 @@
 @import "tailwindcss";
 
+/* Layout shell (issue #2 — Apex-aligned dimensions) */
 :root {
-  --iw-slate: #1a1f2e;
-  --iw-slate-2: #222840;
-  --iw-slate-3: #2a3050;
-  --iw-slate-4: #323a5a;
-  --iw-teal: #3d8b8b;
-  --iw-teal-light: #4fa8a8;
-  --iw-teal-dim: #2a6060;
-  --iw-text: #e2e6f0;
-  --iw-text-2: #9aa3bf;
-  --iw-text-3: #5c6480;
-  --iw-border: rgba(61, 139, 139, 0.15);
-  --iw-border-2: rgba(61, 139, 139, 0.3);
-  --iw-green: #5a9e3a;
-  --iw-amber: #c8841a;
-  --iw-red: #c04040;
+  --iw-sidebar-width: 256px;
+  --iw-topbar-height: 64px;
+  --iw-transition-standard: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Phase 7 — iOS safe-area utilities for notch / home-indicator clearance.
+   The BottomNav uses .pb-safe to avoid content being clipped by the home indicator. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Dark-first (Apex Dashboard) — default when data-theme is dark or unset */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --iw-slate: #0f1419;
+  --iw-slate-1: #161c26;
+  --iw-slate-2: #1a1f29;
+  --iw-slate-3: #25293a;
+  --iw-slate-4: #2d3647;
+
+  /* Skeleton shimmer gradient stops */
+  --iw-shimmer-base: #1a1f29;
+  --iw-shimmer-highlight: #2d3647;
+
+  --iw-teal: #14b8a6;
+  --iw-teal-light: #2dd4bf;
+  --iw-teal-dim: #0d9488;
+
+  --iw-text: #f1f5f9;
+  --iw-text-2: #94a3b8;
+  --iw-text-3: #64748b;
+
+  --iw-border: #2d3647;
+  --iw-border-2: #3d4a5f;
+
+  --iw-green: #10b981;
+  --iw-amber: #f59e0b;
+  --iw-red: #ef4444;
+
+  --iw-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --iw-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  --iw-shadow-3: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+
+  --iw-radius-card: 12px;
+  --iw-radius-control: 8px;
+
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --iw-slate: #f8fafc;
+  --iw-slate-1: #f1f5f9;
+  --iw-slate-2: #ffffff;
+  --iw-slate-3: #ffffff;
+  --iw-slate-4: #e2e8f0;
+
+  --iw-teal: #0d9488;
+  --iw-teal-light: #14b8a6;
+  --iw-teal-dim: #0f766e;
+
+  --iw-text: #0f1419;
+  --iw-text-2: #475569;
+  --iw-text-3: #94a3b8;
+
+  --iw-border: #e2e8f0;
+  --iw-border-2: #cbd5e1;
+
+  --iw-green: #059669;
+  --iw-amber: #d97706;
+  --iw-red: #dc2626;
+
+  /* Skeleton shimmer gradient stops */
+  --iw-shimmer-base: #e2e8f0;
+  --iw-shimmer-highlight: #f8fafc;
+
+  --iw-shadow-1: 0 1px 3px rgba(15, 20, 25, 0.08), 0 1px 2px rgba(15, 20, 25, 0.16);
+  --iw-shadow-2: 0 3px 6px rgba(15, 20, 25, 0.12), 0 3px 6px rgba(15, 20, 25, 0.16);
+  --iw-shadow-3: 0 10px 20px rgba(15, 20, 25, 0.15), 0 6px 6px rgba(15, 20, 25, 0.16);
 }
 
 @theme inline {
   --color-iw-slate: var(--iw-slate);
+  --color-iw-slate-1: var(--iw-slate-1);
   --color-iw-slate-2: var(--iw-slate-2);
   --color-iw-slate-3: var(--iw-slate-3);
   --color-iw-slate-4: var(--iw-slate-4);
   --color-iw-teal: var(--iw-teal);
   --color-iw-teal-light: var(--iw-teal-light);
+  --color-iw-teal-dim: var(--iw-teal-dim);
   --color-iw-text: var(--iw-text);
   --color-iw-text-2: var(--iw-text-2);
   --color-iw-text-3: var(--iw-text-3);
   --color-iw-border: var(--iw-border);
+  --color-iw-border-2: var(--iw-border-2);
   --color-iw-green: var(--iw-green);
   --color-iw-amber: var(--iw-amber);
   --color-iw-red: var(--iw-red);
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes iw-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes iw-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Phase 2 — subtle entrance (dashboard stat grid, messages); respect reduced motion */
+.iw-animate-slide-up {
+  animation: iw-slide-up 0.38s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .iw-enter-stagger > * {
+    animation: iw-slide-up 0.42s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+  }
+  .iw-enter-stagger > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .iw-enter-stagger > *:nth-child(2) {
+    animation-delay: 70ms;
+  }
+  .iw-enter-stagger > *:nth-child(3) {
+    animation-delay: 140ms;
+  }
+  .iw-enter-stagger > *:nth-child(4) {
+    animation-delay: 210ms;
+  }
+  .iw-enter-stagger > *:nth-child(5) {
+    animation-delay: 280ms;
+  }
+  .iw-enter-stagger > *:nth-child(6) {
+    animation-delay: 350ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iw-animate-slide-up,
+  .iw-enter-stagger > * {
+    animation: none !important;
+  }
+}
+
+/* Phase 6 — fade-in utility for badges and status chips */
+.iw-fade-in {
+  animation: iw-fade-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iw-fade-in {
+    animation: none !important;
+  }
+}
+
+/* Phase 6 — shimmer keyframe for skeleton loading placeholders */
+@keyframes iw-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.iw-shimmer-bar {
+  background: linear-gradient(
+    90deg,
+    var(--iw-shimmer-base) 25%,
+    var(--iw-shimmer-highlight) 50%,
+    var(--iw-shimmer-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: iw-shimmer 1.6s infinite linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iw-shimmer-bar {
+    animation: none !important;
+    background: var(--iw-shimmer-base);
+  }
+}
+
+/* Phase 6 — spin keyframe for button loading spinners */
+@keyframes iw-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.iw-spin {
+  animation: iw-spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iw-spin {
+    animation: none !important;
+  }
 }
 
 body {
@@ -40,14 +230,31 @@ body {
   color: var(--iw-text);
   font-size: 14px;
   font-weight: 400;
+  line-height: 1.5;
   font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  transition:
+    background-color var(--iw-transition-standard),
+    color var(--iw-transition-standard);
 }
 
 h1,
 h2,
 h3 {
-  font-size: 18px;
-  font-weight: 500;
+  line-height: 1.2;
+  font-weight: 600;
+  color: var(--iw-text);
+}
+
+h1 {
+  font-size: 1.5rem;
+}
+
+h2 {
+  font-size: 1.125rem;
+}
+
+h3 {
+  font-size: 1rem;
 }
 
 .iw-label {
@@ -55,8 +262,73 @@ h3 {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--iw-text-3);
+  font-weight: 500;
 }
 
 .iw-mono {
   font-family: ui-monospace, monospace;
+}
+
+/* Phase 8 — Skip-to-content link: hidden until keyboard-focused (WCAG 2.4.1 bypass blocks).
+   Becomes visible when tabbed to, jumps keyboard users past the sidebar+topbar. */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link:focus-visible {
+  position: fixed;
+  inset: auto auto auto 1rem;
+  top: 1rem;
+  z-index: 200;
+  width: auto;
+  height: auto;
+  clip: auto;
+  margin: 0;
+  overflow: visible;
+  white-space: normal;
+  background: var(--iw-teal);
+  color: #fff;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--iw-radius-control);
+  font-size: 0.875rem;
+  font-weight: 500;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  box-shadow: var(--iw-shadow-3);
+}
+
+/* Keyboard focus — teal ring on primary controls */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--iw-teal);
+  outline-offset: 2px;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Phase 5 — smooth global color transitions during theme switch only.
+   The ThemeProvider briefly sets data-theme-transition on <html> so every
+   element transitions together, without interfering with hover/animation
+   transitions at other times. */
+html[data-theme-transition] *,
+html[data-theme-transition] *::before,
+html[data-theme-transition] *::after {
+  transition:
+    background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 300ms cubic-bezier(0.4, 0, 0.2, 1) !important;
 }

@@ -24,42 +24,51 @@ const costOptions: { value: ChangeOrderCostImpactType; label: string }[] = [
 
 function StepIndicator({ step }: { step: number }) {
   return (
-    <div className="mb-6 flex items-center">
-      {STEP_LABELS.map((label, i) => (
-        <div key={label} className="flex flex-1 items-center">
-          <div className="flex flex-col items-center">
-            <span
-              className={[
-                'flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold transition-[background-color,border-color,color] duration-200',
-                i < step
-                  ? 'bg-[var(--iw-teal)] text-white'
-                  : i === step
-                    ? 'border-2 border-[var(--iw-teal)] text-[var(--iw-teal)]'
-                    : 'border border-[var(--iw-border-2)] text-[var(--iw-text-3)]',
-              ].join(' ')}
-            >
-              {i < step ? (
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              ) : (
-                i + 1
-              )}
-            </span>
-            <span
-              className={`mt-1 hidden text-[10px] font-medium sm:block ${i === step ? 'text-[var(--iw-teal)]' : 'text-[var(--iw-text-3)]'}`}
-            >
-              {label}
-            </span>
-          </div>
-          {i < STEP_LABELS.length - 1 && (
-            <div
-              className={`mx-2 h-px flex-1 transition-[background-color] duration-300 ${i < step ? 'bg-[var(--iw-teal)]' : 'bg-[var(--iw-border)]'}`}
-            />
-          )}
-        </div>
-      ))}
-    </div>
+    <nav
+      aria-label="Form steps"
+      className="mb-6"
+    >
+      <ol className="flex items-center" role="list">
+        {STEP_LABELS.map((label, i) => (
+          <li key={label} className="flex flex-1 items-center">
+            <div className="flex flex-col items-center">
+              <span
+                aria-current={i === step ? 'step' : undefined}
+                aria-label={`Step ${i + 1}: ${label}${i < step ? ' — completed' : i === step ? ' — current' : ''}`}
+                className={[
+                  'flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold transition-[background-color,border-color,color] duration-200',
+                  i < step
+                    ? 'bg-[var(--iw-teal)] text-white'
+                    : i === step
+                      ? 'border-2 border-[var(--iw-teal)] text-[var(--iw-teal)]'
+                      : 'border border-[var(--iw-border-2)] text-[var(--iw-text-3)]',
+                ].join(' ')}
+              >
+                {i < step ? (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                    <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <span aria-hidden="true">{i + 1}</span>
+                )}
+              </span>
+              <span
+                aria-hidden="true"
+                className={`mt-1 hidden text-[10px] font-medium sm:block ${i === step ? 'text-[var(--iw-teal)]' : 'text-[var(--iw-text-3)]'}`}
+              >
+                {label}
+              </span>
+            </div>
+            {i < STEP_LABELS.length - 1 && (
+              <div
+                aria-hidden="true"
+                className={`mx-2 h-px flex-1 transition-[background-color] duration-300 ${i < step ? 'bg-[var(--iw-teal)]' : 'bg-[var(--iw-border)]'}`}
+              />
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
   )
 }
 
@@ -355,7 +364,10 @@ export function ChangeOrderForm({
       )}
 
       {error ? (
-        <p className="mt-4 flex items-start gap-2 rounded-[var(--iw-radius-control)] border border-[var(--iw-red)]/30 bg-[var(--iw-red)]/10 px-3 py-2 text-sm text-[var(--iw-red)]">
+        <p
+          role="alert"
+          className="mt-4 flex items-start gap-2 rounded-[var(--iw-radius-control)] border border-[var(--iw-red)]/30 bg-[var(--iw-red)]/10 px-3 py-2 text-sm text-[var(--iw-red)]"
+        >
           <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5" />
             <path d="M7 4v3.5M7 9.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -393,7 +405,8 @@ export function ChangeOrderForm({
           <Button
             type="button"
             variant="primary"
-            disabled={busy || !canSubmit}
+            loading={busy}
+            disabled={!canSubmit}
             onClick={() => void submit()}
           >
             {busy ? 'Submitting…' : 'Submit request'}
