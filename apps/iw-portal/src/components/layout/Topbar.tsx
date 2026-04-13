@@ -2,6 +2,7 @@ import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import { IwLogoMark } from '@/components/layout/IwLogoMark'
 import { ProjectSwitcher } from '@/components/portal/ProjectSwitcher'
+import { ThemeToggle } from '@/components/theme/ThemeToggle'
 import type { Project } from '@/lib/supabase/types'
 
 export function Topbar({
@@ -23,7 +24,7 @@ export function Topbar({
     .toUpperCase()
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 flex h-[54px] items-center justify-between border-b border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-4 md:left-[210px]">
+    <header className="fixed left-0 right-0 top-0 z-40 flex h-[var(--iw-topbar-height)] items-center justify-between border-b border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-4 transition-[background-color,border-color] duration-300 md:left-[var(--iw-sidebar-width)]">
       <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center md:gap-3">
         <div className="flex items-center gap-2">
           <IwLogoMark />
@@ -36,14 +37,28 @@ export function Topbar({
         </div>
       </div>
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         <Link
           href="/notifications"
-          className="relative rounded border border-[var(--iw-border)] p-2 text-[var(--iw-text-2)] hover:text-[var(--iw-text)]"
-          aria-label="Notifications"
+          className="relative flex h-8 w-8 items-center justify-center rounded-[var(--iw-radius-control)] border border-[var(--iw-border)] bg-[var(--iw-slate-3)]/40 text-[var(--iw-text-2)] transition-[border-color,background-color,color] duration-200 hover:border-[var(--iw-border-2)] hover:bg-[var(--iw-slate-3)] hover:text-[var(--iw-text)]"
+          aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
         >
-          <span className="text-base">🔔</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M13 9.5V6.5a5 5 0 0 0-10 0v3l-1 2h12l-1-2Z"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M6.5 13.5a1.5 1.5 0 0 0 3 0"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              strokeLinecap="round"
+            />
+          </svg>
           {unreadNotifications > 0 ? (
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-[var(--iw-red)]" />
+            <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-[var(--iw-red)]" aria-hidden="true" />
           ) : null}
         </Link>
         <div className="hidden text-right text-xs sm:block">

@@ -25,39 +25,64 @@ export default async function ProgressPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1>Project Progress</h1>
+    <div className="iw-animate-slide-up space-y-6">
+      <div>
+        <h1>Project Progress</h1>
+        <p className="mt-1 text-sm text-[var(--iw-text-2)]">
+          Track milestones, approve completed phases, and see how far you&apos;ve come.
+        </p>
+      </div>
+
       <Card>
-        <p className="iw-label mb-2">Overall</p>
+        <p className="iw-label mb-3">Overall</p>
         <ProgressBar value={bundle.project.progress_pct} />
-        <p className="mt-2 text-sm text-[var(--iw-text-2)]">
-          Current phase emphasis follows your milestones below — we keep this aligned with your engagement plan and
-          delivery checkpoints.
+        <p className="mt-3 text-sm text-[var(--iw-text-2)]">
+          Progress is aligned with your milestone approvals and delivery checkpoints below.
         </p>
       </Card>
-      <div>
-        <h2 className="mb-3 text-base font-medium text-[var(--iw-text)]">Milestones</h2>
+
+      <section>
+        <h2 className="mb-4 text-base font-semibold text-[var(--iw-text)]">Milestones</h2>
         <MilestoneTimeline milestones={milestones} approvalsByMilestoneId={approvalsByMilestoneId} />
-      </div>
+      </section>
+
       <Card>
-        <p className="iw-label mb-2">What&apos;s included</p>
+        <p className="iw-label mb-3">What&apos;s included in your plan</p>
         {bundle.project.plan === 'growth' ? (
-          <ul className="list-inside list-disc space-y-1 text-sm text-[var(--iw-text-2)]">
-            <li>Everything in Starter</li>
-            <li>Advanced integrations and AI features</li>
-            <li>Booking and payments flows</li>
-            <li>Copywriting included</li>
+          <ul className="space-y-2 text-sm text-[var(--iw-text-2)]">
+            {[
+              'Everything in Starter',
+              'Advanced integrations and AI features',
+              'Booking and payments flows',
+              'Copywriting included',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-2">
+                <svg className="mt-0.5 shrink-0 text-[var(--iw-teal)]" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {item}
+              </li>
+            ))}
           </ul>
         ) : (
-          <ul className="list-inside list-disc space-y-1 text-sm text-[var(--iw-text-2)]">
-            <li>Up to five core pages and supporting layouts</li>
-            <li>Contact forms and lead intake automation</li>
-            <li>Vercel deployment and launch support</li>
+          <ul className="space-y-2 text-sm text-[var(--iw-text-2)]">
+            {[
+              'Up to five core pages and supporting layouts',
+              'Contact forms and lead intake automation',
+              'Vercel deployment and launch support',
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-2">
+                <svg className="mt-0.5 shrink-0 text-[var(--iw-teal)]" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {item}
+              </li>
+            ))}
           </ul>
         )}
-        <p className="mt-3 text-sm text-[var(--iw-text-3)]">
-          Exclusions: third-party subscription fees, paid media spend, and out-of-scope custom software outside your
-          statement of work.
+        <p className="mt-4 border-t border-[var(--iw-border)] pt-3 text-xs text-[var(--iw-text-3)]">
+          Exclusions: third-party subscription fees, paid media spend, and out-of-scope custom software
+          outside your statement of work.
         </p>
       </Card>
     </div>
