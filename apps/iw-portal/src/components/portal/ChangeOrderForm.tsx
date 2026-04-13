@@ -7,11 +7,13 @@ import type { ChangeOrderRow } from '@/lib/supabase/types'
 import { useCallback, useState } from 'react'
 
 const inputCls =
-  'mt-1 w-full rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-3 py-2 text-[var(--iw-text)]'
-const labelCls = 'block text-sm text-[var(--iw-text-2)]'
-const areaCls = `${inputCls} min-h-[100px] resize-y`
+  'mt-1.5 w-full rounded-[var(--iw-radius-control)] border border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-3 py-2 text-sm text-[var(--iw-text)] placeholder:text-[var(--iw-text-3)] transition-[border-color] duration-200 focus:border-[var(--iw-teal)] focus:outline-none disabled:opacity-50'
+const labelCls = 'block text-sm font-medium text-[var(--iw-text-2)]'
+const areaCls = `${inputCls} min-h-[100px] resize-y leading-relaxed`
 
 type Step = 0 | 1 | 2 | 3
+
+const STEP_LABELS = ['Request', 'Scope', 'Budget', 'Confirm']
 
 const costOptions: { value: ChangeOrderCostImpactType; label: string }[] = [
   { value: 'none', label: 'No change to fees' },
@@ -19,6 +21,47 @@ const costOptions: { value: ChangeOrderCostImpactType; label: string }[] = [
   { value: 'decrease', label: 'Fee decrease / removal' },
   { value: 'tbd', label: 'To be determined after estimate' },
 ]
+
+function StepIndicator({ step }: { step: number }) {
+  return (
+    <div className="mb-6 flex items-center">
+      {STEP_LABELS.map((label, i) => (
+        <div key={label} className="flex flex-1 items-center">
+          <div className="flex flex-col items-center">
+            <span
+              className={[
+                'flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold transition-[background-color,border-color,color] duration-200',
+                i < step
+                  ? 'bg-[var(--iw-teal)] text-white'
+                  : i === step
+                    ? 'border-2 border-[var(--iw-teal)] text-[var(--iw-teal)]'
+                    : 'border border-[var(--iw-border-2)] text-[var(--iw-text-3)]',
+              ].join(' ')}
+            >
+              {i < step ? (
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                  <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ) : (
+                i + 1
+              )}
+            </span>
+            <span
+              className={`mt-1 hidden text-[10px] font-medium sm:block ${i === step ? 'text-[var(--iw-teal)]' : 'text-[var(--iw-text-3)]'}`}
+            >
+              {label}
+            </span>
+          </div>
+          {i < STEP_LABELS.length - 1 && (
+            <div
+              className={`mx-2 h-px flex-1 transition-[background-color] duration-300 ${i < step ? 'bg-[var(--iw-teal)]' : 'bg-[var(--iw-border)]'}`}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export function ChangeOrderForm({
   onCreated,
@@ -124,14 +167,31 @@ export function ChangeOrderForm({
   ])
 
   return (
-    <div className="rounded-[12px] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] p-4">
-      <p className="iw-label mb-1">Request a change to your scope</p>
-      <p className="mb-4 text-xs text-[var(--iw-text-3)]">
-        Step {step + 1} of 4. Your answers are saved with your project and we&apos;ll follow up after you submit.
-      </p>
+    <div className="iw-animate-slide-up rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] p-5 shadow-[var(--iw-shadow-2)]">
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div>
+          <p className="iw-label">Request a scope change</p>
+          <p className="mt-0.5 text-xs text-[var(--iw-text-3)]">
+            Step {step + 1} of 4 — your answers are saved with your project.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={busy}
+          aria-label="Close"
+          className="rounded-[var(--iw-radius-control)] p-1.5 text-[var(--iw-text-3)] transition-colors duration-150 hover:bg-[var(--iw-slate-2)] hover:text-[var(--iw-text)] disabled:pointer-events-none"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
 
-      {step === 0 ? (
-        <div className="space-y-3">
+      <StepIndicator step={step} />
+
+      {step === 0 && (
+        <div className="space-y-4">
           <label className={labelCls}>
             Short title for this request
             <input
@@ -153,10 +213,10 @@ export function ChangeOrderForm({
             />
           </label>
         </div>
-      ) : null}
+      )}
 
-      {step === 1 ? (
-        <div className="space-y-3">
+      {step === 1 && (
+        <div className="space-y-4">
           <label className={labelCls}>
             What we agreed is in scope today (short summary)
             <textarea
@@ -185,10 +245,10 @@ export function ChangeOrderForm({
             />
           </label>
         </div>
-      ) : null}
+      )}
 
-      {step === 2 ? (
-        <div className="space-y-3">
+      {step === 2 && (
+        <div className="space-y-4">
           <label className={labelCls}>
             How this might affect timeline or deadlines
             <textarea
@@ -233,31 +293,35 @@ export function ChangeOrderForm({
             />
           </label>
         </div>
-      ) : null}
+      )}
 
-      {step === 3 ? (
+      {step === 3 && (
         <div className="space-y-4">
-          <label className={labelCls}>
-            Your full name (person authorizing this request)
-            <input
-              value={authorizedSignerName}
-              onChange={(e) => setAuthorizedSignerName(e.target.value)}
-              className={inputCls}
-              disabled={busy}
-            />
-          </label>
-          <label className={labelCls}>
-            Your role or title
-            <input
-              value={authorizedSignerTitle}
-              onChange={(e) => setAuthorizedSignerTitle(e.target.value)}
-              className={inputCls}
-              disabled={busy}
-            />
-          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className={labelCls}>
+              Your full name (authorizing this request)
+              <input
+                value={authorizedSignerName}
+                onChange={(e) => setAuthorizedSignerName(e.target.value)}
+                className={inputCls}
+                disabled={busy}
+                placeholder="Full legal name"
+              />
+            </label>
+            <label className={labelCls}>
+              Your role or title
+              <input
+                value={authorizedSignerTitle}
+                onChange={(e) => setAuthorizedSignerTitle(e.target.value)}
+                className={inputCls}
+                disabled={busy}
+                placeholder="CEO, Owner, etc."
+              />
+            </label>
+          </div>
 
-          <div className="space-y-3 rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)] p-3">
-            <p className="text-xs font-medium text-[var(--iw-text-3)]">Please confirm the following</p>
+          <div className="space-y-3 rounded-[var(--iw-radius-control)] border border-[var(--iw-border)] bg-[var(--iw-slate-2)] p-4">
+            <p className="iw-label">Please confirm the following</p>
             <AckRow
               checked={ackAccuracy}
               onChange={setAckAccuracy}
@@ -288,13 +352,26 @@ export function ChangeOrderForm({
             />
           </div>
         </div>
+      )}
+
+      {error ? (
+        <p className="mt-4 flex items-start gap-2 rounded-[var(--iw-radius-control)] border border-[var(--iw-red)]/30 bg-[var(--iw-red)]/10 px-3 py-2 text-sm text-[var(--iw-red)]">
+          <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M7 4v3.5M7 9.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          {error}
+        </p>
       ) : null}
 
-      {error ? <p className="mt-3 text-sm text-red-300">{error}</p> : null}
-
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[var(--iw-border)] pt-4">
         {step > 0 ? (
-          <Button type="button" variant="ghost" disabled={busy} onClick={() => setStep((s) => (s > 0 ? ((s - 1) as Step) : s))}>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={busy}
+            onClick={() => setStep((s) => (s > 0 ? ((s - 1) as Step) : s))}
+          >
             Back
           </Button>
         ) : null}
@@ -313,8 +390,13 @@ export function ChangeOrderForm({
             Next
           </Button>
         ) : (
-          <Button type="button" variant="primary" disabled={busy || !canSubmit} onClick={() => void submit()}>
-            Submit request
+          <Button
+            type="button"
+            variant="primary"
+            disabled={busy || !canSubmit}
+            onClick={() => void submit()}
+          >
+            {busy ? 'Submitting…' : 'Submit request'}
           </Button>
         )}
         <Button type="button" variant="ghost" disabled={busy} onClick={onClose}>
@@ -339,16 +421,26 @@ function AckRow({
   detail: string
 }) {
   return (
-    <label className="flex cursor-pointer gap-2 text-sm text-[var(--iw-text)]">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-        disabled={disabled}
-        className="mt-1"
-      />
+    <label className="flex cursor-pointer gap-3 text-sm">
+      <span className="relative mt-0.5 flex shrink-0 items-center">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          disabled={disabled}
+          className="peer sr-only"
+        />
+        {/* Custom checkbox */}
+        <span className="flex h-4 w-4 items-center justify-center rounded border border-[var(--iw-border-2)] bg-[var(--iw-slate-3)] transition-[background-color,border-color] duration-150 peer-checked:border-[var(--iw-teal)] peer-checked:bg-[var(--iw-teal)] peer-disabled:opacity-50 peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--iw-teal)] peer-focus-visible:ring-offset-1">
+          {checked && (
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+              <path d="M1.5 5l2.5 2.5L8.5 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+      </span>
       <span>
-        <span className="font-medium">{label}</span>
+        <span className="font-medium text-[var(--iw-text)]">{label}</span>
         <span className="mt-0.5 block text-xs text-[var(--iw-text-2)]">{detail}</span>
       </span>
     </label>

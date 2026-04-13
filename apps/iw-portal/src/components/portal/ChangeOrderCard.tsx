@@ -116,22 +116,30 @@ export function ChangeOrderCard({
 
   return (
     <article
-      className={`rounded-[14px] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] shadow-[0_1px_0_rgba(0,0,0,0.04)] ${row.status === 'cancelled' ? 'opacity-[0.92]' : ''}`}
+      className={`rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] shadow-[var(--iw-shadow-1)] transition-[box-shadow,border-color] duration-300 hover:border-[var(--iw-border-2)] hover:shadow-[var(--iw-shadow-2)] ${row.status === 'cancelled' ? 'opacity-[0.85]' : ''}`}
     >
       <div className="flex flex-wrap items-stretch gap-0 sm:flex-nowrap">
         <button
           type="button"
           id={triggerId}
-          className="flex min-w-0 flex-1 items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-[var(--iw-slate-2)]/40"
+          className="flex min-w-0 flex-1 items-start gap-3 px-5 py-4 text-left transition-colors duration-150 hover:bg-[var(--iw-slate-2)]/40"
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((o) => !o)}
         >
           <span
-            className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md border border-[var(--iw-border)] bg-[var(--iw-slate-2)] text-xs text-[var(--iw-text-2)]"
-            aria-hidden
+            className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[var(--iw-radius-control)] border border-[var(--iw-border)] bg-[var(--iw-slate-2)] text-[var(--iw-text-3)]"
+            aria-hidden="true"
           >
-            {open ? '−' : '+'}
+            <svg
+              className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+            >
+              <path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-semibold tracking-tight text-[var(--iw-text)]">{row.title}</h2>
@@ -215,19 +223,20 @@ export function ChangeOrderCard({
                 href={`/api/change-orders/${row.id}/pdf`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--iw-border-2)] bg-[var(--iw-slate-2)] px-3 py-2 text-sm font-medium text-[var(--iw-teal-light)] transition hover:border-[var(--iw-teal-dim)] hover:bg-[var(--iw-slate-1)]"
+                className="inline-flex items-center gap-2 rounded-[var(--iw-radius-control)] border border-[var(--iw-border-2)] bg-[var(--iw-slate-2)] px-3 py-2 text-sm font-medium text-[var(--iw-teal-light)] shadow-[var(--iw-shadow-1)] transition-[border-color,background-color,box-shadow] duration-200 hover:border-[var(--iw-teal-dim)] hover:bg-[var(--iw-slate-1)] hover:shadow-[var(--iw-shadow-2)]"
               >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
                 Download a copy (PDF)
               </a>
             </p>
           ) : null}
 
           {row.staff_notes ? (
-            <div className="mt-4 rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)]/80 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--iw-text-3)]">
-                Message from your project team
-              </p>
-              <p className="mt-1.5 text-sm leading-relaxed text-[var(--iw-text-2)] whitespace-pre-wrap">
+            <div className="mt-4 rounded-[var(--iw-radius-control)] border border-[var(--iw-teal-dim)]/30 bg-[var(--iw-teal-dim)]/10 px-4 py-3">
+              <p className="iw-label text-[var(--iw-teal)]">Message from your project team</p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--iw-text-2)] whitespace-pre-wrap">
                 {row.staff_notes}
               </p>
             </div>

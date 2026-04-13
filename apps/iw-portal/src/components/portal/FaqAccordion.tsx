@@ -29,27 +29,67 @@ const faqs = [
   },
 ]
 
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      className={`shrink-0 text-[var(--iw-text-3)] transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 6l4 4 4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export function FaqAccordion() {
   const [open, setOpen] = useState<number | null>(0)
   return (
-    <div className="space-y-2">
-      {faqs.map((f, i) => (
-        <div key={f.q} className="rounded-[12px] border border-[var(--iw-border)] bg-[var(--iw-slate-3)]">
-          <button
-            type="button"
-            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-[var(--iw-text)]"
-            onClick={() => setOpen(open === i ? null : i)}
+    <ul className="iw-enter-stagger space-y-2">
+      {faqs.map((f, i) => {
+        const isOpen = open === i
+        const panelId = `faq-panel-${i}`
+        const triggerId = `faq-trigger-${i}`
+        return (
+          <li
+            key={f.q}
+            className="overflow-hidden rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] transition-[border-color,box-shadow] duration-200 hover:border-[var(--iw-border-2)] hover:shadow-[var(--iw-shadow-1)]"
           >
-            {f.q}
-            <span className="text-[var(--iw-text-3)]">{open === i ? '−' : '+'}</span>
-          </button>
-          {open === i ? (
-            <div className="border-t border-[var(--iw-border)] px-4 py-3 text-sm text-[var(--iw-text-2)]">
-              {f.a}
+            <button
+              type="button"
+              id={triggerId}
+              aria-expanded={isOpen}
+              aria-controls={panelId}
+              className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left text-sm font-medium text-[var(--iw-text)] transition-colors duration-150 hover:text-[var(--iw-text)]"
+              onClick={() => setOpen(isOpen ? null : i)}
+            >
+              <span>{f.q}</span>
+              <ChevronIcon open={isOpen} />
+            </button>
+            {/* Smooth expand via CSS grid trick */}
+            <div
+              id={panelId}
+              role="region"
+              aria-labelledby={triggerId}
+              className={`grid transition-[grid-template-rows] duration-200 ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+            >
+              <div className="overflow-hidden">
+                <div className="border-t border-[var(--iw-border)] px-4 py-3 text-sm leading-relaxed text-[var(--iw-text-2)]">
+                  {f.a}
+                </div>
+              </div>
             </div>
-          ) : null}
-        </div>
-      ))}
-    </div>
+          </li>
+        )
+      })}
+    </ul>
   )
 }

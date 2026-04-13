@@ -5,6 +5,15 @@ import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { NotificationPreferences } from '@/lib/supabase/types'
 import { SettingsPreferences } from './preferences'
 
+function AccountRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[var(--iw-border)] py-3 last:border-b-0 last:pb-0 first:pt-0">
+      <dt className="shrink-0 text-sm text-[var(--iw-text-3)]">{label}</dt>
+      <dd className="min-w-0 text-right text-sm text-[var(--iw-text)]">{children}</dd>
+    </div>
+  )
+}
+
 export default async function SettingsPage() {
   const bundle = await getPortalBundle()
   const supabase = await createServerSupabaseForUser()
@@ -18,41 +27,39 @@ export default async function SettingsPage() {
   const p = (prefs ?? null) as NotificationPreferences | null
 
   return (
-    <div className="space-y-6">
-      <h1>Settings</h1>
+    <div className="iw-animate-slide-up space-y-6">
+      <div>
+        <h1>Settings</h1>
+        <p className="mt-1 text-sm text-[var(--iw-text-2)]">
+          Manage your account details and notification preferences.
+        </p>
+      </div>
+
       <Card>
-        <p className="iw-label mb-3">Account</p>
-        <dl className="space-y-2 text-sm">
-          <div className="flex justify-between gap-4">
-            <dt className="text-[var(--iw-text-3)]">Name</dt>
-            <dd className="text-[var(--iw-text)]">{bundle.client.name}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-[var(--iw-text-3)]">Email</dt>
-            <dd className="text-[var(--iw-text)]">{bundle.client.email}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-[var(--iw-text-3)]">Phone</dt>
-            <dd className="text-[var(--iw-text)]">{bundle.client.phone ?? '—'}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-[var(--iw-text-3)]">Project</dt>
-            <dd className="iw-mono text-[var(--iw-text)]">{bundle.project.slug}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-[var(--iw-text-3)]">Contact reference</dt>
-            <dd className="break-all iw-mono text-xs text-[var(--iw-text)]">
+        <p className="iw-label mb-1">Account</p>
+        <p className="mb-3 text-xs text-[var(--iw-text-3)]">
+          Contact your project team to update these details.
+        </p>
+        <dl>
+          <AccountRow label="Name">{bundle.client.name}</AccountRow>
+          <AccountRow label="Email">{bundle.client.email}</AccountRow>
+          <AccountRow label="Phone">{bundle.client.phone ?? '—'}</AccountRow>
+          <AccountRow label="Project">
+            <span className="iw-mono">{bundle.project.slug}</span>
+          </AccountRow>
+          <AccountRow label="Contact ref">
+            <span className="iw-mono break-all text-xs text-[var(--iw-text-2)]">
               {bundle.client.hubspot_contact_id ?? '—'}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-[var(--iw-text-3)]">Engagement reference</dt>
-            <dd className="break-all iw-mono text-xs text-[var(--iw-text)]">
+            </span>
+          </AccountRow>
+          <AccountRow label="Engagement ref">
+            <span className="iw-mono break-all text-xs text-[var(--iw-text-2)]">
               {bundle.project.hubspot_deal_id ?? '—'}
-            </dd>
-          </div>
+            </span>
+          </AccountRow>
         </dl>
       </Card>
+
       <SettingsPreferences clientId={bundle.client.id} initial={p} />
     </div>
   )
