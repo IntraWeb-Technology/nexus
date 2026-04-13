@@ -2,7 +2,6 @@
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
   "envMode": "loose",
-  "globalDependencies": [".env.local"],
   "globalEnv": ["NODE_ENV", "CI"],
   "globalPassThroughEnv": [
     "N8N_API_KEY",

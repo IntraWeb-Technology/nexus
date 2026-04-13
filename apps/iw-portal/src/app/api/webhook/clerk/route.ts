@@ -1,8 +1,39 @@
+import { createClerkClient } from '@clerk/backend'
+import {
+  isPortalAutoProvisionEnabled,
+  parseClerkWebhookUser,
+  provisionSelfSignupCustomer,
+} from '@/lib/data/provision-self-signup'
 import { triggerLoginEvent } from '@/lib/n8n/client'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
+
+async function tryProvisionFromClerkUserId(
+  supabase: ReturnType<typeof createServiceSupabase>,
+  userId: string,
+) {
+  if (!isPortalAutoProvisionEnabled() || !userId.startsWith('user_')) return
+  const sk = process.env.CLERK_SECRET_KEY
+  if (!sk) return
+  try {
+    const clerk = createClerkClient({ secretKey: sk })
+    const user = await clerk.users.getUser(userId)
+    const primaryId = user.primaryEmailAddressId
+    const email =
+      user.emailAddresses.find((e) => e.id === primaryId)?.emailAddress ??
+      user.emailAddresses[0]?.emailAddress
+    if (!email) return
+    const name =
+      [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+      email.split('@')[0] ||
+      'Client'
+    await provisionSelfSignupCustomer(supabase, { userId, email, name })
+  } catch (e) {
+    console.error('[clerk webhook] tryProvisionFromClerkUserId', e)
+  }
+}
 
 export async function POST(request: Request) {
   const secret = process.env.CLERK_WEBHOOK_SECRET
@@ -30,16 +61,40 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  if (evt.type === 'user.created') {
+    const parsed = parseClerkWebhookUser(evt.data as Record<string, unknown>)
+    if (parsed) {
+      try {
+        const supabase = createServiceSupabase()
+        const result = await provisionSelfSignupCustomer(supabase, parsed)
+        if (result === 'created') {
+          console.log('[clerk webhook] self-signup provisioned', parsed.userId)
+        }
+      } catch (e) {
+        console.error('[clerk webhook] user.created provision', e)
+      }
+    }
+  }
+
   if (evt.type === 'session.created') {
     const userId = String(evt.data.user_id ?? '')
     if (userId) {
       try {
         const supabase = createServiceSupabase()
-        const { data: client } = await supabase
+        let { data: client } = await supabase
           .from('clients')
           .select('id, name, email')
           .eq('clerk_user_id', userId)
           .maybeSingle()
+        if (!client) {
+          await tryProvisionFromClerkUserId(supabase, userId)
+          const again = await supabase
+            .from('clients')
+            .select('id, name, email')
+            .eq('clerk_user_id', userId)
+            .maybeSingle()
+          client = again.data
+        }
         if (client) {
           const { data: project } = await supabase
             .from('projects')
