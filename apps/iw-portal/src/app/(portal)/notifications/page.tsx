@@ -16,8 +16,13 @@ export default async function NotificationsPage() {
   const notifications = (data ?? []) as NotificationRow[]
 
   return (
-    <div className="space-y-4">
-      <h1>Notifications</h1>
+    <div className="iw-animate-slide-up space-y-6">
+      <div>
+        <h1>Notifications</h1>
+        <p className="mt-1 text-sm text-[var(--iw-text-2)]">
+          Stay informed — messages from our team and project updates appear here.
+        </p>
+      </div>
       <NotificationList projectId={bundle.project.id} initial={notifications} />
     </div>
   )
