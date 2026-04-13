@@ -1,5 +1,5 @@
 const portalUrl = () =>
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://portal.intrawebtech.com'
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://dashboard.intrawebtech.com'
 
 export function welcomeEmailHtml(params: { name: string }): { subject: string; html: string } {
   return {
