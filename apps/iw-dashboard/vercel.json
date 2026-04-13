@@ -1,6 +1,0 @@
-{
-  "framework": "nextjs",
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile --filter=free-nextjs-admin-dashboard... --filter=my-turborepo",
-  "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=free-nextjs-admin-dashboard",
-  "ignoreCommand": "cd ../.. && npx -y turbo@2.9.6 query affected --base=\"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\" --packages free-nextjs-admin-dashboard --tasks build --exit-code"
-}
