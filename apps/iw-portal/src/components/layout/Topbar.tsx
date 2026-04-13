@@ -25,14 +25,20 @@ export function Topbar({
 
   return (
     <header className="fixed left-0 right-0 top-0 z-40 flex h-[var(--iw-topbar-height)] items-center justify-between border-b border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-4 transition-[background-color,border-color] duration-300 md:left-[var(--iw-sidebar-width)]">
-      <div className="flex min-w-0 flex-1 flex-col gap-2 md:flex-row md:items-center md:gap-3">
-        <div className="flex items-center gap-2">
+      {/* Single-row layout on all screen sizes — prevents 2-row overflow in 64px header */}
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2">
           <IwLogoMark />
-          <span className="truncate text-sm font-medium text-[var(--iw-text)]">
-            IntraWeb OS — Client Portal
+          {/* Title hidden on small mobile — too long for constrained header */}
+          <span className="hidden text-sm font-medium text-[var(--iw-text)] sm:block">
+            Client Portal
+          </span>
+          <span className="hidden text-sm font-medium text-[var(--iw-text)] lg:block">
+            — IntraWeb OS
           </span>
         </div>
-        <div className="w-full max-w-[220px] md:hidden">
+        {/* Project switcher visible on mobile only (desktop shows it in the sidebar) */}
+        <div className="w-full max-w-[200px] md:hidden">
           <ProjectSwitcher projects={projects} activeSlug={activeSlug} />
         </div>
       </div>

@@ -7,6 +7,15 @@
   --iw-transition-standard: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Phase 7 — iOS safe-area utilities for notch / home-indicator clearance.
+   The BottomNav uses .pb-safe to avoid content being clipped by the home indicator. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 /* Dark-first (Apex Dashboard) — default when data-theme is dark or unset */
 :root,
 [data-theme="dark"] {

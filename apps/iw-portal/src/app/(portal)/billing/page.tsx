@@ -24,8 +24,17 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const canceledQuery = q.canceled === '1'
 
   return (
-    <div className="space-y-6">
-      <h1>Billing</h1>
+    <div className="iw-animate-slide-up space-y-8">
+      <header className="border-b border-[var(--iw-border)] pb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-[var(--iw-text)] md:text-[1.75rem]">
+          Billing
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--iw-text-2)] md:text-[15px]">
+          Invoices and payments for{' '}
+          <span className="iw-mono font-medium text-[var(--iw-text)]">{bundle.project.slug}</span>. Totals include
+          synced records from your account where applicable.
+        </p>
+      </header>
       <HubSpotGate
         fallback={
           <BillingBody
