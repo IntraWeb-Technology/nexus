@@ -17,6 +17,28 @@ export function isClerkSatelliteMode(): boolean {
 }
 
 /**
+ * Satellite primary URLs must be absolute (`https://accounts…/sign-in`).
+ * If env is `accounts.example.com/sign-in` (no scheme), browsers treat it as a path on the
+ * current origin → `https://dashboard…/accounts.example.com/…` and `redirect_url` chains explode.
+ */
+export function normalizeClerkAuthUrl(raw: string | undefined | null): string {
+  const t = (raw ?? '').trim()
+  if (!t) return ''
+  if (t.startsWith('/')) return t
+  if (/^https?:\/\//i.test(t)) return t
+  if (t.startsWith('//')) return `https:${t}`
+  return `https://${t.replace(/^\/+/, '')}`
+}
+
+function clerkSatelliteSignInUrl(): string {
+  return normalizeClerkAuthUrl(process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL)
+}
+
+function clerkSatelliteSignUpUrl(): string {
+  return normalizeClerkAuthUrl(process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL)
+}
+
+/**
  * Clerk `domain` must be a hostname (and optional port for localhost), never a URL or `https//…` typo.
  * Otherwise the SDK builds bad script URLs like `https://clerk.https//dashboard.example/...`.
  */
@@ -48,9 +70,7 @@ function normalizeSatelliteDomain(raw: string): string {
 /** Satellite auth is active (middleware + provider). Domain comes from env or request host. */
 export function clerkSatelliteConfigured(): boolean {
   if (!isClerkSatelliteMode()) return false
-  const si = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL?.trim()
-  const su = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL?.trim()
-  return Boolean(si && su)
+  return Boolean(clerkSatelliteSignInUrl() && clerkSatelliteSignUpUrl())
 }
 
 /** Fallback host when `headers()` has no host (edge cases during prerender). */
@@ -83,8 +103,8 @@ export function clerkSatelliteMiddlewareOptions(req: NextRequest) {
   return {
     isSatellite: true as const,
     domain,
-    signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL!,
-    signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL!,
+    signInUrl: clerkSatelliteSignInUrl(),
+    signUpUrl: clerkSatelliteSignUpUrl(),
   }
 }
 
@@ -112,12 +132,12 @@ export function clerkProviderSatelliteProps(requestHostHeader: string):
   return {
     isSatellite: true,
     domain,
-    signInUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL!,
-    signUpUrl: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL!,
+    signInUrl: clerkSatelliteSignInUrl(),
+    signUpUrl: clerkSatelliteSignUpUrl(),
   }
 }
 
 export function clerkAfterSignOutUrl(): string {
-  if (clerkSatelliteConfigured()) return process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL!
+  if (clerkSatelliteConfigured()) return clerkSatelliteSignInUrl()
   return '/sign-in'
 }
