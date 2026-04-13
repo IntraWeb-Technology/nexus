@@ -42,25 +42,32 @@ export function SettingsPreferences({
 
   return (
     <Card>
-      <p className="iw-label mb-3">Notification preferences</p>
-      <div className="space-y-4">
+      <p className="iw-label mb-1">Notification preferences</p>
+      <p className="mb-5 text-xs text-[var(--iw-text-3)]">
+        Changes save automatically.
+      </p>
+      <div className="space-y-5">
         <Toggle
           label="Email notifications"
+          description="Receive email updates when your project status changes."
           checked={prefs.email_notifications}
           onChange={(e) => void patch({ email_notifications: e.target.checked })}
         />
         <Toggle
           label="Message alerts"
+          description="Get notified when your project team sends a message."
           checked={prefs.message_alerts}
           onChange={(e) => void patch({ message_alerts: e.target.checked })}
         />
         <Toggle
           label="Invoice reminders"
+          description="Receive reminders before upcoming invoice due dates."
           checked={prefs.invoice_reminders}
           onChange={(e) => void patch({ invoice_reminders: e.target.checked })}
         />
         <Toggle
           label="Document uploads"
+          description="Be notified when new files are added to your project."
           checked={prefs.document_uploads}
           onChange={(e) => void patch({ document_uploads: e.target.checked })}
         />

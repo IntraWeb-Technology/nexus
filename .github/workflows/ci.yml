@@ -2,15 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, development]
   pull_request:
-    branches: [main]
+    branches: [main, development]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
         with:
@@ -24,5 +26,22 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Build migrated apps
-        run: pnpm exec turbo run build --filter=@repo/iw-site --filter=@repo/iw-portal
+      # Only run Next builds for iw-site / iw-portal when those apps (or their deps) changed
+      # vs the PR base (pull_request) or the previous commit on the branch (push).
+      - name: Build migrated apps (affected only)
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            BASE="${{ github.event.before }}"
+          else
+            BASE=""
+          fi
+          if [ -z "$BASE" ]; then
+            pnpm exec turbo run build --filter=@repo/iw-site --filter=@repo/iw-portal
+          else
+            pnpm exec turbo run build \
+              --filter="@repo/iw-site...$BASE" \
+              --filter="@repo/iw-portal...$BASE"
+          fi

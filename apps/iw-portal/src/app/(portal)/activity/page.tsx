@@ -22,8 +22,13 @@ export default async function ActivityPage() {
   const portalOnlyItems = mergeActivityFeed(portalRows, [])
 
   return (
-    <div className="space-y-4">
-      <h1>Activity Log</h1>
+    <div className="iw-animate-slide-up space-y-6">
+      <div>
+        <h1>Activity Log</h1>
+        <p className="mt-1 text-sm text-[var(--iw-text-2)]">
+          A timeline of all project events, messages, and team updates.
+        </p>
+      </div>
       <HubSpotGate fallback={<ActivityFeed items={portalOnlyItems} />}>
         <ActivityMergedFeed
           projectId={bundle.project.id}
