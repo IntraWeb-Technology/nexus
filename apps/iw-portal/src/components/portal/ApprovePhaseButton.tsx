@@ -38,7 +38,14 @@ export function ApprovePhaseButton({ milestone }: { milestone: Milestone }) {
   }, [milestone.id, notes])
 
   if (done) {
-    return <p className="mt-2 text-sm font-medium text-emerald-200">Approved ✓</p>
+    return (
+      <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-[var(--iw-green)]">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M2 7l3 3 7-7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Approved
+      </p>
+    )
   }
 
   if (milestone.status !== 'active') return null
@@ -59,7 +66,7 @@ export function ApprovePhaseButton({ milestone }: { milestone: Milestone }) {
             className="w-full rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-3 py-2 text-sm text-[var(--iw-text)]"
             disabled={busy}
           />
-          {error ? <p className="text-sm text-red-300">{error}</p> : null}
+          {error ? <p className="text-sm text-[var(--iw-red)]">{error}</p> : null}
           <div className="flex gap-2">
             <Button type="button" variant="primary" disabled={busy} onClick={() => void submit()}>
               Confirm approval
