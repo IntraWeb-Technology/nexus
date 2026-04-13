@@ -161,11 +161,9 @@ export function LegalPageLayout({
             </div>
           </EntranceReveal>
 
-          <EntranceReveal>
-            <div ref={contentRef} className="legal-prose-dark max-w-[720px]">
-              {children}
-            </div>
-          </EntranceReveal>
+          <div ref={contentRef} className="legal-prose-dark max-w-[720px]">
+            {children}
+          </div>
         </div>
       </div>
     </div>
