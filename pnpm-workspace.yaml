@@ -1,4 +1,3 @@
 packages:
   - "apps/*"
   - "packages/*"
-  - "apps/iw-portal/clerk-nextjs"

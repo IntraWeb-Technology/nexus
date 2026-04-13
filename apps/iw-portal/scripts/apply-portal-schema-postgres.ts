@@ -9,7 +9,7 @@
  * Requires in .env.local:
  *   POSTGRES_URL_NON_POOLING (or POSTGRES_URL) — use the Supabase direct (5432) connection string.
  *
- * Run from clerk-nextjs:
+ * Run from `apps/iw-portal` or via `pnpm --filter @repo/iw-portal db:apply-schema`:
  *   pnpm exec tsx scripts/apply-portal-schema-postgres.ts
  */
 import path from 'node:path'
@@ -85,7 +85,7 @@ async function main() {
     console.log('\nDone. Next steps:')
     console.log('  • Supabase → Authentication: ensure Clerk third-party JWT or custom JWT matches Clerk template "supabase" (claim sub = Clerk user id).')
     console.log('  • Storage → buckets "client-uploads" (005) and "change-order-packets" (006) should exist.')
-    console.log('  • Seed data: pnpm seed (from clerk-nextjs, with SUPABASE_SERVICE_ROLE_KEY).')
+    console.log('  • Seed data: pnpm seed (from apps/iw-portal or pnpm --filter @repo/iw-portal seed, with SUPABASE_SERVICE_ROLE_KEY).')
   } finally {
     await client.end().catch(() => {})
     if (prevTls === undefined) delete process.env.NODE_TLS_REJECT_UNAUTHORIZED

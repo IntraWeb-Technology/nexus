@@ -5,7 +5,7 @@
  *   - HUBSPOT_PRIVATE_APP_TOKEN with scopes: crm.schemas.contacts.write (and read)
  *   - Optionally forms scope on the same app if you later automate form creation
  *
- * Run from clerk-nextjs:
+ * Run from apps/iw-portal (or `pnpm --filter @repo/iw-portal hubspot:ensure-co-properties`):
  *   pnpm hubspot:ensure-co-properties
  *
  * Re-run after label changes: existing properties get PATCHed so HubSpot UI labels update (new

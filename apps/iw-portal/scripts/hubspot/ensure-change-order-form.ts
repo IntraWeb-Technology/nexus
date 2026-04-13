@@ -5,7 +5,7 @@
  *   - Run `pnpm hubspot:ensure-co-properties` first (contact properties must exist).
  *   - HUBSPOT_PRIVATE_APP_TOKEN with scope: **forms** (Marketing Forms).
  *
- * Run from clerk-nextjs:
+ * Run from apps/iw-portal (or `pnpm --filter @repo/iw-portal hubspot:ensure-co-form`):
  *   pnpm hubspot:ensure-co-form
  *
  * To update an existing form by id instead, use:

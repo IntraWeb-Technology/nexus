@@ -1,5 +1,5 @@
 /**
- * Development seed — run from `clerk-nextjs` directory:
+ * Development seed — run from `apps/iw-portal` (or `pnpm --filter @repo/iw-portal seed` from repo root):
  *   pnpm seed
  * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY in `.env.local`
  */

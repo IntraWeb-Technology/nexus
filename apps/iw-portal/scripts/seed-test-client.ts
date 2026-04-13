@@ -1,7 +1,7 @@
 /**
  * Test client seed — full portal data for QA (messages, docs, invoices, notifications, etc.).
  *
- * Run from `clerk-nextjs`:
+ * Run from `apps/iw-portal` or `pnpm --filter @repo/iw-portal seed:test` from repo root:
  *   pnpm seed:test
  *
  * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY in `.env.local`
