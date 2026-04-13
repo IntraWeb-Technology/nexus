@@ -9,6 +9,7 @@ export type N8nInboundAction =
   | 'add_invoice'
   | 'log_activity'
   | 'provision_client'
+  | 'link_portal_clerk_user'
   | 'update_change_order'
 
 export interface N8nEnvelope<T extends N8nInboundAction, D> {
@@ -76,12 +77,27 @@ export type ProvisionClientData = {
   clerk_user_id?: string
 }
 
+/**
+ * After HubSpot `provision_client`, swap placeholder `clerk_user_id` for the real Clerk
+ * `user_…` id (e.g. from Clerk API / invite accepted). At least one of `hubspot_contact_id`
+ * or `email` should match the provisioned client row.
+ */
+export type LinkPortalClerkUserData = {
+  clerk_user_id: string
+  hubspot_contact_id?: string
+  email?: string
+}
+
 /** HubSpot / n8n: set portal row status after staff approval (or decline). `project_slug` must match the change order's project. */
 export type UpdateChangeOrderData = {
   change_order_id: string
   status: ChangeOrderStatus
   staff_notes?: string | null
 }
+
+/** Inbound actions that do not use `project_slug` on the envelope (HubSpot continuity helpers). */
+export type N8nInboundPayloadNoSlug =
+  | { action: 'link_portal_clerk_user'; data: LinkPortalClerkUserData }
 
 export type N8nInboundPayload =
   | N8nEnvelope<'update_milestone', UpdateMilestoneData>
@@ -92,6 +108,7 @@ export type N8nInboundPayload =
   | AddInvoiceInboundPayload
   | N8nEnvelope<'log_activity', LogActivityData>
   | N8nEnvelope<'provision_client', ProvisionClientData>
+  | N8nInboundPayloadNoSlug
   | N8nEnvelope<'update_change_order', UpdateChangeOrderData>
 
 export interface StaffAlertPayload {

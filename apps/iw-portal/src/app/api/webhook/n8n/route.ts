@@ -1,4 +1,5 @@
 import { sendWelcomeEmail } from '@/lib/email/send'
+import { linkPlaceholderClientToClerkUser } from '@/lib/data/link-hubspot-provisioned-clerk'
 import { invoicesForPlan } from '@/lib/invoice-templates'
 import { milestonesForPlan } from '@/lib/milestones-templates'
 import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webhooks'
@@ -229,11 +230,51 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ ok: true })
       }
+      case 'link_portal_clerk_user': {
+        const d = payload as Extract<N8nInboundPayload, { action: 'link_portal_clerk_user' }>
+        const clerkUserId = d.data.clerk_user_id?.trim()
+        if (!clerkUserId) {
+          return NextResponse.json({ error: 'clerk_user_id required' }, { status: 400 })
+        }
+        const hs = d.data.hubspot_contact_id?.trim()
+        const em = d.data.email?.trim()
+        if (!hs && !em) {
+          return NextResponse.json({ error: 'hubspot_contact_id or email required' }, { status: 400 })
+        }
+        const result = await linkPlaceholderClientToClerkUser(supabase, {
+          clerkUserId: clerkUserId,
+          email: em,
+          hubspotContactId: hs,
+        })
+        if (result === 'not_found') {
+          return NextResponse.json({ ok: false, result }, { status: 404 })
+        }
+        if (result === 'conflict') {
+          return NextResponse.json({ ok: false, result }, { status: 409 })
+        }
+        return NextResponse.json({ ok: true, result })
+      }
       case 'provision_client': {
         const d = payload as Extract<N8nInboundPayload, { action: 'provision_client' }>
         const slug = projectSlug
         if (!slug) return NextResponse.json({ error: 'project_slug required' }, { status: 400 })
         const data = d.data
+        const dealId = data.hubspot_deal_id?.trim()
+        if (dealId) {
+          const { data: existingByDeal } = await supabase
+            .from('projects')
+            .select('id, client_id')
+            .eq('hubspot_deal_id', dealId)
+            .maybeSingle()
+          if (existingByDeal) {
+            return NextResponse.json({
+              client_id: existingByDeal.client_id,
+              project_id: existingByDeal.id,
+              idempotent: true,
+            })
+          }
+        }
+
         const clerkUserId =
           data.clerk_user_id ?? `provision:hs:${data.hubspot_contact_id}`
 

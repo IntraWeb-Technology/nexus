@@ -1,5 +1,7 @@
+import { createClerkClient } from '@clerk/backend'
 import { invoicesForPlan } from '@/lib/invoice-templates'
 import { milestonesForPlan } from '@/lib/milestones-templates'
+import { createServiceSupabase } from '@/lib/supabase/server'
 import type { Plan } from '@/lib/supabase/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -37,6 +39,42 @@ export function parseClerkWebhookUser(
   const name = `${fn} ${ln}`.trim() || email.split('@')[0] || 'Client'
 
   return { userId, email, name }
+}
+
+/**
+ * When auto-provision is on, ensures a `clients` row (and starter project) exists for this
+ * Clerk user by calling the Clerk API + inserting via service role. Used by the Clerk
+ * webhook on `session.created` and as a fallback on the first portal request if webhooks
+ * were not delivered or configured.
+ */
+export async function ensureSelfSignupProvisionForClerkUser(userId: string): Promise<void> {
+  if (!isPortalAutoProvisionEnabled() || !userId.startsWith('user_')) return
+  const sk = process.env.CLERK_SECRET_KEY
+  if (!sk) return
+  try {
+    const supabase = createServiceSupabase()
+    const { data: existing } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('clerk_user_id', userId)
+      .maybeSingle()
+    if (existing) return
+
+    const clerk = createClerkClient({ secretKey: sk })
+    const user = await clerk.users.getUser(userId)
+    const primaryId = user.primaryEmailAddressId
+    const email =
+      user.emailAddresses.find((e) => e.id === primaryId)?.emailAddress ??
+      user.emailAddresses[0]?.emailAddress
+    if (!email) return
+    const name =
+      [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+      email.split('@')[0] ||
+      'Client'
+    await provisionSelfSignupCustomer(supabase, { userId, email, name })
+  } catch (e) {
+    console.error('[provision-self-signup] ensureSelfSignupProvisionForClerkUser', e)
+  }
 }
 
 function projectSlugForClerkUser(userId: string): string {

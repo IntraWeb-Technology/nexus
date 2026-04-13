@@ -178,7 +178,7 @@ After a successful call, the client sees the new **status** badge on **Change or
 - `Content-Type: application/json`
 - `x-intrawebtech-secret: <WEBHOOK_SECRET>` — required; validated by `validateIntrawebSecret` in `src/lib/webhooks/secret.ts`
 
-**Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `add_invoice`, `update_milestone`, `update_change_order`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
+**Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `link_portal_clerk_user`, `add_invoice`, `update_milestone`, `update_change_order`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
 
 ### Example: HubSpot → `provision_client`
 
@@ -201,6 +201,35 @@ After a deal is qualified in HubSpot, an n8n workflow can create the portal clie
 ```
 
 Use your real `project_slug` pattern and IDs from HubSpot properties.
+
+**Idempotency (deal continuity)** — If `data.hubspot_deal_id` is already stored on a `projects` row, the portal responds with `200` and `{ client_id, project_id, idempotent: true }` instead of inserting again. HubSpot/n8n retries therefore keep a single Supabase client + project tied to that deal.
+
+### Continuity: Supabase ↔ HubSpot ↔ Clerk
+
+Typical chain:
+
+1. **HubSpot** (deal stage, workflow, or n8n HubSpot trigger) fires when a client is ready for the portal.
+2. **n8n** calls `POST /api/webhook/n8n` with **`provision_client`**. That inserts `clients` (with `hubspot_contact_id`) and `projects` (with `hubspot_deal_id`). If `clerk_user_id` is omitted, the app stores a placeholder: `provision:hs:<hubspot_contact_id>`.
+3. **Clerk** — You send an invite to the **same email** as in step 2. When the user is created, the portal’s **`user.created` Clerk webhook** tries **`link_portal_clerk_user` logic by email**: if a placeholder client row matches that email, `clerk_user_id` is replaced with the real `user_…` id. No duplicate client row is needed.
+4. If the invite email differs from HubSpot (aliases, Google vs work), the automatic link may not run. Then **n8n** should call **`link_portal_clerk_user`** once you know the Clerk user id (Clerk API “list users” / search by email).
+
+**`link_portal_clerk_user` (n8n → portal)** — `POST /api/webhook/n8n` with the same `x-intrawebtech-secret` header. No `project_slug` on the envelope.
+
+```json
+{
+  "action": "link_portal_clerk_user",
+  "data": {
+    "clerk_user_id": "user_2abc…",
+    "hubspot_contact_id": "12345"
+  }
+}
+```
+
+Either `hubspot_contact_id` or `email` (matching the provisioned `clients.email`) is required together with `clerk_user_id`. Responses: `200` + `{ ok: true, result: "linked" | "noop_already" }`, `404` if no placeholder row matched, `409` on update conflict.
+
+**HubSpot-backed UI** — After `hubspot_deal_id` and `hubspot_contact_id` are set, configure **`HUBSPOT_PRIVATE_APP_TOKEN`** on the portal host so billing/activity/deal widgets can read CRM data (see `src/lib/hubspot/config.ts`).
+
+**Reference workflow (import in n8n)** — Skeleton: [`docs/n8n-workflows/portal-hubspot-deal-provision.workflow.ts`](n8n-workflows/portal-hubspot-deal-provision.workflow.ts). Set `PORTAL_WEBHOOK_URL` on the n8n host to your portal’s `/api/webhook/n8n` URL (or edit the Code node default).
 
 ### HubSpot → n8n → `add_invoice` (portal billing)
 

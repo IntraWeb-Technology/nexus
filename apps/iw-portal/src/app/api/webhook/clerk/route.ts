@@ -1,6 +1,6 @@
-import { createClerkClient } from '@clerk/backend'
+import { linkPlaceholderClientToClerkUser } from '@/lib/data/link-hubspot-provisioned-clerk'
 import {
-  isPortalAutoProvisionEnabled,
+  ensureSelfSignupProvisionForClerkUser,
   parseClerkWebhookUser,
   provisionSelfSignupCustomer,
 } from '@/lib/data/provision-self-signup'
@@ -9,31 +9,6 @@ import { createServiceSupabase } from '@/lib/supabase/server'
 import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
-
-async function tryProvisionFromClerkUserId(
-  supabase: ReturnType<typeof createServiceSupabase>,
-  userId: string,
-) {
-  if (!isPortalAutoProvisionEnabled() || !userId.startsWith('user_')) return
-  const sk = process.env.CLERK_SECRET_KEY
-  if (!sk) return
-  try {
-    const clerk = createClerkClient({ secretKey: sk })
-    const user = await clerk.users.getUser(userId)
-    const primaryId = user.primaryEmailAddressId
-    const email =
-      user.emailAddresses.find((e) => e.id === primaryId)?.emailAddress ??
-      user.emailAddresses[0]?.emailAddress
-    if (!email) return
-    const name =
-      [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
-      email.split('@')[0] ||
-      'Client'
-    await provisionSelfSignupCustomer(supabase, { userId, email, name })
-  } catch (e) {
-    console.error('[clerk webhook] tryProvisionFromClerkUserId', e)
-  }
-}
 
 export async function POST(request: Request) {
   const secret = process.env.CLERK_WEBHOOK_SECRET
@@ -66,6 +41,15 @@ export async function POST(request: Request) {
     if (parsed) {
       try {
         const supabase = createServiceSupabase()
+        const linkResult = await linkPlaceholderClientToClerkUser(supabase, {
+          clerkUserId: parsed.userId,
+          email: parsed.email,
+        })
+        if (linkResult === 'linked') {
+          console.log('[clerk webhook] linked HubSpot-provisioned client', parsed.userId, parsed.email)
+        } else if (linkResult === 'conflict') {
+          console.warn('[clerk webhook] link HubSpot client conflict', parsed.userId)
+        }
         const result = await provisionSelfSignupCustomer(supabase, parsed)
         if (result === 'created') {
           console.log('[clerk webhook] self-signup provisioned', parsed.userId)
@@ -87,7 +71,7 @@ export async function POST(request: Request) {
           .eq('clerk_user_id', userId)
           .maybeSingle()
         if (!client) {
-          await tryProvisionFromClerkUserId(supabase, userId)
+          await ensureSelfSignupProvisionForClerkUser(userId)
           const again = await supabase
             .from('clients')
             .select('id, name, email')
