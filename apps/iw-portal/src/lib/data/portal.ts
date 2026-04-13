@@ -7,11 +7,51 @@ import { cache } from 'react'
 
 const PROJECT_COOKIE = 'iw_portal_project_slug'
 
+/** Auto-provision uses `cl-<clerkIdWithoutPrefix>`; prefer CRM-backed projects when picking a default. */
+function isAutoProvisionSlug(slug: string): boolean {
+  return slug.startsWith('cl-')
+}
+
+function compareEngagement(a: Project, b: Project): number {
+  const aHs = Boolean(a.hubspot_deal_id?.trim()) ? 1 : 0
+  const bHs = Boolean(b.hubspot_deal_id?.trim()) ? 1 : 0
+  if (aHs !== bHs) return bHs - aHs
+  const aAuto = isAutoProvisionSlug(a.slug) ? 1 : 0
+  const bAuto = isAutoProvisionSlug(b.slug) ? 1 : 0
+  if (aAuto !== bAuto) return aAuto - bAuto
+  return Date.parse(b.created_at) - Date.parse(a.created_at)
+}
+
+/**
+ * Cookie wins unless it pins the auto `cl-…` starter while a HubSpot-linked project exists
+ * (fixes stale cookies after CRM provision + merge).
+ */
+export function pickActiveProjectForPortal(projects: Project[], preferredSlug: string | undefined): Project {
+  if (preferredSlug) {
+    const match = projects.find((p) => p.slug === preferredSlug)
+    if (match) {
+      const hasHubspotElsewhere = projects.some(
+        (p) => p.id !== match.id && Boolean(p.hubspot_deal_id?.trim()),
+      )
+      if (!(isAutoProvisionSlug(match.slug) && hasHubspotElsewhere)) {
+        return match
+      }
+    }
+  }
+  return [...projects].sort(compareEngagement)[0]!
+}
+
+function orderProjectsForDisplay(projects: Project[], active: Project): Project[] {
+  const rest = projects.filter((p) => p.id !== active.id)
+  const sortedRest = [...rest].sort(compareEngagement)
+  return [active, ...sortedRest]
+}
+
 export interface PortalBundle {
   client: Client
-  /** All projects for this client (newest first). Each may map to a distinct engagement. */
+  /** Projects for this client; active engagement first, then by CRM / slug heuristics. */
   projects: Project[]
-  /** Active project (from cookie when valid, else newest). */
+  /** Active project (cookie when valid; else HubSpot-backed or non–auto-provision slug over `cl-…`). */
   project: Project
   unreadMessages: number
   unreadNotifications: number
@@ -46,10 +86,8 @@ export const getPortalBundle = cache(async (): Promise<PortalBundle | null> => {
   const projects = projectRows as Project[]
   const cookieStore = await cookies()
   const preferredSlug = cookieStore.get(PROJECT_COOKIE)?.value
-  const project =
-    preferredSlug && projects.some((p) => p.slug === preferredSlug)
-      ? projects.find((p) => p.slug === preferredSlug)!
-      : projects[0]
+  const project = pickActiveProjectForPortal(projects, preferredSlug)
+  const orderedProjects = orderProjectsForDisplay(projects, project)
 
   const [{ count: mc }, { count: nc }] = await Promise.all([
     supabase
@@ -67,7 +105,7 @@ export const getPortalBundle = cache(async (): Promise<PortalBundle | null> => {
 
   return {
     client: client as Client,
-    projects,
+    projects: orderedProjects,
     project,
     unreadMessages: mc ?? 0,
     unreadNotifications: nc ?? 0,
