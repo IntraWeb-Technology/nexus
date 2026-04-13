@@ -5,9 +5,9 @@ export function PlanSummary({ plan }: { plan: Plan }) {
   const title = plan === 'growth' ? 'Growth' : plan === 'starter' ? 'Starter' : 'Custom'
   return (
     <Card>
-      <p className="iw-label mb-2">Plan</p>
-      <p className="text-[var(--iw-text)]">{title}</p>
-      <p className="mt-2 text-sm text-[var(--iw-text-2)]">
+      <p className="iw-label mb-2">Your plan</p>
+      <p className="text-lg font-semibold text-[var(--iw-text)]">{title}</p>
+      <p className="mt-3 text-sm leading-relaxed text-[var(--iw-text-2)]">
         {plan === 'starter'
           ? 'Core automation, client portal, and Vercel deployment — scoped for a focused launch.'
           : plan === 'growth'

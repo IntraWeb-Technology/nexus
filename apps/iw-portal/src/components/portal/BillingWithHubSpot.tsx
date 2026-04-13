@@ -56,24 +56,37 @@ export function BillingBody({
   const retainer = supabaseInvoices.find((i) => i.sku?.includes('MRR'))
 
   return (
-    <>
+    <div className="space-y-6">
       {paidQuery ? (
-        <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-          Payment submitted. If the invoice still shows unpaid, wait a few seconds for Stripe to finish
-          processing, then refresh.
-        </p>
+        <div
+          className="rounded-[var(--iw-radius-card)] border border-[var(--iw-green)]/35 bg-[var(--iw-slate-3)] px-4 py-3 text-sm shadow-[var(--iw-shadow-1)] transition-[box-shadow] duration-300"
+          role="status"
+        >
+          <p className="font-medium text-[var(--iw-text)]">Payment submitted</p>
+          <p className="mt-1 text-[var(--iw-text-2)]">
+            If an invoice still shows unpaid, wait a few seconds for Stripe to finish processing, then refresh.
+          </p>
+        </div>
       ) : null}
       {canceledQuery ? (
-        <p className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-3)] px-4 py-3 text-sm text-[var(--iw-text-2)]">
-          Checkout was canceled. You can retry any time from the Make a payment button on a pending invoice.
-        </p>
+        <div className="rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-slate-3)] px-4 py-3 text-sm text-[var(--iw-text-2)] shadow-[var(--iw-shadow-1)]">
+          Checkout was canceled. You can retry any time from the <span className="font-medium text-[var(--iw-text)]">Make a payment</span> button on a pending invoice.
+        </div>
       ) : null}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="iw-enter-stagger grid gap-4 sm:grid-cols-3">
         <StatCard label="Total project cost (invoiced)" value={money(total)} />
         <StatCard label="Paid to date" value={money(paid)} />
         <StatCard label="Balance due" value={money(balance)} />
       </div>
-      <InvoiceTable rows={invoiceRows} />
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-[var(--iw-text)]">Invoices</h2>
+          <p className="mt-1 text-sm text-[var(--iw-text-2)]">
+            Line items from the portal and your billing profile, in one list.
+          </p>
+        </div>
+        <InvoiceTable rows={invoiceRows} />
+      </div>
       {retainer ? (
         <Card>
           <p className="iw-label mb-2">Recurring retainer</p>
@@ -83,6 +96,6 @@ export function BillingBody({
           </p>
         </Card>
       ) : null}
-    </>
+    </div>
   )
 }
