@@ -16,3 +16,5 @@ Package name: **`@repo/iw-portal`**, path: **`apps/iw-portal`**.
 3. Leave the default install/build override empty if you rely on `vercel.json` in this folder (`cd ../..` then `pnpm install` + `turbo build`).
 
 Environment variables for Clerk, Supabase, Stripe, etc. are documented in the repo root `.env.example` under the Portal section.
+
+After changing env vars in the Vercel dashboard, trigger a new deployment (for example push a commit that touches this app) so the build picks up the updated values.
