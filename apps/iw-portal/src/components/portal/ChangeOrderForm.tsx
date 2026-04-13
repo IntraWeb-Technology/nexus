@@ -393,7 +393,8 @@ export function ChangeOrderForm({
           <Button
             type="button"
             variant="primary"
-            disabled={busy || !canSubmit}
+            loading={busy}
+            disabled={!canSubmit}
             onClick={() => void submit()}
           >
             {busy ? 'Submitting…' : 'Submit request'}

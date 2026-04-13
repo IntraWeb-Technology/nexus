@@ -130,7 +130,8 @@ export function SignatureModal({ document, open, onClose, onSigned }: SignatureM
           type="button"
           variant="primary"
           onClick={() => void confirm()}
-          disabled={busy || name.trim().length < 3}
+          loading={busy}
+          disabled={name.trim().length < 3}
         >
           {busy ? 'Signing…' : 'Confirm signature'}
         </Button>

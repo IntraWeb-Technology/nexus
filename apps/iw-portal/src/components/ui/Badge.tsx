@@ -17,7 +17,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-block rounded px-2 py-0.5 text-[10px] font-medium leading-tight ${variants[variant] ?? variants.teal}`}
+      className={`iw-fade-in inline-block rounded px-2 py-0.5 text-[10px] font-medium leading-tight ${variants[variant] ?? variants.teal}`}
     >
       {children}
     </span>
