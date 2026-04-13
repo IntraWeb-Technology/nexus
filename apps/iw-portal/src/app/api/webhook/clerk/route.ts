@@ -1,4 +1,7 @@
-import { linkPlaceholderClientToClerkUser } from '@/lib/data/link-hubspot-provisioned-clerk'
+import {
+  linkPlaceholderClientToClerkUser,
+  mergeProvisionedClientsByEmailIntoClerkUser,
+} from '@/lib/data/link-hubspot-provisioned-clerk'
 import {
   ensureSelfSignupProvisionForClerkUser,
   parseClerkWebhookUser,
@@ -49,6 +52,14 @@ export async function POST(request: Request) {
           console.log('[clerk webhook] linked HubSpot-provisioned client', parsed.userId, parsed.email)
         } else if (linkResult === 'conflict') {
           console.warn('[clerk webhook] link HubSpot client conflict', parsed.userId)
+        } else if (linkResult === 'noop_already') {
+          const merged = await mergeProvisionedClientsByEmailIntoClerkUser(supabase, {
+            clerkUserId: parsed.userId,
+            email: parsed.email,
+          })
+          if (merged === 'merged') {
+            console.log('[clerk webhook] merged HubSpot placeholder into existing client', parsed.userId)
+          }
         }
         const result = await provisionSelfSignupCustomer(supabase, parsed)
         if (result === 'created') {
@@ -78,6 +89,15 @@ export async function POST(request: Request) {
             .eq('clerk_user_id', userId)
             .maybeSingle()
           client = again.data
+        }
+        if (client?.email) {
+          const merged = await mergeProvisionedClientsByEmailIntoClerkUser(supabase, {
+            clerkUserId: userId,
+            email: client.email,
+          })
+          if (merged === 'merged') {
+            console.log('[clerk webhook] merged HubSpot placeholder on session.created', userId)
+          }
         }
         if (client) {
           const { data: project } = await supabase

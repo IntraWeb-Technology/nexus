@@ -8,14 +8,14 @@
  *
  * Run: pnpm exec tsx scripts/upsert-jschibelli-portal.ts
  */
-import path from 'node:path'
+import { mergeProvisionedClientsByEmailIntoClerkUser } from '../src/lib/data/link-hubspot-provisioned-clerk'
 import { requireHubSpotToken } from '../src/lib/hubspot/config'
 import { config } from 'dotenv'
 import { createClerkClient } from '@clerk/backend'
 import { createClient } from '@supabase/supabase-js'
-import { resolveMonorepoRoot } from './lib/repo-root'
+import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
 
-config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
+config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 
 const EMAIL = 'jschibelli@gmail.com'
 const PROJECT_SLUG = 'jschibelli-portal-2026'
@@ -120,12 +120,32 @@ async function main() {
     process.exit(1)
   }
 
-  const { data: existing } = await sb
+  const merged = await mergeProvisionedClientsByEmailIntoClerkUser(sb, {
+    clerkUserId,
+    email: EMAIL,
+  })
+  if (merged === 'merged') {
+    console.log('Merged HubSpot placeholder client(s) into this Clerk user by email.')
+  }
+
+  const { data: existingBySlug } = await sb
     .from('projects')
     .select('id')
     .eq('client_id', client.id)
-    .limit(1)
+    .eq('slug', PROJECT_SLUG)
     .maybeSingle()
+
+  let existing = existingBySlug
+  if (!existing?.id) {
+    const { data: fallback } = await sb
+      .from('projects')
+      .select('id')
+      .eq('client_id', client.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    existing = fallback
+  }
 
   let projectId: string
   if (existing?.id) {
@@ -142,6 +162,8 @@ async function main() {
     }
     projectId = existing.id
   } else {
+    let resolved: string | undefined
+
     const { data: project, error: pErr } = await sb
       .from('projects')
       .insert({
@@ -157,14 +179,58 @@ async function main() {
       .select('id')
       .single()
 
-    if (pErr || !project) {
+    if (!pErr && project?.id) {
+      resolved = project.id
+    } else if (pErr?.code === '23505') {
+      const { data: globalRow } = await sb
+        .from('projects')
+        .select('id, client_id')
+        .eq('slug', PROJECT_SLUG)
+        .maybeSingle()
+      if (globalRow?.id) {
+        const { data: owner } = await sb
+          .from('clients')
+          .select('id, clerk_user_id, email')
+          .eq('id', globalRow.client_id)
+          .maybeSingle()
+        const ownerClerk = owner?.clerk_user_id ?? ''
+        const ownerEmail = (owner?.email ?? '').trim().toLowerCase()
+        const samePersonEmail = ownerEmail === EMAIL.trim().toLowerCase()
+        const canReparent =
+          owner &&
+          owner.id !== client.id &&
+          (ownerClerk.startsWith('provision:') || samePersonEmail)
+        if (canReparent) {
+          const { error: repErr } = await sb
+            .from('projects')
+            .update({
+              client_id: client.id,
+              hubspot_deal_id: hubspotDeal,
+            })
+            .eq('id', globalRow.id)
+          if (!repErr) {
+            resolved = globalRow.id
+            console.log('Reparented project with this slug onto your Clerk-linked client (same email).')
+            const { count: left } = await sb
+              .from('projects')
+              .select('*', { count: 'exact', head: true })
+              .eq('client_id', owner.id)
+            if ((left ?? 0) === 0) {
+              await sb.from('clients').delete().eq('id', owner.id)
+            }
+          }
+        }
+      }
+    }
+
+    if (!resolved) {
       if (pErr?.code === '23505') {
         console.error('Slug conflict — change PROJECT_SLUG in script or delete existing project row.')
       }
       console.error('projects insert failed:', pErr?.message ?? pErr)
       process.exit(1)
     }
-    projectId = project.id
+    projectId = resolved
   }
 
   await sb.from('notification_preferences').upsert(

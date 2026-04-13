@@ -3,15 +3,14 @@
  *   pnpm seed
  * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY in `.env.local`
  */
-import path from 'node:path'
 import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { milestonesForPlan } from '../src/lib/milestones-templates'
 import { invoicesForPlan } from '../src/lib/invoice-templates'
 import { exitIfPortalSchemaMissing } from './lib/supabase-schema-check'
-import { resolveMonorepoRoot } from './lib/repo-root'
+import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
 
-config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
+config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL

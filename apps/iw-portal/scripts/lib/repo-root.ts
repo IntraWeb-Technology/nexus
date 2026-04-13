@@ -13,3 +13,8 @@ export function resolveMonorepoRoot(fromFileUrl: string): string {
   }
   throw new Error('Could not locate monorepo root (pnpm-workspace.yaml)')
 }
+
+/** Path to `apps/iw-portal/.env.local` (secrets for portal scripts). */
+export function iwPortalEnvLocalPath(root: string): string {
+  return path.join(root, 'apps', 'iw-portal', '.env.local')
+}

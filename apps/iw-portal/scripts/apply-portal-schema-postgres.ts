@@ -12,14 +12,13 @@
  * Run from `apps/iw-portal` or via `pnpm --filter @repo/iw-portal db:apply-schema`:
  *   pnpm exec tsx scripts/apply-portal-schema-postgres.ts
  */
-import path from 'node:path'
 import { config } from 'dotenv'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { Client } from 'pg'
-import { resolveMonorepoRoot } from './lib/repo-root'
+import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
 
-config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
+config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 
 const conn =
   process.env.POSTGRES_URL_NON_POOLING ??

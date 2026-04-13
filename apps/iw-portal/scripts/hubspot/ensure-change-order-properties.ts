@@ -14,11 +14,10 @@
  * Then in HubSpot: Marketing → Forms → Create form → add fields mapped 1:1 to these
  * internal names (plus Email). Publish and set HUBSPOT_CHANGE_ORDER_FORM_GUID in .env.
  */
-import path from 'node:path'
 import { config } from 'dotenv'
-import { resolveMonorepoRoot } from '../lib/repo-root'
+import { iwPortalEnvLocalPath, resolveMonorepoRoot } from '../lib/repo-root'
 
-config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
+config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 
 const HUBSPOT_API = 'https://api.hubapi.com'
 const TOKEN = process.env.HUBSPOT_PRIVATE_APP_TOKEN

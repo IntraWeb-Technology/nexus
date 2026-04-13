@@ -5,12 +5,11 @@
  *
  *   pnpm exec tsx scripts/test-n8n-add-invoice.ts
  */
-import path from 'node:path'
 import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
-import { resolveMonorepoRoot } from './lib/repo-root'
+import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
 
-config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
+config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL

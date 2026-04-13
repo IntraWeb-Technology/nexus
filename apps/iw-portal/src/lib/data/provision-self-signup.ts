@@ -1,5 +1,9 @@
 import { createClerkClient } from '@clerk/backend'
 import { invoicesForPlan } from '@/lib/invoice-templates'
+import {
+  linkPlaceholderClientToClerkUser,
+  mergeProvisionedClientsByEmailIntoClerkUser,
+} from '@/lib/data/link-hubspot-provisioned-clerk'
 import { milestonesForPlan } from '@/lib/milestones-templates'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import type { Plan } from '@/lib/supabase/types'
@@ -53,13 +57,6 @@ export async function ensureSelfSignupProvisionForClerkUser(userId: string): Pro
   if (!sk) return
   try {
     const supabase = createServiceSupabase()
-    const { data: existing } = await supabase
-      .from('clients')
-      .select('id')
-      .eq('clerk_user_id', userId)
-      .maybeSingle()
-    if (existing) return
-
     const clerk = createClerkClient({ secretKey: sk })
     const user = await clerk.users.getUser(userId)
     const primaryId = user.primaryEmailAddressId
@@ -71,6 +68,19 @@ export async function ensureSelfSignupProvisionForClerkUser(userId: string): Pro
       [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
       email.split('@')[0] ||
       'Client'
+
+    await linkPlaceholderClientToClerkUser(supabase, { clerkUserId: userId, email })
+
+    const { data: existing } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('clerk_user_id', userId)
+      .maybeSingle()
+    if (existing) {
+      await mergeProvisionedClientsByEmailIntoClerkUser(supabase, { clerkUserId: userId, email })
+      return
+    }
+
     await provisionSelfSignupCustomer(supabase, { userId, email, name })
   } catch (e) {
     console.error('[provision-self-signup] ensureSelfSignupProvisionForClerkUser', e)
@@ -93,12 +103,18 @@ export async function provisionSelfSignupCustomer(
 
   const { userId, email, name } = input
 
+  const linkRes = await linkPlaceholderClientToClerkUser(supabase, { clerkUserId: userId, email })
+  if (linkRes === 'linked') return 'created'
+
   const { data: existing } = await supabase
     .from('clients')
     .select('id')
     .eq('clerk_user_id', userId)
     .maybeSingle()
-  if (existing) return 'exists'
+  if (existing) {
+    await mergeProvisionedClientsByEmailIntoClerkUser(supabase, { clerkUserId: userId, email })
+    return 'exists'
+  }
 
   const slug = projectSlugForClerkUser(userId)
   const { data: slugTaken } = await supabase.from('projects').select('id').eq('slug', slug).maybeSingle()
