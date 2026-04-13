@@ -12,6 +12,15 @@ function present(value: string): boolean {
   return Boolean(value.trim())
 }
 
+function supabaseProjectRef(url: string): string | null {
+  if (!present(url)) return null
+  try {
+    return new URL(url).hostname.split('.')[0] ?? null
+  } catch {
+    return null
+  }
+}
+
 /**
  * Unauthenticated health probe for production debugging (Clerk keys present + live/test match).
  * Does not expose secret values.
@@ -56,6 +65,7 @@ export async function GET() {
         requestHost,
       },
       supabase: {
+        projectRef: supabaseProjectRef(supabaseUrl),
         urlConfigured: present(supabaseUrl),
         anonKeyConfigured: present(supabaseAnon),
         prefersServerKey: present(supabaseServiceRole) || present(supabaseSecret),
