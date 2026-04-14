@@ -195,12 +195,31 @@ After a deal is qualified in HubSpot, an n8n workflow can create the portal clie
     "hubspot_contact_id": "12345",
     "hubspot_deal_id": "67890",
     "plan": "growth",
-    "start_date": "2026-04-01"
+    "start_date": "2026-04-01",
+    "engagement_phase": "qualified"
   }
 }
 ```
 
 Use your real `project_slug` pattern and IDs from HubSpot properties.
+
+Optional **`data.engagement_phase`:** `"qualified"`** selects the **pre-contract** milestone template (shorter “qualification” track). Any other value or omission uses the standard delivery milestones for `data.plan`.
+
+### Qualified to buy (SYS 00 → n8n → portal + Clerk)
+
+When HubSpot sends a **`deal.propertyChange`** for **`dealstage`** into **`SYS 00 — HubSpot Events Router`**, the router treats **Qualified to buy** as a dedicated branch when the new stage is:
+
+- HubSpot’s built-in token **`qualifiedtobuy`**, and/or
+- listed in CONFIG **`hubspot.dealStageIds.qualifiedToBuy`** (comma-separated internal IDs), and/or
+- listed in CONFIG **`hubspot.dealStageIds.leadQualified`** (unioned with the above for pipelines that map “qualified” to that custom stage).
+
+SYS 00 then forwards to **`POST {n8nBaseUrl}/webhook/hubspot-deal-qualified-portal`** with the same **`{ id, properties }`** deal payload used for other deal webhooks.
+
+**Checked-in workflow (import in n8n):** [`packages/n8n-workflows/03_sales/SYS 03 — Qualified to Buy → Portal + Clerk.json`](../../../packages/n8n-workflows/03_sales/SYS%2003%20%E2%80%94%20Qualified%20to%20Buy%20%E2%86%92%20Portal%20+%20Clerk.json). After import, attach **HubSpot** credentials on **Fetch Deal From HubSpot** (or swap the node to your private-app pattern), activate the workflow, and set n8n **environment** variables **`WEBHOOK_SECRET`**, **`CLERK_SECRET_KEY`**, **`PORTAL_WEBHOOK_URL`** (unless CONFIG **`owner.portalN8nWebhookUrl`** is populated), and **`PORTAL_SIGNUP_REDIRECT_URL`** (unless CONFIG **`owner.portalSignUpUrl`** is populated). The flow calls **`provision_client`** with **`engagement_phase: "qualified"`** so the portal seeds pre-contract milestones (`src/lib/milestones-templates.ts`).
+
+**Clerk checklist:** invitations use **`POST https://api.clerk.com/v1/invitations`** with the **same email** as `provision_client`. The workflow **lists users by email** first and skips creating an invitation if a user already exists; if the portal returns **`idempotent: true`** for the deal, it skips Clerk as well.
+
+**Invoices at this stage (v1):** rely on **`provision_client`** template invoice seeds (`invoicesForPlan`); add or replace lines later via **`add_invoice`** when HubSpot has definitive amounts.
 
 **Idempotency (deal continuity)** — If `data.hubspot_deal_id` is already stored on a `projects` row, the portal responds with `200` and `{ client_id, project_id, idempotent: true }` instead of inserting again. HubSpot/n8n retries therefore keep a single Supabase client + project tied to that deal.
 
@@ -326,7 +345,16 @@ The portal updates invoices on `POST /api/webhook/stripe` (Stripe signing secret
 
 In n8n, listen on that webhook to send Slack/email, update HubSpot deal stage, or call other systems. **Do not** duplicate invoice state updates here if the portal webhook is already authoritative for “paid” in Supabase.
 
+Portal **invoice** Checkout sessions (created in [`src/app/api/billing/create-checkout-session/route.ts`](../src/app/api/billing/create-checkout-session/route.ts)) also copy Stripe **`metadata`** keys **`hubspot_deal_id`** and **`project_slug`** when present on the project, so monitoring and downstream automations can correlate payment to HubSpot and the portal without relying only on Supabase UUIDs.
+
 For **catalog** Payment Links (and subscription links with `sku` / `type` / `payment_link`), the same Stripe webhook handler notifies **`/webhook/portal-stripe-catalog-payment`** — see [Catalog Payment Links](#catalog-payment-links-portal-stripe-catalog-payment) above.
+
+## Pre-contract visibility, contracts, and RLS (checklist)
+
+Use this as a **runbook** for product and compliance; avoid shipping new database policies until owners explicitly approve exposure rules.
+
+- **Contract capture:** choose one primary path (external e-sign, HubSpot quotes/contracts, or portal-native documents) and document it for engineering and legal.
+- **RLS / visibility:** audit `apps/iw-portal/supabase/migrations` for what a **qualified** (pre-close) client should see versus staff-only rows; if needed, add **`project.status`**-aware policies (for example hiding certain document types until a contract is recorded).
 
 ## Related routes
 

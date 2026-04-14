@@ -13,7 +13,8 @@
     "analyze": "ANALYZE=true next build",
     "audit:cookies": "ts-node scripts/auditCookies.ts",
     "recaptcha:token": "node scripts/recaptcha-print-token.js",
-    "sync:n8n": "node scripts/sync-workflows-to-n8n.mjs"
+    "sync:n8n": "node scripts/sync-workflows-to-n8n.mjs",
+    "test:n8n:qualified-portal": "node scripts/test-qualified-portal-webhook.mjs"
   },
   "dependencies": {
     "@repo/n8n-workflows": "workspace:*",

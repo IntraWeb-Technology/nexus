@@ -92,6 +92,8 @@ export async function POST(request: Request) {
       project_id: project.id,
       client_id: client.id,
       invoice_number: invoice.invoice_number,
+      project_slug: project.slug,
+      hubspot_deal_id: project.hubspot_deal_id ?? '',
     },
     success_url: `${base}/billing?paid=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${base}/billing?canceled=1`,

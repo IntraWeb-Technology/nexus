@@ -190,8 +190,17 @@ export default function ContactForm() {
     }
   };
 
+  // HubSpot's tracking script can record native <form> submits as "non-HubSpot forms" before fetch completes.
+  // data-hs-ignore keeps CRM in sync with the real /api/contact + server-side HubSpot pipeline only.
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate suppressHydrationWarning>
+    <form
+      id="intraweb-contact-form"
+      data-hs-ignore="true"
+      onSubmit={handleSubmit(onSubmit)}
+      className="flex flex-col gap-6"
+      noValidate
+      suppressHydrationWarning
+    >
       {submitStatus && (
         <div
           className={`p-4 rounded-md ${

@@ -21,7 +21,14 @@ function getResend(): Resend {
 export const maxDuration = 60;
 
 const RECAPTCHA_ACTION = "contact";
-const RECAPTCHA_MIN_SCORE = 0.5;
+
+function recaptchaMinScore(): number {
+  const raw = process.env.RECAPTCHA_MIN_SCORE?.trim();
+  if (!raw) return 0.5;
+  const n = Number.parseFloat(raw);
+  if (!Number.isFinite(n)) return 0.5;
+  return Math.min(1, Math.max(0, n));
+}
 
 /** HubSpot single-line text; keep UI/server in sync with property limits */
 const PAIN_POINT_MAX = 1000;
@@ -211,7 +218,7 @@ async function verifyRecaptchaToken(
       }
       return { valid: false, invalidReason: "action_mismatch", score, hostname };
     }
-    const scoreOk = score >= RECAPTCHA_MIN_SCORE;
+    const scoreOk = score >= recaptchaMinScore();
     return {
       valid: scoreOk,
       score,

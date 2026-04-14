@@ -33,7 +33,8 @@ export async function AccountSummaryCard() {
         <Card>
           <p className="iw-label mb-2">Account details</p>
           <p className="text-sm text-[var(--iw-text-2)]">
-            When your project is connected on our side, engagement and profile details will show here.
+            This project has no HubSpot deal or contact id on your portal record yet, so CRM details cannot be
+            fetched. Milestones and tasks still come from the portal database only.
           </p>
         </Card>
       )

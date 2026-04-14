@@ -1,7 +1,7 @@
 import { sendWelcomeEmail } from '@/lib/email/send'
 import { linkPlaceholderClientToClerkUser } from '@/lib/data/link-hubspot-provisioned-clerk'
 import { invoicesForPlan } from '@/lib/invoice-templates'
-import { milestonesForPlan } from '@/lib/milestones-templates'
+import { milestonesForEngagementPhase } from '@/lib/milestones-templates'
 import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webhooks'
 import { progressFromMilestones } from '@/lib/progress'
 import { createServiceSupabase } from '@/lib/supabase/server'
@@ -321,7 +321,9 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: pErr?.message ?? 'project insert failed' }, { status: 500 })
         }
 
-        const seeds = milestonesForPlan(data.plan)
+        const engagementPhase =
+          data.engagement_phase === 'qualified' ? 'qualified' : 'standard'
+        const seeds = milestonesForEngagementPhase(engagementPhase, data.plan)
         const milestoneRows = seeds.map((m, i) => ({
           project_id: project.id,
           title: m.title,

@@ -1,4 +1,5 @@
 import type { ChangeOrderStatus, NotificationType, Plan } from '@/lib/supabase/types'
+import type { EngagementPhase } from '@/lib/milestones-templates'
 
 export type N8nInboundAction =
   | 'update_milestone'
@@ -75,6 +76,8 @@ export type ProvisionClientData = {
   start_date: string
   /** If omitted, a unique placeholder is generated until Clerk user exists */
   clerk_user_id?: string
+  /** When `qualified`, seeds pre-contract milestones instead of the full delivery template. */
+  engagement_phase?: EngagementPhase
 }
 
 /**

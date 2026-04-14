@@ -1,9 +1,25 @@
 import type { Plan } from '@/lib/supabase/types'
 
+/** Pre-contract (qualified) vs standard post-sale milestone tracks from `provision_client`. */
+export type EngagementPhase = 'standard' | 'qualified'
+
 export interface MilestoneSeed {
   title: string
   phase: string
   sort_order: number
+}
+
+/** Milestones for deals in “qualified to buy” before full project kickoff. */
+export function milestonesForEngagementPhase(phase: EngagementPhase, plan: Plan): MilestoneSeed[] {
+  if (phase === 'qualified') {
+    return [
+      { title: 'Portal access & welcome', phase: 'qualification', sort_order: 1 },
+      { title: 'Discovery & requirements', phase: 'qualification', sort_order: 2 },
+      { title: 'Proposal & scope alignment', phase: 'qualification', sort_order: 3 },
+      { title: 'Contract & kickoff prep', phase: 'qualification', sort_order: 4 },
+    ]
+  }
+  return milestonesForPlan(plan)
 }
 
 export function milestonesForPlan(plan: Plan): MilestoneSeed[] {

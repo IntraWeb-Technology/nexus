@@ -11,6 +11,9 @@
  *
  * Note: The public PUT /workflows/:id schema does not accept tags or description; workflow
  * `tags` in JSON are not pushed here. Use n8n UI or MCP partial updates to align tags after sync.
+ *
+ * If no remote workflow matches **by exact name**, this script **POST**s a new workflow (n8n
+ * returns a new id). Duplicate names on the server are avoided by listing existing workflows first.
  */
 
 import fs from "node:fs";
@@ -97,6 +100,7 @@ async function fetchJson(url, { method = "GET", headers = {}, body } = {}) {
 
 function shouldSkipFile(name) {
   const lower = name.toLowerCase();
+  if (lower === "package.json" || lower === "turbo.json") return true;
   if (lower.includes("sample")) return true;
   if (lower.includes("payload")) return true;
   return false;
@@ -145,6 +149,17 @@ function buildNameToId(workflows) {
   return idMap;
 }
 
+function buildWorkflowPayload(wf) {
+  return {
+    name: wf.name,
+    nodes: wf.nodes,
+    connections: wf.connections,
+    settings: pickSettings(wf.settings),
+    staticData: wf.staticData ?? null,
+    pinData: wf.pinData ?? {},
+  };
+}
+
 async function syncOne({
   filePath,
   baseUrl,
@@ -163,6 +178,9 @@ async function syncOne({
   if (!name) {
     return { status: "skip", file: filePath, reason: "missing name" };
   }
+  if (!Array.isArray(wf.nodes)) {
+    return { status: "skip", file: filePath, name, reason: "not a workflow export (no nodes array)" };
+  }
 
   if (dryRun) {
     return {
@@ -173,24 +191,45 @@ async function syncOne({
     };
   }
 
-  const remoteId = nameToId.get(name);
-  if (!remoteId) {
-    return {
-      status: "skip",
-      file: filePath,
-      name,
-      reason: "no remote workflow with this name (non-archived preferred)",
-    };
-  }
+  const body = buildWorkflowPayload(wf);
+  let remoteId = nameToId.get(name);
 
-  const body = {
-    name: wf.name,
-    nodes: wf.nodes,
-    connections: wf.connections,
-    settings: pickSettings(wf.settings),
-    staticData: wf.staticData ?? null,
-    pinData: wf.pinData ?? {},
-  };
+  if (!remoteId) {
+    const createUrl = `${baseUrl}/api/v1/workflows`;
+    try {
+      const created = await fetchJson(createUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-N8N-API-KEY": apiKey,
+        },
+        body: JSON.stringify(body),
+      });
+      const newId =
+        created && typeof created === "object"
+          ? String(created.id ?? created.data?.id ?? "")
+          : "";
+      if (!newId) {
+        return {
+          status: "fail",
+          file: filePath,
+          name,
+          error: `POST ${createUrl} returned no id: ${JSON.stringify(created).slice(0, 400)}`,
+        };
+      }
+      nameToId.set(name, newId);
+      remoteId = newId;
+      return {
+        status: "ok",
+        file: path.relative(REPO_ROOT, filePath),
+        name,
+        id: remoteId,
+        created: true,
+      };
+    } catch (e) {
+      return { file: filePath, name, error: e.message, status: "fail" };
+    }
+  }
 
   const putUrl = `${baseUrl}/api/v1/workflows/${encodeURIComponent(remoteId)}`;
   try {

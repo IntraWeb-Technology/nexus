@@ -8,7 +8,12 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {},
+      "parameters": {
+        "content": "## SYS 00 — HubSpot Events Router\n\n**Trigger:** Webhook POST at `/hubspot-events` (single HubSpot app target URL).\n\n**What it does:** Receives batched HubSpot webhook events, parses event type and dealstage/contact changes, fetches full deal or contact from HubSpot API, then POSTs to the correct system webhook path so downstream workflows run unchanged — e.g. **SYS 04 — Client Onboarding Logistics** (closed-won), **SYS 03 — Proposal and Contract Delivery** (proposal), **SYS 03 — Contract Generation** (contract sent via direct webhook or HubSpot automation), **SYS 03 — Invoice and Payment Collection** (invoice sent), **SYS 07 — Internal Reporting Dashboard** (stage/contact changes), **SYS 05 — Referral and Reactivation Engine** (project complete), **SYS 03 — Qualified to Buy → Portal + Clerk** (`hubspot-deal-qualified-portal`).\n\n**HubSpot app Target URL:** `https://n8n.intrawebtech.com/webhook/hubspot-events`\n\n**Subscriptions to create in HubSpot:**\n- `deal.propertyChange` → property **dealstage** (for closed-won, proposal, invoice, project-complete, and reporting)\n- `contact.propertyChange` → properties as needed for **SYS 07 — Internal Reporting Dashboard** (e.g. lifecyclestage, or create multiple)\n\n**Dependencies:** CONFIG (**hubspot.dealStageIds** — internal stage IDs from your portal; if Proposal fires SYS 07 instead of SYS 03, your proposal ID does not match), HubSpot API credential.",
+        "height": 340,
+        "width": 480,
+        "color": 5
+      },
       "id": "note-sys00",
       "name": "Note — About this workflow",
       "type": "n8n-nodes-base.stickyNote",
@@ -30,7 +35,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        256,
+        250,
         320
       ],
       "webhookId": "1ac56db6-2649-4ee1-9ec3-fa8462e204a8"
@@ -46,7 +51,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.3,
       "position": [
-        480,
+        470,
         320
       ]
     },
@@ -68,34 +73,29 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        704,
+        690,
         320
       ]
     },
     {
       "parameters": {
-        "jsCode": "// HubSpot sends an array of events. Parse and route each one.\nconst webhookNode = $('HubSpot Events Webhook').first();\nconst body = webhookNode.json.body ?? webhookNode.json;\nconst config = $input.first().json;\nconst n8nBaseUrl = (config.owner && config.owner.n8nBaseUrl) ? config.owner.n8nBaseUrl.replace(/\\/$/, '') : 'https://n8n.intrawebtech.com';\n\nconst events = Array.isArray(body) ? body : (body && typeof body.objectId !== 'undefined' ? [body] : []);\nif (events.length === 0) return [];\n\nconst dealProps = 'dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company';\nconst contactProps = 'firstname,lastname,company,industry,lead_source,lead_score,hs_lead_status';\n\nconst stageCfg = (config.hubspot && config.hubspot.dealStageIds) || {};\nconst stageCandidates = (raw, fallback) => {\n  const parts = (v) => {\n    if (v === undefined || v === null || v === '') return [];\n    if (Array.isArray(v)) return v.map((x) => String(x).toLowerCase().trim()).filter(Boolean);\n    const s = String(v);\n    if (s.includes(',')) return s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);\n    const one = s.toLowerCase().trim();\n    return one ? [one] : [];\n  };\n  const fromRaw = parts(raw);\n  if (fromRaw.length) return fromRaw;\n  return parts(fallback);\n};\nconst closedWonStages = stageCandidates(stageCfg.closedWon, 'closedwon');\nconst proposalStages = stageCandidates(stageCfg.proposal, '3382756085');\nconst contractSentStages = stageCandidates(stageCfg.contractSent, '');\nconst invoiceSentStages = stageCandidates(stageCfg.invoiceSent, '3382756086');\nconst paidStages = stageCandidates(stageCfg.paid, '3382756087');\nconst projectCompleteStages = stageCandidates(stageCfg.projectComplete, '3382756088');\n\nconst out = [];\nfor (const e of events) {\n  const eventType = e.eventType || e.subscriptionType || '';\n  const objectId = e.objectId;\n  const propertyName = e.propertyName || '';\n  const propertyValue = String(e.propertyValue || '').toLowerCase();\n\n  if (!objectId) continue;\n\n  let route = 'skip';\n  let objectType = '';\n  let webhookPath = '';\n\n  if (eventType === 'deal.propertyChange' && propertyName === 'dealstage') {\n    objectType = 'deal';\n\n    if (closedWonStages.includes(propertyValue)) {\n      route = 'closed_won';\n      webhookPath = 'hubspot-deal-closed-won';\n\n    } else if (proposalStages.includes(propertyValue)) {\n      route = 'proposal_stage';\n      webhookPath = 'hubspot-deal-proposal-stage';\n\n    } else if (contractSentStages.length && contractSentStages.includes(propertyValue)) {\n      route = 'contract_sent';\n      webhookPath = 'hubspot-deal-contract-sent';\n\n    } else if (invoiceSentStages.includes(propertyValue)) {\n      route = 'invoice_sent';\n      webhookPath = 'hubspot-deal-invoice-sent';\n\n    } else if (paidStages.includes(propertyValue)) {\n      route = 'paid';\n      webhookPath = 'hubspot-deal-stage-change';\n\n    } else if (projectCompleteStages.includes(propertyValue)) {\n      route = 'project_complete';\n      webhookPath = 'hubspot-deal-project-complete';\n\n    } else {\n      route = 'deal_stage_change';\n      webhookPath = 'hubspot-deal-stage-change';\n    }\n\n  } else if (eventType === 'contact.propertyChange' || eventType === 'contact.creation') {\n    objectType = 'contact';\n    route = 'contact_change';\n    webhookPath = 'hubspot-contact-change';\n  }\n\n  if (route !== 'skip' && webhookPath) {\n    out.push({\n      json: {\n        route,\n        objectId: String(objectId),\n        objectType,\n        n8nBaseUrl,\n        webhookPath,\n        dealProps,\n        contactProps\n      }\n    });\n  }\n}\nreturn out;"
+        "jsCode": "// HubSpot sends an array of events. Parse and route each one.\nconst webhookNode = $('HubSpot Events Webhook').first();\nconst body = webhookNode.json.body ?? webhookNode.json;\nconst config = $input.first().json;\nconst n8nBaseUrl = (config.owner && config.owner.n8nBaseUrl) ? config.owner.n8nBaseUrl.replace(/\\/$/, '') : 'https://n8n.intrawebtech.com';\n\nconst events = Array.isArray(body) ? body : (body && typeof body.objectId !== 'undefined' ? [body] : []);\nif (events.length === 0) return [];\n\nconst dealProps = 'dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company';\nconst contactProps = 'firstname,lastname,company,industry,lead_source,lead_score,hs_lead_status';\n\nconst stageCfg = (config.hubspot && config.hubspot.dealStageIds) || {};\nconst stageCandidates = (raw, fallback) => {\n  const parts = (v) => {\n    if (v === undefined || v === null || v === '') return [];\n    if (Array.isArray(v)) return v.map((x) => String(x).toLowerCase().trim()).filter(Boolean);\n    const s = String(v);\n    if (s.includes(',')) return s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);\n    const one = s.toLowerCase().trim();\n    return one ? [one] : [];\n  };\n  const fromRaw = parts(raw);\n  if (fromRaw.length) return fromRaw;\n  return parts(fallback);\n};\nconst closedWonStages = stageCandidates(stageCfg.closedWon, 'closedwon');\nconst proposalStages = stageCandidates(stageCfg.proposal, '3382756085');\nconst contractSentStages = stageCandidates(stageCfg.contractSent, '');\nconst invoiceSentStages = stageCandidates(stageCfg.invoiceSent, '3382756086');\nconst paidStages = stageCandidates(stageCfg.paid, '3382756087');\nconst projectCompleteStages = stageCandidates(stageCfg.projectComplete, '3382756088');\n\nconst qualifiedToBuyExtra = stageCandidates(stageCfg.qualifiedToBuy, 'qualifiedtobuy');\nconst leadQualifiedStages = stageCandidates(stageCfg.leadQualified, '');\nconst qualifiedPortalStages = [...new Set([...qualifiedToBuyExtra, ...leadQualifiedStages].filter(Boolean))];\n\nconst out = [];\nfor (const e of events) {\n  const eventType = e.eventType || e.subscriptionType || '';\n  const objectId = e.objectId;\n  const propertyName = e.propertyName || '';\n  const propertyValue = String(e.propertyValue || '').toLowerCase();\n\n  if (!objectId) continue;\n\n  let route = 'skip';\n  let objectType = '';\n  let webhookPath = '';\n\n  if (eventType === 'deal.propertyChange' && propertyName === 'dealstage') {\n    objectType = 'deal';\n\n    if (closedWonStages.includes(propertyValue)) {\n      route = 'closed_won';\n      webhookPath = 'hubspot-deal-closed-won';\n\n    } else if (proposalStages.includes(propertyValue)) {\n      route = 'proposal_stage';\n      webhookPath = 'hubspot-deal-proposal-stage';\n\n    } else if (contractSentStages.length && contractSentStages.includes(propertyValue)) {\n      route = 'contract_sent';\n      webhookPath = 'hubspot-deal-contract-sent';\n\n    } else if (invoiceSentStages.includes(propertyValue)) {\n      route = 'invoice_sent';\n      webhookPath = 'hubspot-deal-invoice-sent';\n\n    } else if (paidStages.includes(propertyValue)) {\n      route = 'paid';\n      webhookPath = 'hubspot-deal-stage-change';\n\n    } else if (projectCompleteStages.includes(propertyValue)) {\n      route = 'project_complete';\n      webhookPath = 'hubspot-deal-project-complete';\n\n    } else if (qualifiedPortalStages.includes(propertyValue)) {\n      route = 'qualified_portal';\n      webhookPath = 'hubspot-deal-qualified-portal';\n\n    } else {\n      route = 'deal_stage_change';\n      webhookPath = 'hubspot-deal-stage-change';\n    }\n\n  } else if (eventType === 'contact.propertyChange' || eventType === 'contact.creation') {\n    objectType = 'contact';\n    route = 'contact_change';\n    webhookPath = 'hubspot-contact-change';\n  }\n\n  if (route !== 'skip' && webhookPath) {\n    out.push({\n      json: {\n        route,\n        objectId: String(objectId),\n        objectType,\n        n8nBaseUrl,\n        webhookPath,\n        dealProps,\n        contactProps\n      }\n    });\n  }\n}\nreturn out;"
       },
       "id": "sys00-parse",
       "name": "Parse and Route Events",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        912,
+        910,
         320
       ]
     },
     {
       "parameters": {
+        "method": "GET",
         "url": "=https://api.hubapi.com/crm/v3/objects/{{ $json.objectType === 'deal' ? 'deals' : 'contacts' }}/{{ $json.objectId }}?properties={{ $json.objectType === 'deal' ? $json.dealProps : $json.contactProps }}",
         "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "hubspotDeveloperApi",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
+        "nodeCredentialType": "hubspotAppToken",
         "options": {}
       },
       "id": "sys00-fetch",
@@ -103,13 +103,13 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1168,
-        496
+        1130,
+        320
       ],
       "credentials": {
-        "hubspotDeveloperApi": {
-          "id": "GqT0NoNc7c9eAodv",
-          "name": "HubSpot Developer account"
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
         }
       }
     },
@@ -124,7 +124,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
-        1360,
+        1350,
         320
       ]
     },
@@ -153,7 +153,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1600,
+        1590,
         320
       ]
     },
@@ -171,32 +171,9 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1824,
+        1810,
         320
       ]
-    },
-    {
-      "parameters": {
-        "authentication": "appToken",
-        "resource": "deal",
-        "operation": "getAll",
-        "limit": 200,
-        "filters": {}
-      },
-      "type": "n8n-nodes-base.hubspot",
-      "typeVersion": 2.2,
-      "position": [
-        1104,
-        368
-      ],
-      "id": "ca04826b-15ad-4ed1-8c63-6f5bfdb35718",
-      "name": "Get many deals",
-      "credentials": {
-        "hubspotAppToken": {
-          "id": "volH6pGD5psvPC7a",
-          "name": "HubSpot App Token account"
-        }
-      }
     }
   ],
   "connections": {
@@ -237,12 +214,12 @@
       "main": [
         [
           {
-            "node": "Merge Context with Fetched",
+            "node": "Fetch Deal or Contact",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Get many deals",
+            "node": "Merge Context with Fetched",
             "type": "main",
             "index": 0
           }
@@ -251,7 +228,13 @@
     },
     "Fetch Deal or Contact": {
       "main": [
-        []
+        [
+          {
+            "node": "Merge Context with Fetched",
+            "type": "main",
+            "index": 1
+          }
+        ]
       ]
     },
     "Merge Context with Fetched": {
@@ -272,17 +255,6 @@
             "node": "POST to System Webhook",
             "type": "main",
             "index": 0
-          }
-        ]
-      ]
-    },
-    "Get many deals": {
-      "main": [
-        [
-          {
-            "node": "Merge Context with Fetched",
-            "type": "main",
-            "index": 1
           }
         ]
       ]
@@ -333,7 +305,7 @@
     "nodes": [
       {
         "parameters": {
-          "content": "## SYS 00 — HubSpot Events Router\n\n**Trigger:** Webhook POST at `/hubspot-events` (single HubSpot app target URL).\n\n**What it does:** Receives batched HubSpot webhook events, parses event type and dealstage/contact changes, fetches full deal or contact from HubSpot API, then POSTs to the correct system webhook path so downstream workflows run unchanged — e.g. **SYS 04 — Client Onboarding Logistics** (closed-won), **SYS 03 — Proposal and Contract Delivery** (proposal), **SYS 03 — Contract Generation** (contract sent via direct webhook or HubSpot automation), **SYS 03 — Invoice and Payment Collection** (invoice sent), **SYS 07 — Internal Reporting Dashboard** (stage/contact changes), **SYS 05 — Referral and Reactivation Engine** (project complete).\n\n**HubSpot app Target URL:** `https://n8n.intrawebtech.com/webhook/hubspot-events`\n\n**Subscriptions to create in HubSpot:**\n- `deal.propertyChange` → property **dealstage** (for closed-won, proposal, invoice, project-complete, and reporting)\n- `contact.propertyChange` → properties as needed for **SYS 07 — Internal Reporting Dashboard** (e.g. lifecyclestage, or create multiple)\n\n**Dependencies:** CONFIG (**hubspot.dealStageIds** — internal stage IDs from your portal; if Proposal fires SYS 07 instead of SYS 03, your proposal ID does not match), HubSpot API credential.",
+          "content": "## SYS 00 — HubSpot Events Router\n\n**Trigger:** Webhook POST at `/hubspot-events` (single HubSpot app target URL).\n\n**What it does:** Receives batched HubSpot webhook events, parses event type and dealstage/contact changes, fetches full deal or contact from HubSpot API, then POSTs to the correct system webhook path so downstream workflows run unchanged — e.g. **SYS 04 — Client Onboarding Logistics** (closed-won), **SYS 03 — Proposal and Contract Delivery** (proposal), **SYS 03 — Contract Generation** (contract sent via direct webhook or HubSpot automation), **SYS 03 — Invoice and Payment Collection** (invoice sent), **SYS 07 — Internal Reporting Dashboard** (stage/contact changes), **SYS 05 — Referral and Reactivation Engine** (project complete), **SYS 03 — Qualified to Buy → Portal + Clerk** (`hubspot-deal-qualified-portal`).\n\n**HubSpot app Target URL:** `https://n8n.intrawebtech.com/webhook/hubspot-events`\n\n**Subscriptions to create in HubSpot:**\n- `deal.propertyChange` → property **dealstage** (for closed-won, proposal, invoice, project-complete, and reporting)\n- `contact.propertyChange` → properties as needed for **SYS 07 — Internal Reporting Dashboard** (e.g. lifecyclestage, or create multiple)\n\n**Dependencies:** CONFIG (**hubspot.dealStageIds** — internal stage IDs from your portal; if Proposal fires SYS 07 instead of SYS 03, your proposal ID does not match), HubSpot API credential.",
           "height": 340,
           "width": 480,
           "color": 5
@@ -403,7 +375,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// HubSpot sends an array of events. Parse and route each one.\nconst webhookNode = $('HubSpot Events Webhook').first();\nconst body = webhookNode.json.body ?? webhookNode.json;\nconst config = $input.first().json;\nconst n8nBaseUrl = (config.owner && config.owner.n8nBaseUrl) ? config.owner.n8nBaseUrl.replace(/\\/$/, '') : 'https://n8n.intrawebtech.com';\n\nconst events = Array.isArray(body) ? body : (body && typeof body.objectId !== 'undefined' ? [body] : []);\nif (events.length === 0) return [];\n\nconst dealProps = 'dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company';\nconst contactProps = 'firstname,lastname,company,industry,lead_source,lead_score,hs_lead_status';\n\nconst stageCfg = (config.hubspot && config.hubspot.dealStageIds) || {};\nconst stageCandidates = (raw, fallback) => {\n  const parts = (v) => {\n    if (v === undefined || v === null || v === '') return [];\n    if (Array.isArray(v)) return v.map((x) => String(x).toLowerCase().trim()).filter(Boolean);\n    const s = String(v);\n    if (s.includes(',')) return s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);\n    const one = s.toLowerCase().trim();\n    return one ? [one] : [];\n  };\n  const fromRaw = parts(raw);\n  if (fromRaw.length) return fromRaw;\n  return parts(fallback);\n};\nconst closedWonStages = stageCandidates(stageCfg.closedWon, 'closedwon');\nconst proposalStages = stageCandidates(stageCfg.proposal, '3382756085');\nconst contractSentStages = stageCandidates(stageCfg.contractSent, '');\nconst invoiceSentStages = stageCandidates(stageCfg.invoiceSent, '3382756086');\nconst paidStages = stageCandidates(stageCfg.paid, '3382756087');\nconst projectCompleteStages = stageCandidates(stageCfg.projectComplete, '3382756088');\n\nconst out = [];\nfor (const e of events) {\n  const eventType = e.eventType || e.subscriptionType || '';\n  const objectId = e.objectId;\n  const propertyName = e.propertyName || '';\n  const propertyValue = String(e.propertyValue || '').toLowerCase();\n\n  if (!objectId) continue;\n\n  let route = 'skip';\n  let objectType = '';\n  let webhookPath = '';\n\n  if (eventType === 'deal.propertyChange' && propertyName === 'dealstage') {\n    objectType = 'deal';\n\n    if (closedWonStages.includes(propertyValue)) {\n      route = 'closed_won';\n      webhookPath = 'hubspot-deal-closed-won';\n\n    } else if (proposalStages.includes(propertyValue)) {\n      route = 'proposal_stage';\n      webhookPath = 'hubspot-deal-proposal-stage';\n\n    } else if (contractSentStages.length && contractSentStages.includes(propertyValue)) {\n      route = 'contract_sent';\n      webhookPath = 'hubspot-deal-contract-sent';\n\n    } else if (invoiceSentStages.includes(propertyValue)) {\n      route = 'invoice_sent';\n      webhookPath = 'hubspot-deal-invoice-sent';\n\n    } else if (paidStages.includes(propertyValue)) {\n      route = 'paid';\n      webhookPath = 'hubspot-deal-stage-change';\n\n    } else if (projectCompleteStages.includes(propertyValue)) {\n      route = 'project_complete';\n      webhookPath = 'hubspot-deal-project-complete';\n\n    } else {\n      route = 'deal_stage_change';\n      webhookPath = 'hubspot-deal-stage-change';\n    }\n\n  } else if (eventType === 'contact.propertyChange' || eventType === 'contact.creation') {\n    objectType = 'contact';\n    route = 'contact_change';\n    webhookPath = 'hubspot-contact-change';\n  }\n\n  if (route !== 'skip' && webhookPath) {\n    out.push({\n      json: {\n        route,\n        objectId: String(objectId),\n        objectType,\n        n8nBaseUrl,\n        webhookPath,\n        dealProps,\n        contactProps\n      }\n    });\n  }\n}\nreturn out;"
+          "jsCode": "// HubSpot sends an array of events. Parse and route each one.\nconst webhookNode = $('HubSpot Events Webhook').first();\nconst body = webhookNode.json.body ?? webhookNode.json;\nconst config = $input.first().json;\nconst n8nBaseUrl = (config.owner && config.owner.n8nBaseUrl) ? config.owner.n8nBaseUrl.replace(/\\/$/, '') : 'https://n8n.intrawebtech.com';\n\nconst events = Array.isArray(body) ? body : (body && typeof body.objectId !== 'undefined' ? [body] : []);\nif (events.length === 0) return [];\n\nconst dealProps = 'dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company';\nconst contactProps = 'firstname,lastname,company,industry,lead_source,lead_score,hs_lead_status';\n\nconst stageCfg = (config.hubspot && config.hubspot.dealStageIds) || {};\nconst stageCandidates = (raw, fallback) => {\n  const parts = (v) => {\n    if (v === undefined || v === null || v === '') return [];\n    if (Array.isArray(v)) return v.map((x) => String(x).toLowerCase().trim()).filter(Boolean);\n    const s = String(v);\n    if (s.includes(',')) return s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);\n    const one = s.toLowerCase().trim();\n    return one ? [one] : [];\n  };\n  const fromRaw = parts(raw);\n  if (fromRaw.length) return fromRaw;\n  return parts(fallback);\n};\nconst closedWonStages = stageCandidates(stageCfg.closedWon, 'closedwon');\nconst proposalStages = stageCandidates(stageCfg.proposal, '3382756085');\nconst contractSentStages = stageCandidates(stageCfg.contractSent, '');\nconst invoiceSentStages = stageCandidates(stageCfg.invoiceSent, '3382756086');\nconst paidStages = stageCandidates(stageCfg.paid, '3382756087');\nconst projectCompleteStages = stageCandidates(stageCfg.projectComplete, '3382756088');\n\nconst qualifiedToBuyExtra = stageCandidates(stageCfg.qualifiedToBuy, 'qualifiedtobuy');\nconst leadQualifiedStages = stageCandidates(stageCfg.leadQualified, '');\nconst qualifiedPortalStages = [...new Set([...qualifiedToBuyExtra, ...leadQualifiedStages].filter(Boolean))];\n\nconst out = [];\nfor (const e of events) {\n  const eventType = e.eventType || e.subscriptionType || '';\n  const objectId = e.objectId;\n  const propertyName = e.propertyName || '';\n  const propertyValue = String(e.propertyValue || '').toLowerCase();\n\n  if (!objectId) continue;\n\n  let route = 'skip';\n  let objectType = '';\n  let webhookPath = '';\n\n  if (eventType === 'deal.propertyChange' && propertyName === 'dealstage') {\n    objectType = 'deal';\n\n    if (closedWonStages.includes(propertyValue)) {\n      route = 'closed_won';\n      webhookPath = 'hubspot-deal-closed-won';\n\n    } else if (proposalStages.includes(propertyValue)) {\n      route = 'proposal_stage';\n      webhookPath = 'hubspot-deal-proposal-stage';\n\n    } else if (contractSentStages.length && contractSentStages.includes(propertyValue)) {\n      route = 'contract_sent';\n      webhookPath = 'hubspot-deal-contract-sent';\n\n    } else if (invoiceSentStages.includes(propertyValue)) {\n      route = 'invoice_sent';\n      webhookPath = 'hubspot-deal-invoice-sent';\n\n    } else if (paidStages.includes(propertyValue)) {\n      route = 'paid';\n      webhookPath = 'hubspot-deal-stage-change';\n\n    } else if (projectCompleteStages.includes(propertyValue)) {\n      route = 'project_complete';\n      webhookPath = 'hubspot-deal-project-complete';\n\n    } else if (qualifiedPortalStages.includes(propertyValue)) {\n      route = 'qualified_portal';\n      webhookPath = 'hubspot-deal-qualified-portal';\n\n    } else {\n      route = 'deal_stage_change';\n      webhookPath = 'hubspot-deal-stage-change';\n    }\n\n  } else if (eventType === 'contact.propertyChange' || eventType === 'contact.creation') {\n    objectType = 'contact';\n    route = 'contact_change';\n    webhookPath = 'hubspot-contact-change';\n  }\n\n  if (route !== 'skip' && webhookPath) {\n    out.push({\n      json: {\n        route,\n        objectId: String(objectId),\n        objectType,\n        n8nBaseUrl,\n        webhookPath,\n        dealProps,\n        contactProps\n      }\n    });\n  }\n}\nreturn out;"
         },
         "id": "sys00-parse",
         "name": "Parse and Route Events",
