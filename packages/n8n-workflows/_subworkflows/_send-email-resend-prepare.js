@@ -173,17 +173,17 @@ function wrapEmail(innerHtml) {
 ${headStyles}
 </head>
 <body style="margin:0;padding:0;background:${E.bg};">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${E.bg};padding:32px 16px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${E.bg};padding:32px 0;">
   <tr><td align="center">
   <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%;background:${E.card};border-radius:12px;border:1px solid ${E.border};overflow:hidden;" data-iw-email-shell="1">
     <tr><td style="padding:0;height:4px;background:${E.teal};font-size:0;line-height:4px;">&nbsp;</td></tr>
-    <tr><td style="padding:28px 32px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;">
+    <tr><td style="padding:28px 0 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;">
       ${logoBlock}
     </td></tr>
-    <tr><td style="padding:8px 32px 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};">
+    <tr><td style="padding:8px 0 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};">
       <div class="iw-email-body" style="min-height:72px;">${innerHtml}</div>
     </td></tr>
-    <tr><td style="padding:20px 32px 28px;border-top:1px solid ${E.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};">
+    <tr><td style="padding:20px 0 28px;border-top:1px solid ${E.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};">
       <p style="margin:0 0 8px;">${company}</p>
       ${footerLine2}
     </td></tr>
