@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T13:16:25.621Z",
+  "updatedAt": "2026-04-17T04:20:27.510Z",
   "createdAt": "2026-03-08T22:52:54.110Z",
   "id": "3JWOGfRAtb7a9plr",
   "name": "SYS 05 — Referral & Reactivation Engine",
@@ -57,6 +57,7 @@
     },
     {
       "parameters": {
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
@@ -85,6 +86,7 @@
     },
     {
       "parameters": {
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
@@ -154,7 +156,26 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FF6VOLCcRxI4uNYD",
+          "mode": "id",
+          "cachedResultName": "SW: Send Email via Resend"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "subject": "={{ $json.subject }}",
+            "html": "={{ $json.html }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys11-ref-email",
@@ -196,7 +217,25 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "VzxtOFmmGEitVEQk",
+          "mode": "id",
+          "cachedResultName": "SW: Send SMS"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "body": "={{ $json.body }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys11-ref-sms",
@@ -223,7 +262,28 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1qQFLOSHZsS9JPKP",
+          "mode": "id",
+          "cachedResultName": "SW: Log to Automations Log Sheet"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowName": "={{ $json.workflowName }}",
+            "contactName": "={{ $json.contactName }}",
+            "phone": "={{ $json.phone }}",
+            "eventType": "={{ $json.eventType }}",
+            "status": "={{ $json.status }}",
+            "notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys11-ref-log",
@@ -250,7 +310,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    to: d.email,\n    subject: `Checking in — ${d.company}`,\n    html: `<p>Hi ${d.firstName || 'there'},</p><p>It's been a while since we last worked together, and I wanted to check in.</p><p>A lot has changed in the AI automation space since our last project. We've built some powerful new systems — from AI-powered lead qualification to automated client reporting — that could make a real difference for ${d.company}.</p><p>Would you be open to a quick 15-minute catch-up? I'd love to hear what's new on your end and share what we've been building.</p><p>${d.config.owner.calendarLink}</p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05 — Referral & Reactivation Engine'\n  }\n}];"
+        "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    to: d.email,\n    subject: `Checking in — ${d.company}`,\n    html: `<p>Hi ${d.firstName || 'there'},</p><p>It's been a while since we last worked together, and I wanted to check in.</p><p>A lot has changed in the AI automation space since our last project. We've built some powerful new systems — from AI-powered lead qualification to automated client reporting — that could make a real difference for ${d.company}.</p><p>Would you be open to a quick 15-minute catch-up? I'd love to hear what's new on your end and share what we've been building.</p><p><a href=\"${d.config.owner.calendarLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">Book a 15-minute catch-up</a></p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05 — Referral & Reactivation Engine'\n  }\n}];"
       },
       "id": "sys11-react-email-prep",
       "name": "Prep Reactivation Email",
@@ -263,7 +323,26 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FF6VOLCcRxI4uNYD",
+          "mode": "id",
+          "cachedResultName": "SW: Send Email via Resend"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "subject": "={{ $json.subject }}",
+            "html": "={{ $json.html }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys11-react-email",
@@ -305,7 +384,25 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "VzxtOFmmGEitVEQk",
+          "mode": "id",
+          "cachedResultName": "SW: Send SMS"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "body": "={{ $json.body }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys11-react-sms",
@@ -332,7 +429,28 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1qQFLOSHZsS9JPKP",
+          "mode": "id",
+          "cachedResultName": "SW: Log to Automations Log Sheet"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowName": "={{ $json.workflowName }}",
+            "contactName": "={{ $json.contactName }}",
+            "phone": "={{ $json.phone }}",
+            "eventType": "={{ $json.eventType }}",
+            "status": "={{ $json.status }}",
+            "notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys11-react-log",
@@ -592,7 +710,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "timezone": "America/New_York",
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedMode": "fixed",
@@ -607,9 +725,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "eccf07c4-476e-48da-a003-9efcaef89835",
-  "activeVersionId": "eccf07c4-476e-48da-a003-9efcaef89835",
-  "versionCounter": 59,
+  "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+  "activeVersionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+  "versionCounter": 113,
   "triggerCount": 2,
   "shared": [
     {
@@ -632,9 +750,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T13:24:25.000Z",
-    "createdAt": "2026-04-03T13:16:25.622Z",
-    "versionId": "eccf07c4-476e-48da-a003-9efcaef89835",
+    "updatedAt": "2026-04-14T03:11:42.175Z",
+    "createdAt": "2026-04-14T03:11:42.175Z",
+    "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
     "workflowId": "3JWOGfRAtb7a9plr",
     "nodes": [
       {
@@ -687,6 +805,7 @@
       },
       {
         "parameters": {
+          "source": "database",
           "workflowId": {
             "__rl": true,
             "value": "1eTTVoSFSlSPvZV4",
@@ -715,6 +834,7 @@
       },
       {
         "parameters": {
+          "source": "database",
           "workflowId": {
             "__rl": true,
             "value": "1eTTVoSFSlSPvZV4",
@@ -784,7 +904,26 @@
       },
       {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "FF6VOLCcRxI4uNYD",
+            "mode": "id",
+            "cachedResultName": "SW: Send Email via Resend"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "subject": "={{ $json.subject }}",
+              "html": "={{ $json.html }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
           "options": {}
         },
         "id": "sys11-ref-email",
@@ -826,7 +965,25 @@
       },
       {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "VzxtOFmmGEitVEQk",
+            "mode": "id",
+            "cachedResultName": "SW: Send SMS"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "body": "={{ $json.body }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
           "options": {}
         },
         "id": "sys11-ref-sms",
@@ -853,7 +1010,28 @@
       },
       {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "1qQFLOSHZsS9JPKP",
+            "mode": "id",
+            "cachedResultName": "SW: Log to Automations Log Sheet"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowName": "={{ $json.workflowName }}",
+              "contactName": "={{ $json.contactName }}",
+              "phone": "={{ $json.phone }}",
+              "eventType": "={{ $json.eventType }}",
+              "status": "={{ $json.status }}",
+              "notes": "={{ $json.notes }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
           "options": {}
         },
         "id": "sys11-ref-log",
@@ -880,7 +1058,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    to: d.email,\n    subject: `Checking in — ${d.company}`,\n    html: `<p>Hi ${d.firstName || 'there'},</p><p>It's been a while since we last worked together, and I wanted to check in.</p><p>A lot has changed in the AI automation space since our last project. We've built some powerful new systems — from AI-powered lead qualification to automated client reporting — that could make a real difference for ${d.company}.</p><p>Would you be open to a quick 15-minute catch-up? I'd love to hear what's new on your end and share what we've been building.</p><p>${d.config.owner.calendarLink}</p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05 — Referral & Reactivation Engine'\n  }\n}];"
+          "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    to: d.email,\n    subject: `Checking in — ${d.company}`,\n    html: `<p>Hi ${d.firstName || 'there'},</p><p>It's been a while since we last worked together, and I wanted to check in.</p><p>A lot has changed in the AI automation space since our last project. We've built some powerful new systems — from AI-powered lead qualification to automated client reporting — that could make a real difference for ${d.company}.</p><p>Would you be open to a quick 15-minute catch-up? I'd love to hear what's new on your end and share what we've been building.</p><p><a href=\"${d.config.owner.calendarLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">Book a 15-minute catch-up</a></p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05 — Referral & Reactivation Engine'\n  }\n}];"
         },
         "id": "sys11-react-email-prep",
         "name": "Prep Reactivation Email",
@@ -893,7 +1071,26 @@
       },
       {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "FF6VOLCcRxI4uNYD",
+            "mode": "id",
+            "cachedResultName": "SW: Send Email via Resend"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "subject": "={{ $json.subject }}",
+              "html": "={{ $json.html }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
           "options": {}
         },
         "id": "sys11-react-email",
@@ -935,7 +1132,25 @@
       },
       {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "VzxtOFmmGEitVEQk",
+            "mode": "id",
+            "cachedResultName": "SW: Send SMS"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "body": "={{ $json.body }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
           "options": {}
         },
         "id": "sys11-react-sms",
@@ -962,7 +1177,28 @@
       },
       {
         "parameters": {
-          "source": "parameter",
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "1qQFLOSHZsS9JPKP",
+            "mode": "id",
+            "cachedResultName": "SW: Log to Automations Log Sheet"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowName": "={{ $json.workflowName }}",
+              "contactName": "={{ $json.contactName }}",
+              "phone": "={{ $json.phone }}",
+              "eventType": "={{ $json.eventType }}",
+              "status": "={{ $json.status }}",
+              "notes": "={{ $json.notes }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
           "options": {}
         },
         "id": "sys11-react-log",
@@ -1220,18 +1456,171 @@
       }
     },
     "authors": "John Schibelli",
-    "name": "Version eccf07c4",
-    "description": "",
-    "autosaved": true,
+    "name": null,
+    "description": null,
+    "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T13:24:25.212Z",
-        "id": 1520,
+        "createdAt": "2026-04-14T03:11:42.260Z",
+        "id": 2077,
         "workflowId": "3JWOGfRAtb7a9plr",
-        "versionId": "eccf07c4-476e-48da-a003-9efcaef89835",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:37.397Z",
+        "id": 2143,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:46.394Z",
+        "id": 2209,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:33.326Z",
+        "id": 2275,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:17:02.337Z",
+        "id": 2341,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:14.559Z",
+        "id": 2407,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:57.423Z",
+        "id": 2473,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:33.744Z",
+        "id": 2539,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:41.559Z",
+        "id": 2611,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:20:27.570Z",
+        "id": 2655,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:11:42.235Z",
+        "id": 2076,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:37.375Z",
+        "id": 2142,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:46.375Z",
+        "id": 2208,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:33.312Z",
+        "id": 2274,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:17:02.310Z",
+        "id": 2340,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:14.535Z",
+        "id": 2406,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:57.407Z",
+        "id": 2472,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:33.727Z",
+        "id": 2538,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:41.541Z",
+        "id": 2610,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:20:27.548Z",
+        "id": 2654,
+        "workflowId": "3JWOGfRAtb7a9plr",
+        "versionId": "6581de2b-7f57-4e41-87b5-d68b22f796c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ]
+    ],
+    "settings": {}
   }
 }

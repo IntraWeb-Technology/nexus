@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T03:42:42.760Z",
+  "updatedAt": "2026-04-17T04:21:21.849Z",
   "createdAt": "2026-03-08T22:44:07.701Z",
   "id": "FF6VOLCcRxI4uNYD",
   "name": "SW: Send Email via Resend",
@@ -9,7 +9,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** In the parent workflow, the Execute Sub-workflow node must map these fields under **Workflow Inputs** (passing only the previous node is not enough when using workflow ID).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.",
+        "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** In the parent workflow, the Execute Sub-workflow node must map these fields under **Workflow Inputs** (passing only the previous node is not enough when using workflow ID).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.\n\n**Branding:** `html` should be a **body fragment** (paragraphs, lists, links). **Prepare Email** wraps it in the IntraWeb email shell (logo from `config.branding.logoUrl` in CONFIG — HTTPS image URL; wordmark fallback if empty). Pass `skipBranding: true` to send raw HTML (full documents, rare internal sends). If `html` already contains `data-iw-email-shell=\"1\"` or starts with `<!DOCTYPE` / `<html`, wrapping is skipped.",
         "height": 280,
         "width": 420,
         "color": 5
@@ -38,7 +38,35 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $('Execute Workflow Trigger').first().json;\nconst config = $('Call \\'CONFIG — Global Settings\\'').first().json;\n\nif (!input.to) {\n  const keys = input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input);\n  throw new Error('Missing required field \"to\". Map Workflow Inputs in the Execute Sub-workflow node: to, subject, html (and optional workflowName). Expected { to, subject, html }. Received keys: ' + keys);\n}\nif (!input.subject) {\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.');\n}\nif (!input.html) {\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.');\n}\n\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`;\n\nconst payload = {\n  from: from,\n  to: [input.to],\n  subject: input.subject,\n  html: input.html\n};\n\nif (input.attachments) {\n  payload.attachments = input.attachments;\n}\n\nreturn [{\n  json: {\n    payload: payload,\n    workflowName: input.workflowName || 'SW: Send Email via Resend',\n    to: input.to\n  }\n}];"
+        "jsCode": "return $input.all();"
+      },
+      "id": "f4a1c9e2-8b3d-4f1a-9c2e-7d6b5a403918",
+      "name": "Pass workflow inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "e3b8f7a6-5c4d-43e2-8d91-0a1b2c3d4e5f",
+      "name": "Merge trigger and config",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        540,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\r\n * n8n Code node: SW — Send Email via Resend → \"Prepare Email\"\r\n * Input is **Merge trigger and config** output: flat merge of workflow inputs + CONFIG (n8n 2.14+\r\n * task runner: avoid $('…') to other nodes — use $input only).\r\n * Keep hex values in sync with apps/iw-portal/src/lib/email/design-tokens.ts\r\n */\r\nconst m = $input.first().json || {}\r\n\r\nconst EMAIL_KEYS = new Set([\r\n  'to',\r\n  'subject',\r\n  'html',\r\n  'attachments',\r\n  'skipBranding',\r\n  'workflowName',\r\n])\r\n\r\nconst input = {}\r\nconst config = {}\r\nfor (const [k, v] of Object.entries(m)) {\r\n  if (EMAIL_KEYS.has(k)) input[k] = v\r\n  else config[k] = v\r\n}\r\n\r\nif (!input.to) {\r\n  const keys =\r\n    input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input)\r\n  throw new Error(\r\n    'Missing required field \"to\". Map Workflow Inputs in the Execute Sub-workflow node: to, subject, html (and optional workflowName). Expected { to, subject, html }. Received keys on merged item: ' +\r\n      Object.keys(m).join(', ') +\r\n      ' (email fields picked: ' +\r\n      keys +\r\n      ')',\r\n  )\r\n}\r\nif (!input.subject) {\r\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.')\r\n}\r\nif (!input.html) {\r\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.')\r\n}\r\nif (!config.owner) {\r\n  throw new Error(\r\n    'Missing CONFIG on merged item (no owner). Ensure Get CONFIG ran and Merge combines trigger + CONFIG outputs.',\r\n  )\r\n}\r\n\r\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`\r\n\r\nconst E = {\r\n  bg: '#f8fafc',\r\n  card: '#ffffff',\r\n  border: '#e2e8f0',\r\n  text: '#0f1419',\r\n  muted: '#475569',\r\n  teal: '#0d9488',\r\n  link: '#0d9488',\r\n}\r\n\r\nfunction escapeHtml(s) {\r\n  return String(s ?? '')\r\n    .replace(/&/g, '&amp;')\r\n    .replace(/</g, '&lt;')\r\n    .replace(/>/g, '&gt;')\r\n    .replace(/\"/g, '&quot;')\r\n}\r\n\r\nfunction wrapEmail(innerHtml) {\r\n  const owner = config.owner || {}\r\n  // Served from apps/iw-site/public/branding/ (deploy iw-site so this URL returns 200).\r\n  const DEFAULT_LOGO = 'https://www.intrawebtech.com/branding/intraweb-logo-light.png'\r\n  let logoUrl = String(config.branding?.logoUrl || '').trim()\r\n  if (!logoUrl || logoUrl.includes('intraweb-logo-black')) {\r\n    logoUrl = DEFAULT_LOGO\r\n  } else if (\r\n    logoUrl.includes('intrawebtech.com') &&\r\n    logoUrl.includes('/intraweb-logo-light.png') &&\r\n    !logoUrl.includes('/branding/')\r\n  ) {\r\n    // Legacy root URL → same file under /branding/\r\n    logoUrl = DEFAULT_LOGO\r\n  }\r\n  const company = escapeHtml(owner.companyName || 'IntraWeb Technologies LLC')\r\n  const supportEmail = String(owner.email || '').trim()\r\n  const calendarLink = String(owner.calendarLink || '').trim()\r\n\r\n  const tagline = `<p style=\"margin:14px 0 0;font-family:Montserrat,Segoe UI,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${E.teal};\">Systems &amp; automation for growing teams</p>`\r\n\r\n  const logoBlock = logoUrl\r\n    ? `<img src=\"${escapeHtml(logoUrl)}\" width=\"280\" alt=\"${company}\" style=\"display:block;max-width:280px;width:100%;height:auto;border:0;\" />${tagline}`\r\n    : `<div style=\"font-family:Montserrat,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${E.text};letter-spacing:-0.02em;\">IntraWeb</div>${tagline}`\r\n\r\n  const footerBits = []\r\n  if (supportEmail) {\r\n    const e = escapeHtml(supportEmail)\r\n    footerBits.push(\r\n      `<a href=\"mailto:${e}\" style=\"color:${E.link};text-decoration:none;\">${e}</a>`,\r\n    )\r\n  }\r\n  if (calendarLink) {\r\n    footerBits.push(\r\n      `<a href=\"${escapeHtml(calendarLink)}\" style=\"color:${E.link};text-decoration:none;\">Schedule time</a>`,\r\n    )\r\n  }\r\n  const footerLine2 = footerBits.length ? `<p style=\"margin:0;\">${footerBits.join(' · ')}</p>` : ''\r\n\r\n  return `<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\" />\r\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\r\n<link href=\"https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap\" rel=\"stylesheet\" />\r\n</head>\r\n<body style=\"margin:0;padding:0;background:${E.bg};\">\r\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:${E.bg};padding:32px 16px;\">\r\n  <tr><td align=\"center\">\r\n  <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:600px;width:100%;background:${E.card};border-radius:12px;border:1px solid ${E.border};overflow:hidden;\" data-iw-email-shell=\"1\">\r\n    <tr><td style=\"padding:0;height:4px;background:${E.teal};font-size:0;line-height:4px;\">&nbsp;</td></tr>\r\n    <tr><td style=\"padding:28px 32px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;\">\r\n      ${logoBlock}\r\n    </td></tr>\r\n    <tr><td style=\"padding:8px 32px 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};\">\r\n      <div style=\"min-height:72px;\">${innerHtml}</div>\r\n    </td></tr>\r\n    <tr><td style=\"padding:20px 32px 28px;border-top:1px solid ${E.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};\">\r\n      <p style=\"margin:0 0 8px;\">${company}</p>\r\n      ${footerLine2}\r\n    </td></tr>\r\n  </table>\r\n  </td></tr>\r\n</table>\r\n</body>\r\n</html>`\r\n}\r\n\r\nconst rawHtml = String(input.html || '').trim()\r\nconst skip =\r\n  input.skipBranding === true ||\r\n  rawHtml.includes('data-iw-email-shell=\"1\"') ||\r\n  /^<(!DOCTYPE|html)\\b/i.test(rawHtml)\r\n\r\nconst finalHtml = skip ? String(input.html) : wrapEmail(String(input.html))\r\n\r\nconst payload = {\r\n  from,\r\n  to: [input.to],\r\n  subject: input.subject,\r\n  html: finalHtml,\r\n}\r\n\r\nif (input.attachments) {\r\n  payload.attachments = input.attachments\r\n}\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      payload,\r\n      workflowName: input.workflowName || 'SW: Send Email via Resend',\r\n      to: input.to,\r\n    },\r\n  },\r\n]\r\n"
       },
       "id": "15a1d2ab-3522-4836-9edc-ba822d26f4d3",
       "name": "Prepare Email",
@@ -217,7 +245,7 @@
         224
       ],
       "id": "95edbf69-3783-463c-bef3-4edc9e5393d2",
-      "name": "Call 'CONFIG — Global Settings'"
+      "name": "Get CONFIG"
     }
   ],
   "connections": {
@@ -225,7 +253,12 @@
       "main": [
         [
           {
-            "node": "Call 'CONFIG — Global Settings'",
+            "node": "Pass workflow inputs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get CONFIG",
             "type": "main",
             "index": 0
           }
@@ -305,7 +338,29 @@
         ]
       ]
     },
-    "Call 'CONFIG — Global Settings'": {
+    "Pass workflow inputs": {
+      "main": [
+        [
+          {
+            "node": "Merge trigger and config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Merge trigger and config",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge trigger and config": {
       "main": [
         [
           {
@@ -320,7 +375,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "timeSavedMode": "fixed",
     "callerPolicy": "workflowsFromSameOwner"
   },
@@ -331,7 +386,7 @@
   "pinData": {},
   "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
   "activeVersionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-  "versionCounter": 132,
+  "versionCounter": 189,
   "triggerCount": 0,
   "shared": [
     {
@@ -361,7 +416,7 @@
     "nodes": [
       {
         "parameters": {
-          "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** In the parent workflow, the Execute Sub-workflow node must map these fields under **Workflow Inputs** (passing only the previous node is not enough when using workflow ID).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.",
+          "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** In the parent workflow, the Execute Sub-workflow node must map these fields under **Workflow Inputs** (passing only the previous node is not enough when using workflow ID).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.\n\n**Branding:** `html` should be a **body fragment** (paragraphs, lists, links). **Prepare Email** wraps it in the IntraWeb email shell (logo from `config.branding.logoUrl` in CONFIG — HTTPS image URL; wordmark fallback if empty). Pass `skipBranding: true` to send raw HTML (full documents, rare internal sends). If `html` already contains `data-iw-email-shell=\"1\"` or starts with `<!DOCTYPE` / `<html`, wrapping is skipped.",
           "height": 280,
           "width": 420,
           "color": 5
@@ -390,7 +445,35 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $('Execute Workflow Trigger').first().json;\nconst config = $('Call \\'CONFIG — Global Settings\\'').first().json;\n\nif (!input.to) {\n  const keys = input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input);\n  throw new Error('Missing required field \"to\". Map Workflow Inputs in the Execute Sub-workflow node: to, subject, html (and optional workflowName). Expected { to, subject, html }. Received keys: ' + keys);\n}\nif (!input.subject) {\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.');\n}\nif (!input.html) {\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.');\n}\n\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`;\n\nconst payload = {\n  from: from,\n  to: [input.to],\n  subject: input.subject,\n  html: input.html\n};\n\nif (input.attachments) {\n  payload.attachments = input.attachments;\n}\n\nreturn [{\n  json: {\n    payload: payload,\n    workflowName: input.workflowName || 'SW: Send Email via Resend',\n    to: input.to\n  }\n}];"
+          "jsCode": "return $input.all();"
+        },
+        "id": "f4a1c9e2-8b3d-4f1a-9c2e-7d6b5a403918",
+        "name": "Pass workflow inputs",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          360,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {}
+        },
+        "id": "e3b8f7a6-5c4d-43e2-8d91-0a1b2c3d4e5f",
+        "name": "Merge trigger and config",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          540,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "/**\r\n * n8n Code node: SW — Send Email via Resend → \"Prepare Email\"\r\n * Input is **Merge trigger and config** output: flat merge of workflow inputs + CONFIG (n8n 2.14+\r\n * task runner: avoid $('…') to other nodes — use $input only).\r\n * Keep hex values in sync with apps/iw-portal/src/lib/email/design-tokens.ts\r\n */\r\nconst m = $input.first().json || {}\r\n\r\nconst EMAIL_KEYS = new Set([\r\n  'to',\r\n  'subject',\r\n  'html',\r\n  'attachments',\r\n  'skipBranding',\r\n  'workflowName',\r\n])\r\n\r\nconst input = {}\r\nconst config = {}\r\nfor (const [k, v] of Object.entries(m)) {\r\n  if (EMAIL_KEYS.has(k)) input[k] = v\r\n  else config[k] = v\r\n}\r\n\r\nif (!input.to) {\r\n  const keys =\r\n    input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input)\r\n  throw new Error(\r\n    'Missing required field \"to\". Map Workflow Inputs in the Execute Sub-workflow node: to, subject, html (and optional workflowName). Expected { to, subject, html }. Received keys on merged item: ' +\r\n      Object.keys(m).join(', ') +\r\n      ' (email fields picked: ' +\r\n      keys +\r\n      ')',\r\n  )\r\n}\r\nif (!input.subject) {\r\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.')\r\n}\r\nif (!input.html) {\r\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.')\r\n}\r\nif (!config.owner) {\r\n  throw new Error(\r\n    'Missing CONFIG on merged item (no owner). Ensure Get CONFIG ran and Merge combines trigger + CONFIG outputs.',\r\n  )\r\n}\r\n\r\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`\r\n\r\nconst E = {\r\n  bg: '#f8fafc',\r\n  card: '#ffffff',\r\n  border: '#e2e8f0',\r\n  text: '#0f1419',\r\n  muted: '#475569',\r\n  teal: '#0d9488',\r\n  link: '#0d9488',\r\n}\r\n\r\nfunction escapeHtml(s) {\r\n  return String(s ?? '')\r\n    .replace(/&/g, '&amp;')\r\n    .replace(/</g, '&lt;')\r\n    .replace(/>/g, '&gt;')\r\n    .replace(/\"/g, '&quot;')\r\n}\r\n\r\nfunction wrapEmail(innerHtml) {\r\n  const owner = config.owner || {}\r\n  // Served from apps/iw-site/public/branding/ (deploy iw-site so this URL returns 200).\r\n  const DEFAULT_LOGO = 'https://www.intrawebtech.com/branding/intraweb-logo-light.png'\r\n  let logoUrl = String(config.branding?.logoUrl || '').trim()\r\n  if (!logoUrl || logoUrl.includes('intraweb-logo-black')) {\r\n    logoUrl = DEFAULT_LOGO\r\n  } else if (\r\n    logoUrl.includes('intrawebtech.com') &&\r\n    logoUrl.includes('/intraweb-logo-light.png') &&\r\n    !logoUrl.includes('/branding/')\r\n  ) {\r\n    // Legacy root URL → same file under /branding/\r\n    logoUrl = DEFAULT_LOGO\r\n  }\r\n  const company = escapeHtml(owner.companyName || 'IntraWeb Technologies LLC')\r\n  const supportEmail = String(owner.email || '').trim()\r\n  const calendarLink = String(owner.calendarLink || '').trim()\r\n\r\n  const tagline = `<p style=\"margin:14px 0 0;font-family:Montserrat,Segoe UI,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${E.teal};\">Systems &amp; automation for growing teams</p>`\r\n\r\n  const logoBlock = logoUrl\r\n    ? `<img src=\"${escapeHtml(logoUrl)}\" width=\"280\" alt=\"${company}\" style=\"display:block;max-width:280px;width:100%;height:auto;border:0;\" />${tagline}`\r\n    : `<div style=\"font-family:Montserrat,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${E.text};letter-spacing:-0.02em;\">IntraWeb</div>${tagline}`\r\n\r\n  const footerBits = []\r\n  if (supportEmail) {\r\n    const e = escapeHtml(supportEmail)\r\n    footerBits.push(\r\n      `<a href=\"mailto:${e}\" style=\"color:${E.link};text-decoration:none;\">${e}</a>`,\r\n    )\r\n  }\r\n  if (calendarLink) {\r\n    footerBits.push(\r\n      `<a href=\"${escapeHtml(calendarLink)}\" style=\"color:${E.link};text-decoration:none;\">Schedule time</a>`,\r\n    )\r\n  }\r\n  const footerLine2 = footerBits.length ? `<p style=\"margin:0;\">${footerBits.join(' · ')}</p>` : ''\r\n\r\n  return `<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\" />\r\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\r\n<link href=\"https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap\" rel=\"stylesheet\" />\r\n</head>\r\n<body style=\"margin:0;padding:0;background:${E.bg};\">\r\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:${E.bg};padding:32px 16px;\">\r\n  <tr><td align=\"center\">\r\n  <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:600px;width:100%;background:${E.card};border-radius:12px;border:1px solid ${E.border};overflow:hidden;\" data-iw-email-shell=\"1\">\r\n    <tr><td style=\"padding:0;height:4px;background:${E.teal};font-size:0;line-height:4px;\">&nbsp;</td></tr>\r\n    <tr><td style=\"padding:28px 32px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;\">\r\n      ${logoBlock}\r\n    </td></tr>\r\n    <tr><td style=\"padding:8px 32px 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};\">\r\n      <div style=\"min-height:72px;\">${innerHtml}</div>\r\n    </td></tr>\r\n    <tr><td style=\"padding:20px 32px 28px;border-top:1px solid ${E.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};\">\r\n      <p style=\"margin:0 0 8px;\">${company}</p>\r\n      ${footerLine2}\r\n    </td></tr>\r\n  </table>\r\n  </td></tr>\r\n</table>\r\n</body>\r\n</html>`\r\n}\r\n\r\nconst rawHtml = String(input.html || '').trim()\r\nconst skip =\r\n  input.skipBranding === true ||\r\n  rawHtml.includes('data-iw-email-shell=\"1\"') ||\r\n  /^<(!DOCTYPE|html)\\b/i.test(rawHtml)\r\n\r\nconst finalHtml = skip ? String(input.html) : wrapEmail(String(input.html))\r\n\r\nconst payload = {\r\n  from,\r\n  to: [input.to],\r\n  subject: input.subject,\r\n  html: finalHtml,\r\n}\r\n\r\nif (input.attachments) {\r\n  payload.attachments = input.attachments\r\n}\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      payload,\r\n      workflowName: input.workflowName || 'SW: Send Email via Resend',\r\n      to: input.to,\r\n    },\r\n  },\r\n]\r\n"
         },
         "id": "15a1d2ab-3522-4836-9edc-ba822d26f4d3",
         "name": "Prepare Email",
@@ -569,7 +652,7 @@
           224
         ],
         "id": "95edbf69-3783-463c-bef3-4edc9e5393d2",
-        "name": "Call 'CONFIG — Global Settings'"
+        "name": "Get CONFIG"
       }
     ],
     "connections": {
@@ -577,7 +660,12 @@
         "main": [
           [
             {
-              "node": "Call 'CONFIG — Global Settings'",
+              "node": "Pass workflow inputs",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get CONFIG",
               "type": "main",
               "index": 0
             }
@@ -657,7 +745,29 @@
           ]
         ]
       },
-      "Call 'CONFIG — Global Settings'": {
+      "Pass workflow inputs": {
+        "main": [
+          [
+            {
+              "node": "Merge trigger and config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get CONFIG": {
+        "main": [
+          [
+            {
+              "node": "Merge trigger and config",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge trigger and config": {
         "main": [
           [
             {
@@ -715,6 +825,158 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-13T21:13:00.998Z",
+        "id": 1576,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:32:52.980Z",
+        "id": 1598,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:33:34.123Z",
+        "id": 1646,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:18:29.661Z",
+        "id": 1715,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:21:57.082Z",
+        "id": 1765,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:40:58.012Z",
+        "id": 1825,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:53:57.875Z",
+        "id": 1845,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:55:34.159Z",
+        "id": 1905,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:00:29.323Z",
+        "id": 1971,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:11:35.362Z",
+        "id": 2037,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:31.050Z",
+        "id": 2103,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:40.275Z",
+        "id": 2169,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:27.241Z",
+        "id": 2235,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:54.587Z",
+        "id": 2301,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:07.330Z",
+        "id": 2367,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:50.606Z",
+        "id": 2433,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:27.556Z",
+        "id": 2499,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:32.214Z",
+        "id": 2571,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:21:21.877Z",
+        "id": 2681,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-03-29T22:36:57.999Z",
         "id": 1090,
         "workflowId": "FF6VOLCcRxI4uNYD",
@@ -753,7 +1015,160 @@
         "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T21:13:00.988Z",
+        "id": 1575,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:32:52.969Z",
+        "id": 1597,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:33:34.111Z",
+        "id": 1645,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:18:29.651Z",
+        "id": 1714,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:21:57.072Z",
+        "id": 1764,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:40:57.999Z",
+        "id": 1824,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:53:57.858Z",
+        "id": 1844,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:55:34.148Z",
+        "id": 1904,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:00:29.310Z",
+        "id": 1970,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:11:35.351Z",
+        "id": 2036,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:31.038Z",
+        "id": 2102,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:40.264Z",
+        "id": 2168,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:27.228Z",
+        "id": 2234,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:54.576Z",
+        "id": 2300,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:07.316Z",
+        "id": 2366,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:50.596Z",
+        "id": 2432,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:27.548Z",
+        "id": 2498,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:32.202Z",
+        "id": 2570,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:21:21.868Z",
+        "id": 2680,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ]
+    ],
+    "settings": {}
   }
 }

@@ -16,7 +16,7 @@ const payload = {
     industry: "Restaurant / Food",
   },
   createDeal: false,
-  dealStage: "qualifiedtobuy",
+  dealStage: "appointmentscheduled",
   tier: "starter",
   painOverride: `E2E automated test ${new Date().toISOString()}`,
   intake: {

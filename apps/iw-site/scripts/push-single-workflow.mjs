@@ -26,6 +26,8 @@ function pickSettings(obj) {
     "saveDataErrorExecution",
     "saveDataSuccessExecution",
     "executionTimeout",
+    "availableInMCP",
+    "callerPolicy",
   ];
   const out = {};
   for (const k of keys) {

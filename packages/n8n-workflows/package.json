@@ -5,6 +5,10 @@
   "scripts": {
     "build": "node -e \"require('fs').mkdirSync('dist',{recursive:true});require('fs').writeFileSync('dist/.gitkeep','')\"",
     "lint": "node -e \"process.exit(0)\"",
-    "check-types": "node -e \"process.exit(0)\""
+    "check-types": "node -e \"process.exit(0)\"",
+    "pull:n8n": "node scripts/pull-from-n8n.mjs",
+    "sync:n8n:package": "node scripts/sync-from-n8n-to-package.mjs",
+    "inject:send-email-prepare": "node scripts/inject-code-node-from-file.mjs \"packages/n8n-workflows/_subworkflows/SW — Send Email via Resend.json\" \"Prepare Email\" \"packages/n8n-workflows/_subworkflows/_send-email-resend-prepare.js\"",
+    "push:n8n:workflow": "node scripts/push-local-workflow.mjs"
   }
 }

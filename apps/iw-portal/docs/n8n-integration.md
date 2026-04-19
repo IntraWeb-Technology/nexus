@@ -215,6 +215,11 @@ When HubSpot sends a **`deal.propertyChange`** for **`dealstage`** into **`SYS 0
 
 SYS 00 then forwards to **`POST {n8nBaseUrl}/webhook/hubspot-deal-qualified-portal`** with the same **`{ id, properties }`** deal payload used for other deal webhooks.
 
+### Marketing intake vs Qualified (stage gating)
+
+- **`iw-site`** posts **`SYS 01`** payloads with an **early** deal stage (default HubSpot builtin **`appointmentscheduled`**, overridable with **`N8N_CONTACT_DEAL_STAGE`**). That keeps **Qualified to buy** as the explicit gate for this `provision_client` path.
+- Align **CONFIG — Global Settings** in n8n: **`hubspot.dealStageIds.discoveryCallRequested`** for first-touch deals created inside n8n, and **`hubspot.dealStageIds.qualifiedToBuy` / `leadQualified`** so SYS 00’s union matches your live pipeline ids. See repo **[`packages/n8n-workflows/STAGES.md`](../../../packages/n8n-workflows/STAGES.md)**.
+
 **Checked-in workflow (import in n8n):** [`packages/n8n-workflows/03_sales/SYS 03 — Qualified to Buy → Portal + Clerk.json`](../../../packages/n8n-workflows/03_sales/SYS%2003%20%E2%80%94%20Qualified%20to%20Buy%20%E2%86%92%20Portal%20+%20Clerk.json). After import, attach **HubSpot** credentials on **Fetch Deal From HubSpot** (or swap the node to your private-app pattern), activate the workflow, and set n8n **environment** variables **`WEBHOOK_SECRET`**, **`CLERK_SECRET_KEY`**, **`PORTAL_WEBHOOK_URL`** (unless CONFIG **`owner.portalN8nWebhookUrl`** is populated), and **`PORTAL_SIGNUP_REDIRECT_URL`** (unless CONFIG **`owner.portalSignUpUrl`** is populated). The flow calls **`provision_client`** with **`engagement_phase: "qualified"`** so the portal seeds pre-contract milestones (`src/lib/milestones-templates.ts`).
 
 **Clerk checklist:** invitations use **`POST https://api.clerk.com/v1/invitations`** with the **same email** as `provision_client`. The workflow **lists users by email** first and skips creating an invitation if a user already exists; if the portal returns **`idempotent: true`** for the deal, it skips Clerk as well.
@@ -247,6 +252,8 @@ Typical chain:
 Either `hubspot_contact_id` or `email` (matching the provisioned `clients.email`) is required together with `clerk_user_id`. Responses: `200` + `{ ok: true, result: "linked" | "noop_already" }`, `404` if no placeholder row matched, `409` on update conflict.
 
 **HubSpot-backed UI** — After `hubspot_deal_id` and `hubspot_contact_id` are set, configure **`HUBSPOT_PRIVATE_APP_TOKEN`** on the portal host so billing/activity/deal widgets can read CRM data (see `src/lib/hubspot/config.ts`).
+
+**Future (optional CRM cache)** — If the dashboard must show a large, stable snapshot of HubSpot contact fields without a round-trip on every request, add a narrow sync (HubSpot workflow or n8n on `contact.propertyChange`) that POSTs a small JSON blob into Supabase keyed by `hubspot_contact_id`. Today the portal reads CRM slices on demand via the HubSpot API using ids stored on `clients` / `projects`.
 
 **Reference workflow (import in n8n)** — Skeleton: [`docs/n8n-workflows/portal-hubspot-deal-provision.workflow.ts`](n8n-workflows/portal-hubspot-deal-provision.workflow.ts). Set `PORTAL_WEBHOOK_URL` on the n8n host to your portal’s `/api/webhook/n8n` URL (or edit the Code node default).
 

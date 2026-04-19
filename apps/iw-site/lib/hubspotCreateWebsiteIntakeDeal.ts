@@ -4,7 +4,7 @@
  *
  * Env (optional, align with your portal / n8n CONFIG):
  * - HUBSPOT_DEAL_PIPELINE_ID — default "default"
- * - HUBSPOT_DEAL_STAGE_LEAD_QUALIFIED — numeric stage id; when form sends qualifiedtobuy, this replaces it (custom pipelines)
+ * - HUBSPOT_DEAL_STAGE_LEAD_QUALIFIED — numeric stage id; when caller sends qualifiedtobuy, this replaces it (custom pipelines). Marketing routes should pass an early stage (e.g. appointmentscheduled) or N8N_CONTACT_DEAL_STAGE.
  * - HUBSPOT_DEAL_OWNER_ID — hubspot_owner_id on the deal
  *
  * Tier amounts match CONFIG — Global Settings tiers (starter/growth setup+monthly).

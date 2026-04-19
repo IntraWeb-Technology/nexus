@@ -31,6 +31,18 @@ function walkJsonFiles(dir, out = []) {
   return out
 }
 
+/** Only match files that look like n8n Public API workflow exports (avoids sample payloads / MCP helper JSON). */
+function isWorkflowExport(doc) {
+  return (
+    doc &&
+    typeof doc === 'object' &&
+    Array.isArray(doc.nodes) &&
+    doc.connections != null &&
+    typeof doc.connections === 'object' &&
+    !Array.isArray(doc.connections)
+  )
+}
+
 function buildIdToPaths() {
   const files = walkJsonFiles(PKG_ROOT)
   const idToPaths = new Map()
@@ -41,6 +53,7 @@ function buildIdToPaths() {
     } catch {
       continue
     }
+    if (!isWorkflowExport(doc)) continue
     const id = doc?.id
     if (typeof id !== 'string' || !id) continue
     const list = idToPaths.get(id) || []

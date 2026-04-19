@@ -9,7 +9,7 @@ import { timingSafeEqual } from "crypto";
 import { hubspotCreateOrUpdateContact, isHubSpotSyncFailure } from "@/lib/hubspotCreateOrUpdateContact";
 import { hubspotCreateWebsiteIntakeDeal } from "@/lib/hubspotCreateWebsiteIntakeDeal";
 import { formatWebsiteIntakeJsonSafe, formatWebsiteIntakePlainText } from "@/lib/formatWebsiteIntakeForHubSpot";
-import { hubSpotDealStageOrDefault } from "@/lib/normalizeHubSpotDealStage";
+import { resolveLeadIntakeDealStageForHubSpot } from "@/lib/n8nLeadIntakeDealStage";
 import { buildBookingSessionPayload } from "@/lib/kickoffBookingSession";
 
 export const maxDuration = 60;
@@ -29,11 +29,7 @@ const inputSchema = z.object({
     })
     .passthrough(),
   createDeal: z.boolean().optional().default(true),
-  dealStage: z
-    .string()
-    .optional()
-    .default("qualifiedtobuy")
-    .transform((s) => hubSpotDealStageOrDefault(s, "qualifiedtobuy")),
+  dealStage: z.string().optional(),
   tier: z.enum(["starter", "growth"]).optional().default("starter"),
   painOverride: z.string().optional().default(""),
   intake: z.unknown().optional(),
@@ -231,7 +227,8 @@ export async function POST(req: NextRequest) {
       "https://n8n.intrawebtech.com/webhook/hubspot-website-form-lead";
 
     // Do not forward reCAPTCHA token to n8n (secret, large, not part of workflow contract).
-    const { recaptchaToken: _drop, ...restForN8n } = parsed.data;
+    const { recaptchaToken: _drop, dealStage: _clientDealStage, ...restForN8n } = parsed.data;
+    const intakeDealStage = resolveLeadIntakeDealStageForHubSpot(parsed.data.dealStage);
 
     const intakePlain = formatWebsiteIntakePlainText(parsed.data.intake);
     /**
@@ -240,7 +237,11 @@ export async function POST(req: NextRequest) {
      */
     const painForDeal = (parsed.data.painOverride?.trim() || intakePlain || "").trim();
 
-    let bodyForN8n: Record<string, unknown> = { ...restForN8n, painOverride: painForDeal };
+    let bodyForN8n: Record<string, unknown> = {
+      ...restForN8n,
+      dealStage: intakeDealStage,
+      painOverride: painForDeal,
+    };
     /** Set when HubSpot CRM create/update succeeded; used to avoid 502 if n8n is down. */
     let crmContactId: string | null = null;
     let hubspotDealId: string | null = null;
@@ -306,7 +307,7 @@ export async function POST(req: NextRequest) {
           lastName: c.lastName,
           industry: c.industry,
           tier: parsed.data.tier,
-          dealStage: parsed.data.dealStage,
+          dealStage: intakeDealStage,
           painSummary: painForDeal,
         });
         if ("error" in dealResult) {

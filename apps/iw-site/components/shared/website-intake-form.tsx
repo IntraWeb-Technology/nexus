@@ -378,7 +378,6 @@ export default function WebsiteIntakeForm() {
           industry: parsed.industry,
         },
         createDeal: true,
-        dealStage: "qualifiedtobuy",
         tier: toTier(parsed.budget),
         painOverride: buildPainOverride(parsed),
         intake: {

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-12T14:17:29.078Z",
+  "updatedAt": "2026-04-17T04:19:47.368Z",
   "createdAt": "2026-03-31T02:42:24.194Z",
   "id": "i1Fe1DxmomgmKK7k",
   "name": "SYS 03 — Stripe Payment → HubSpot Paid Sync",
@@ -37,6 +37,7 @@
     },
     {
       "parameters": {
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
@@ -127,7 +128,7 @@
               "rightValue": true,
               "operator": {
                 "type": "boolean",
-                "operation": "isTrue"
+                "operation": "equals"
               }
             }
           ],
@@ -338,7 +339,7 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "binaryMode": "separate"
   },
   "staticData": null,
@@ -346,9 +347,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "9d2c2e76-135c-4689-bb76-df068ec52445",
-  "activeVersionId": "4757093e-e214-4f64-9c99-af42093314a4",
-  "versionCounter": 27,
+  "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+  "activeVersionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+  "versionCounter": 83,
   "triggerCount": 1,
   "shared": [
     {
@@ -371,25 +372,20 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:42:44.762Z",
-    "createdAt": "2026-04-03T03:42:44.762Z",
-    "versionId": "4757093e-e214-4f64-9c99-af42093314a4",
+    "updatedAt": "2026-04-14T03:12:36.874Z",
+    "createdAt": "2026-04-14T03:12:36.874Z",
+    "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
     "workflowId": "i1Fe1DxmomgmKK7k",
     "nodes": [
       {
-        "parameters": {
-          "content": "## SYS 03 — Stripe Payment → HubSpot Paid Sync (v1)\n\n### Purpose\nWhen Stripe confirms payment, automatically mark the HubSpot Deal as **Paid** and store Stripe identifiers on the deal so downstream automation can trust the CRM state.\n\n### How it works\n1. Receives Stripe webhook\n2. Extracts `event.id` from payload\n3. **Verifies** authenticity by calling Stripe API `GET /v1/events/{id}` using `$env.STRIPE_SECRET_KEY`\n4. Reads `metadata.hubspotDealId` (recommended) from the underlying Stripe object (e.g. Checkout Session)\n5. Updates HubSpot deal:\n   - `dealstage` → `config.hubspot.dealStageIds.paid`\n   - writes Stripe IDs (customer, payment_intent, checkout_session, subscription, invoice)\n\n### Required configuration\n- n8n env var: `STRIPE_SECRET_KEY`\n- HubSpot credential on the update node\n- Your Stripe Checkout / Payment Link flow should set `metadata.hubspotDealId` + `metadata.sku` when possible\n",
-          "height": 420,
-          "width": 560,
-          "color": 5
-        },
+        "parameters": {},
         "id": "note-paid-sync",
         "name": "Note — About this workflow",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1.3,
         "position": [
-          60,
-          60
+          64,
+          64
         ]
       },
       {
@@ -404,7 +400,7 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
         "position": [
-          260,
+          272,
           320
         ],
         "webhookId": "87142032-4d59-4c38-b217-b8eb255cbb60"
@@ -412,7 +408,22 @@
       {
         "parameters": {
           "source": "database",
-          "workflowId": ""
+          "workflowId": {
+            "__rl": true,
+            "value": "1eTTVoSFSlSPvZV4",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+            "cachedResultName": "CONFIG — Global Settings"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "get-config",
         "name": "Get Config",
@@ -432,13 +443,12 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          700,
+          704,
           320
         ]
       },
       {
         "parameters": {
-          "method": "GET",
           "url": "=https://api.stripe.com/v1/events/{{$json.eventId}}",
           "sendHeaders": true,
           "headerParameters": {
@@ -456,7 +466,7 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4,
         "position": [
-          920,
+          928,
           320
         ]
       },
@@ -469,7 +479,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1140,
+          1152,
           320
         ]
       },
@@ -488,7 +498,7 @@
                 "rightValue": true,
                 "operator": {
                   "type": "boolean",
-                  "operation": "isTrue"
+                  "operation": "equals"
                 }
               }
             ],
@@ -547,16 +557,15 @@
                 }
               ]
             }
-          },
-          "options": {}
+          }
         },
         "id": "hs-update",
         "name": "Update HubSpot Deal → Paid",
         "type": "n8n-nodes-base.hubspot",
         "typeVersion": 2,
         "position": [
-          1580,
-          240
+          1536,
+          16
         ],
         "credentials": {
           "hubspotApi": {
@@ -574,9 +583,36 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1800,
+          1808,
           320
         ]
+      },
+      {
+        "parameters": {
+          "authentication": "appToken",
+          "resource": "deal",
+          "operation": "update",
+          "dealId": {
+            "__rl": true,
+            "value": "={{ $json.hubspotDealId }}",
+            "mode": "id"
+          },
+          "updateFields": {}
+        },
+        "type": "n8n-nodes-base.hubspot",
+        "typeVersion": 2.2,
+        "position": [
+          1584,
+          432
+        ],
+        "id": "68d77c8f-ce48-4db2-a910-4da339bfd6c2",
+        "name": "Update a deal",
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
       }
     ],
     "connections": {
@@ -646,7 +682,7 @@
           ],
           [
             {
-              "node": "Update HubSpot Deal → Paid",
+              "node": "Update a deal",
               "type": "main",
               "index": 0
             }
@@ -654,6 +690,11 @@
         ]
       },
       "Update HubSpot Deal → Paid": {
+        "main": [
+          []
+        ]
+      },
+      "Update a deal": {
         "main": [
           [
             {
@@ -669,6 +710,152 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-14T03:12:36.910Z",
+        "id": 2133,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:45.875Z",
+        "id": 2199,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:32.887Z",
+        "id": 2265,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:17:01.458Z",
+        "id": 2331,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:13.949Z",
+        "id": 2397,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:56.875Z",
+        "id": 2463,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:33.148Z",
+        "id": 2529,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:40.529Z",
+        "id": 2601,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:19:47.435Z",
+        "id": 2631,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:36.901Z",
+        "id": 2132,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:45.862Z",
+        "id": 2198,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:32.873Z",
+        "id": 2264,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:17:01.427Z",
+        "id": 2330,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:13.931Z",
+        "id": 2396,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:56.862Z",
+        "id": 2462,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:33.132Z",
+        "id": 2528,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:40.509Z",
+        "id": 2600,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:19:47.412Z",
+        "id": 2630,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ],
+    "settings": {}
   }
 }

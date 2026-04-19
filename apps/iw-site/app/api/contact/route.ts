@@ -7,6 +7,8 @@ import { writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { timingSafeEqual } from "crypto";
+import { buildN8nContactLeadWebhookPayload } from "@/lib/n8nLeadIntakeDealStage";
+import { escapeHtml, wrapIntraWebStaffEmailHtml } from "@/lib/emailShell";
 
 /** Lazy init so `next build` / route analysis does not require RESEND_API_KEY at module load. */
 function getResend(): Resend {
@@ -447,33 +449,59 @@ export async function POST(request: NextRequest) {
     }
 
     // When RECAPTCHA_SKIP_IN_DEV is set, skip token requirement and verification entirely (no token needed).
+    const insecureSkipRecaptcha = process.env.CONTACT_INSECURE_SKIP_RECAPTCHA === "true";
     if (recaptchaEnabled && !skipRecaptchaInDev && !recaptchaBypass) {
-      const token = validatedData.recaptchaToken;
-      if (!token || typeof token !== "string") {
-        return NextResponse.json(
-          { error: "reCAPTCHA verification required", message: "Please complete the security check and try again." },
-          { status: 400 }
+      if (insecureSkipRecaptcha) {
+        console.error(
+          "[contact] SECURITY: CONTACT_INSECURE_SKIP_RECAPTCHA=true — server-side reCAPTCHA verification is OFF. Remove this env var when GOOGLE_APPLICATION_CREDENTIALS_JSON (or another verifier) is configured."
         );
-      }
-      const { valid, invalidReason, score, hostname, apiErrorMessage } = await verifyRecaptchaToken(token, request);
-      if (!valid) {
-        // Log server-side so you can debug in production (Vercel logs, etc.)
-        console.error("[reCAPTCHA] verification failed", {
-          invalidReason,
-          score,
-          hostname,
-          apiErrorMessage,
-          hint: "Check: NEXT_PUBLIC_RECAPTCHA_SITE_KEY matches RECAPTCHA_ENTERPRISE_SITE_KEY; domain allowed in reCAPTCHA key; token not reused; Google credentials and API enabled.",
-        });
-        const responseBody: Record<string, unknown> = {
-          error: "reCAPTCHA verification failed",
-          message: "Security check failed. Please try again.",
-        };
-        // Optional: set RECAPTCHA_DEBUG_RESPONSE=true in Vercel env to see reason in Network tab, then remove after fixing
-        if (process.env.RECAPTCHA_DEBUG_RESPONSE === "true") {
-          responseBody.debug = { invalidReason, score, hostname, apiErrorMessage };
+      } else {
+        const token = validatedData.recaptchaToken;
+        if (!token || typeof token !== "string") {
+          return NextResponse.json(
+            { error: "reCAPTCHA verification required", message: "Please complete the security check and try again." },
+            { status: 400 }
+          );
         }
-        return NextResponse.json(responseBody, { status: 400 });
+        const { valid, invalidReason, score, hostname, apiErrorMessage } = await verifyRecaptchaToken(token, request);
+        if (!valid) {
+          const missingServerCreds =
+            invalidReason === "api_error" &&
+            typeof apiErrorMessage === "string" &&
+            apiErrorMessage.includes("GOOGLE_APPLICATION_CREDENTIALS_JSON is not set");
+
+          if (missingServerCreds) {
+            console.error(
+              "[contact] reCAPTCHA cannot run: GOOGLE_APPLICATION_CREDENTIALS_JSON is not set on this deployment. HubSpot tracking may still log non-HubSpot form activity; /api/contact does not reach thank-you until verification succeeds or CONTACT_INSECURE_SKIP_RECAPTCHA=true (emergency only)."
+            );
+            return NextResponse.json(
+              {
+                error: "recaptcha_server_misconfigured",
+                message:
+                  "This form cannot be verified right now (server configuration). Please email us directly or try again later.",
+              },
+              { status: 503 }
+            );
+          }
+
+          // Log server-side so you can debug in production (Vercel logs, etc.)
+          console.error("[reCAPTCHA] verification failed", {
+            invalidReason,
+            score,
+            hostname,
+            apiErrorMessage,
+            hint: "Check: NEXT_PUBLIC_RECAPTCHA_SITE_KEY matches RECAPTCHA_ENTERPRISE_SITE_KEY; domain allowed in reCAPTCHA key; token not reused; Google credentials and API enabled.",
+          });
+          const responseBody: Record<string, unknown> = {
+            error: "reCAPTCHA verification failed",
+            message: "Security check failed. Please try again.",
+          };
+          // Optional: set RECAPTCHA_DEBUG_RESPONSE=true in Vercel env to see reason in Network tab, then remove after fixing
+          if (process.env.RECAPTCHA_DEBUG_RESPONSE === "true") {
+            responseBody.debug = { invalidReason, score, hostname, apiErrorMessage };
+          }
+          return NextResponse.json(responseBody, { status: 400 });
+        }
       }
     }
 
@@ -503,11 +531,23 @@ What they are trying to fix or achieve:
 ${painPoint}
 `;
 
+    const htmlInner = `<p style="font-weight:600;margin-top:0;color:#0f1419;">New contact form submission</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;font-size:14px;color:#0f1419;">
+<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;color:#475569;width:120px;">Name</td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">${escapeHtml(`${firstName} ${lastName}`)}</td></tr>
+<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;color:#475569;">Company</td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">${escapeHtml(companyName)}</td></tr>
+<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;color:#475569;">Email</td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><a href="mailto:${escapeHtml(email)}" style="color:#0d9488;text-decoration:none;">${escapeHtml(email)}</a></td></tr>
+<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;color:#475569;">Phone</td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;">${escapeHtml(phone)}</td></tr>
+${websiteForHubSpot ? `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;color:#475569;">Website</td><td style="padding:6px 0;border-bottom:1px solid #e2e8f0;"><a href="${escapeHtml(websiteForHubSpot)}" style="color:#0d9488;text-decoration:none;">${escapeHtml(websiteForHubSpot)}</a></td></tr>` : ""}
+<tr><td colspan="2" style="padding:12px 0 4px;color:#475569;font-size:13px;">What they are trying to fix or achieve</td></tr>
+<tr><td colspan="2" style="padding:0 0 8px;white-space:pre-wrap;">${escapeHtml(painPoint)}</td></tr>
+</table>`;
+
     const emailPromise = getResend().emails.send({
       from: "IntraWeb Contact Form <contact@intrawebtech.com>",
       to: process.env.CONTACT_EMAIL || "contact@intrawebtech.com",
       subject: "New Contact Form Submission",
       text: emailContent,
+      html: wrapIntraWebStaffEmailHtml(htmlInner),
       replyTo: email,
     });
 
@@ -603,13 +643,10 @@ ${painPoint}
       const n8nUrl = process.env.N8N_CONTACT_WEBHOOK_URL?.trim();
       if (sync.contactId && n8nUrl) {
         tier = await classifyPainTier(painPoint);
-        const n8nPayload = {
+        const n8nPayload = buildN8nContactLeadWebhookPayload({
           contactId: sync.contactId,
-          createDeal: true,
-          dealStage: "qualifiedtobuy",
           tier,
-          painOverride: "",
-        };
+        });
         console.log("[n8n] Firing webhook for", sync.contactId, "tier", tier);
         try {
           const n8nRes = await fetch(n8nUrl, {

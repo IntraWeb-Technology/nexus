@@ -14,7 +14,10 @@
     "audit:cookies": "ts-node scripts/auditCookies.ts",
     "recaptcha:token": "node scripts/recaptcha-print-token.js",
     "sync:n8n": "node scripts/sync-workflows-to-n8n.mjs",
-    "test:n8n:qualified-portal": "node scripts/test-qualified-portal-webhook.mjs"
+    "test:n8n:qualified-portal": "node scripts/test-qualified-portal-webhook.mjs",
+    "test:n8n:sys01-lead": "node scripts/test-sys01-website-form-lead.mjs",
+    "test": "jest lib/__tests__",
+    "test:all": "jest"
   },
   "dependencies": {
     "@repo/n8n-workflows": "workspace:*",

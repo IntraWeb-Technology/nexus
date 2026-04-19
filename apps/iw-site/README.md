@@ -195,11 +195,28 @@ RECAPTCHA_ENTERPRISE_PROJECT_ID=your-gcp-project-id
 Use the same site key for both `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` and `RECAPTCHA_ENTERPRISE_SITE_KEY`. Server-side verification requires a GCP project with reCAPTCHA Enterprise API enabled and authentication via [Application Default Credentials (ADC)](https://cloud.google.com/docs/authentication/application-default-credentials) (e.g. `gcloud auth application-default login` locally, `GOOGLE_APPLICATION_CREDENTIALS`, or the default service account on GCP). The `projects.assessments.create` method also supports [API keys](https://docs.cloud.google.com/recaptcha/docs/authentication) for billing/quota. See [Authenticate to reCAPTCHA](https://docs.cloud.google.com/recaptcha/docs/authentication) for all options.
 
 For HubSpot contact sync and n8n (optional): set `HUBSPOT_ACCESS_TOKEN`, `HUBSPOT_FORM_GUID` (Forms API). For n8n, set `N8N_CONTACT_WEBHOOK_URL` to the **SYS 01 — Website Form Lead Intake** production webhook (e.g. `https://n8n.intrawebtech.com/webhook/hubspot-website-form-lead`). The API creates or updates the HubSpot contact first, classifies the pain description with Claude (`ANTHROPIC_API_KEY`, model `claude-haiku-4-5-20251001`), then POSTs JSON: `contactId`, `createDeal`, `dealStage`, `tier` (`starter` | `growth`), `painOverride`.
+
+**Strict funnel (deal stages):** New leads use an **early** HubSpot stage (default `appointmentscheduled` on the default pipeline), not `qualifiedtobuy`. **Qualified to buy** should move in HubSpot so **SYS 00 → SYS 03** can run `provision_client` + Clerk. Override the builtin default with **`N8N_CONTACT_DEAL_STAGE`** (HubSpot internal id or numeric stage id for custom pipelines). See [`packages/n8n-workflows/STAGES.md`](../../packages/n8n-workflows/STAGES.md) and CONFIG **`hubspot.dealStageIds.discoveryCallRequested`** in n8n.
 ```
 N8N_CONTACT_WEBHOOK_URL=https://n8n.intrawebtech.com/webhook/hubspot-website-form-lead
+N8N_CONTACT_DEAL_STAGE=
 ANTHROPIC_API_KEY=your-anthropic-api-key
 ```
 Use the **Production** URL from the workflow’s Webhook node (or `/webhook-test/...` for test).
+
+**Production URL checklist (verify wiring):**
+
+| Integration | Target |
+|-------------|--------|
+| `N8N_CONTACT_WEBHOOK_URL` | SYS 01 webhook path **`hubspot-website-form-lead`** on your n8n host |
+| HubSpot private app → **Target URL** | **`…/webhook/hubspot-events`** on n8n (**SYS 00 — HubSpot Events Router**) |
+
+**Staging smoke (optional, needs `N8N_API_KEY`):**
+
+- `pnpm --filter @repo/iw-site test:n8n:sys01-lead` — activates SYS 01 (unless `--no-activate`) and POSTs an early-stage intake payload.
+- `pnpm --filter @repo/iw-site test:n8n:qualified-portal` — SYS 03 qualified webhook smoke (see script header for env).
+
+**Unit tests:** `pnpm --filter @repo/iw-site test` runs Jest on `lib/__tests__` (lead-intake contract + kickoff helpers). Use `pnpm --filter @repo/iw-site test:all` for the full suite (legacy UI tests may need browser mocks).
 
 **HubSpot + n8n lead scoring checklist:**
 - In HubSpot: create custom contact properties `lead_score` (number), `lead_tier` (string), `scoring_breakdown` (string) if they do not exist; ensure `numberofemployees` exists on contacts (standard or custom).
@@ -209,9 +226,9 @@ Use the **Production** URL from the workflow’s Webhook node (or `/webhook-test
 
 - **Deployment env:** HubSpot and n8n are only used when the **deployment** (e.g. Vercel) has the env vars set. `.env.local` is for local dev only. In Vercel: Project → Settings → Environment Variables → add for Production (and Preview if needed):
   - `NEXT_PUBLIC_HUBSPOT_ID`, `HUBSPOT_FORM_GUID`, `HUBSPOT_ACCESS_TOKEN` for HubSpot
-  - `N8N_CONTACT_WEBHOOK_URL`, `ANTHROPIC_API_KEY` for n8n tiering + intake  
+  - `N8N_CONTACT_WEBHOOK_URL`, `N8N_CONTACT_DEAL_STAGE` (optional; custom pipeline stage id), `ANTHROPIC_API_KEY` for n8n tiering + intake  
   Redeploy after changing env.
-- **reCAPTCHA blocking:** If reCAPTCHA is enabled and verification fails, the API returns 400 before any HubSpot/n8n code runs. In production, set `GOOGLE_APPLICATION_CREDENTIALS_JSON` (full service account JSON) and ensure the site domain is allowed in the reCAPTCHA key. Check deployment logs for `[reCAPTCHA] verification failed`.
+- **reCAPTCHA blocking:** If reCAPTCHA is enabled and verification fails, the API returns 400 **before** Resend, HubSpot Forms/Contacts, and thank-you — even if HubSpot’s tracking script still logs a “non-HubSpot form” submission. Set `GOOGLE_APPLICATION_CREDENTIALS_JSON` (full service account JSON from GCP → Service account → Keys) and ensure the site domain is allowed on the reCAPTCHA key. If JSON keys are blocked by org policy, use an org-admin-created key, Workload Identity Federation, or a tiny GCP-hosted verifier — or **temporary emergency only:** `CONTACT_INSECURE_SKIP_RECAPTCHA=true` (server skips verification; **high spam risk**; remove when credentials exist). Missing JSON alone may return **503** with `recaptcha_server_misconfigured` instead of a generic security error. Check logs for `[reCAPTCHA] verification failed`.
 - **Postman / API clients (production):** The live site cannot use a fake `recaptchaToken`; tokens are one-time and tied to the browser. For trusted testing only, set **`CONTACT_BYPASS_RECAPTCHA_SECRET`** in the deployment env to a random string **at least 16 characters**, redeploy, then send header **`X-Intraweb-Contact-Bypass`** with that **exact** value on `POST /api/contact`. Remove the env var (or rotate the secret) when finished—anyone with the secret can submit without reCAPTCHA.
 - **Logs:** After a form submit, check deployment logs (e.g. Vercel → Logs). Each successful `POST /api/contact` logs a single line: `[contact] integration summary for <email> | hubspot_forms: … | hubspot_contacts: …`. You want `hubspot_forms: ok` and/or `hubspot_contacts: ok (contact created)` or `ok (contact updated by email)`. If you see `skipped`, set the missing env vars on the **deployment** and redeploy. If you see `error:` with an HTTP status, read the message (HubSpot often returns JSON explaining invalid field names or missing properties).
 - **See why HubSpot did not update:** In **`next dev` (localhost)**, every successful `POST /api/contact` response JSON includes **`integrations`** (`hubspotForms`, `hubspotContacts`, `hubspotEnv`) so Postman shows `skipped` vs `ok` vs `error` without extra env vars. In production, set `CONTACT_INTEGRATION_DEBUG=true` temporarily to get the same shape in the response, then remove it.

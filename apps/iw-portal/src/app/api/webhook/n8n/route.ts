@@ -6,6 +6,7 @@ import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webh
 import { progressFromMilestones } from '@/lib/progress'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
+import { findProjectByHubSpotDealId } from '@/lib/webhooks/provision-client-idempotency'
 import { NextResponse } from 'next/server'
 
 export async function POST(request: Request) {
@@ -259,20 +260,13 @@ export async function POST(request: Request) {
         const slug = projectSlug
         if (!slug) return NextResponse.json({ error: 'project_slug required' }, { status: 400 })
         const data = d.data
-        const dealId = data.hubspot_deal_id?.trim()
-        if (dealId) {
-          const { data: existingByDeal } = await supabase
-            .from('projects')
-            .select('id, client_id')
-            .eq('hubspot_deal_id', dealId)
-            .maybeSingle()
-          if (existingByDeal) {
-            return NextResponse.json({
-              client_id: existingByDeal.client_id,
-              project_id: existingByDeal.id,
-              idempotent: true,
-            })
-          }
+        const existingByDeal = await findProjectByHubSpotDealId(supabase, data.hubspot_deal_id)
+        if (existingByDeal) {
+          return NextResponse.json({
+            client_id: existingByDeal.client_id,
+            project_id: existingByDeal.id,
+            idempotent: true,
+          })
         }
 
         const clerkUserId =

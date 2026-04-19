@@ -30,7 +30,7 @@ $body = if ($NoContactId -or -not $ContactId) {
             industry    = "Other"
         }
         createDeal   = $false
-        dealStage    = "qualifiedtobuy"
+        dealStage    = "appointmentscheduled"
         tier         = "starter"
         painOverride = "PowerShell test payload (safe to delete)"
         intake       = @{ contact = @{ businessName = "n8n webhook test" } }
@@ -39,7 +39,7 @@ $body = if ($NoContactId -or -not $ContactId) {
     @{
         contactId    = $ContactId
         createDeal   = $false
-        dealStage    = "qualifiedtobuy"
+        dealStage    = "appointmentscheduled"
         tier         = "starter"
         painOverride = "PowerShell test with existing HubSpot contact id"
     }

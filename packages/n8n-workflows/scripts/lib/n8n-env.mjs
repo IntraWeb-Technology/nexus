@@ -39,8 +39,14 @@ export function loadEnvLocal() {
   loadOneEnvFile(join(REPO_ROOT, '.env.local'))
 }
 
+/**
+ * n8n **instance origin** (scheme + host + optional path prefix), never `/api/v1`.
+ * Repo scripts append `/api/v1` themselves. A trailing `/api/v1` on N8N_API_URL / N8N_BASE_URL
+ * is stripped so the same value can be pasted from the **n8n API** credential field if needed.
+ */
 export function baseUrl() {
-  const raw = (process.env.N8N_API_URL || process.env.N8N_BASE_URL || '').trim().replace(/\/$/, '')
+  let raw = (process.env.N8N_API_URL || process.env.N8N_BASE_URL || '').trim().replace(/\/$/, '')
+  raw = raw.replace(/\/api\/v1$/i, '')
   return raw
 }
 

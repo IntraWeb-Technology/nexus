@@ -43,7 +43,7 @@ function getIntArg(flag, defaultValue) {
   return Number.isFinite(n) && n > 0 ? n : defaultValue;
 }
 
-/** Public API accepts only a subset; UI-only keys (callerPolicy, availableInMCP, …) cause 400. */
+/** Public API accepts a subset of workflow settings; include MCP flags when present (n8n 2.x). */
 function pickSettings(obj) {
   if (!obj || typeof obj !== "object") return {};
   const keys = [
@@ -55,6 +55,8 @@ function pickSettings(obj) {
     "saveDataErrorExecution",
     "saveDataSuccessExecution",
     "executionTimeout",
+    "availableInMCP",
+    "callerPolicy",
   ];
   const out = {};
   for (const k of keys) {

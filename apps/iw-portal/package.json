@@ -18,7 +18,8 @@
     "db:push": "pnpm exec supabase db push",
     "hubspot:ensure-co-properties": "tsx scripts/hubspot/ensure-change-order-properties.ts",
     "hubspot:ensure-co-form": "tsx scripts/hubspot/ensure-change-order-form.ts",
-    "hubspot:update-co-form": "tsx scripts/hubspot/update-change-order-form.ts"
+    "hubspot:update-co-form": "tsx scripts/hubspot/update-change-order-form.ts",
+    "test": "tsx --test src/lib/webhooks/provision-client-idempotency.test.ts"
   },
   "dependencies": {
     "@clerk/backend": "^3.2.4",
