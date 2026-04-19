@@ -4,11 +4,46 @@
  *   node packages/n8n-workflows/scripts/push-local-workflow.mjs <path-to-workflow.json>
  *
  * Requires N8N_API_URL (or N8N_BASE_URL) + N8N_API_KEY (see .env.example; loadEnvLocal reads repo .env.local).
+ *
+ * After a successful PUT, if any Code node’s `jsCode` contains the IntraWeb email shell marker
+ * `data-iw-email-shell`, we assert the graph no longer uses legacy horizontal shell padding. That
+ * catches n8n 2.x cases where the UI draft `nodes` blob drifted from `activeVersion` (emails still
+ * showed `8px 32px 40px` / `28px 32px 12px` until a full PUT from git).
  */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 import { baseUrl, loadEnvLocal } from './lib/n8n-env.mjs'
+
+/** Legacy shell paddings (horizontal 32px); must stay out of Prepare Email / wrapEmail. */
+const LEGACY_SHELL_PADDING = ['8px 32px 40px', '28px 32px 12px', '20px 32px 28px']
+
+function codeNodesBlob(nodes) {
+  if (!Array.isArray(nodes)) return ''
+  return nodes
+    .filter((n) => n?.type === 'n8n-nodes-base.code' && typeof n?.parameters?.jsCode === 'string')
+    .map((n) => n.parameters.jsCode)
+    .join('\n')
+}
+
+/** n8n 2.x can briefly diverge `nodes` vs `activeVersion.nodes`; both must match for sends. */
+function assertIntraWebEmailShellNodes(workflowResponse) {
+  const sections = [
+    ['nodes', workflowResponse?.nodes],
+    ['activeVersion.nodes', workflowResponse?.activeVersion?.nodes],
+  ]
+  for (const [label, nodes] of sections) {
+    const codeBlob = codeNodesBlob(nodes)
+    if (!codeBlob.includes('data-iw-email-shell')) continue
+    const found = LEGACY_SHELL_PADDING.filter((s) => codeBlob.includes(s))
+    if (found.length) {
+      throw new Error(
+        `Push response \`${label}\` still contains legacy email shell padding: ${found.join(', ')}. ` +
+          'Re-open the workflow in n8n or re-run inject + push from git.',
+      )
+    }
+  }
+}
 
 function pickSettings(obj) {
   if (!obj || typeof obj !== 'object') return {}
@@ -80,9 +115,17 @@ if (!res.ok) {
   console.error(text.slice(0, 2000))
   process.exit(1)
 }
+let parsed
 try {
-  const j = JSON.parse(text)
-  console.log('OK', j.id, j.name, j.updatedAt || '')
+  parsed = JSON.parse(text)
 } catch {
-  console.log(text.slice(0, 500))
+  console.error('Non-JSON response from n8n:', text.slice(0, 500))
+  process.exit(1)
 }
+try {
+  assertIntraWebEmailShellNodes(parsed)
+} catch (e) {
+  console.error(e instanceof Error ? e.message : e)
+  process.exit(1)
+}
+console.log('OK', parsed.id, parsed.name, parsed.updatedAt || '')
