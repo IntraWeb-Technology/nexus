@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:19:55.006Z",
+  "updatedAt": "2026-04-19T19:25:29.656Z",
   "createdAt": "2026-03-08T22:46:19.089Z",
   "id": "dDeJ0UOrGnkXGeix",
   "name": "SYS 01 — AI Voice Lead Qualification",
@@ -624,7 +624,7 @@
   "pinData": {},
   "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
   "activeVersionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
-  "versionCounter": 202,
+  "versionCounter": 215,
   "triggerCount": 1,
   "shared": [
     {
@@ -1412,6 +1412,38 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:44.930Z",
+        "id": 2753,
+        "workflowId": "dDeJ0UOrGnkXGeix",
+        "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:53.776Z",
+        "id": 2803,
+        "workflowId": "dDeJ0UOrGnkXGeix",
+        "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:04.062Z",
+        "id": 2849,
+        "workflowId": "dDeJ0UOrGnkXGeix",
+        "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:29.726Z",
+        "id": 3015,
+        "workflowId": "dDeJ0UOrGnkXGeix",
+        "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-03T03:42:43.011Z",
         "id": 1479,
         "workflowId": "dDeJ0UOrGnkXGeix",
@@ -1562,8 +1594,39 @@
         "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:44.914Z",
+        "id": 2752,
+        "workflowId": "dDeJ0UOrGnkXGeix",
+        "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:53.763Z",
+        "id": 2802,
+        "workflowId": "dDeJ0UOrGnkXGeix",
+        "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:04.037Z",
+        "id": 2848,
+        "workflowId": "dDeJ0UOrGnkXGeix",
+        "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:29.695Z",
+        "id": 3014,
+        "workflowId": "dDeJ0UOrGnkXGeix",
+        "versionId": "493524d7-8ed1-4405-82b3-5fd3039a60fd",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

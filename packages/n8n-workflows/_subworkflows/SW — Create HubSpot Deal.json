@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:21:12.446Z",
+  "updatedAt": "2026-04-19T19:25:28.124Z",
   "createdAt": "2026-03-08T22:40:17.167Z",
   "id": "r3XBl1iiKYzSOFWF",
   "name": "SW: Create HubSpot Deal",
@@ -205,7 +205,7 @@
   "pinData": {},
   "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
   "activeVersionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
-  "versionCounter": 403,
+  "versionCounter": 416,
   "triggerCount": 0,
   "shared": [
     {
@@ -583,6 +583,38 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:39.700Z",
+        "id": 2701,
+        "workflowId": "r3XBl1iiKYzSOFWF",
+        "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:43.559Z",
+        "id": 2733,
+        "workflowId": "r3XBl1iiKYzSOFWF",
+        "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:02:05.746Z",
+        "id": 2901,
+        "workflowId": "r3XBl1iiKYzSOFWF",
+        "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:28.166Z",
+        "id": 3001,
+        "workflowId": "r3XBl1iiKYzSOFWF",
+        "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-13T21:12:49.353Z",
         "id": 1567,
         "workflowId": "r3XBl1iiKYzSOFWF",
@@ -733,8 +765,39 @@
         "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:39.681Z",
+        "id": 2700,
+        "workflowId": "r3XBl1iiKYzSOFWF",
+        "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:43.544Z",
+        "id": 2732,
+        "workflowId": "r3XBl1iiKYzSOFWF",
+        "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:02:05.733Z",
+        "id": 2900,
+        "workflowId": "r3XBl1iiKYzSOFWF",
+        "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:28.153Z",
+        "id": 3000,
+        "workflowId": "r3XBl1iiKYzSOFWF",
+        "versionId": "6b7c243f-116b-4840-bf8f-cbf277bde279",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

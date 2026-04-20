@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:19:44.931Z",
+  "updatedAt": "2026-04-19T19:26:03.029Z",
   "createdAt": "2026-03-15T22:51:03.504Z",
   "id": "1aX9pLXOuVelq3sK",
   "name": "SYS 03 — Proposal and Contract Delivery",
@@ -389,18 +389,12 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "mode": "id",
-          "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
-        },
-        "sheetName": {
-          "mode": "name",
-          "value": "Proposals"
-        },
+        "operation": "executeQuery",
+        "query": "{{ \"SELECT status AS \\\"Status\\\", status FROM public.os_contracts_queue WHERE queue_type = 'proposal' AND hubspot_deal_id = '\" + String($('Extract Deal Data').first().json.dealId||'').replace(/'/g,\"''\") + \"' ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 1;\" }}",
         "options": {}
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         5136,
         -592
@@ -408,87 +402,33 @@
       "id": "345881f4-2e5f-405c-bda6-d268d3e93677",
       "name": "Check Approval Status",
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "mode": "id",
-          "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
-        },
-        "sheetName": {
-          "mode": "name",
-          "value": "Proposals"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "ID": "={{ $('Extract Deal Data').first().json.dealId || '' }}",
-            "Date": "={{ new Date().toISOString().split('T')[0] }}",
-            "Client": "={{ $('Extract Deal Data').first().json.clientName }}",
-            "Drive Link": "={{ $('Upload to Drive').first()?.json?.id ? 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.id : ($('Upload to Drive').first()?.json?.data?.id ? 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.data.id : '') }}",
-            "Status": "={{ 'Pending Review | $' + ($('Extract Deal Data').first().json.dealValue || 0) + ' | ' + ($('Extract Deal Data').first().json.tier || '') + ' | ' + ($('Extract Deal Data').first().json.contactEmail || '') }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "ID",
-              "displayName": "ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Date",
-              "displayName": "Date",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Client",
-              "displayName": "Client",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Drive Link",
-              "displayName": "Drive Link",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Status",
-              "displayName": "Status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\nfunction esc(x) { return String(x ?? '').replace(/'/g, \"''\"); }\nconst dealId = String(d.dealId || '').trim();\nconst statusDetail = 'Pending Review | $' + (d.dealValue || 0) + ' | ' + (d.tier || '') + ' | ' + (d.contactEmail || '');\nconst q = \"INSERT INTO public.os_contracts_queue (queue_type,hubspot_deal_id,queue_date,client_name,drive_link,status,proposal_status_detail) VALUES ('proposal','\" + esc(dealId) + \"',CURRENT_DATE,'\" + esc(d.clientName) + \"','\" + esc(driveLink) + \"','Pending Review','\" + esc(statusDetail) + \"') ON CONFLICT (hubspot_deal_id,queue_type) DO UPDATE SET client_name = EXCLUDED.client_name, drive_link = EXCLUDED.drive_link, status = EXCLUDED.status, proposal_status_detail = EXCLUDED.proposal_status_detail, queue_date = EXCLUDED.queue_date, updated_at = now();\";\nreturn [{ json: { _sql: q } }];"
+      },
+      "id": "sys03-proposal-queue-sql",
+      "name": "Build Proposal Queue SQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4096,
+        -528
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json._sql }}",
         "options": {}
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         4240,
         -528
@@ -496,9 +436,9 @@
       "id": "33f3e5e2-8aee-4ec9-a513-cb38c410ff2a",
       "name": "Add to Proposals Queue",
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
@@ -523,8 +463,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        4000,
-        -512
+        3952,
+        -528
       ],
       "id": "cb0b6a64-8b96-4c09-aa1d-033c1030fa9c",
       "name": "Upload to Drive",
@@ -784,6 +724,17 @@
       "main": [
         [
           {
+            "node": "Build Proposal Queue SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Proposal Queue SQL": {
+      "main": [
+        [
+          {
             "node": "Add to Proposals Queue",
             "type": "main",
             "index": 0
@@ -816,9 +767,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
-  "activeVersionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
-  "versionCounter": 400,
+  "versionId": "97e58c64-af72-4658-9b4f-50366ce1e2b1",
+  "activeVersionId": "7acedf40-2e99-4964-830e-10b048514218",
+  "versionCounter": 414,
   "triggerCount": 1,
   "shared": [
     {
@@ -841,9 +792,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-14T04:29:16.522Z",
-    "createdAt": "2026-04-14T04:29:16.522Z",
-    "versionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
+    "updatedAt": "2026-04-19T19:25:35.749Z",
+    "createdAt": "2026-04-19T19:25:35.749Z",
+    "versionId": "7acedf40-2e99-4964-830e-10b048514218",
     "workflowId": "1aX9pLXOuVelq3sK",
     "nodes": [
       {
@@ -1228,18 +1179,12 @@
       },
       {
         "parameters": {
-          "documentId": {
-            "mode": "id",
-            "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "Proposals"
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"SELECT status AS \\\"Status\\\", status FROM public.os_contracts_queue WHERE queue_type = 'proposal' AND hubspot_deal_id = '\" + String($('Extract Deal Data').first().json.dealId||'').replace(/'/g,\"''\") + \"' ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 1;\" }}",
           "options": {}
         },
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.7,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           5136,
           -592
@@ -1247,87 +1192,33 @@
         "id": "345881f4-2e5f-405c-bda6-d268d3e93677",
         "name": "Check Approval Status",
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       },
       {
         "parameters": {
-          "operation": "append",
-          "documentId": {
-            "mode": "id",
-            "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "Proposals"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "ID": "={{ $('Extract Deal Data').first().json.dealId || '' }}",
-              "Date": "={{ new Date().toISOString().split('T')[0] }}",
-              "Client": "={{ $('Extract Deal Data').first().json.clientName }}",
-              "Drive Link": "={{ $('Upload to Drive').first()?.json?.id ? 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.id : ($('Upload to Drive').first()?.json?.data?.id ? 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.data.id : '') }}",
-              "Status": "={{ 'Pending Review | $' + ($('Extract Deal Data').first().json.dealValue || 0) + ' | ' + ($('Extract Deal Data').first().json.tier || '') + ' | ' + ($('Extract Deal Data').first().json.contactEmail || '') }}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "ID",
-                "displayName": "ID",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Date",
-                "displayName": "Date",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Client",
-                "displayName": "Client",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Drive Link",
-                "displayName": "Drive Link",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Status",
-                "displayName": "Status",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
+          "jsCode": "const d = $('Extract Deal Data').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\nfunction esc(x) { return String(x ?? '').replace(/'/g, \"''\"); }\nconst dealId = String(d.dealId || '').trim();\nconst statusDetail = 'Pending Review | $' + (d.dealValue || 0) + ' | ' + (d.tier || '') + ' | ' + (d.contactEmail || '');\nconst q = \"INSERT INTO public.os_contracts_queue (queue_type,hubspot_deal_id,queue_date,client_name,drive_link,status,proposal_status_detail) VALUES ('proposal','\" + esc(dealId) + \"',CURRENT_DATE,'\" + esc(d.clientName) + \"','\" + esc(driveLink) + \"','Pending Review','\" + esc(statusDetail) + \"') ON CONFLICT (hubspot_deal_id,queue_type) DO UPDATE SET client_name = EXCLUDED.client_name, drive_link = EXCLUDED.drive_link, status = EXCLUDED.status, proposal_status_detail = EXCLUDED.proposal_status_detail, queue_date = EXCLUDED.queue_date, updated_at = now();\";\nreturn [{ json: { _sql: q } }];"
+        },
+        "id": "sys03-proposal-queue-sql",
+        "name": "Build Proposal Queue SQL",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4120,
+          -528
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "={{ $json._sql }}",
           "options": {}
         },
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.7,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           4240,
           -528
@@ -1335,9 +1226,9 @@
         "id": "33f3e5e2-8aee-4ec9-a513-cb38c410ff2a",
         "name": "Add to Proposals Queue",
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       },
@@ -1623,6 +1514,17 @@
         "main": [
           [
             {
+              "node": "Build Proposal Queue SQL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Proposal Queue SQL": {
+        "main": [
+          [
+            {
               "node": "Add to Proposals Queue",
               "type": "main",
               "index": 0
@@ -1648,54 +1550,21 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-14T04:29:16.632Z",
-        "id": 2549,
+        "createdAt": "2026-04-19T19:25:35.800Z",
+        "id": 3035,
         "workflowId": "1aX9pLXOuVelq3sK",
-        "versionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
+        "versionId": "7acedf40-2e99-4964-830e-10b048514218",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-14T09:44:40.134Z",
-        "id": 2597,
+        "createdAt": "2026-04-19T19:25:35.784Z",
+        "id": 3034,
         "workflowId": "1aX9pLXOuVelq3sK",
-        "versionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:19:45.106Z",
-        "id": 2629,
-        "workflowId": "1aX9pLXOuVelq3sK",
-        "versionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T04:29:16.589Z",
-        "id": 2548,
-        "workflowId": "1aX9pLXOuVelq3sK",
-        "versionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:40.115Z",
-        "id": 2596,
-        "workflowId": "1aX9pLXOuVelq3sK",
-        "versionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:19:45.079Z",
-        "id": 2628,
-        "workflowId": "1aX9pLXOuVelq3sK",
-        "versionId": "3bd9e7a0-cb40-4fa8-b1b1-ec6d48ca5449",
+        "versionId": "7acedf40-2e99-4964-830e-10b048514218",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

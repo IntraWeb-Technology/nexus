@@ -1,3 +1,4 @@
+import { getSupabaseApiUrl } from '@/lib/supabase/url'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -32,7 +33,7 @@ export async function GET() {
 
   const pk = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? ''
   const sk = process.env.CLERK_SECRET_KEY ?? ''
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+  const supabaseUrl = getSupabaseApiUrl() ?? ''
   const supabaseAnon =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY ?? ''
   const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''

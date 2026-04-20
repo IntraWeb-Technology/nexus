@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:20:09.032Z",
+  "updatedAt": "2026-04-19T19:25:35.292Z",
   "createdAt": "2026-03-08T22:47:47.374Z",
   "id": "jDbLNf6Q1mIaTlGy",
   "name": "SYS 02 — Outbound Lead Outreach Sequence",
@@ -1053,7 +1053,7 @@
   "pinData": {},
   "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
   "activeVersionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
-  "versionCounter": 190,
+  "versionCounter": 203,
   "triggerCount": 1,
   "shared": [
     {
@@ -2271,6 +2271,38 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:50.160Z",
+        "id": 2765,
+        "workflowId": "jDbLNf6Q1mIaTlGy",
+        "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:46:00.673Z",
+        "id": 2815,
+        "workflowId": "jDbLNf6Q1mIaTlGy",
+        "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:32.680Z",
+        "id": 2861,
+        "workflowId": "jDbLNf6Q1mIaTlGy",
+        "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.356Z",
+        "id": 3027,
+        "workflowId": "jDbLNf6Q1mIaTlGy",
+        "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-03T03:42:43.475Z",
         "id": 1487,
         "workflowId": "jDbLNf6Q1mIaTlGy",
@@ -2421,8 +2453,39 @@
         "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:50.142Z",
+        "id": 2764,
+        "workflowId": "jDbLNf6Q1mIaTlGy",
+        "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:46:00.638Z",
+        "id": 2814,
+        "workflowId": "jDbLNf6Q1mIaTlGy",
+        "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:32.652Z",
+        "id": 2860,
+        "workflowId": "jDbLNf6Q1mIaTlGy",
+        "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.338Z",
+        "id": 3026,
+        "workflowId": "jDbLNf6Q1mIaTlGy",
+        "versionId": "3cf2d6d8-7798-48a5-b8be-6d6dbca84536",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

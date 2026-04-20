@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:20:38.665Z",
+  "updatedAt": "2026-04-19T19:25:36.791Z",
   "createdAt": "2026-03-08T22:56:10.084Z",
   "id": "2O0odRL5azZZLv5N",
   "name": "SYS 06 — LinkedIn Content Pipeline",
@@ -175,7 +175,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $('Get Config').first().json;\n\nreturn [{\n  json: {\n    message: `LinkedIn drafts ready for review: https://docs.google.com/spreadsheets/d/${config.google.masterSheetId}`,\n    priority: 'info'\n  }\n}];"
+        "jsCode": "const config = $('Get Config').first().json;\n\nreturn [{\n  json: {\n    message: `LinkedIn drafts saved to Supabase (public.os_linkedin_pipeline). masterSheetId is no longer required for this workflow.`,\n    priority: 'info'\n  }\n}];"
       },
       "id": "sys07-alert-prep",
       "name": "Prep Alert",
@@ -237,125 +237,22 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-          "mode": "list",
-          "cachedResultName": "IntraWeb OS — Master Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 2105675935,
-          "mode": "list",
-          "cachedResultName": "LinkedIn",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=2105675935"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Hashtags": "={{ $json.hashtags }}",
-            "Date Generated": "={{ $json.dateGenerated }}",
-            "News Hook": "={{ $json.newsHook }}",
-            "Full Post": "={{ $json.fullPost }}",
-            "Suggested Link": "={{ $json.suggestedLink }}",
-            "Status": "={{ $json.status }}",
-            "Scheduled Time": "={{ $json.scheduledTime }}",
-            "Post Notes": "={{ $json.postNotes }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Date Generated",
-              "displayName": "Date Generated",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "News Hook",
-              "displayName": "News Hook",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Full Post",
-              "displayName": "Full Post",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Hashtags",
-              "displayName": "Hashtags",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Suggested Link",
-              "displayName": "Suggested Link",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Status",
-              "displayName": "Status",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Scheduled Time",
-              "displayName": "Scheduled Time",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Post Notes",
-              "displayName": "Post Notes",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO public.os_linkedin_pipeline (hashtags, date_generated, news_hook, full_post, suggested_link, status, scheduled_time, post_notes) VALUES ('\" + String($json.hashtags||'').replace(/'/g,\"''\") + \"', now(),'\" + String($json.newsHook||'').replace(/'/g,\"''\") + \"','\" + String($json.fullPost||'').replace(/'/g,\"''\") + \"','\" + String($json.suggestedLink||'').replace(/'/g,\"''\") + \"','\" + String($json.status||'').replace(/'/g,\"''\") + \"','\" + String($json.scheduledTime||'').replace(/'/g,\"''\") + \"','\" + String($json.postNotes||'').replace(/'/g,\"''\") + \"');\" }}",
         "options": {}
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "id": "fc36a43a-e7f9-4ce1-bae2-244e3fb86d2e",
+      "name": "Append row in sheet",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         1776,
         400
       ],
-      "id": "fc36a43a-e7f9-4ce1-bae2-244e3fb86d2e",
-      "name": "Append row in sheet",
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     }
@@ -544,9 +441,9 @@
       }
     ]
   },
-  "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-  "activeVersionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-  "versionCounter": 145,
+  "versionId": "db5b200f-c8d2-4448-9bf2-4c50caeea9ae",
+  "activeVersionId": "db5b200f-c8d2-4448-9bf2-4c50caeea9ae",
+  "versionCounter": 158,
   "triggerCount": 1,
   "shared": [
     {
@@ -569,9 +466,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T12:00:13.840Z",
-    "createdAt": "2026-04-03T12:00:13.840Z",
-    "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
+    "updatedAt": "2026-04-19T19:25:36.791Z",
+    "createdAt": "2026-04-19T19:25:36.791Z",
+    "versionId": "db5b200f-c8d2-4448-9bf2-4c50caeea9ae",
     "workflowId": "2O0odRL5azZZLv5N",
     "nodes": [
       {
@@ -742,7 +639,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const config = $('Get Config').first().json;\n\nreturn [{\n  json: {\n    message: `LinkedIn drafts ready for review: https://docs.google.com/spreadsheets/d/${config.google.masterSheetId}`,\n    priority: 'info'\n  }\n}];"
+          "jsCode": "const config = $('Get Config').first().json;\n\nreturn [{\n  json: {\n    message: `LinkedIn drafts saved to Supabase (public.os_linkedin_pipeline). masterSheetId is no longer required for this workflow.`,\n    priority: 'info'\n  }\n}];"
         },
         "id": "sys07-alert-prep",
         "name": "Prep Alert",
@@ -804,125 +701,22 @@
       },
       {
         "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-            "mode": "list",
-            "cachedResultName": "IntraWeb OS — Master Data",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": 2105675935,
-            "mode": "list",
-            "cachedResultName": "LinkedIn",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=2105675935"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "Hashtags": "={{ $json.hashtags }}",
-              "Date Generated": "={{ $json.dateGenerated }}",
-              "News Hook": "={{ $json.newsHook }}",
-              "Full Post": "={{ $json.fullPost }}",
-              "Suggested Link": "={{ $json.suggestedLink }}",
-              "Status": "={{ $json.status }}",
-              "Scheduled Time": "={{ $json.scheduledTime }}",
-              "Post Notes": "={{ $json.postNotes }}"
-            },
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "Date Generated",
-                "displayName": "Date Generated",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "News Hook",
-                "displayName": "News Hook",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Full Post",
-                "displayName": "Full Post",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Hashtags",
-                "displayName": "Hashtags",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Suggested Link",
-                "displayName": "Suggested Link",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Status",
-                "displayName": "Status",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Scheduled Time",
-                "displayName": "Scheduled Time",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Post Notes",
-                "displayName": "Post Notes",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"INSERT INTO public.os_linkedin_pipeline (hashtags, date_generated, news_hook, full_post, suggested_link, status, scheduled_time, post_notes) VALUES ('\" + String($json.hashtags||'').replace(/'/g,\"''\") + \"', now(),'\" + String($json.newsHook||'').replace(/'/g,\"''\") + \"','\" + String($json.fullPost||'').replace(/'/g,\"''\") + \"','\" + String($json.suggestedLink||'').replace(/'/g,\"''\") + \"','\" + String($json.status||'').replace(/'/g,\"''\") + \"','\" + String($json.scheduledTime||'').replace(/'/g,\"''\") + \"','\" + String($json.postNotes||'').replace(/'/g,\"''\") + \"');\" }}",
           "options": {}
         },
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.7,
+        "id": "fc36a43a-e7f9-4ce1-bae2-244e3fb86d2e",
+        "name": "Append row in sheet",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           1776,
           400
         ],
-        "id": "fc36a43a-e7f9-4ce1-bae2-244e3fb86d2e",
-        "name": "Append row in sheet",
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       }
@@ -1075,281 +869,24 @@
     "authors": "John Schibelli",
     "name": null,
     "description": null,
-    "autosaved": true,
+    "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-13T23:32:59.115Z",
-        "id": 1624,
+        "createdAt": "2026-04-19T19:25:36.828Z",
+        "id": 3051,
         "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
+        "versionId": "db5b200f-c8d2-4448-9bf2-4c50caeea9ae",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-13T23:33:40.391Z",
-        "id": 1672,
+        "createdAt": "2026-04-19T19:25:36.816Z",
+        "id": 3050,
         "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:18:36.639Z",
-        "id": 1743,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:22:04.470Z",
-        "id": 1799,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:54:04.275Z",
-        "id": 1881,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:55:40.862Z",
-        "id": 1947,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:00:36.478Z",
-        "id": 2013,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:11:42.384Z",
-        "id": 2079,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:12:37.505Z",
-        "id": 2145,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:15:46.503Z",
-        "id": 2211,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:33.396Z",
-        "id": 2277,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:17:02.603Z",
-        "id": 2343,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:14.709Z",
-        "id": 2409,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:57.566Z",
-        "id": 2475,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:33.850Z",
-        "id": 2541,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:41.725Z",
-        "id": 2613,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:20:38.733Z",
-        "id": 2657,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-13T23:32:59.105Z",
-        "id": 1623,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-13T23:33:40.380Z",
-        "id": 1671,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:18:36.627Z",
-        "id": 1742,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:22:04.455Z",
-        "id": 1798,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:54:04.260Z",
-        "id": 1880,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:55:40.842Z",
-        "id": 1946,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:00:36.458Z",
-        "id": 2012,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:11:42.367Z",
-        "id": 2078,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:12:37.488Z",
-        "id": 2144,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:15:46.484Z",
-        "id": 2210,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:33.384Z",
-        "id": 2276,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:17:02.587Z",
-        "id": 2342,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:14.646Z",
-        "id": 2408,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:57.541Z",
-        "id": 2474,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:33.832Z",
-        "id": 2540,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:41.712Z",
-        "id": 2612,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:20:38.712Z",
-        "id": 2656,
-        "workflowId": "2O0odRL5azZZLv5N",
-        "versionId": "fc5a817c-1a85-415d-8934-3418ac8bad03",
+        "versionId": "db5b200f-c8d2-4448-9bf2-4c50caeea9ae",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

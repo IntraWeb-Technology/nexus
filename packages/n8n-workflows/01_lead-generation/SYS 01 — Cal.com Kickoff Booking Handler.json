@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:19:56.467Z",
+  "updatedAt": "2026-04-19T19:25:29.803Z",
   "createdAt": "2026-04-02T02:04:39.521Z",
   "id": "jZSXHKgoMIQErTJ1",
   "name": "SYS 01 — Cal.com Kickoff Booking Handler",
@@ -605,7 +605,7 @@
   "pinData": {},
   "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
   "activeVersionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
-  "versionCounter": 84,
+  "versionCounter": 97,
   "triggerCount": 1,
   "shared": [
     {
@@ -1377,6 +1377,38 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:45.068Z",
+        "id": 2755,
+        "workflowId": "jZSXHKgoMIQErTJ1",
+        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:53.863Z",
+        "id": 2805,
+        "workflowId": "jZSXHKgoMIQErTJ1",
+        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:06.088Z",
+        "id": 2851,
+        "workflowId": "jZSXHKgoMIQErTJ1",
+        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:29.866Z",
+        "id": 3017,
+        "workflowId": "jZSXHKgoMIQErTJ1",
+        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-03T03:42:43.093Z",
         "id": 1481,
         "workflowId": "jZSXHKgoMIQErTJ1",
@@ -1527,8 +1559,39 @@
         "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:45.052Z",
+        "id": 2754,
+        "workflowId": "jZSXHKgoMIQErTJ1",
+        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:53.847Z",
+        "id": 2804,
+        "workflowId": "jZSXHKgoMIQErTJ1",
+        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:06.070Z",
+        "id": 2850,
+        "workflowId": "jZSXHKgoMIQErTJ1",
+        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:29.845Z",
+        "id": 3016,
+        "workflowId": "jZSXHKgoMIQErTJ1",
+        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

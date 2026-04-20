@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:19:39.642Z",
+  "updatedAt": "2026-04-19T19:25:35.635Z",
   "createdAt": "2026-02-23T02:02:11.116Z",
   "id": "mH67fjS4eC9amV4n",
   "name": "SYS 03 — Pre-Call Diagnostic Brief",
@@ -127,41 +127,22 @@
     },
     {
       "parameters": {
-        "operation": "read",
-        "documentId": {
-          "__rl": true,
-          "value": "1045Srb-IOkEU_qHjvGzJD_C42m2_a_0ffd_8HwIZrjs",
-          "mode": "list",
-          "cachedResultName": "IntraWeb — Pre-Call Diagnostic Brief",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1045Srb-IOkEU_qHjvGzJD_C42m2_a_0ffd_8HwIZrjs/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "mode": "name",
-          "value": "={{ $('GetConfig').first().json.google.preCallIntakeSheetTab }}"
-        },
-        "range": "A:ZZ",
-        "filters": {
-          "values": [
-            {
-              "lookupColumn": "={{ $('GetConfig').first().json.google.preCallIntakeEmailColumn }}",
-              "lookupValue": "={{ $('📋 Parse Booking Data').first().json.email }}"
-            }
-          ]
-        },
+        "operation": "executeQuery",
+        "query": "={{ \"SELECT COALESCE((SELECT email FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '') AS email, COALESCE((SELECT payload FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '{}'::jsonb) AS payload;\" }}",
         "options": {}
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "id": "2a854935-32da-48b3-b604-8c1ab9268349",
+      "name": "🔍 Check Form Submitted",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         -1248,
         192
       ],
-      "id": "2a854935-32da-48b3-b604-8c1ab9268349",
-      "name": "🔍 Check Form Submitted",
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
@@ -241,7 +222,7 @@
               "role": "system"
             },
             {
-              "content": "=Generate a pre-call diagnostic brief for this prospect:\n\nName: {{ $('📋 Parse Booking Data').first().json.fullName }}\nCall time: {{ $('📋 Parse Booking Data').first().json.formattedDate }}\n\nIntake Form Responses:\n- Revenue model: {{ $json['What is your company revenue model?'] || 'Not provided' }}\n- Team size: {{ $json['How many employees or contractors are on your team?'] || 'Not provided' }}\n- Biggest time drain: {{ $json['Where does your team lose the most time each week?'] || 'Not provided' }}\n- AI experience: {{ $json['Have you tried AI tools before? What happened?'] || 'Not provided' }}\n- 90-day win: {{ $json['What would a win look like 90 days from now?'] || 'Not provided' }}\n- Tech stack: {{ $json['What is your current tech stack?'] || 'Not provided' }}\n\nGenerate a brief with these exact sections:\n\n## Company Snapshot\n(2-3 sentences on what you know about their situation based on responses)\n\n## Primary Pain Points\n(Rank top 3 by ROI impact with a one-line explanation each)\n\n## Quick Wins (30 Days)\n(2-3 specific workflows IntraWeb could automate immediately)\n\n## Diagnostic Focus Areas\n(What the $10K assessment would investigate for this company)\n\n## Cost of Inaction\n(Specific framing of what staying the same costs them — time, money, competitive position)\n\n## Suggested Talking Points\n(3-4 specific questions John should ask on this call to qualify and advance the deal)\n\nBe direct and specific. No fluff."
+              "content": "=Generate a pre-call diagnostic brief for this prospect:\n\nName: {{ $('📋 Parse Booking Data').first().json.fullName }}\nCall time: {{ $('📋 Parse Booking Data').first().json.formattedDate }}\n\nIntake Form Responses:\n- Revenue model: {{ ($json.payload && $json.payload['What is your company revenue model?']) || 'Not provided' }}\n- Team size: {{ ($json.payload && $json.payload['How many employees or contractors are on your team?']) || 'Not provided' }}\n- Biggest time drain: {{ ($json.payload && $json.payload['Where does your team lose the most time each week?']) || 'Not provided' }}\n- AI experience: {{ ($json.payload && $json.payload['Have you tried AI tools before? What happened?']) || 'Not provided' }}\n- 90-day win: {{ ($json.payload && $json.payload['What would a win look like 90 days from now?']) || 'Not provided' }}\n- Tech stack: {{ ($json.payload && $json.payload['What is your current tech stack?']) || 'Not provided' }}\n\nGenerate a brief with these exact sections:\n\n## Company Snapshot\n(2-3 sentences on what you know about their situation based on responses)\n\n## Primary Pain Points\n(Rank top 3 by ROI impact with a one-line explanation each)\n\n## Quick Wins (30 Days)\n(2-3 specific workflows IntraWeb could automate immediately)\n\n## Diagnostic Focus Areas\n(What the $10K assessment would investigate for this company)\n\n## Cost of Inaction\n(Specific framing of what staying the same costs them — time, money, competitive position)\n\n## Suggested Talking Points\n(3-4 specific questions John should ask on this call to qualify and advance the deal)\n\nBe direct and specific. No fluff."
             }
           ]
         },
@@ -264,7 +245,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const booking = $('📋 Parse Booking Data').first().json;\nconst formData = $('🔍 Check Form Submitted').first().json;\nconst aiResponse = $input.first().json;\n\n// Extract the brief text from OpenAI response\nconst briefText = aiResponse?.message?.content \n  || aiResponse?.text \n  || aiResponse?.choices?.[0]?.message?.content\n  || 'Brief generation failed — please generate manually.';\n\nconst docTitle = `${booking.fullName} — Pre-Call Diagnostic Brief — ${new Date().toLocaleDateString('en-US')}`;\n\nreturn [{\n  json: {\n    ...booking,\n    briefText,\n    docTitle,\n    formSubmitted: !!formData.email,\n    formData\n  }\n}];"
+        "jsCode": "const booking = $('📋 Parse Booking Data').first().json;\nconst raw = $('🔍 Check Form Submitted').first().json;\nconst p = raw && raw.payload && typeof raw.payload === 'object' ? raw.payload : {};\nconst formData = { ...raw, ...p };\nconst aiResponse = $input.first().json;\n\n// Extract the brief text from OpenAI response\nconst briefText = aiResponse?.message?.content \n  || aiResponse?.text \n  || aiResponse?.choices?.[0]?.message?.content\n  || 'Brief generation failed — please generate manually.';\n\nconst docTitle = `${booking.fullName} — Pre-Call Diagnostic Brief — ${new Date().toLocaleDateString('en-US')}`;\n\nreturn [{\n  json: {\n    ...booking,\n    briefText,\n    docTitle,\n    formSubmitted: !!(raw && String(raw.email || '').trim()),\n    formData\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -637,9 +618,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
-  "activeVersionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
-  "versionCounter": 166,
+  "versionId": "361eb467-9793-4f71-83b4-c4505aab6210",
+  "activeVersionId": "361eb467-9793-4f71-83b4-c4505aab6210",
+  "versionCounter": 179,
   "triggerCount": 1,
   "shared": [
     {
@@ -662,9 +643,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-14T03:24:32.704Z",
-    "createdAt": "2026-04-14T03:24:32.704Z",
-    "versionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
+    "updatedAt": "2026-04-19T19:25:35.636Z",
+    "createdAt": "2026-04-19T19:25:35.636Z",
+    "versionId": "361eb467-9793-4f71-83b4-c4505aab6210",
     "workflowId": "mH67fjS4eC9amV4n",
     "nodes": [
       {
@@ -787,41 +768,22 @@
       },
       {
         "parameters": {
-          "operation": "read",
-          "documentId": {
-            "__rl": true,
-            "value": "1045Srb-IOkEU_qHjvGzJD_C42m2_a_0ffd_8HwIZrjs",
-            "mode": "list",
-            "cachedResultName": "IntraWeb — Pre-Call Diagnostic Brief",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1045Srb-IOkEU_qHjvGzJD_C42m2_a_0ffd_8HwIZrjs/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "={{ $('GetConfig').first().json.google.preCallIntakeSheetTab }}"
-          },
-          "range": "A:ZZ",
-          "filters": {
-            "values": [
-              {
-                "lookupColumn": "={{ $('GetConfig').first().json.google.preCallIntakeEmailColumn }}",
-                "lookupValue": "={{ $('📋 Parse Booking Data').first().json.email }}"
-              }
-            ]
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"SELECT COALESCE((SELECT email FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '') AS email, COALESCE((SELECT payload FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '{}'::jsonb) AS payload;\" }}",
           "options": {}
         },
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.5,
+        "id": "2a854935-32da-48b3-b604-8c1ab9268349",
+        "name": "🔍 Check Form Submitted",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           -1248,
           192
         ],
-        "id": "2a854935-32da-48b3-b604-8c1ab9268349",
-        "name": "🔍 Check Form Submitted",
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       },
@@ -901,7 +863,7 @@
                 "role": "system"
               },
               {
-                "content": "=Generate a pre-call diagnostic brief for this prospect:\n\nName: {{ $('📋 Parse Booking Data').first().json.fullName }}\nCall time: {{ $('📋 Parse Booking Data').first().json.formattedDate }}\n\nIntake Form Responses:\n- Revenue model: {{ $json['What is your company revenue model?'] || 'Not provided' }}\n- Team size: {{ $json['How many employees or contractors are on your team?'] || 'Not provided' }}\n- Biggest time drain: {{ $json['Where does your team lose the most time each week?'] || 'Not provided' }}\n- AI experience: {{ $json['Have you tried AI tools before? What happened?'] || 'Not provided' }}\n- 90-day win: {{ $json['What would a win look like 90 days from now?'] || 'Not provided' }}\n- Tech stack: {{ $json['What is your current tech stack?'] || 'Not provided' }}\n\nGenerate a brief with these exact sections:\n\n## Company Snapshot\n(2-3 sentences on what you know about their situation based on responses)\n\n## Primary Pain Points\n(Rank top 3 by ROI impact with a one-line explanation each)\n\n## Quick Wins (30 Days)\n(2-3 specific workflows IntraWeb could automate immediately)\n\n## Diagnostic Focus Areas\n(What the $10K assessment would investigate for this company)\n\n## Cost of Inaction\n(Specific framing of what staying the same costs them — time, money, competitive position)\n\n## Suggested Talking Points\n(3-4 specific questions John should ask on this call to qualify and advance the deal)\n\nBe direct and specific. No fluff."
+                "content": "=Generate a pre-call diagnostic brief for this prospect:\n\nName: {{ $('📋 Parse Booking Data').first().json.fullName }}\nCall time: {{ $('📋 Parse Booking Data').first().json.formattedDate }}\n\nIntake Form Responses:\n- Revenue model: {{ ($json.payload && $json.payload['What is your company revenue model?']) || 'Not provided' }}\n- Team size: {{ ($json.payload && $json.payload['How many employees or contractors are on your team?']) || 'Not provided' }}\n- Biggest time drain: {{ ($json.payload && $json.payload['Where does your team lose the most time each week?']) || 'Not provided' }}\n- AI experience: {{ ($json.payload && $json.payload['Have you tried AI tools before? What happened?']) || 'Not provided' }}\n- 90-day win: {{ ($json.payload && $json.payload['What would a win look like 90 days from now?']) || 'Not provided' }}\n- Tech stack: {{ ($json.payload && $json.payload['What is your current tech stack?']) || 'Not provided' }}\n\nGenerate a brief with these exact sections:\n\n## Company Snapshot\n(2-3 sentences on what you know about their situation based on responses)\n\n## Primary Pain Points\n(Rank top 3 by ROI impact with a one-line explanation each)\n\n## Quick Wins (30 Days)\n(2-3 specific workflows IntraWeb could automate immediately)\n\n## Diagnostic Focus Areas\n(What the $10K assessment would investigate for this company)\n\n## Cost of Inaction\n(Specific framing of what staying the same costs them — time, money, competitive position)\n\n## Suggested Talking Points\n(3-4 specific questions John should ask on this call to qualify and advance the deal)\n\nBe direct and specific. No fluff."
               }
             ]
           },
@@ -924,7 +886,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const booking = $('📋 Parse Booking Data').first().json;\nconst formData = $('🔍 Check Form Submitted').first().json;\nconst aiResponse = $input.first().json;\n\n// Extract the brief text from OpenAI response\nconst briefText = aiResponse?.message?.content \n  || aiResponse?.text \n  || aiResponse?.choices?.[0]?.message?.content\n  || 'Brief generation failed — please generate manually.';\n\nconst docTitle = `${booking.fullName} — Pre-Call Diagnostic Brief — ${new Date().toLocaleDateString('en-US')}`;\n\nreturn [{\n  json: {\n    ...booking,\n    briefText,\n    docTitle,\n    formSubmitted: !!formData.email,\n    formData\n  }\n}];"
+          "jsCode": "const booking = $('📋 Parse Booking Data').first().json;\nconst raw = $('🔍 Check Form Submitted').first().json;\nconst p = raw && raw.payload && typeof raw.payload === 'object' ? raw.payload : {};\nconst formData = { ...raw, ...p };\nconst aiResponse = $input.first().json;\n\n// Extract the brief text from OpenAI response\nconst briefText = aiResponse?.message?.content \n  || aiResponse?.text \n  || aiResponse?.choices?.[0]?.message?.content\n  || 'Brief generation failed — please generate manually.';\n\nconst docTitle = `${booking.fullName} — Pre-Call Diagnostic Brief — ${new Date().toLocaleDateString('en-US')}`;\n\nreturn [{\n  json: {\n    ...booking,\n    briefText,\n    docTitle,\n    formSubmitted: !!(raw && String(raw.email || '').trim()),\n    formData\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -1291,54 +1253,21 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-14T03:24:32.784Z",
-        "id": 2523,
+        "createdAt": "2026-04-19T19:25:35.683Z",
+        "id": 3033,
         "workflowId": "mH67fjS4eC9amV4n",
-        "versionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
+        "versionId": "361eb467-9793-4f71-83b4-c4505aab6210",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-14T09:44:39.823Z",
-        "id": 2595,
+        "createdAt": "2026-04-19T19:25:35.668Z",
+        "id": 3032,
         "workflowId": "mH67fjS4eC9amV4n",
-        "versionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:19:40.132Z",
-        "id": 2625,
-        "workflowId": "mH67fjS4eC9amV4n",
-        "versionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:32.763Z",
-        "id": 2522,
-        "workflowId": "mH67fjS4eC9amV4n",
-        "versionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:39.782Z",
-        "id": 2594,
-        "workflowId": "mH67fjS4eC9amV4n",
-        "versionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:19:40.018Z",
-        "id": 2624,
-        "workflowId": "mH67fjS4eC9amV4n",
-        "versionId": "2c1f5da2-984f-40ab-981b-bd410b142d0c",
+        "versionId": "361eb467-9793-4f71-83b4-c4505aab6210",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

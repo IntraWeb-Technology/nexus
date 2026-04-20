@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:21:26.587Z",
+  "updatedAt": "2026-04-19T19:25:29.519Z",
   "createdAt": "2026-03-08T22:44:52.798Z",
   "id": "VzxtOFmmGEitVEQk",
   "name": "SW: Send SMS",
@@ -311,7 +311,7 @@
   },
   "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
   "activeVersionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
-  "versionCounter": 169,
+  "versionCounter": 182,
   "triggerCount": 0,
   "shared": [
     {
@@ -730,6 +730,38 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:40.380Z",
+        "id": 2713,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:44.478Z",
+        "id": 2747,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:02:20.477Z",
+        "id": 2915,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:29.565Z",
+        "id": 3013,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-14T02:53:58.034Z",
         "id": 1848,
         "workflowId": "VzxtOFmmGEitVEQk",
@@ -832,8 +864,39 @@
         "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:40.368Z",
+        "id": 2712,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:44.457Z",
+        "id": 2746,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:02:20.457Z",
+        "id": 2914,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:29.546Z",
+        "id": 3012,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

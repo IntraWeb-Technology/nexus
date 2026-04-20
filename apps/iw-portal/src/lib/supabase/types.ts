@@ -157,3 +157,89 @@ export interface NotificationPreferences {
   document_uploads: boolean
   created_at: string
 }
+
+/** Operational store (Supabase `public.os_*`) — n8n + internal APIs; not client RLS tables. */
+export interface OsAutomationLogRow {
+  id: string
+  logged_at: string
+  workflow_name: string
+  contact_name: string
+  phone: string
+  event_type: string
+  status: string
+  notes: string
+  hubspot_deal_id: string | null
+  hubspot_contact_id: string | null
+}
+
+export interface OsDealsSheetRow {
+  id: string
+  hubspot_deal_id: string | null
+  deal_name: string | null
+  company: string | null
+  industry: string | null
+  tier: string | null
+  lead_score: string | null
+  hubspot_contact_id: string | null
+  hubspot_company_id: string | null
+  sheet_timestamp: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OsLeadRow {
+  id: string
+  source_kind: string
+  occurred_at: string
+  name: string | null
+  company: string | null
+  industry: string | null
+  source: string | null
+  lead_score: number | null
+  status: string | null
+  place_id: string | null
+  website: string | null
+  email: string | null
+  phone: string | null
+  address: string | null
+  hubspot_contact_id: string | null
+  hubspot_deal_id: string | null
+}
+
+export interface OsContractsQueueRow {
+  id: string
+  queue_type: 'contract' | 'proposal'
+  hubspot_deal_id: string | null
+  queue_date: string | null
+  client_name: string | null
+  company: string | null
+  industry: string | null
+  deal_value: string | null
+  tier: string | null
+  contact_email: string | null
+  pain_points: string | null
+  drive_link: string | null
+  status: string
+  proposal_status_detail: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OsClientSuccessClientRow {
+  id: string
+  hubspot_deal_id: string | null
+  client_name: string
+  tier: string | null
+  mrr: string | null
+  start_date: string | null
+  last_activity: string | null
+  health_score: string | null
+  updated_at: string
+}
+
+export interface OsPreCallIntakeRow {
+  id: string
+  email: string
+  payload: Record<string, unknown>
+  submitted_at: string
+}

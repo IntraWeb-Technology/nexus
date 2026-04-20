@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:20:16.500Z",
+  "updatedAt": "2026-04-19T19:25:36.041Z",
   "createdAt": "2026-03-08T22:51:30.016Z",
   "id": "QjW7q9bT5wqCjynz",
   "name": "SYS 04 — Client Onboarding Docs Generator",
@@ -588,9 +588,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
-  "activeVersionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
-  "versionCounter": 306,
+  "versionId": "499c6d19-b423-4392-aa17-569c438ba8ab",
+  "activeVersionId": "499c6d19-b423-4392-aa17-569c438ba8ab",
+  "versionCounter": 319,
   "triggerCount": 0,
   "shared": [
     {
@@ -613,9 +613,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-14T04:30:39.278Z",
-    "createdAt": "2026-04-14T04:30:39.278Z",
-    "versionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
+    "updatedAt": "2026-04-19T19:25:36.042Z",
+    "createdAt": "2026-04-19T19:25:36.042Z",
+    "versionId": "499c6d19-b423-4392-aa17-569c438ba8ab",
     "workflowId": "QjW7q9bT5wqCjynz",
     "nodes": [
       {
@@ -1192,54 +1192,21 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-14T04:30:39.331Z",
-        "id": 2553,
+        "createdAt": "2026-04-19T19:25:36.176Z",
+        "id": 3041,
         "workflowId": "QjW7q9bT5wqCjynz",
-        "versionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
+        "versionId": "499c6d19-b423-4392-aa17-569c438ba8ab",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-14T09:44:40.722Z",
-        "id": 2603,
+        "createdAt": "2026-04-19T19:25:36.137Z",
+        "id": 3040,
         "workflowId": "QjW7q9bT5wqCjynz",
-        "versionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:20:16.543Z",
-        "id": 2647,
-        "workflowId": "QjW7q9bT5wqCjynz",
-        "versionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T04:30:39.311Z",
-        "id": 2552,
-        "workflowId": "QjW7q9bT5wqCjynz",
-        "versionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:40.704Z",
-        "id": 2602,
-        "workflowId": "QjW7q9bT5wqCjynz",
-        "versionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:20:16.531Z",
-        "id": 2646,
-        "workflowId": "QjW7q9bT5wqCjynz",
-        "versionId": "bc162dbc-d3d6-4a0b-b3c4-52e7059ea8fa",
+        "versionId": "499c6d19-b423-4392-aa17-569c438ba8ab",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

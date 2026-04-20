@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:20:02.802Z",
+  "updatedAt": "2026-04-19T19:25:30.278Z",
   "createdAt": "2026-04-11T00:34:56.265Z",
   "id": "mVlQSfO4pb5lomdf",
   "name": "SYS 01.5 — Client Intake Brief (Real-Time)",
@@ -237,7 +237,7 @@
   "pinData": {},
   "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
   "activeVersionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
-  "versionCounter": 56,
+  "versionCounter": 70,
   "triggerCount": 1,
   "shared": [
     {
@@ -631,6 +631,38 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:49.904Z",
+        "id": 2761,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:46:00.304Z",
+        "id": 2811,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:16.842Z",
+        "id": 2857,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.140Z",
+        "id": 3023,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-13T23:32:54.667Z",
         "id": 1609,
         "workflowId": "mVlQSfO4pb5lomdf",
@@ -765,8 +797,39 @@
         "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:47.265Z",
+        "id": 2760,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:56.569Z",
+        "id": 2810,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:14.283Z",
+        "id": 2856,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:31.887Z",
+        "id": 3022,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

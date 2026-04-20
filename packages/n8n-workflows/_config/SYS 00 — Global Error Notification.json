@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:21:00.546Z",
+  "updatedAt": "2026-04-19T19:25:27.723Z",
   "createdAt": "2026-03-21T17:28:10.960Z",
   "id": "w9S9LovIY8CxchZm",
   "name": "SYS 00 — Global Error Notification",
@@ -247,7 +247,7 @@
   "pinData": {},
   "versionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
   "activeVersionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
-  "versionCounter": 154,
+  "versionCounter": 164,
   "triggerCount": 0,
   "shared": [
     {
@@ -653,6 +653,30 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:39.375Z",
+        "id": 2695,
+        "workflowId": "w9S9LovIY8CxchZm",
+        "versionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:44.606Z",
+        "id": 2749,
+        "workflowId": "w9S9LovIY8CxchZm",
+        "versionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:27.788Z",
+        "id": 2995,
+        "workflowId": "w9S9LovIY8CxchZm",
+        "versionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-13T23:32:52.389Z",
         "id": 1583,
         "workflowId": "w9S9LovIY8CxchZm",
@@ -795,8 +819,31 @@
         "versionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:39.356Z",
+        "id": 2694,
+        "workflowId": "w9S9LovIY8CxchZm",
+        "versionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:44.588Z",
+        "id": 2748,
+        "workflowId": "w9S9LovIY8CxchZm",
+        "versionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:27.764Z",
+        "id": 2994,
+        "workflowId": "w9S9LovIY8CxchZm",
+        "versionId": "c0a35f8f-bb70-4f54-b75c-db6a850776f8",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:21:15.887Z",
+  "updatedAt": "2026-04-19T19:25:28.377Z",
   "createdAt": "2026-03-08T22:42:32.045Z",
   "id": "hxsCltRP81r5gLtm",
   "name": "SW: Generate PDF from HTML",
@@ -218,7 +218,7 @@
   "pinData": {},
   "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
   "activeVersionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
-  "versionCounter": 150,
+  "versionCounter": 163,
   "triggerCount": 0,
   "shared": [
     {
@@ -740,6 +740,38 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:39.966Z",
+        "id": 2705,
+        "workflowId": "hxsCltRP81r5gLtm",
+        "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:43.794Z",
+        "id": 2737,
+        "workflowId": "hxsCltRP81r5gLtm",
+        "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:02:09.426Z",
+        "id": 2905,
+        "workflowId": "hxsCltRP81r5gLtm",
+        "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:28.416Z",
+        "id": 3005,
+        "workflowId": "hxsCltRP81r5gLtm",
+        "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-03-28T19:23:24.921Z",
         "id": 492,
         "workflowId": "hxsCltRP81r5gLtm",
@@ -1026,8 +1058,39 @@
         "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:39.951Z",
+        "id": 2704,
+        "workflowId": "hxsCltRP81r5gLtm",
+        "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:43.770Z",
+        "id": 2736,
+        "workflowId": "hxsCltRP81r5gLtm",
+        "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:02:09.405Z",
+        "id": 2904,
+        "workflowId": "hxsCltRP81r5gLtm",
+        "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:28.400Z",
+        "id": 3004,
+        "workflowId": "hxsCltRP81r5gLtm",
+        "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

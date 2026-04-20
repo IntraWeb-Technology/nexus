@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:21:02.148Z",
+  "updatedAt": "2026-04-19T19:25:27.859Z",
   "createdAt": "2026-03-14T22:07:18.208Z",
   "id": "zIP8vhSQ1bCQP9RR",
   "name": "SYS 00 — HubSpot Events Router",
@@ -79,7 +79,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// HubSpot sends an array of events. Parse and route each one.\nconst webhookNode = $('HubSpot Events Webhook').first();\nconst body = webhookNode.json.body ?? webhookNode.json;\nconst config = $input.first().json;\nconst n8nBaseUrl = (config.owner && config.owner.n8nBaseUrl) ? config.owner.n8nBaseUrl.replace(/\\/$/, '') : 'https://n8n.intrawebtech.com';\n\nconst events = Array.isArray(body) ? body : (body && typeof body.objectId !== 'undefined' ? [body] : []);\nif (events.length === 0) return [];\n\nconst dealProps = 'dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company';\nconst contactProps = 'firstname,lastname,company,industry,lead_source,lead_score,hs_lead_status';\n\nconst stageCfg = (config.hubspot && config.hubspot.dealStageIds) || {};\nconst stageCandidates = (raw, fallback) => {\n  const parts = (v) => {\n    if (v === undefined || v === null || v === '') return [];\n    if (Array.isArray(v)) return v.map((x) => String(x).toLowerCase().trim()).filter(Boolean);\n    const s = String(v);\n    if (s.includes(',')) return s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);\n    const one = s.toLowerCase().trim();\n    return one ? [one] : [];\n  };\n  const fromRaw = parts(raw);\n  if (fromRaw.length) return fromRaw;\n  return parts(fallback);\n};\nconst closedWonStages = stageCandidates(stageCfg.closedWon, 'closedwon');\nconst proposalStages = stageCandidates(stageCfg.proposal, '3382756085');\nconst contractSentStages = stageCandidates(stageCfg.contractSent, '');\nconst invoiceSentStages = stageCandidates(stageCfg.invoiceSent, '3382756086');\nconst paidStages = stageCandidates(stageCfg.paid, '3382756087');\nconst projectCompleteStages = stageCandidates(stageCfg.projectComplete, '3382756088');\n\nconst qualifiedToBuyExtra = stageCandidates(stageCfg.qualifiedToBuy, 'qualifiedtobuy');\nconst leadQualifiedStages = stageCandidates(stageCfg.leadQualified, '');\nconst qualifiedPortalStages = [...new Set([...qualifiedToBuyExtra, ...leadQualifiedStages].filter(Boolean))];\n\nconst out = [];\nfor (const e of events) {\n  const eventType = e.eventType || e.subscriptionType || '';\n  const objectId = e.objectId;\n  const propertyName = e.propertyName || '';\n  const propertyValue = String(e.propertyValue || '').toLowerCase();\n\n  if (!objectId) continue;\n\n  let route = 'skip';\n  let objectType = '';\n  let webhookPath = '';\n\n  if (eventType === 'deal.propertyChange' && propertyName === 'dealstage') {\n    objectType = 'deal';\n\n    if (closedWonStages.includes(propertyValue)) {\n      route = 'closed_won';\n      webhookPath = 'hubspot-deal-closed-won';\n\n    } else if (proposalStages.includes(propertyValue)) {\n      route = 'proposal_stage';\n      webhookPath = 'hubspot-deal-proposal-stage';\n\n    } else if (contractSentStages.length && contractSentStages.includes(propertyValue)) {\n      route = 'contract_sent';\n      webhookPath = 'hubspot-deal-contract-sent';\n\n    } else if (invoiceSentStages.includes(propertyValue)) {\n      route = 'invoice_sent';\n      webhookPath = 'hubspot-deal-invoice-sent';\n\n    } else if (paidStages.includes(propertyValue)) {\n      route = 'paid';\n      webhookPath = 'hubspot-deal-stage-change';\n\n    } else if (projectCompleteStages.includes(propertyValue)) {\n      route = 'project_complete';\n      webhookPath = 'hubspot-deal-project-complete';\n\n    } else if (qualifiedPortalStages.includes(propertyValue)) {\n      route = 'qualified_portal';\n      webhookPath = 'hubspot-deal-qualified-portal';\n\n    } else {\n      route = 'deal_stage_change';\n      webhookPath = 'hubspot-deal-stage-change';\n    }\n\n  } else if (eventType === 'contact.propertyChange' || eventType === 'contact.creation') {\n    objectType = 'contact';\n    route = 'contact_change';\n    webhookPath = 'hubspot-contact-change';\n  }\n\n  if (route !== 'skip' && webhookPath) {\n    out.push({\n      json: {\n        route,\n        objectId: String(objectId),\n        objectType,\n        n8nBaseUrl,\n        webhookPath,\n        dealProps,\n        contactProps\n      }\n    });\n  }\n}\nreturn out;"
+        "jsCode": "// HubSpot sends an array of events. Parse and route each one.\nconst webhookNode = $('HubSpot Events Webhook').first();\nconst body = webhookNode.json.body ?? webhookNode.json;\nconst config = $input.first().json;\nconst n8nBaseUrl = (config.owner && config.owner.n8nBaseUrl) ? config.owner.n8nBaseUrl.replace(/\\/$/, '') : 'https://n8n.intrawebtech.com';\n\nconst events = Array.isArray(body) ? body : (body && typeof body.objectId !== 'undefined' ? [body] : []);\nif (events.length === 0) return [];\n\nconst dealProps = 'dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company,hs_line_items';\nconst contactProps = 'firstname,lastname,company,industry,lead_source,lead_score,hs_lead_status';\n\nconst stageCfg = (config.hubspot && config.hubspot.dealStageIds) || {};\nconst stageCandidates = (raw, fallback) => {\n  const parts = (v) => {\n    if (v === undefined || v === null || v === '') return [];\n    if (Array.isArray(v)) return v.map((x) => String(x).toLowerCase().trim()).filter(Boolean);\n    const s = String(v);\n    if (s.includes(',')) return s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);\n    const one = s.toLowerCase().trim();\n    return one ? [one] : [];\n  };\n  const fromRaw = parts(raw);\n  if (fromRaw.length) return fromRaw;\n  return parts(fallback);\n};\nconst closedWonStages = stageCandidates(stageCfg.closedWon, 'closedwon');\nconst proposalStages = stageCandidates(stageCfg.proposal, '3382756085');\nconst contractSentStages = stageCandidates(stageCfg.contractSent, '');\nconst invoiceSentStages = stageCandidates(stageCfg.invoiceSent, '3382756086');\nconst paidStages = stageCandidates(stageCfg.paid, '3382756087');\nconst projectCompleteStages = stageCandidates(stageCfg.projectComplete, '3382756088');\n\nconst qualifiedToBuyExtra = stageCandidates(stageCfg.qualifiedToBuy, 'qualifiedtobuy');\nconst leadQualifiedStages = stageCandidates(stageCfg.leadQualified, '');\nconst qualifiedPortalStages = [...new Set([...qualifiedToBuyExtra, ...leadQualifiedStages].filter(Boolean))];\n\nconst out = [];\nfor (const e of events) {\n  const eventType = e.eventType || e.subscriptionType || '';\n  const objectId = e.objectId;\n  const propertyName = e.propertyName || '';\n  const propertyValue = String(e.propertyValue || '').toLowerCase();\n\n  if (!objectId) continue;\n\n  let route = 'skip';\n  let objectType = '';\n  let webhookPath = '';\n\n  if (eventType === 'deal.propertyChange' && propertyName === 'dealstage') {\n    objectType = 'deal';\n\n    if (closedWonStages.includes(propertyValue)) {\n      route = 'closed_won';\n      webhookPath = 'hubspot-deal-closed-won';\n\n    } else if (proposalStages.includes(propertyValue)) {\n      route = 'proposal_stage';\n      webhookPath = 'hubspot-deal-proposal-stage';\n\n    } else if (contractSentStages.length && contractSentStages.includes(propertyValue)) {\n      route = 'contract_sent';\n      webhookPath = 'hubspot-deal-contract-sent';\n\n    } else if (invoiceSentStages.includes(propertyValue)) {\n      route = 'invoice_sent';\n      webhookPath = 'hubspot-deal-invoice-sent';\n\n    } else if (paidStages.includes(propertyValue)) {\n      route = 'paid';\n      webhookPath = 'hubspot-deal-stage-change';\n\n    } else if (projectCompleteStages.includes(propertyValue)) {\n      route = 'project_complete';\n      webhookPath = 'hubspot-deal-project-complete';\n\n    } else if (qualifiedPortalStages.includes(propertyValue)) {\n      route = 'qualified_portal';\n      webhookPath = 'hubspot-deal-qualified-portal';\n\n    } else {\n      route = 'deal_stage_change';\n      webhookPath = 'hubspot-deal-stage-change';\n    }\n\n  } else if (eventType === 'contact.propertyChange' || eventType === 'contact.creation') {\n    objectType = 'contact';\n    route = 'contact_change';\n    webhookPath = 'hubspot-contact-change';\n  }\n\n  if (route !== 'skip' && webhookPath) {\n    out.push({\n      json: {\n        route,\n        objectId: String(objectId),\n        objectType,\n        n8nBaseUrl,\n        webhookPath,\n        dealProps,\n        contactProps\n      }\n    });\n  }\n}\nreturn out;"
       },
       "id": "sys00-parse",
       "name": "Parse and Route Events",
@@ -273,9 +273,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-  "activeVersionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-  "versionCounter": 280,
+  "versionId": "eec3686c-f71d-40f2-a181-7d05947a0e7f",
+  "activeVersionId": "eec3686c-f71d-40f2-a181-7d05947a0e7f",
+  "versionCounter": 290,
   "triggerCount": 1,
   "shared": [
     {
@@ -298,9 +298,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-14T02:18:28.880Z",
-    "createdAt": "2026-04-14T02:18:28.880Z",
-    "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
+    "updatedAt": "2026-04-19T19:25:27.865Z",
+    "createdAt": "2026-04-19T19:25:27.865Z",
+    "versionId": "eec3686c-f71d-40f2-a181-7d05947a0e7f",
     "workflowId": "zIP8vhSQ1bCQP9RR",
     "nodes": [
       {
@@ -375,7 +375,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// HubSpot sends an array of events. Parse and route each one.\nconst webhookNode = $('HubSpot Events Webhook').first();\nconst body = webhookNode.json.body ?? webhookNode.json;\nconst config = $input.first().json;\nconst n8nBaseUrl = (config.owner && config.owner.n8nBaseUrl) ? config.owner.n8nBaseUrl.replace(/\\/$/, '') : 'https://n8n.intrawebtech.com';\n\nconst events = Array.isArray(body) ? body : (body && typeof body.objectId !== 'undefined' ? [body] : []);\nif (events.length === 0) return [];\n\nconst dealProps = 'dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company';\nconst contactProps = 'firstname,lastname,company,industry,lead_source,lead_score,hs_lead_status';\n\nconst stageCfg = (config.hubspot && config.hubspot.dealStageIds) || {};\nconst stageCandidates = (raw, fallback) => {\n  const parts = (v) => {\n    if (v === undefined || v === null || v === '') return [];\n    if (Array.isArray(v)) return v.map((x) => String(x).toLowerCase().trim()).filter(Boolean);\n    const s = String(v);\n    if (s.includes(',')) return s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);\n    const one = s.toLowerCase().trim();\n    return one ? [one] : [];\n  };\n  const fromRaw = parts(raw);\n  if (fromRaw.length) return fromRaw;\n  return parts(fallback);\n};\nconst closedWonStages = stageCandidates(stageCfg.closedWon, 'closedwon');\nconst proposalStages = stageCandidates(stageCfg.proposal, '3382756085');\nconst contractSentStages = stageCandidates(stageCfg.contractSent, '');\nconst invoiceSentStages = stageCandidates(stageCfg.invoiceSent, '3382756086');\nconst paidStages = stageCandidates(stageCfg.paid, '3382756087');\nconst projectCompleteStages = stageCandidates(stageCfg.projectComplete, '3382756088');\n\nconst qualifiedToBuyExtra = stageCandidates(stageCfg.qualifiedToBuy, 'qualifiedtobuy');\nconst leadQualifiedStages = stageCandidates(stageCfg.leadQualified, '');\nconst qualifiedPortalStages = [...new Set([...qualifiedToBuyExtra, ...leadQualifiedStages].filter(Boolean))];\n\nconst out = [];\nfor (const e of events) {\n  const eventType = e.eventType || e.subscriptionType || '';\n  const objectId = e.objectId;\n  const propertyName = e.propertyName || '';\n  const propertyValue = String(e.propertyValue || '').toLowerCase();\n\n  if (!objectId) continue;\n\n  let route = 'skip';\n  let objectType = '';\n  let webhookPath = '';\n\n  if (eventType === 'deal.propertyChange' && propertyName === 'dealstage') {\n    objectType = 'deal';\n\n    if (closedWonStages.includes(propertyValue)) {\n      route = 'closed_won';\n      webhookPath = 'hubspot-deal-closed-won';\n\n    } else if (proposalStages.includes(propertyValue)) {\n      route = 'proposal_stage';\n      webhookPath = 'hubspot-deal-proposal-stage';\n\n    } else if (contractSentStages.length && contractSentStages.includes(propertyValue)) {\n      route = 'contract_sent';\n      webhookPath = 'hubspot-deal-contract-sent';\n\n    } else if (invoiceSentStages.includes(propertyValue)) {\n      route = 'invoice_sent';\n      webhookPath = 'hubspot-deal-invoice-sent';\n\n    } else if (paidStages.includes(propertyValue)) {\n      route = 'paid';\n      webhookPath = 'hubspot-deal-stage-change';\n\n    } else if (projectCompleteStages.includes(propertyValue)) {\n      route = 'project_complete';\n      webhookPath = 'hubspot-deal-project-complete';\n\n    } else if (qualifiedPortalStages.includes(propertyValue)) {\n      route = 'qualified_portal';\n      webhookPath = 'hubspot-deal-qualified-portal';\n\n    } else {\n      route = 'deal_stage_change';\n      webhookPath = 'hubspot-deal-stage-change';\n    }\n\n  } else if (eventType === 'contact.propertyChange' || eventType === 'contact.creation') {\n    objectType = 'contact';\n    route = 'contact_change';\n    webhookPath = 'hubspot-contact-change';\n  }\n\n  if (route !== 'skip' && webhookPath) {\n    out.push({\n      json: {\n        route,\n        objectId: String(objectId),\n        objectType,\n        n8nBaseUrl,\n        webhookPath,\n        dealProps,\n        contactProps\n      }\n    });\n  }\n}\nreturn out;"
+          "jsCode": "// HubSpot sends an array of events. Parse and route each one.\nconst webhookNode = $('HubSpot Events Webhook').first();\nconst body = webhookNode.json.body ?? webhookNode.json;\nconst config = $input.first().json;\nconst n8nBaseUrl = (config.owner && config.owner.n8nBaseUrl) ? config.owner.n8nBaseUrl.replace(/\\/$/, '') : 'https://n8n.intrawebtech.com';\n\nconst events = Array.isArray(body) ? body : (body && typeof body.objectId !== 'undefined' ? [body] : []);\nif (events.length === 0) return [];\n\nconst dealProps = 'dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company,hs_line_items';\nconst contactProps = 'firstname,lastname,company,industry,lead_source,lead_score,hs_lead_status';\n\nconst stageCfg = (config.hubspot && config.hubspot.dealStageIds) || {};\nconst stageCandidates = (raw, fallback) => {\n  const parts = (v) => {\n    if (v === undefined || v === null || v === '') return [];\n    if (Array.isArray(v)) return v.map((x) => String(x).toLowerCase().trim()).filter(Boolean);\n    const s = String(v);\n    if (s.includes(',')) return s.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);\n    const one = s.toLowerCase().trim();\n    return one ? [one] : [];\n  };\n  const fromRaw = parts(raw);\n  if (fromRaw.length) return fromRaw;\n  return parts(fallback);\n};\nconst closedWonStages = stageCandidates(stageCfg.closedWon, 'closedwon');\nconst proposalStages = stageCandidates(stageCfg.proposal, '3382756085');\nconst contractSentStages = stageCandidates(stageCfg.contractSent, '');\nconst invoiceSentStages = stageCandidates(stageCfg.invoiceSent, '3382756086');\nconst paidStages = stageCandidates(stageCfg.paid, '3382756087');\nconst projectCompleteStages = stageCandidates(stageCfg.projectComplete, '3382756088');\n\nconst qualifiedToBuyExtra = stageCandidates(stageCfg.qualifiedToBuy, 'qualifiedtobuy');\nconst leadQualifiedStages = stageCandidates(stageCfg.leadQualified, '');\nconst qualifiedPortalStages = [...new Set([...qualifiedToBuyExtra, ...leadQualifiedStages].filter(Boolean))];\n\nconst out = [];\nfor (const e of events) {\n  const eventType = e.eventType || e.subscriptionType || '';\n  const objectId = e.objectId;\n  const propertyName = e.propertyName || '';\n  const propertyValue = String(e.propertyValue || '').toLowerCase();\n\n  if (!objectId) continue;\n\n  let route = 'skip';\n  let objectType = '';\n  let webhookPath = '';\n\n  if (eventType === 'deal.propertyChange' && propertyName === 'dealstage') {\n    objectType = 'deal';\n\n    if (closedWonStages.includes(propertyValue)) {\n      route = 'closed_won';\n      webhookPath = 'hubspot-deal-closed-won';\n\n    } else if (proposalStages.includes(propertyValue)) {\n      route = 'proposal_stage';\n      webhookPath = 'hubspot-deal-proposal-stage';\n\n    } else if (contractSentStages.length && contractSentStages.includes(propertyValue)) {\n      route = 'contract_sent';\n      webhookPath = 'hubspot-deal-contract-sent';\n\n    } else if (invoiceSentStages.includes(propertyValue)) {\n      route = 'invoice_sent';\n      webhookPath = 'hubspot-deal-invoice-sent';\n\n    } else if (paidStages.includes(propertyValue)) {\n      route = 'paid';\n      webhookPath = 'hubspot-deal-stage-change';\n\n    } else if (projectCompleteStages.includes(propertyValue)) {\n      route = 'project_complete';\n      webhookPath = 'hubspot-deal-project-complete';\n\n    } else if (qualifiedPortalStages.includes(propertyValue)) {\n      route = 'qualified_portal';\n      webhookPath = 'hubspot-deal-qualified-portal';\n\n    } else {\n      route = 'deal_stage_change';\n      webhookPath = 'hubspot-deal-stage-change';\n    }\n\n  } else if (eventType === 'contact.propertyChange' || eventType === 'contact.creation') {\n    objectType = 'contact';\n    route = 'contact_change';\n    webhookPath = 'hubspot-contact-change';\n  }\n\n  if (route !== 'skip' && webhookPath) {\n    out.push({\n      json: {\n        route,\n        objectId: String(objectId),\n        objectType,\n        n8nBaseUrl,\n        webhookPath,\n        dealProps,\n        contactProps\n      }\n    });\n  }\n}\nreturn out;"
         },
         "id": "sys00-parse",
         "name": "Parse and Route Events",
@@ -562,262 +562,21 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-14T02:18:28.945Z",
-        "id": 1703,
+        "createdAt": "2026-04-19T19:25:27.951Z",
+        "id": 2997,
         "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
+        "versionId": "eec3686c-f71d-40f2-a181-7d05947a0e7f",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-14T02:21:56.631Z",
-        "id": 1753,
+        "createdAt": "2026-04-19T19:25:27.925Z",
+        "id": 2996,
         "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:34:58.152Z",
-        "id": 1813,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:53:57.195Z",
-        "id": 1833,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:55:33.657Z",
-        "id": 1893,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:00:28.816Z",
-        "id": 1959,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:11:34.736Z",
-        "id": 2025,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:12:30.550Z",
-        "id": 2091,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:15:39.666Z",
-        "id": 2157,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:26.669Z",
-        "id": 2223,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:54.107Z",
-        "id": 2289,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:06.275Z",
-        "id": 2355,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:50.163Z",
-        "id": 2421,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:26.356Z",
-        "id": 2487,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:30.987Z",
-        "id": 2559,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:21:02.206Z",
-        "id": 2667,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:18:28.929Z",
-        "id": 1702,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:21:56.616Z",
-        "id": 1752,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:34:58.135Z",
-        "id": 1812,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:53:57.171Z",
-        "id": 1832,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:55:33.637Z",
-        "id": 1892,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:00:28.796Z",
-        "id": 1958,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:11:34.723Z",
-        "id": 2024,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:12:30.532Z",
-        "id": 2090,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:15:39.647Z",
-        "id": 2156,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:26.635Z",
-        "id": 2222,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:54.095Z",
-        "id": 2288,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:06.259Z",
-        "id": 2354,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:50.150Z",
-        "id": 2420,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:26.344Z",
-        "id": 2486,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:30.971Z",
-        "id": 2558,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:21:02.186Z",
-        "id": 2666,
-        "workflowId": "zIP8vhSQ1bCQP9RR",
-        "versionId": "3b3d2cec-724e-4dca-b153-5e4502732e3c",
+        "versionId": "eec3686c-f71d-40f2-a181-7d05947a0e7f",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

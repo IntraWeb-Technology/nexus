@@ -36,6 +36,71 @@ const formatCurrency = (value) => {
   }).format(Number.isFinite(numeric) ? numeric : 0);
 };
 
+const lineItemsPdf = Array.isArray(d.lineItems) ? d.lineItems : [];
+const subtotalPdf =
+  Number(d.lineItemsSubtotal) ||
+  lineItemsPdf.reduce((s, li) => s + (Number(li.amount) || 0), 0);
+const discPdf = Math.max(0, Number(d.totalDiscount) || 0);
+const dealAmtPdf = Number(d.dealAmount) || Number(d.tierAmount) || 0;
+const finalDealPdf =
+  dealAmtPdf > 0
+    ? dealAmtPdf
+    : subtotalPdf - discPdf > 0
+      ? subtotalPdf - discPdf
+      : subtotalPdf;
+
+const feeTableBody = (() => {
+  const rows = [];
+  if (lineItemsPdf.length) {
+    lineItemsPdf.forEach((li) => {
+      const name = escapeHtml(li.name || 'Item');
+      const sku =
+        li.sku && String(li.sku).trim()
+          ? ` <span class="muted">(${escapeHtml(li.sku)})</span>`
+          : '';
+      rows.push(
+        `<tr><td>${name}${sku}<div class="line-table__meta">Qty ${escapeHtml(String(li.quantity ?? 1))} × ${escapeHtml(formatCurrency(li.unitPrice))}</div></td><td class="num">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,
+      );
+    });
+    rows.push(
+      `<tr class="line-table__subtotal"><td>Subtotal (line items)</td><td class="num">${escapeHtml(formatCurrency(subtotalPdf))}</td></tr>`,
+    );
+    if (discPdf > 0.005) {
+      rows.push(
+        `<tr class="line-table__discount"><td>Discounts</td><td class="num">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,
+      );
+    }
+    rows.push(
+      `<tr class="line-table__total"><td><strong>Total deal amount</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalDealPdf))}</strong></td></tr>`,
+    );
+  } else {
+    rows.push(
+      `<tr><td>Tier / package (${escapeHtml(d.tierLabel || d.tier || '')})</td><td class="num">${escapeHtml(formatCurrency(d.tierAmount))}</td></tr>`,
+    );
+    if (discPdf > 0.005) {
+      rows.push(
+        `<tr class="line-table__discount"><td>Discounts</td><td class="num">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,
+      );
+    }
+    rows.push(
+      `<tr class="line-table__total"><td><strong>Total deal amount</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalDealPdf || d.tierAmount))}</strong></td></tr>`,
+    );
+  }
+  rows.push(
+    `<tr class="line-table__schedule"><td colspan="2">Payment timing estimates (tier template; invoice cadence per Provider)</td></tr>`,
+  );
+  rows.push(
+    `<tr><td>Estimated upfront / setup</td><td class="num">${escapeHtml(formatCurrency(d.upfrontDue))}</td></tr>`,
+  );
+  rows.push(
+    `<tr><td>Monthly recurring (if applicable)</td><td class="num">${escapeHtml(formatCurrency(d.tierMonthly))}</td></tr>`,
+  );
+  rows.push(
+    `<tr><td>Launch / initial payment (estimate)</td><td class="num">${escapeHtml(formatCurrency(d.launchBalance))}</td></tr>`,
+  );
+  return rows.join('');
+})();
+
 const logoHtml = (() => {
   const b64 = branding.logoPdfBase64 || branding.logoDarkBase64;
   const url = branding.logoUrlDark || branding.logoUrl;
@@ -80,6 +145,11 @@ const html = `<!DOCTYPE html>
       --iw-orange-ghost: #fef0e8;
       --iw-white: #ffffff;
       --iw-off-white: #f8fafb;
+      --iw-print-footer-block: 0.72in;
+    }
+    @page {
+      size: letter;
+      margin: 0.52in 0.58in 0.72in 0.58in;
     }
     * {
       box-sizing: border-box;
@@ -95,11 +165,30 @@ const html = `<!DOCTYPE html>
       font-family: 'DM Sans', system-ui, sans-serif;
     }
     .iw-page {
+      display: flex;
+      flex-direction: column;
       width: 816px;
+      max-width: 100%;
       min-height: 1056px;
       margin: 0 auto;
       background: var(--iw-slate-50);
       color: var(--iw-slate-700);
+    }
+    .iw-page > header,
+    .iw-page > .doc-hero,
+    .iw-page > .doc-meta-bar {
+      flex-shrink: 0;
+    }
+    main.doc-body {
+      flex: 1 1 auto;
+    }
+    @media print {
+      .iw-page {
+        display: block;
+        width: 100%;
+        min-height: 0;
+        margin: 0;
+      }
     }
     .doc-header {
       display: flex;
@@ -138,8 +227,10 @@ const html = `<!DOCTYPE html>
     }
     .doc-hero {
       background: var(--iw-slate-900);
-      padding: 28px 32px 26px;
+      padding: 32px 32px 28px;
       color: var(--iw-white);
+      break-after: avoid-page;
+      page-break-after: avoid;
     }
     .doc-hero__label {
       display: inline-block;
@@ -199,7 +290,13 @@ const html = `<!DOCTYPE html>
     }
     .doc-body {
       background: var(--iw-white);
-      padding: 32px 48px 40px;
+      padding: 44px 48px 56px;
+    }
+    @media print {
+      .doc-body {
+        padding-top: 36pt;
+        padding-bottom: calc(36pt + var(--iw-print-footer-block));
+      }
     }
     .doc-body > * + * {
       margin-top: 28px;
@@ -214,6 +311,12 @@ const html = `<!DOCTYPE html>
       padding-bottom: 8px;
       border-bottom: 1.5px solid var(--iw-slate-100);
       color: var(--iw-slate-800);
+      break-after: avoid;
+      page-break-after: avoid;
+      break-inside: avoid;
+    }
+    section {
+      break-inside: auto;
     }
     .doc-section__accent {
       width: 4px;
@@ -250,6 +353,14 @@ const html = `<!DOCTYPE html>
       width: 100%;
       border-collapse: collapse;
       font-size: 10pt;
+      break-inside: auto;
+    }
+    .line-table thead {
+      display: table-header-group;
+    }
+    .line-table tbody tr {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .line-table thead th {
       background: var(--iw-slate-950);
@@ -281,6 +392,40 @@ const html = `<!DOCTYPE html>
       color: var(--iw-slate-800);
       white-space: nowrap;
     }
+    .line-table__meta {
+      font-size: 8.5pt;
+      color: var(--iw-slate-500);
+      font-weight: 500;
+      margin-top: 3px;
+    }
+    .line-table .muted {
+      font-weight: 500;
+      color: var(--iw-slate-500);
+    }
+    .line-table tr.line-table__subtotal td {
+      background: var(--iw-off-white);
+      font-weight: 700;
+      border-bottom: 1px solid var(--iw-slate-200);
+    }
+    .line-table tr.line-table__discount td {
+      color: var(--iw-orange-dim);
+      font-weight: 700;
+      background: var(--iw-orange-ghost);
+    }
+    .line-table tr.line-table__total td {
+      background: var(--iw-teal-ghost);
+      color: var(--iw-teal-dim);
+      font-weight: 800;
+      font-size: 11pt;
+      border-bottom: none;
+    }
+    .line-table tr.line-table__schedule td {
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: var(--iw-slate-500);
+      padding-top: 16px;
+      border-bottom: 1px dashed var(--iw-slate-200);
+    }
     .body-text {
       font-size: 10pt;
       line-height: 1.75;
@@ -292,12 +437,20 @@ const html = `<!DOCTYPE html>
       font-size: 10pt;
       line-height: 1.7;
       color: var(--iw-slate-700);
+      orphans: 3;
+      widows: 3;
+    }
+    .proposal-body h2,
+    .proposal-body h3 {
+      break-after: avoid;
+      page-break-after: avoid;
     }
     .msa-exhibit {
       border: 1px solid var(--iw-slate-100);
       border-radius: 12px;
-      padding: 18px 20px;
+      padding: 22px 22px;
       background: var(--iw-white);
+      break-inside: auto;
     }
     .callout--slate {
       border-left: 4px solid var(--iw-slate-500);
@@ -310,8 +463,9 @@ const html = `<!DOCTYPE html>
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 28px;
-      margin-top: 24px;
+      margin-top: 28px;
       break-inside: avoid;
+      page-break-inside: avoid;
     }
     .signature-grid__col {
       border-top: 1px solid var(--iw-slate-800);
@@ -330,10 +484,24 @@ const html = `<!DOCTYPE html>
       grid-template-columns: 1fr 2fr 1fr;
       align-items: center;
       gap: 12px;
-      padding: 12px 24px;
+      flex-shrink: 0;
+      margin-top: auto;
+      padding: 16px 28px 18px;
       background: var(--iw-slate-950);
       color: var(--iw-slate-300);
       font-size: 8pt;
+    }
+    @media print {
+      .doc-footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10;
+        margin: 0;
+        padding: 12px 0.58in 14px;
+        box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.06);
+      }
     }
     .doc-footer__brand {
       font-weight: 700;
@@ -412,31 +580,16 @@ const html = `<!DOCTYPE html>
 
       <section>
         <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>2. Fees and payment</h2>
-        <p class="body-text">Fees are based on the commercial terms selected for this engagement unless otherwise agreed in writing.</p>
+        <p class="body-text">Pricing reflects HubSpot deal line items and the recorded deal amount (including discounts when present). Payment timing rows below are estimates from the selected tier template.</p>
         <table class="line-table">
           <thead>
             <tr>
-              <th>Item</th>
+              <th>Description</th>
               <th>Amount</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Tier / package amount</td>
-              <td class="num">${escapeHtml(formatCurrency(d.tierAmount))}</td>
-            </tr>
-            <tr>
-              <td>Estimated upfront / setup</td>
-              <td class="num">${escapeHtml(formatCurrency(d.upfrontDue))}</td>
-            </tr>
-            <tr>
-              <td>Monthly recurring (if applicable)</td>
-              <td class="num">${escapeHtml(formatCurrency(d.tierMonthly))}</td>
-            </tr>
-            <tr>
-              <td>Launch / initial payment (estimate)</td>
-              <td class="num">${escapeHtml(formatCurrency(d.launchBalance))}</td>
-            </tr>
+            ${feeTableBody}
           </tbody>
         </table>
         <p class="body-text">Invoices are due per the payment instructions on the invoice unless a different schedule is agreed in writing. Late payments may incur suspension of work until accounts are current.</p>

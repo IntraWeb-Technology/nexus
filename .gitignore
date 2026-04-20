@@ -42,3 +42,6 @@ yarn-error.log*
 
 # Local staging clones (not part of the monorepo)
 tmp/
+
+# Supabase CLI link cache for apps/iw-portal (machine-local; run `pnpm exec supabase link --project-ref <ref>` in apps/iw-portal)
+apps/iw-portal/supabase/.temp/

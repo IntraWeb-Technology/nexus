@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:19:47.368Z",
+  "updatedAt": "2026-04-19T19:25:35.938Z",
   "createdAt": "2026-03-31T02:42:24.194Z",
   "id": "i1Fe1DxmomgmKK7k",
   "name": "SYS 03 — Stripe Payment → HubSpot Paid Sync",
@@ -349,7 +349,7 @@
   "pinData": {},
   "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
   "activeVersionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
-  "versionCounter": 83,
+  "versionCounter": 96,
   "triggerCount": 1,
   "shared": [
     {
@@ -784,6 +784,38 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-18T22:45:51.049Z",
+        "id": 2779,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:46:01.596Z",
+        "id": 2829,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:00:24.313Z",
+        "id": 2875,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.984Z",
+        "id": 3039,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-14T03:12:36.901Z",
         "id": 2132,
         "workflowId": "i1Fe1DxmomgmKK7k",
@@ -854,8 +886,39 @@
         "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:51.039Z",
+        "id": 2778,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:46:01.571Z",
+        "id": 2828,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:00:24.216Z",
+        "id": 2874,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.972Z",
+        "id": 3038,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

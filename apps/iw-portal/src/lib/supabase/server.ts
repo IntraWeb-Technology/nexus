@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { cache } from 'react'
+import { getSupabaseApiUrl } from '@/lib/supabase/url'
 
 const supabaseJwtTemplate = process.env.CLERK_SUPABASE_JWT_TEMPLATE ?? 'supabase'
 
@@ -18,7 +19,7 @@ function isClerkJwtTemplateMissing(e: unknown): boolean {
 }
 
 function getUrlKey() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url = getSupabaseApiUrl()
   const anon =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
   const service =
@@ -76,7 +77,7 @@ export function createServiceSupabase(): SupabaseClient {
   const { url, service } = getUrlKey()
   if (!url || !service) {
     throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL and a server key (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY)',
+      'Missing Supabase API URL (NEXT_PUBLIC_SUPABASE_URL or SUPABASE_URL) and a server key (SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY)',
     )
   }
   return createClient(url, service, {

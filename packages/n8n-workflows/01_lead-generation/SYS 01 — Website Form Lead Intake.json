@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:20:00.664Z",
+  "updatedAt": "2026-04-19T19:25:30.110Z",
   "createdAt": "2026-03-21T17:17:54.963Z",
   "id": "JzghCkfPxT5CV1iT",
   "name": "SYS 01 — Website Form Lead Intake",
@@ -318,130 +318,27 @@
     },
     {
       "parameters": {
-        "operation": "appendOrUpdate",
-        "documentId": {
-          "__rl": true,
-          "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-          "mode": "list",
-          "cachedResultName": "IntraWeb OS — Master Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 493844058,
-          "mode": "list",
-          "cachedResultName": "Deals",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=493844058"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Timestamp",
-              "displayName": "Timestamp",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Deal Name",
-              "displayName": "Deal Name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Company",
-              "displayName": "Company",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Industry",
-              "displayName": "Industry",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Tier",
-              "displayName": "Tier",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Lead Score",
-              "displayName": "Lead Score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "HubSpot Deal ID",
-              "displayName": "HubSpot Deal ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "HubSpot Contact ID",
-              "displayName": "HubSpot Contact ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "HubSpot Company ID",
-              "displayName": "HubSpot Company ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO public.os_deals_sheet (hubspot_deal_id, deal_name, company, industry, tier, lead_score, hubspot_contact_id, hubspot_company_id, sheet_timestamp) VALUES ('\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.company||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.industry||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.tier||'').replace(/'/g,\"''\") + \"','','\" + String($('Build CRM Context').first().json.contactId||'').replace(/'/g,\"''\") + \"','', now()) ON CONFLICT (hubspot_deal_id) DO UPDATE SET deal_name = EXCLUDED.deal_name, company = EXCLUDED.company, industry = EXCLUDED.industry, tier = EXCLUDED.tier, lead_score = EXCLUDED.lead_score, hubspot_contact_id = EXCLUDED.hubspot_contact_id, hubspot_company_id = EXCLUDED.hubspot_company_id, sheet_timestamp = EXCLUDED.sheet_timestamp, updated_at = now();\" }}",
         "options": {}
       },
       "id": "f3a0249b-db16-4139-8c50-88eab2972251",
       "name": "Append or update row in sheet",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         2960,
         64
       ],
+      "credentials": {
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
+        }
+      },
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -477,45 +374,27 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-          "mode": "list",
-          "cachedResultName": "IntraWeb OS — Master Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "mode": "name",
-          "value": "Deals"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO public.os_deals_sheet (hubspot_deal_id, deal_name, company, industry, tier, lead_score, hubspot_contact_id, hubspot_company_id, sheet_timestamp) SELECT '\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.company||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.industry||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.tier||'').replace(/'/g,\"''\") + \"','','\" + String($('Build CRM Context').first().json.contactId||'').replace(/'/g,\"''\") + \"','', now() WHERE NOT EXISTS (SELECT 1 FROM public.os_deals_sheet d WHERE d.hubspot_deal_id = '\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"');\" }}",
         "options": {}
       },
       "id": "sys16-deals-sheet",
       "name": "Append to Deals Tab",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         3408,
         -16
       ],
+      "credentials": {
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
+        }
+      },
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -1195,9 +1074,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-  "activeVersionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-  "versionCounter": 494,
+  "versionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
+  "activeVersionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
+  "versionCounter": 507,
   "triggerCount": 1,
   "shared": [
     {
@@ -1220,9 +1099,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-04T05:18:44.000Z",
-    "createdAt": "2026-04-04T05:14:41.049Z",
-    "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
+    "updatedAt": "2026-04-19T19:25:30.112Z",
+    "createdAt": "2026-04-19T19:25:30.112Z",
+    "versionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
     "workflowId": "JzghCkfPxT5CV1iT",
     "nodes": [
       {
@@ -1536,130 +1415,27 @@
       },
       {
         "parameters": {
-          "operation": "appendOrUpdate",
-          "documentId": {
-            "__rl": true,
-            "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-            "mode": "list",
-            "cachedResultName": "IntraWeb OS — Master Data",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": 493844058,
-            "mode": "list",
-            "cachedResultName": "Deals",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=493844058"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "Timestamp",
-                "displayName": "Timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Deal Name",
-                "displayName": "Deal Name",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Company",
-                "displayName": "Company",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Industry",
-                "displayName": "Industry",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Tier",
-                "displayName": "Tier",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Lead Score",
-                "displayName": "Lead Score",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "HubSpot Deal ID",
-                "displayName": "HubSpot Deal ID",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "HubSpot Contact ID",
-                "displayName": "HubSpot Contact ID",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "HubSpot Company ID",
-                "displayName": "HubSpot Company ID",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"INSERT INTO public.os_deals_sheet (hubspot_deal_id, deal_name, company, industry, tier, lead_score, hubspot_contact_id, hubspot_company_id, sheet_timestamp) VALUES ('\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.company||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.industry||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.tier||'').replace(/'/g,\"''\") + \"','','\" + String($('Build CRM Context').first().json.contactId||'').replace(/'/g,\"''\") + \"','', now()) ON CONFLICT (hubspot_deal_id) DO UPDATE SET deal_name = EXCLUDED.deal_name, company = EXCLUDED.company, industry = EXCLUDED.industry, tier = EXCLUDED.tier, lead_score = EXCLUDED.lead_score, hubspot_contact_id = EXCLUDED.hubspot_contact_id, hubspot_company_id = EXCLUDED.hubspot_company_id, sheet_timestamp = EXCLUDED.sheet_timestamp, updated_at = now();\" }}",
           "options": {}
         },
         "id": "f3a0249b-db16-4139-8c50-88eab2972251",
         "name": "Append or update row in sheet",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.7,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           2960,
           64
         ],
+        "credentials": {
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
+          }
+        },
         "retryOnFail": true,
         "maxTries": 2,
-        "waitBetweenTries": 5000,
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
-          }
-        }
+        "waitBetweenTries": 5000
       },
       {
         "parameters": {
@@ -1695,45 +1471,27 @@
       },
       {
         "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-            "mode": "list",
-            "cachedResultName": "IntraWeb OS — Master Data",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "Deals"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [],
-            "schema": [],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"INSERT INTO public.os_deals_sheet (hubspot_deal_id, deal_name, company, industry, tier, lead_score, hubspot_contact_id, hubspot_company_id, sheet_timestamp) SELECT '\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.company||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.industry||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.tier||'').replace(/'/g,\"''\") + \"','','\" + String($('Build CRM Context').first().json.contactId||'').replace(/'/g,\"''\") + \"','', now() WHERE NOT EXISTS (SELECT 1 FROM public.os_deals_sheet d WHERE d.hubspot_deal_id = '\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"');\" }}",
           "options": {}
         },
         "id": "sys16-deals-sheet",
         "name": "Append to Deals Tab",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           3408,
           -16
         ],
+        "credentials": {
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
+          }
+        },
         "retryOnFail": true,
         "maxTries": 2,
-        "waitBetweenTries": 5000,
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
-          }
-        }
+        "waitBetweenTries": 5000
       },
       {
         "parameters": {
@@ -2400,307 +2158,26 @@
       }
     },
     "authors": "John Schibelli",
-    "name": "Version 20894ad5",
-    "description": "",
-    "autosaved": true,
+    "name": null,
+    "description": null,
+    "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-04T05:18:44.432Z",
-        "id": 1524,
+        "createdAt": "2026-04-19T19:25:30.222Z",
+        "id": 3021,
         "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
+        "versionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-13T21:09:57.000Z",
-        "id": 1546,
+        "createdAt": "2026-04-19T19:25:30.199Z",
+        "id": 3020,
         "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-13T23:32:53.576Z",
-        "id": 1608,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-13T23:33:34.862Z",
-        "id": 1656,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:18:30.723Z",
-        "id": 1725,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:21:57.712Z",
-        "id": 1775,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:53:58.728Z",
-        "id": 1857,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:55:34.795Z",
-        "id": 1917,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:00:30.046Z",
-        "id": 1983,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:11:36.053Z",
-        "id": 2049,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:12:31.870Z",
-        "id": 2115,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:15:40.902Z",
-        "id": 2181,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:28.051Z",
-        "id": 2247,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:55.247Z",
-        "id": 2313,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:08.548Z",
-        "id": 2379,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:51.618Z",
-        "id": 2445,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:28.149Z",
-        "id": 2511,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:34.060Z",
-        "id": 2583,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:20:00.919Z",
-        "id": 2639,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-13T21:09:56.978Z",
-        "id": 1545,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-13T23:32:53.558Z",
-        "id": 1607,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-13T23:33:34.847Z",
-        "id": 1655,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:18:30.690Z",
-        "id": 1724,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:21:57.696Z",
-        "id": 1774,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:53:58.701Z",
-        "id": 1856,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T02:55:34.779Z",
-        "id": 1916,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:00:30.030Z",
-        "id": 1982,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:11:36.038Z",
-        "id": 2048,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:12:31.837Z",
-        "id": 2114,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:15:40.885Z",
-        "id": 2180,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:28.028Z",
-        "id": 2246,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:55.231Z",
-        "id": 2312,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:08.515Z",
-        "id": 2378,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:51.607Z",
-        "id": 2444,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:28.135Z",
-        "id": 2510,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:33.933Z",
-        "id": 2582,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:20:00.805Z",
-        "id": 2638,
-        "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
+        "versionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

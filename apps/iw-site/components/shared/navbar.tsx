@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import Image from 'next/image';
 
-const navLinks = [
+const navLinks: Array<{ name: string; href: string; external?: boolean }> = [
   { name: "Home", href: "/" },
   { name: "How We Work", href: "/process" },
   { name: "About", href: "/about" },
   { name: "Agent Readiness", href: "/agent-readiness" },
   { name: "Implementation", href: "/implementation" },
   { name: "FAQ", href: "/faq" },
+  { name: "Sign In", href: "https://accounts.intrawebtech.com", external: true },
 ];
 
 export default function Navbar() {
@@ -122,13 +123,23 @@ export default function Navbar() {
         <ul className="hidden lg:flex items-center gap-8 font-body">
           {navLinks.map((link) => (
             <li key={link.name}>
-              <Link
-                href={link.href}
-                className={`hover:text-teal-400 transition-colors ${pathname === link.href ? "text-teal-400 font-semibold" : ""}`}
-                onClick={(e) => handleNavClick(e, link.href)}
-              >
-                {link.name}
-              </Link>
+              {link.external ? (
+                <a
+                  href={link.href}
+                  className="hover:text-teal-400 transition-colors"
+                  rel="noopener noreferrer"
+                >
+                  {link.name}
+                </a>
+              ) : (
+                <Link
+                  href={link.href}
+                  className={`hover:text-teal-400 transition-colors ${pathname === link.href ? "text-teal-400 font-semibold" : ""}`}
+                  onClick={(e) => handleNavClick(e, link.href)}
+                >
+                  {link.name}
+                </Link>
+              )}
             </li>
           ))}
           <li>
@@ -152,18 +163,29 @@ export default function Navbar() {
           <ul className="flex flex-col gap-4 font-body">
             {navLinks.map((link) => (
               <li key={link.name}>
-                <Link
-                  href={link.href}
-                  className={`block py-2 px-2 rounded hover:bg-teal-500 hover:text-white transition-colors ${pathname === link.href ? "text-teal-400 font-semibold" : ""}`}
-                  onClick={(e) => {
-                    handleNavClick(e, link.href);
-                    if (!link.href.startsWith("#") && !(link.href === "/" && isHome)) {
-                      setMenuOpen(false);
-                    }
-                  }}
-                >
-                  {link.name}
-                </Link>
+                {link.external ? (
+                  <a
+                    href={link.href}
+                    className="block py-2 px-2 rounded hover:bg-teal-500 hover:text-white transition-colors"
+                    rel="noopener noreferrer"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {link.name}
+                  </a>
+                ) : (
+                  <Link
+                    href={link.href}
+                    className={`block py-2 px-2 rounded hover:bg-teal-500 hover:text-white transition-colors ${pathname === link.href ? "text-teal-400 font-semibold" : ""}`}
+                    onClick={(e) => {
+                      handleNavClick(e, link.href);
+                      if (!link.href.startsWith("#") && !(link.href === "/" && isHome)) {
+                        setMenuOpen(false);
+                      }
+                    }}
+                  >
+                    {link.name}
+                  </Link>
+                )}
               </li>
             ))}
             <li>

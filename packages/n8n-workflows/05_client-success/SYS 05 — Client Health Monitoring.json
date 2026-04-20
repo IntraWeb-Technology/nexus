@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-17T04:20:23.901Z",
+  "updatedAt": "2026-04-19T19:25:36.347Z",
   "createdAt": "2026-03-08T22:52:36.783Z",
   "id": "oMCQFip422ufnvMN",
   "name": "SYS 05 — Client Health Monitoring",
@@ -301,98 +301,22 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-          "mode": "list",
-          "cachedResultName": "IntraWeb OS — Master Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 1242959944,
-          "mode": "list",
-          "cachedResultName": "Clients",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=1242959944"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Client Name",
-              "displayName": "Client Name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Tier",
-              "displayName": "Tier",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "MRR",
-              "displayName": "MRR",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Start Date",
-              "displayName": "Start Date",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Last Activity",
-              "displayName": "Last Activity",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Health Score",
-              "displayName": "Health Score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO public.os_client_success_clients (hubspot_deal_id, client_name, tier, mrr, start_date, last_activity, health_score) VALUES ('\" + String($json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($json.clientName||'').replace(/'/g,\"''\") + \"','\" + String($json.tier||'').replace(/'/g,\"''\") + \"','','','\" + String($json.lastContactDate||'').replace(/'/g,\"''\") + \"','\" + String($json.healthScore??'').replace(/'/g,\"''\") + \"') ON CONFLICT (hubspot_deal_id) DO UPDATE SET client_name = EXCLUDED.client_name, tier = EXCLUDED.tier, last_activity = EXCLUDED.last_activity, health_score = EXCLUDED.health_score, updated_at = now();\" }}",
         "options": {}
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "id": "936dcd4e-9f47-4896-a5d2-8f751cd37542",
+      "name": "Update Clients Tab",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         2704,
         288
       ],
-      "id": "936dcd4e-9f47-4896-a5d2-8f751cd37542",
-      "name": "Update Clients Tab",
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
@@ -594,9 +518,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-  "activeVersionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-  "versionCounter": 204,
+  "versionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
+  "activeVersionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
+  "versionCounter": 217,
   "triggerCount": 1,
   "shared": [
     {
@@ -619,9 +543,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-14T03:11:41.927Z",
-    "createdAt": "2026-04-14T03:11:41.927Z",
-    "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
+    "updatedAt": "2026-04-19T19:25:36.348Z",
+    "createdAt": "2026-04-19T19:25:36.348Z",
+    "versionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
     "workflowId": "oMCQFip422ufnvMN",
     "nodes": [
       {
@@ -918,98 +842,22 @@
       },
       {
         "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-            "mode": "list",
-            "cachedResultName": "IntraWeb OS — Master Data",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": 1242959944,
-            "mode": "list",
-            "cachedResultName": "Clients",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=1242959944"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "Client Name",
-                "displayName": "Client Name",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Tier",
-                "displayName": "Tier",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "MRR",
-                "displayName": "MRR",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Start Date",
-                "displayName": "Start Date",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Last Activity",
-                "displayName": "Last Activity",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Health Score",
-                "displayName": "Health Score",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"INSERT INTO public.os_client_success_clients (hubspot_deal_id, client_name, tier, mrr, start_date, last_activity, health_score) VALUES ('\" + String($json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($json.clientName||'').replace(/'/g,\"''\") + \"','\" + String($json.tier||'').replace(/'/g,\"''\") + \"','','','\" + String($json.lastContactDate||'').replace(/'/g,\"''\") + \"','\" + String($json.healthScore??'').replace(/'/g,\"''\") + \"') ON CONFLICT (hubspot_deal_id) DO UPDATE SET client_name = EXCLUDED.client_name, tier = EXCLUDED.tier, last_activity = EXCLUDED.last_activity, health_score = EXCLUDED.health_score, updated_at = now();\" }}",
           "options": {}
         },
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.7,
+        "id": "936dcd4e-9f47-4896-a5d2-8f751cd37542",
+        "name": "Update Clients Tab",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           2704,
           288
         ],
-        "id": "936dcd4e-9f47-4896-a5d2-8f751cd37542",
-        "name": "Update Clients Tab",
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       },
@@ -1199,166 +1047,21 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-14T03:11:41.998Z",
-        "id": 2073,
+        "createdAt": "2026-04-19T19:25:36.401Z",
+        "id": 3045,
         "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
+        "versionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-14T03:12:37.194Z",
-        "id": 2139,
+        "createdAt": "2026-04-19T19:25:36.383Z",
+        "id": 3044,
         "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:15:46.208Z",
-        "id": 2205,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:33.164Z",
-        "id": 2271,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:17:02.070Z",
-        "id": 2337,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:14.333Z",
-        "id": 2403,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:57.212Z",
-        "id": 2469,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:33.554Z",
-        "id": 2535,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:41.100Z",
-        "id": 2607,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:20:23.966Z",
-        "id": 2651,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:11:41.981Z",
-        "id": 2072,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:12:37.180Z",
-        "id": 2138,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:15:46.192Z",
-        "id": 2204,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:16:33.153Z",
-        "id": 2270,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:17:02.042Z",
-        "id": 2336,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:14.315Z",
-        "id": 2402,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:23:57.196Z",
-        "id": 2468,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T03:24:33.535Z",
-        "id": 2534,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-14T09:44:41.084Z",
-        "id": 2606,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-17T04:20:23.948Z",
-        "id": 2650,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "579d8140-cfa4-43f5-b6e6-fec855734ee8",
+        "versionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
-    ],
-    "settings": {}
+    ]
   }
 }

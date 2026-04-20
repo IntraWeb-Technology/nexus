@@ -8,7 +8,8 @@ export function PortalDataUnavailable() {
       <p className="mt-2">
         Refresh the page. If it keeps happening, confirm{' '}
         <code className="text-[var(--iw-teal-light)]">SUPABASE_SERVICE_ROLE_KEY</code> and{' '}
-        <code className="text-[var(--iw-teal-light)]">NEXT_PUBLIC_SUPABASE_URL</code> are set on the
+        <code className="text-[var(--iw-teal-light)]">NEXT_PUBLIC_SUPABASE_URL</code> (or server-only{' '}
+        <code className="text-[var(--iw-teal-light)]">SUPABASE_URL</code>) are set on the
         server, or that your Clerk JWT template for Supabase is configured.
       </p>
     </div>

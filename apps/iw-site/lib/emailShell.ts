@@ -82,10 +82,10 @@ ${headStyles}
     <tr><td style="padding:28px 20px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;">
       ${logoBlock}
     </td></tr>
-    <tr><td style="padding:8px 0 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${IW.text};">
+    <tr><td style="padding:8px 20px 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${IW.text};">
       <div class="iw-email-body" style="min-height:72px;">${innerBodyHtml}</div>
     </td></tr>
-    <tr><td style="padding:20px 0 28px;border-top:1px solid ${IW.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${IW.muted};">
+    <tr><td style="padding:20px 20px 28px;border-top:1px solid ${IW.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${IW.muted};">
       <p style="margin:0;">${escapeHtml(company)}</p>
     </td></tr>
   </table>
