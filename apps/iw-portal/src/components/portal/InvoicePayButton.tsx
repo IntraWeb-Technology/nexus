@@ -21,7 +21,7 @@ export function InvoicePayButton({ invoiceId }: { invoiceId: string }) {
       if (data.url) window.location.href = data.url
     } catch (e) {
       if (e instanceof Error && e.message === 'Stripe is not configured') {
-        setError('Payments are unavailable for these demo invoices.')
+        setError('Online payments are not configured for this environment.')
       } else {
         setError(e instanceof Error ? e.message : 'Checkout failed')
       }

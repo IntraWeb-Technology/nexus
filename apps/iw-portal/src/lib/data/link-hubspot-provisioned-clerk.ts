@@ -8,7 +8,8 @@ function isPlaceholderClerkId(id: string): boolean {
   return id.startsWith('provision:')
 }
 
-function normalizeEmail(email: string): string {
+/** Case-insensitive portal email match (shared by merge + n8n provision). */
+export function normalizePortalClientEmail(email: string): string {
   return email.trim().toLowerCase()
 }
 
@@ -68,7 +69,7 @@ export async function mergeProvisionedClientsByEmailIntoClerkUser(
   input: { clerkUserId: string; email: string },
 ): Promise<MergeProvisionedClientsResult> {
   const clerkUserId = input.clerkUserId.trim()
-  const email = normalizeEmail(input.email)
+  const email = normalizePortalClientEmail(input.email)
   if (!clerkUserId.startsWith('user_') || !email) return 'noop'
 
   const { data: real, error: realErr } = await supabase

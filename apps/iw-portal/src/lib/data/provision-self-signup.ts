@@ -1,10 +1,8 @@
 import { createClerkClient } from '@clerk/backend'
-import { invoicesForPlan } from '@/lib/invoice-templates'
 import {
   linkPlaceholderClientToClerkUser,
   mergeProvisionedClientsByEmailIntoClerkUser,
 } from '@/lib/data/link-hubspot-provisioned-clerk'
-import { milestonesForPlan } from '@/lib/milestones-templates'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import type { Plan } from '@/lib/supabase/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -92,7 +90,7 @@ function projectSlugForClerkUser(userId: string): string {
 }
 
 /**
- * Creates `clients` + `projects` + starter milestones/invoices/preferences when enabled.
+ * Creates `clients` + `projects` + notification preferences when enabled (no template milestones/invoices).
  * Idempotent per `clerk_user_id`. Uses service-role Supabase (bypasses RLS).
  */
 export async function provisionSelfSignupCustomer(
@@ -150,7 +148,7 @@ export async function provisionSelfSignupCustomer(
       slug,
       plan: DEFAULT_PLAN,
       status: 'onboarding',
-      progress_pct: 5,
+      progress_pct: 0,
       start_date: start,
       estimated_launch: null,
       hubspot_deal_id: null,
@@ -164,42 +162,7 @@ export async function provisionSelfSignupCustomer(
     return 'error'
   }
 
-  const seeds = milestonesForPlan(DEFAULT_PLAN)
-  const milestoneRows = seeds.map((m, i) => ({
-    project_id: project.id,
-    title: m.title,
-    description: null as string | null,
-    status: i === 0 ? ('active' as const) : ('pending' as const),
-    phase: m.phase,
-    completed_at: null as string | null,
-    estimated_at: null as string | null,
-    sort_order: m.sort_order,
-  }))
-  const { error: mErr } = await supabase.from('milestones').insert(milestoneRows)
-  if (mErr) {
-    console.error('[provision-self-signup] milestones', mErr)
-    await supabase.from('clients').delete().eq('id', client.id)
-    return 'error'
-  }
-
-  const invSeeds = invoicesForPlan(DEFAULT_PLAN)
-  const { error: invErr } = await supabase.from('invoices').insert(
-    invSeeds.map((inv) => ({
-      project_id: project.id,
-      invoice_number: inv.invoice_number,
-      description: inv.description,
-      amount_cents: inv.amount_cents,
-      status: inv.status,
-      sku: inv.sku,
-      due_date: null,
-      paid_at: inv.status === 'paid' ? new Date().toISOString() : null,
-    })),
-  )
-  if (invErr) {
-    console.error('[provision-self-signup] invoices', invErr)
-    await supabase.from('clients').delete().eq('id', client.id)
-    return 'error'
-  }
+  /** No template milestones/invoices here — those come from `provision_client` (n8n) once the deal exists. */
 
   const { error: prefErr } = await supabase.from('notification_preferences').insert({
     client_id: client.id,

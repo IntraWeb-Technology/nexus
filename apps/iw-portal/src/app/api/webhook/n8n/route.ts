@@ -1,7 +1,11 @@
 import { sendWelcomeEmail } from '@/lib/email/send'
-import { linkPlaceholderClientToClerkUser } from '@/lib/data/link-hubspot-provisioned-clerk'
-import { invoicesForPlan } from '@/lib/invoice-templates'
-import { milestonesForEngagementPhase } from '@/lib/milestones-templates'
+import {
+  linkPlaceholderClientToClerkUser,
+  mergeProvisionedClientsByEmailIntoClerkUser,
+  normalizePortalClientEmail,
+  type MergeProvisionedClientsResult,
+} from '@/lib/data/link-hubspot-provisioned-clerk'
+import { insertProvisionedEngagementContent } from '@/lib/data/provision-client-engagement'
 import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webhooks'
 import { progressFromMilestones } from '@/lib/progress'
 import { createServiceSupabase } from '@/lib/supabase/server'
@@ -247,13 +251,20 @@ export async function POST(request: Request) {
           email: em,
           hubspotContactId: hs,
         })
-        if (result === 'not_found') {
+        let merged: MergeProvisionedClientsResult = 'noop'
+        if (em && clerkUserId.startsWith('user_') && result !== 'conflict') {
+          merged = await mergeProvisionedClientsByEmailIntoClerkUser(supabase, {
+            clerkUserId,
+            email: em,
+          })
+        }
+        if (result === 'not_found' && merged !== 'merged') {
           return NextResponse.json({ ok: false, result }, { status: 404 })
         }
         if (result === 'conflict') {
           return NextResponse.json({ ok: false, result }, { status: 409 })
         }
-        return NextResponse.json({ ok: true, result })
+        return NextResponse.json({ ok: true, result, merged })
       }
       case 'provision_client': {
         const d = payload as Extract<N8nInboundPayload, { action: 'provision_client' }>
@@ -269,38 +280,83 @@ export async function POST(request: Request) {
           })
         }
 
-        const clerkUserId =
-          data.clerk_user_id ?? `provision:hs:${data.hubspot_contact_id}`
-
-        const { data: existing } = await supabase
-          .from('projects')
-          .select('id')
-          .eq('slug', slug)
-          .maybeSingle()
-        if (existing) {
+        const { data: slugRow } = await supabase.from('projects').select('id').eq('slug', slug).maybeSingle()
+        if (slugRow) {
           return NextResponse.json({ error: 'project slug already exists' }, { status: 409 })
         }
 
-        const { data: client, error: cErr } = await supabase
-          .from('clients')
-          .insert({
-            clerk_user_id: clerkUserId,
-            name: data.name,
-            email: data.email,
-            phone: data.phone ?? null,
-            company: null,
-            hubspot_contact_id: data.hubspot_contact_id,
-          })
-          .select('id')
-          .single()
-        if (cErr || !client) {
-          return NextResponse.json({ error: cErr?.message ?? 'client insert failed' }, { status: 500 })
+        const clerkFromPayload = data.clerk_user_id?.trim()
+        const clerkUserId = clerkFromPayload || `provision:hs:${data.hubspot_contact_id}`
+        const engagementPhase =
+          data.engagement_phase === 'qualified' ? 'qualified' : 'standard'
+
+        let clientId: string
+        let insertedNewClientForRollback = false
+
+        if (clerkUserId.startsWith('user_')) {
+          const { data: existingClient, error: exErr } = await supabase
+            .from('clients')
+            .select('id, hubspot_contact_id')
+            .eq('clerk_user_id', clerkUserId)
+            .maybeSingle()
+          if (exErr) {
+            console.error('[webhook/n8n] provision_client client lookup', exErr)
+            return NextResponse.json({ error: 'client lookup failed' }, { status: 500 })
+          }
+          if (existingClient) {
+            clientId = existingClient.id
+            const patch: { hubspot_contact_id?: string; name?: string; phone?: string | null } = {}
+            if (!existingClient.hubspot_contact_id?.trim()) {
+              patch.hubspot_contact_id = data.hubspot_contact_id
+            }
+            if (data.name?.trim()) patch.name = data.name.trim()
+            if (data.phone !== undefined) patch.phone = data.phone ?? null
+            if (Object.keys(patch).length) {
+              await supabase.from('clients').update(patch).eq('id', clientId)
+            }
+          } else {
+            insertedNewClientForRollback = true
+            const { data: client, error: cErr } = await supabase
+              .from('clients')
+              .insert({
+                clerk_user_id: clerkUserId,
+                name: data.name,
+                email: data.email,
+                phone: data.phone ?? null,
+                company: null,
+                hubspot_contact_id: data.hubspot_contact_id,
+              })
+              .select('id')
+              .single()
+            if (cErr || !client) {
+              return NextResponse.json({ error: cErr?.message ?? 'client insert failed' }, { status: 500 })
+            }
+            clientId = client.id
+          }
+        } else {
+          insertedNewClientForRollback = true
+          const { data: client, error: cErr } = await supabase
+            .from('clients')
+            .insert({
+              clerk_user_id: clerkUserId,
+              name: data.name,
+              email: data.email,
+              phone: data.phone ?? null,
+              company: null,
+              hubspot_contact_id: data.hubspot_contact_id,
+            })
+            .select('id')
+            .single()
+          if (cErr || !client) {
+            return NextResponse.json({ error: cErr?.message ?? 'client insert failed' }, { status: 500 })
+          }
+          clientId = client.id
         }
 
         const { data: project, error: pErr } = await supabase
           .from('projects')
           .insert({
-            client_id: client.id,
+            client_id: clientId,
             slug,
             plan: data.plan,
             status: 'onboarding',
@@ -315,42 +371,34 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: pErr?.message ?? 'project insert failed' }, { status: 500 })
         }
 
-        const engagementPhase =
-          data.engagement_phase === 'qualified' ? 'qualified' : 'standard'
-        const seeds = milestonesForEngagementPhase(engagementPhase, data.plan)
-        const milestoneRows = seeds.map((m, i) => ({
-          project_id: project.id,
-          title: m.title,
-          description: null as string | null,
-          status: i === 0 ? ('active' as const) : ('pending' as const),
-          phase: m.phase,
-          completed_at: null as string | null,
-          estimated_at: null as string | null,
-          sort_order: m.sort_order,
-        }))
-        await supabase.from('milestones').insert(milestoneRows)
+        try {
+          await insertProvisionedEngagementContent(supabase, {
+            projectId: project.id,
+            clientId,
+            plan: data.plan,
+            engagementPhase,
+          })
+        } catch (e) {
+          console.error('[webhook/n8n] provision_client engagement content', e)
+          await supabase.from('projects').delete().eq('id', project.id)
+          if (insertedNewClientForRollback) {
+            await supabase.from('clients').delete().eq('id', clientId)
+          }
+          return NextResponse.json({ error: 'provision engagement insert failed' }, { status: 500 })
+        }
 
-        const invSeeds = invoicesForPlan(data.plan)
-        await supabase.from('invoices').insert(
-          invSeeds.map((inv) => ({
-            project_id: project.id,
-            invoice_number: inv.invoice_number,
-            description: inv.description,
-            amount_cents: inv.amount_cents,
-            status: inv.status,
-            sku: inv.sku,
-            due_date: null,
-            paid_at: inv.status === 'paid' ? new Date().toISOString() : null,
-          })),
-        )
-
-        await supabase.from('notification_preferences').insert({
-          client_id: client.id,
-          email_notifications: true,
-          message_alerts: true,
-          invoice_reminders: true,
-          document_uploads: false,
-        })
+        const emailKey = normalizePortalClientEmail(data.email)
+        const { data: sameEmail } = await supabase
+          .from('clients')
+          .select('clerk_user_id')
+          .ilike('email', emailKey)
+        const realClerk = sameEmail?.find((r) => r.clerk_user_id?.startsWith('user_'))?.clerk_user_id
+        if (realClerk) {
+          await mergeProvisionedClientsByEmailIntoClerkUser(supabase, {
+            clerkUserId: realClerk,
+            email: data.email,
+          })
+        }
 
         try {
           await sendWelcomeEmail(data.email, data.name)
@@ -358,7 +406,7 @@ export async function POST(request: Request) {
           console.error('[provision] welcome email', e)
         }
 
-        return NextResponse.json({ client_id: client.id, project_id: project.id })
+        return NextResponse.json({ client_id: clientId, project_id: project.id })
       }
       default:
         return NextResponse.json({ error: 'unknown action' }, { status: 400 })

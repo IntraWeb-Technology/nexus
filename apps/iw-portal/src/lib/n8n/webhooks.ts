@@ -74,7 +74,12 @@ export type ProvisionClientData = {
   hubspot_deal_id: string
   plan: Plan
   start_date: string
-  /** If omitted, a unique placeholder is generated until Clerk user exists */
+  /**
+   * If omitted, `provision:hs:<hubspot_contact_id>` is used until Clerk links.
+   * When set to a real `user_…` id and that portal client already exists (e.g. auto-provision),
+   * the new project is attached to that row so `hubspot_deal_id` / milestones live under the
+   * signed-in user without a duplicate client.
+   */
   clerk_user_id?: string
   /** When `qualified`, seeds pre-contract milestones instead of the full delivery template. */
   engagement_phase?: EngagementPhase
@@ -88,6 +93,7 @@ export type ProvisionClientData = {
 export type LinkPortalClerkUserData = {
   clerk_user_id: string
   hubspot_contact_id?: string
+  /** Strongly recommended when the HubSpot row was linked by contact id only — merges placeholder clients after auto-provision. */
   email?: string
 }
 

@@ -52,7 +52,8 @@ export async function POST(request: Request) {
           console.log('[clerk webhook] linked HubSpot-provisioned client', parsed.userId, parsed.email)
         } else if (linkResult === 'conflict') {
           console.warn('[clerk webhook] link HubSpot client conflict', parsed.userId)
-        } else if (linkResult === 'noop_already') {
+        }
+        if (linkResult !== 'conflict') {
           const merged = await mergeProvisionedClientsByEmailIntoClerkUser(supabase, {
             clerkUserId: parsed.userId,
             email: parsed.email,
