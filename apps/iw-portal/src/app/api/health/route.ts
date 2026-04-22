@@ -1,3 +1,4 @@
+import { isHubSpotConfigured } from '@/lib/hubspot/config'
 import { getSupabaseApiUrl } from '@/lib/supabase/url'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -75,6 +76,10 @@ export async function GET() {
           : present(supabaseSecret)
             ? 'secret'
             : 'none',
+      },
+      hubspot: {
+        /** Portal CRM read + optional email→contact sync on load when token is set. */
+        serverTokenConfigured: isHubSpotConfigured(),
       },
     },
     { status: ok ? 200 : 503 },

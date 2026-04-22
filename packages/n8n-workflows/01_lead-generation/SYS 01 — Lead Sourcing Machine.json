@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-20T04:21:51.133Z",
+  "updatedAt": "2026-04-20T16:21:04.371Z",
   "createdAt": "2026-03-08T22:45:31.533Z",
   "id": "RJngRI1L2LcmFmZ0",
   "name": "SYS 01 — Lead Sourcing Machine",
@@ -93,7 +93,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $('Google Maps Places Search').first().json;\nconst results = Array.isArray(response.results) ? response.results : [];\nconst batchItem = $('Process Each Query').first().json;\nconst query = (batchItem && batchItem.query) ? String(batchItem.query) : '';\nreturn results.map(place => ({\n  json: {\n    businessName: place.name != null ? String(place.name) : '',\n    address: place.formatted_address != null ? String(place.formatted_address) : '',\n    rating: typeof place.rating === 'number' ? place.rating : 0,\n    reviewCount: typeof place.user_ratings_total === 'number' ? place.user_ratings_total : 0,\n    placeId: place.place_id != null ? String(place.place_id) : '',\n    hasPhone: false,\n    hasWebsite: false,\n    phone: '',\n    website: '',\n    sourcingQuery: query\n  }\n}));"
+        "jsCode": "const response = $('Google Maps Places Search').first().json;\nconst results = Array.isArray(response.results) ? response.results : [];\nlet batchItem = {};\ntry {\n  batchItem = $('Process Each Query').item.json || {};\n} catch (e) {\n  const fi = $('Process Each Query').first();\n  batchItem = (fi && fi.json) ? fi.json : {};\n}\nconst query = (batchItem && batchItem.query) ? String(batchItem.query) : '';\nreturn results.map(place => ({\n  json: {\n    businessName: place.name != null ? String(place.name) : '',\n    address: place.formatted_address != null ? String(place.formatted_address) : '',\n    rating: typeof place.rating === 'number' ? place.rating : 0,\n    reviewCount: typeof place.user_ratings_total === 'number' ? place.user_ratings_total : 0,\n    placeId: place.place_id != null ? String(place.place_id) : '',\n    hasPhone: false,\n    hasWebsite: false,\n    phone: '',\n    website: '',\n    sourcingQuery: query\n  }\n}));"
       },
       "id": "fbecaadc-dfc9-4874-9675-540ce4c452cb",
       "name": "Extract Place Data",
@@ -120,7 +120,7 @@
             },
             {
               "name": "key",
-              "value": "={{ $('Call \\'CONFIG — Global Settings\\'').first().json.google?.mapsApiKey || $('Process Each Query').first().json.config?.google?.mapsApiKey || '' }}"
+              "value": "={{ $('Call \\'CONFIG — Global Settings\\'').first().json.google?.mapsApiKey || $('Process Each Query').item.json.config?.google?.mapsApiKey || $('Process Each Query').first().json.config?.google?.mapsApiKey || '' }}"
             }
           ]
         },
@@ -150,7 +150,7 @@
     },
     {
       "parameters": {
-        "jsCode": "let sheetRows = [];\ntry {\n  const readNode = $('Read Leads Sheet').all();\n  if (readNode && Array.isArray(readNode) && readNode.length > 0 && !readNode[0].json?.error) {\n    sheetRows = readNode;\n  }\n} catch (e) {}\nconst existingPlaceIds = new Set(\n  sheetRows\n    .map(r => r.json && (r.json['Place ID'] != null || r.json.placeId != null)\n      ? String(r.json['Place ID'] || r.json.placeId).trim()\n      : '')\n    .filter(Boolean)\n);\nconst items = $('Enrich with Details').all();\nconst filtered = items.filter(item => {\n  const pid = item.json && item.json.placeId ? String(item.json.placeId).trim() : '';\n  return pid && !existingPlaceIds.has(pid);\n});\nreturn filtered.map(item => ({ json: item.json }));"
+        "jsCode": "function pidFrom(j) {\n  if (!j || typeof j !== 'object') return '';\n  const v = j['Place ID'] ?? j.placeId ?? j.place_id ?? j.placeid;\n  if (v == null) return '';\n  const s = String(v).trim();\n  return s || '';\n}\n\nlet sheetRows = [];\ntry {\n  let readNode;\n  try {\n    readNode = typeof $runIndex === 'number' ? $('Read Leads Sheet').all(0, $runIndex) : $('Read Leads Sheet').all();\n  } catch (e2) {\n    readNode = $('Read Leads Sheet').all();\n  }\n  if (readNode && Array.isArray(readNode) && readNode.length > 0 && !readNode[0].json?.error) {\n    sheetRows = readNode;\n  }\n} catch (e) {}\n\nconst existingPlaceIds = new Set(sheetRows.map(r => pidFrom(r.json)).filter(Boolean));\nconst items = $input.all();\nconst filtered = items.filter(item => {\n  const pid = pidFrom(item.json);\n  return pid && !existingPlaceIds.has(pid);\n});\nreturn filtered.map(item => ({ json: item.json }));"
       },
       "id": "03f2fd6c-d486-4772-99e0-738415d65f80",
       "name": "Filter New Leads Only",
@@ -665,7 +665,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const firstItem = $('Process Each Query').first();\nconst batchItem = firstItem && firstItem.json ? firstItem.json : {};\nconst config = batchItem.config || {};\nconst queries = config.leadSourcingQueries || [];\nconst justFinished = batchItem.query ? String(batchItem.query) : '';\nconst remaining = queries.filter(q => String(q).trim() !== justFinished.trim());\n\nif (remaining.length > 0) {\n  return remaining.map(query => ({ json: { query, config } }));\n}\nreturn [{ json: { _alert: true, message: 'Lead sourcing complete — check Automations Log for details', priority: 'info' } }];"
+        "jsCode": "const config = $('Call \\'CONFIG — Global Settings\\'').first().json;\nconst queries = config.leadSourcingQueries || [];\nlet justFinished = '';\ntry {\n  const runIdx = typeof $runIndex === 'number' ? $runIndex : undefined;\n  const exRows = runIdx !== undefined ? $('Extract Place Data').all(0, runIdx) : $('Extract Place Data').all();\n  if (exRows.length) justFinished = String(exRows[0].json?.sourcingQuery || '').trim();\n} catch (e) {}\nif (!justFinished) {\n  try {\n    justFinished = String($('Process Each Query').item.json.query || '').trim();\n  } catch (e2) {\n    try {\n      const qf = $('Process Each Query').first();\n      justFinished = String((qf && qf.json && qf.json.query) ? qf.json.query : '').trim();\n    } catch (e3) {}\n  }\n}\nconst remaining = queries.filter(q => String(q).trim() !== justFinished.trim());\n\nif (remaining.length > 0) {\n  return remaining.map(query => ({ json: { query, config } }));\n}\nreturn [{ json: { _alert: true, message: 'Lead sourcing complete — check Automations Log for details', priority: 'info' } }];"
       },
       "id": "ec0ad197-d8a9-4b5a-814b-2fa2df88777a",
       "name": "Prepare Completion Alert",
@@ -823,6 +823,7 @@
       ],
       "id": "2c4b5318-00ed-4023-950b-40c6e87d3883",
       "name": "Read Leads Sheet",
+      "executeOnce": true,
       "credentials": {
         "postgres": {
           "id": "SHSVYlQKM9cAdx5k",
@@ -871,8 +872,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        66656,
-        12448
+        66672,
+        12752
       ],
       "id": "8aac8ea1-6e83-461c-92a2-c5cb4738e29f",
       "name": "Create a company",
@@ -1414,9 +1415,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "4808b3ca-3e1c-4e5d-805f-6acd591deb9d",
-  "activeVersionId": "4808b3ca-3e1c-4e5d-805f-6acd591deb9d",
-  "versionCounter": 799,
+  "versionId": "7e423d8f-2821-4fbf-95a1-5a4b55372165",
+  "activeVersionId": "a852ade5-1779-47e5-ba96-f082eea0e602",
+  "versionCounter": 859,
   "triggerCount": 1,
   "shared": [
     {
@@ -1439,9 +1440,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-20T04:21:51.134Z",
-    "createdAt": "2026-04-20T04:21:51.134Z",
-    "versionId": "4808b3ca-3e1c-4e5d-805f-6acd591deb9d",
+    "updatedAt": "2026-04-20T16:12:44.494Z",
+    "createdAt": "2026-04-20T16:12:44.494Z",
+    "versionId": "a852ade5-1779-47e5-ba96-f082eea0e602",
     "workflowId": "RJngRI1L2LcmFmZ0",
     "nodes": [
       {
@@ -1490,6 +1491,7 @@
       },
       {
         "parameters": {
+          "batchSize": 1,
           "options": {}
         },
         "id": "b5608317-273a-4be2-8bd0-066cea8a4ccf",
@@ -1530,7 +1532,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const response = $('Google Maps Places Search').first().json;\nconst results = Array.isArray(response.results) ? response.results : [];\nconst batchItem = $('Process Each Query').first().json;\nconst query = (batchItem && batchItem.query) ? String(batchItem.query) : '';\nreturn results.map(place => ({\n  json: {\n    businessName: place.name != null ? String(place.name) : '',\n    address: place.formatted_address != null ? String(place.formatted_address) : '',\n    rating: typeof place.rating === 'number' ? place.rating : 0,\n    reviewCount: typeof place.user_ratings_total === 'number' ? place.user_ratings_total : 0,\n    placeId: place.place_id != null ? String(place.place_id) : '',\n    hasPhone: false,\n    hasWebsite: false,\n    phone: '',\n    website: '',\n    sourcingQuery: query\n  }\n}));"
+          "jsCode": "const response = $('Google Maps Places Search').first().json;\nconst results = Array.isArray(response.results) ? response.results : [];\nlet batchItem = {};\ntry {\n  batchItem = $('Process Each Query').item.json || {};\n} catch (e) {\n  const fi = $('Process Each Query').first();\n  batchItem = (fi && fi.json) ? fi.json : {};\n}\nconst query = (batchItem && batchItem.query) ? String(batchItem.query) : '';\nreturn results.map(place => ({\n  json: {\n    businessName: place.name != null ? String(place.name) : '',\n    address: place.formatted_address != null ? String(place.formatted_address) : '',\n    rating: typeof place.rating === 'number' ? place.rating : 0,\n    reviewCount: typeof place.user_ratings_total === 'number' ? place.user_ratings_total : 0,\n    placeId: place.place_id != null ? String(place.place_id) : '',\n    hasPhone: false,\n    hasWebsite: false,\n    phone: '',\n    website: '',\n    sourcingQuery: query\n  }\n}));"
         },
         "id": "fbecaadc-dfc9-4874-9675-540ce4c452cb",
         "name": "Extract Place Data",
@@ -1557,7 +1559,7 @@
               },
               {
                 "name": "key",
-                "value": "={{ $('Call \\'CONFIG — Global Settings\\'').first().json.google?.mapsApiKey || $('Process Each Query').first().json.config?.google?.mapsApiKey || '' }}"
+                "value": "={{ $('Call \\'CONFIG — Global Settings\\'').first().json.google?.mapsApiKey || $('Process Each Query').item.json.config?.google?.mapsApiKey || $('Process Each Query').first().json.config?.google?.mapsApiKey || '' }}"
               }
             ]
           },
@@ -1587,7 +1589,7 @@
       },
       {
         "parameters": {
-          "jsCode": "let sheetRows = [];\ntry {\n  const readNode = $('Read Leads Sheet').all();\n  if (readNode && Array.isArray(readNode) && readNode.length > 0 && !readNode[0].json?.error) {\n    sheetRows = readNode;\n  }\n} catch (e) {}\nconst existingPlaceIds = new Set(\n  sheetRows\n    .map(r => r.json && (r.json['Place ID'] != null || r.json.placeId != null)\n      ? String(r.json['Place ID'] || r.json.placeId).trim()\n      : '')\n    .filter(Boolean)\n);\nconst items = $('Enrich with Details').all();\nconst filtered = items.filter(item => {\n  const pid = item.json && item.json.placeId ? String(item.json.placeId).trim() : '';\n  return pid && !existingPlaceIds.has(pid);\n});\nreturn filtered.map(item => ({ json: item.json }));"
+          "jsCode": "function pidFrom(j) {\n  if (!j || typeof j !== 'object') return '';\n  const v = j['Place ID'] ?? j.placeId ?? j.place_id ?? j.placeid;\n  if (v == null) return '';\n  const s = String(v).trim();\n  return s || '';\n}\n\nlet sheetRows = [];\ntry {\n  let readNode;\n  try {\n    readNode = typeof $runIndex === 'number' ? $('Read Leads Sheet').all(0, $runIndex) : $('Read Leads Sheet').all();\n  } catch (e2) {\n    readNode = $('Read Leads Sheet').all();\n  }\n  if (readNode && Array.isArray(readNode) && readNode.length > 0 && !readNode[0].json?.error) {\n    sheetRows = readNode;\n  }\n} catch (e) {}\n\nconst existingPlaceIds = new Set(sheetRows.map(r => pidFrom(r.json)).filter(Boolean));\nconst items = $input.all();\nconst filtered = items.filter(item => {\n  const pid = pidFrom(item.json);\n  return pid && !existingPlaceIds.has(pid);\n});\nreturn filtered.map(item => ({ json: item.json }));"
         },
         "id": "03f2fd6c-d486-4772-99e0-738415d65f80",
         "name": "Filter New Leads Only",
@@ -2102,7 +2104,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const firstItem = $('Process Each Query').first();\nconst batchItem = firstItem && firstItem.json ? firstItem.json : {};\nconst config = batchItem.config || {};\nconst queries = config.leadSourcingQueries || [];\nconst justFinished = batchItem.query ? String(batchItem.query) : '';\nconst remaining = queries.filter(q => String(q).trim() !== justFinished.trim());\n\nif (remaining.length > 0) {\n  return remaining.map(query => ({ json: { query, config } }));\n}\nreturn [{ json: { _alert: true, message: 'Lead sourcing complete — check Automations Log for details', priority: 'info' } }];"
+          "jsCode": "const config = $('Call \\'CONFIG — Global Settings\\'').first().json;\nconst queries = config.leadSourcingQueries || [];\nlet justFinished = '';\ntry {\n  const runIdx = typeof $runIndex === 'number' ? $runIndex : undefined;\n  const exRows = runIdx !== undefined ? $('Extract Place Data').all(0, runIdx) : $('Extract Place Data').all();\n  if (exRows.length) justFinished = String(exRows[0].json?.sourcingQuery || '').trim();\n} catch (e) {}\nif (!justFinished) {\n  try {\n    justFinished = String($('Process Each Query').item.json.query || '').trim();\n  } catch (e2) {\n    try {\n      const qf = $('Process Each Query').first();\n      justFinished = String((qf && qf.json && qf.json.query) ? qf.json.query : '').trim();\n    } catch (e3) {}\n  }\n}\nconst remaining = queries.filter(q => String(q).trim() !== justFinished.trim());\n\nif (remaining.length > 0) {\n  return remaining.map(query => ({ json: { query, config } }));\n}\nreturn [{ json: { _alert: true, message: 'Lead sourcing complete — check Automations Log for details', priority: 'info' } }];"
         },
         "id": "ec0ad197-d8a9-4b5a-814b-2fa2df88777a",
         "name": "Prepare Completion Alert",
@@ -2260,6 +2262,7 @@
         ],
         "id": "2c4b5318-00ed-4023-950b-40c6e87d3883",
         "name": "Read Leads Sheet",
+        "executeOnce": true,
         "credentials": {
           "postgres": {
             "id": "SHSVYlQKM9cAdx5k",
@@ -2840,18 +2843,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-20T04:21:51.207Z",
-        "id": 3067,
+        "createdAt": "2026-04-20T16:12:44.551Z",
+        "id": 3103,
         "workflowId": "RJngRI1L2LcmFmZ0",
-        "versionId": "4808b3ca-3e1c-4e5d-805f-6acd591deb9d",
+        "versionId": "a852ade5-1779-47e5-ba96-f082eea0e602",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-20T04:21:51.185Z",
-        "id": 3066,
+        "createdAt": "2026-04-20T16:12:44.533Z",
+        "id": 3102,
         "workflowId": "RJngRI1L2LcmFmZ0",
-        "versionId": "4808b3ca-3e1c-4e5d-805f-6acd591deb9d",
+        "versionId": "a852ade5-1779-47e5-ba96-f082eea0e602",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }

@@ -1,4 +1,5 @@
 import { ensureSelfSignupProvisionForClerkUser } from '@/lib/data/provision-self-signup'
+import { syncPortalMissingHubSpotIdsFromCrm } from '@/lib/data/sync-portal-hubspot-from-crm'
 import { auth } from '@clerk/nextjs/server'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { Client, Project } from '@/lib/supabase/types'
@@ -83,7 +84,9 @@ export const getPortalBundle = cache(async (): Promise<PortalBundle | null> => {
     .order('created_at', { ascending: false })
   if (pErr || !projectRows?.length) return null
 
-  const projects = projectRows as Project[]
+  const synced = await syncPortalMissingHubSpotIdsFromCrm(supabase, client as Client, projectRows as Project[])
+  client = synced.client as typeof client
+  const projects = synced.projects
   const cookieStore = await cookies()
   const preferredSlug = cookieStore.get(PROJECT_COOKIE)?.value
   const project = pickActiveProjectForPortal(projects, preferredSlug)

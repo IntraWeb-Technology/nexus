@@ -9,6 +9,7 @@ const ownerPhone = owner.phone || '';
 const ownerName = owner.name || 'John Schibelli';
 const calendarLink = owner.calendarLink || '';
 const bodyContent = (claudeResult.data ? claudeResult.data.text : claudeResult.html || '').trim();
+const painSummaryForShell = String(claudeResult.painSummaryForShell || '').trim();
 const clientName = d.clientName || 'Client';
 const proposalDate = new Date().toLocaleDateString('en-US', {
   year: 'numeric',
@@ -29,6 +30,13 @@ const escapeHtml = (value) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+const noEmDash = (value) =>
+  String(value ?? '')
+    .replace(/\u2014/g, '-')
+    .replace(/\u2013/g, '-')
+    .replace(/\u2212/g, '-')
+    .replace(/—/g, '-');
 
 const formatCurrency = (value) => {
   const numeric = Number(value || 0);
@@ -52,33 +60,128 @@ const logoHtml = (() => {
   return `<div class="doc-header__wordmark" aria-hidden="true">IntraWeb</div>`;
 })();
 
-const summaryPainPoints = (d.painPointSummary || '')
-  .split(/[,;]\s*/)
-  .map((item) => item.trim())
-  .filter(Boolean);
+/** Short themes for PDF - no raw intake dump, JSON, or PII. */
+const summarizeIntakeForPdf = () => {
+  const summary = String(d.painPointSummary || '').trim();
+  if (summary) {
+    const parts = summary
+      .split(/[,;]\s*/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (parts.length) return noEmDash(parts.map((p) => `• ${p}`).join('\n'));
+  }
+  let raw = String(d.rawPainPoints || d.painPoints || '').trim();
+  if (!raw) return 'No intake themes were captured for this opportunity.';
+  raw = raw.split(/\n-{3,}\n/)[0].trim();
+  raw = raw.replace(/Website intake \(JSON\):[\s\S]*?(?=\n-{3,}|\n===|$)/gi, '');
+  raw = raw.replace(/Website intake \(structured fields\):[\s\S]*$/i, '');
+  const lines = raw.split('\n').filter((ln) => {
+    const t = ln.trim();
+    if (!t) return false;
+    if (/^(email|phone|name|firstname|lastname|business|location)\s*:/i.test(t)) return false;
+    if (/^===\s*Website intake/i.test(t)) return false;
+    return true;
+  });
+  raw = lines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (raw.length > 2400) raw = `${raw.slice(0, 2400).trim()}…`;
+  return noEmDash(raw || 'No intake themes were captured for this opportunity.');
+};
 
-const painSummaryHtml = summaryPainPoints.length
-  ? `<ul class="body-text">${summaryPainPoints.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`
-  : '';
+const intakeThemesText = summarizeIntakeForPdf();
+const intakeThemesHtml = `<p class="quote quote--themes">${escapeHtml(intakeThemesText).replace(/\n/g, '<br/>')}</p>`;
 
-const rawPainBlock = d.rawPainPoints || d.painPoints || 'No pain points were provided in the payload.';
 const contactDisplay = d.contactName || d.contactFirstName || '';
-const tierAmountText = d.tierAmount ? formatCurrency(d.tierAmount) : 'Not provided';
-const tierMonthlyText = formatCurrency(d.tierMonthly || 0);
-const upfrontDueText = formatCurrency(d.upfrontDue || 0);
-const launchBalanceText = formatCurrency(d.launchBalance || 0);
 const lineItems = Array.isArray(d.lineItems) ? d.lineItems : [];
-const lineItemsSubtotal = lineItems.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+const lineItemsSubtotal =
+  Number(d.lineItemsSubtotal) ||
+  lineItems.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+const discPdf = Math.max(0, Number(d.totalDiscount) || 0);
+const dealAmtPdf = Number(d.dealAmount) || 0;
+const tierAmtPdf = Number(d.tierAmount) || 0;
 
-const lineItemsRowsHtml = lineItems.length
-  ? lineItems
-      .map(
-        (li) =>
-          `<tr><td>${escapeHtml(li.name)} <span class="muted">(qty ${li.quantity ?? 1})</span>${li.description ? ' — ' + escapeHtml(String(li.description).slice(0, 120)) : ''}</td><td class="num">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,
-      )
-      .join('') +
-    `<tr><td><strong>Line items subtotal</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(lineItemsSubtotal))}</strong></td></tr>`
-  : '';
+/** When line items exist, quoted total follows the table (subtotal − discounts), not a mismatched HubSpot deal amount. */
+const finalQuotedPdf =
+  lineItemsSubtotal > 0
+    ? Math.max(0, lineItemsSubtotal - discPdf)
+    : dealAmtPdf > 0
+      ? dealAmtPdf
+      : tierAmtPdf;
+
+const isRecurringLineItem = (name) => {
+  const n = String(name || '').toLowerCase();
+  return /\bretainer\b/.test(n) || /\bmaintenance\b/.test(n) || /\bmonthly\b/.test(n);
+};
+
+const monthlyFromLineItems = lineItems
+  .filter((li) => isRecurringLineItem(li.name))
+  .reduce((s, li) => s + (Number(li.amount) || 0), 0);
+
+const displayMonthlyRecurring =
+  monthlyFromLineItems > 0 ? monthlyFromLineItems : Number(d.tierMonthly) || 0;
+
+const upfrontPdf =
+  lineItemsSubtotal > 0 ? Math.round(lineItemsSubtotal * 0.33 * 100) / 100 : Number(d.upfrontDue) || 0;
+
+const afterUpfront = Math.max(0, finalQuotedPdf - upfrontPdf);
+const launchBalancePdf = afterUpfront + displayMonthlyRecurring;
+
+const tierMonthlyText = formatCurrency(displayMonthlyRecurring);
+const upfrontDueText = formatCurrency(upfrontPdf);
+const launchBalanceText = formatCurrency(launchBalancePdf);
+
+const snapshotCompanyDisplay = noEmDash(String(d.companyDisplay || '').trim());
+const snapshotCompanyCell = snapshotCompanyDisplay || 'Not specified';
+
+const heroDisplayName = noEmDash(clientName || snapshotCompanyDisplay);
+
+const snapshotEmail = noEmDash(
+  String(d.contactEmailDisplay || d.contactEmail || '').trim(),
+);
+const snapshotIndustry = noEmDash(
+  String(d.industryDisplay || d.industry || '').trim(),
+);
+const snapshotWebsite = noEmDash(String(d.website || '').trim());
+const snapshotAddress = noEmDash(String(d.address || '').trim());
+
+const monthlyRowLabel =
+  monthlyFromLineItems > 0
+    ? 'Monthly recurring (retainer / maintenance from line items)'
+    : 'Monthly retainer (tier template)';
+
+const lineItemsRowsHtml = (() => {
+  const rows = [];
+  if (lineItems.length) {
+    for (const li of lineItems) {
+      rows.push(
+        `<tr><td>${escapeHtml(li.name || 'Item')}</td><td class="num">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,
+      );
+    }
+    rows.push(
+      `<tr class="line-table__subtotal"><td>Subtotal (line items)</td><td class="num">${escapeHtml(formatCurrency(lineItemsSubtotal))}</td></tr>`,
+    );
+    if (discPdf > 0.005) {
+      rows.push(
+        `<tr class="line-table__discount"><td>Discounts</td><td class="num">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,
+      );
+    }
+    rows.push(
+      `<tr class="line-table__quoted"><td><strong>Quoted total</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf))}</strong></td></tr>`,
+    );
+  } else {
+    rows.push(
+      `<tr><td>Tier / package (${escapeHtml(d.tierLabel || d.tier || '')})</td><td class="num">${escapeHtml(formatCurrency(d.tierAmount))}</td></tr>`,
+    );
+    if (discPdf > 0.005) {
+      rows.push(
+        `<tr class="line-table__discount"><td>Discounts</td><td class="num">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,
+      );
+    }
+    rows.push(
+      `<tr class="line-table__quoted"><td><strong>Quoted total</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf || d.tierAmount))}</strong></td></tr>`,
+    );
+  }
+  return rows.join('');
+})();
 
 const calendarHtml = calendarLink
   ? `<p class="doc-body__cta"><a class="cta-pill" href="${escapeHtml(calendarLink)}">Book approval call</a></p>`
@@ -101,12 +204,31 @@ const bodyInner = (() => {
     .join('');
 })();
 
+const painShellPlain = noEmDash(
+  painSummaryForShell.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+);
+const usePainShell = painShellPlain.replace(/\s+/g, ' ').length > 48;
+const painShellSection = usePainShell
+  ? `<section class="doc-section doc-section--pain-shell">
+        <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>What we heard</h2>
+        <p class="body-text pain-shell">${escapeHtml(painShellPlain).replace(/\n/g, '<br/>')}</p>
+      </section>`
+  : '';
+const intakeThemesSection = usePainShell
+  ? ''
+  : `<section class="doc-section doc-section--intake-themes">
+        <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>Themes from intake</h2>
+        <div class="callout callout--orange">
+          ${intakeThemesHtml}
+        </div>
+      </section>`;
+
 const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Proposal — ${escapeHtml(clientName)} — ${escapeHtml(companyName)}</title>
+  <title>Proposal - ${escapeHtml(clientName)} - ${escapeHtml(companyName)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
@@ -132,6 +254,11 @@ const html = `<!DOCTYPE html>
       --iw-orange-ghost: #fef0e8;
       --iw-white: #ffffff;
       --iw-off-white: #f8fafb;
+      --iw-print-footer-block: 0.55in;
+    }
+    @page {
+      size: 8.5in 11in;
+      margin: 0;
     }
     * {
       box-sizing: border-box;
@@ -147,18 +274,26 @@ const html = `<!DOCTYPE html>
       font-family: 'DM Sans', system-ui, sans-serif;
     }
     .iw-page {
-      width: 816px;
-      min-height: 1056px;
-      margin: 0 auto;
+      width: 100%;
+      max-width: none;
+      min-height: 10in;
+      margin: 0;
       background: var(--iw-slate-50);
       color: var(--iw-slate-700);
+    }
+    @media print {
+      .iw-page {
+        width: 100%;
+        min-height: 0;
+        margin: 0;
+      }
     }
     .doc-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 14px 24px;
+      padding: 14px 0.45in;
       background: var(--iw-slate-950);
       border-bottom: 3px solid var(--iw-teal);
       color: var(--iw-white);
@@ -190,7 +325,7 @@ const html = `<!DOCTYPE html>
     }
     .doc-hero {
       background: var(--iw-slate-900);
-      padding: 28px 32px 26px;
+      padding: 28px 0.45in 26px;
       color: var(--iw-white);
     }
     .doc-hero__label {
@@ -203,7 +338,8 @@ const html = `<!DOCTYPE html>
       margin-bottom: 10px;
     }
     .doc-hero__label::before {
-      content: '— ';
+      content: '';
+      margin-right: 0;
       color: var(--iw-orange);
     }
     .doc-hero__title {
@@ -215,7 +351,7 @@ const html = `<!DOCTYPE html>
     }
     .doc-hero__subtitle {
       margin: 0;
-      max-width: 640px;
+      max-width: none;
       font-size: 11pt;
       line-height: 1.55;
       color: var(--iw-slate-300);
@@ -223,6 +359,7 @@ const html = `<!DOCTYPE html>
     .doc-meta-bar {
       display: flex;
       flex-wrap: wrap;
+      padding: 0 0.45in;
       background: var(--iw-slate-800);
       color: var(--iw-slate-100);
       font-size: 9.5pt;
@@ -251,7 +388,12 @@ const html = `<!DOCTYPE html>
     }
     .doc-body {
       background: var(--iw-white);
-      padding: 32px 48px 40px;
+      padding: 24px 0.45in 32px;
+    }
+    @media print {
+      .doc-body {
+        padding-bottom: calc(12pt + var(--iw-print-footer-block));
+      }
     }
     .doc-body > * + * {
       margin-top: 32px;
@@ -266,6 +408,12 @@ const html = `<!DOCTYPE html>
       padding-bottom: 8px;
       border-bottom: 1.5px solid var(--iw-slate-100);
       color: var(--iw-slate-800);
+    }
+    .doc-section--pain-shell .pain-shell {
+      font-size: 10pt;
+      line-height: 1.65;
+      color: var(--iw-slate-800);
+      margin: 0;
     }
     .doc-section__accent {
       width: 4px;
@@ -330,6 +478,29 @@ const html = `<!DOCTYPE html>
       color: var(--iw-slate-800);
       white-space: nowrap;
     }
+    .line-table tbody tr.line-table__subtotal td {
+      background: var(--iw-off-white);
+      font-weight: 700;
+      border-bottom: 1px solid var(--iw-slate-200);
+    }
+    .line-table tbody tr.line-table__discount td {
+      color: var(--iw-orange-dim);
+      font-weight: 700;
+      background: var(--iw-orange-ghost);
+    }
+    .line-table tbody tr.line-table__quoted td {
+      background: var(--iw-slate-50);
+      font-weight: 800;
+      font-size: 10.5pt;
+      border-bottom: 1px solid var(--iw-slate-200);
+    }
+    .line-table tbody tr.line-table__schedule td {
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: var(--iw-slate-500);
+      padding-top: 14px;
+      border-bottom: 1px dashed var(--iw-slate-200);
+    }
     .line-table tbody tr.line-table__total td {
       background: var(--iw-teal-ghost);
       border-bottom: none;
@@ -361,6 +532,12 @@ const html = `<!DOCTYPE html>
       line-height: 1.65;
       color: var(--iw-slate-700);
       white-space: pre-wrap;
+    }
+    .callout .quote--themes {
+      white-space: normal;
+      font-size: 10pt;
+      line-height: 1.65;
+      max-height: none;
     }
     .body-text {
       font-size: 10pt;
@@ -436,10 +613,16 @@ const html = `<!DOCTYPE html>
       grid-template-columns: 1fr 2fr 1fr;
       align-items: center;
       gap: 12px;
-      padding: 12px 24px;
+      padding: 12px 0.45in;
       background: var(--iw-slate-950);
       color: var(--iw-slate-300);
       font-size: 8pt;
+    }
+    @media print {
+      .doc-footer {
+        padding-left: 0.45in;
+        padding-right: 0.45in;
+      }
     }
     .doc-footer__brand {
       font-weight: 700;
@@ -462,6 +645,51 @@ const html = `<!DOCTYPE html>
       line-height: 1.5;
       margin-top: 8px;
     }
+    @media print {
+      html,
+      body {
+        height: auto;
+      }
+      main.doc-body > section:not(.proposal-body) {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+      .doc-body > section:not(.proposal-body) > .doc-section__title {
+        break-after: avoid-page;
+        page-break-after: avoid;
+      }
+      .doc-hero {
+        break-after: avoid-page;
+        page-break-after: avoid;
+      }
+      .doc-section__title {
+        break-after: avoid-page;
+        page-break-after: avoid;
+        break-inside: avoid;
+      }
+      .kv-grid {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+      }
+      .line-table thead {
+        display: table-header-group;
+      }
+      .line-table tbody tr {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+      }
+      .proposal-body h2,
+      .doc-prose-h2 {
+        break-after: avoid-page;
+        page-break-after: avoid;
+        break-inside: avoid;
+      }
+      .proposal-body div[style*="display:grid"] > div,
+      .proposal-body div[style*="display: grid"] > div {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+      }
+    }
   </style>
 </head>
 <body>
@@ -476,8 +704,8 @@ const html = `<!DOCTYPE html>
 
     <section class="doc-hero">
       <div class="doc-hero__label">Project Proposal</div>
-      <h1 class="doc-hero__title">${escapeHtml(d.company || clientName)}</h1>
-      <p class="doc-hero__subtitle">Delivery-focused implementation scope, commercial summary, and next steps — aligned to the operational context captured for this opportunity.</p>
+      <h1 class="doc-hero__title">${escapeHtml(heroDisplayName)}</h1>
+      <p class="doc-hero__subtitle">Delivery-focused implementation scope, commercial summary, and next steps, aligned to the operational context captured for this opportunity.</p>
     </section>
 
     <div class="doc-meta-bar">
@@ -504,15 +732,18 @@ const html = `<!DOCTYPE html>
         <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>Client snapshot</h2>
         <div class="kv-grid kv-grid--3col">
           <div><div class="kv-k">Client</div><div class="kv-v">${escapeHtml(clientName)}</div></div>
-          <div><div class="kv-k">Company</div><div class="kv-v">${escapeHtml(d.company || '')}</div></div>
+          <div><div class="kv-k">Company</div><div class="kv-v">${escapeHtml(snapshotCompanyCell)}</div></div>
           <div><div class="kv-k">Primary contact</div><div class="kv-v">${escapeHtml(contactDisplay)}</div></div>
-          <div><div class="kv-k">Email</div><div class="kv-v">${escapeHtml(d.contactEmail || '')}</div></div>
-          <div><div class="kv-k">Phone</div><div class="kv-v">${escapeHtml(d.contactPhone || '')}</div></div>
-          <div><div class="kv-k">Industry</div><div class="kv-v">${escapeHtml(d.industry || '')}</div></div>
-          <div><div class="kv-k">Website</div><div class="kv-v">${escapeHtml(d.website || '')}</div></div>
-          <div style="grid-column: span 2"><div class="kv-k">Address</div><div class="kv-v">${escapeHtml(d.address || '')}</div></div>
+          <div><div class="kv-k">Email</div><div class="kv-v">${escapeHtml(snapshotEmail || 'Not specified')}</div></div>
+          <div><div class="kv-k">Phone</div><div class="kv-v">${escapeHtml(noEmDash(String(d.contactPhone || '').trim()) || 'Not specified')}</div></div>
+          <div><div class="kv-k">Industry</div><div class="kv-v">${escapeHtml(snapshotIndustry || 'Not specified')}</div></div>
+          <div><div class="kv-k">Website</div><div class="kv-v">${escapeHtml(snapshotWebsite || 'Not specified')}</div></div>
+          <div style="grid-column: span 2"><div class="kv-k">Address</div><div class="kv-v">${escapeHtml(snapshotAddress || 'Not specified')}</div></div>
         </div>
       </section>
+
+      ${painShellSection}
+      ${intakeThemesSection}
 
       <section>
         <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>Investment summary</h2>
@@ -520,21 +751,13 @@ const html = `<!DOCTYPE html>
           <thead><tr><th>Item</th><th>Amount</th></tr></thead>
           <tbody>
             ${lineItemsRowsHtml}
-            <tr><td>Tier amount</td><td class="num">${escapeHtml(tierAmountText)}</td></tr>
-            <tr><td>Tier monthly</td><td class="num">${escapeHtml(tierMonthlyText)}</td></tr>
-            <tr><td>Upfront due</td><td class="num">${escapeHtml(upfrontDueText)}</td></tr>
-            <tr class="line-table__total"><td>Launch balance</td><td class="num">${escapeHtml(launchBalanceText)}</td></tr>
+            <tr class="line-table__schedule"><td colspan="2">Payment timing (estimate; final cadence on invoice)</td></tr>
+            <tr><td>${escapeHtml(monthlyRowLabel)}</td><td class="num">${escapeHtml(tierMonthlyText)}</td></tr>
+            <tr><td>${escapeHtml(lineItemsSubtotal > 0 ? 'Upfront due (33% of line-item subtotal)' : 'Upfront due')}</td><td class="num">${escapeHtml(upfrontDueText)}</td></tr>
+            <tr class="line-table__total"><td>Launch balance (estimate)</td><td class="num">${escapeHtml(launchBalanceText)}</td></tr>
           </tbody>
         </table>
-        <p class="fine-print">Launch balance is due at approval and includes the remaining project balance plus the first month&rsquo;s subscription; tier monthly applies thereafter.</p>
-      </section>
-
-      <section>
-        <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>Pain points from intake</h2>
-        <div class="callout callout--orange">
-          <p class="quote">${escapeHtml(rawPainBlock)}</p>
-          ${painSummaryHtml}
-        </div>
+        <p class="fine-print">Launch balance estimate = quoted total minus upfront plus first month of recurring (retainer/maintenance from line items when present, otherwise tier monthly). Final amounts on invoice.</p>
       </section>
 
       <section class="proposal-body">
@@ -547,11 +770,11 @@ const html = `<!DOCTYPE html>
 
     <footer class="doc-footer">
       <div class="doc-footer__brand">IntraWeb</div>
-      <div class="doc-footer__conf">Confidential — prepared for ${escapeHtml(clientName)}. Distribution outside the parties requires written consent.</div>
+      <div class="doc-footer__conf">Confidential - prepared for ${escapeHtml(clientName)}. Distribution outside the parties requires written consent.</div>
       <div class="doc-footer__page">Page 1</div>
     </footer>
   </div>
 </body>
 </html>`;
 
-return [{ json: { html, fileName: `IntraWeb — ${d.clientName} — Proposal.pdf` } }];
+return [{ json: { html, fileName: `IntraWeb - ${d.clientName} - Proposal.pdf` } }];

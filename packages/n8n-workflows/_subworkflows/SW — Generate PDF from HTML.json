@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-19T19:25:28.377Z",
+  "updatedAt": "2026-04-21T02:37:42.564Z",
   "createdAt": "2026-03-08T22:42:32.045Z",
   "id": "hxsCltRP81r5gLtm",
   "name": "SW: Generate PDF from HTML",
@@ -8,12 +8,7 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "content": "## SW: Generate PDF from HTML\n\n**Subworkflow.** Converts HTML content to a PDF via an external API (no Puppeteer in Code — n8n disallows that module). Used by proposal delivery, onboarding docs, and owner's manual generator.\n\n**Input:**\n- `html` — full HTML string\n- `fileName` (optional) — output filename\n\n**Output:** `{ success, data: { pdfBase64, fileName, mimeType }, error }`. Returns base64-encoded PDF for upload to Drive or other use.\n\n**PDF service:** `html2pdf.fly.dev` (no auth). Endpoint is **POST** only. To use another service (e.g. Gotenberg), edit the URL in the \"Call PDF Service\" node. For fully self-hosted, see `scripts/generate-pdf.js` + Execute Command node.",
-        "height": 300,
-        "width": 420,
-        "color": 5
-      },
+      "parameters": {},
       "id": "note-sw-pdf",
       "name": "Note — About this workflow",
       "type": "n8n-nodes-base.stickyNote",
@@ -32,8 +27,8 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        250,
-        300
+        256,
+        304
       ]
     },
     {
@@ -45,8 +40,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        470,
-        300
+        448,
+        304
       ]
     },
     {
@@ -55,7 +50,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -77,8 +73,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        600,
-        300
+        608,
+        304
       ]
     },
     {
@@ -90,8 +86,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        690,
-        460
+        816,
+        400
       ]
     },
     {
@@ -128,8 +124,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        820,
-        200
+        816,
+        208
       ],
       "onError": "continueErrorOutput"
     },
@@ -143,7 +139,7 @@
       "typeVersion": 2,
       "position": [
         1040,
-        300
+        304
       ]
     }
   ],
@@ -216,9 +212,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
+  "versionId": "83ae343e-8bd8-4974-8d11-36f0b60a620b",
   "activeVersionId": "a3b10faa-7087-4606-82c4-4944a4dc53dd",
-  "versionCounter": 163,
+  "versionCounter": 168,
   "triggerCount": 0,
   "shared": [
     {

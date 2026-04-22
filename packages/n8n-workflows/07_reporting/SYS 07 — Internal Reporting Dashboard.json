@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-19T19:25:36.871Z",
+  "updatedAt": "2026-04-22T00:14:43.916Z",
   "createdAt": "2026-04-03T01:44:47.283Z",
   "id": "EZe0M0WcHC6bOsdg",
   "name": "SYS 07 — Internal Reporting Dashboard",
@@ -201,27 +201,6 @@
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "={{ \"INSERT INTO public.os_pipeline_snapshots (deal_name, stage, value, close_date, days_in_stage, owner) VALUES ('\" + String($json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($json.stage||'').replace(/'/g,\"''\") + \"',\" + (Number($json.value)||0) + \",'\" + String($json.closeDate||'').replace(/'/g,\"''\") + \"',\" + (Number($json.daysInStage)||0) + \",'\" + String($json.owner||'').replace(/'/g,\"''\") + \"');\" }}",
-        "options": {}
-      },
-      "id": "69a7742d-9811-45c2-bf4b-c53e3d3a1a73",
-      "name": "Append to Pipeline",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        1072,
-        128
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "OS_SUPABASE_POSTGRES",
-          "name": "Supabase OS Postgres"
-        }
-      }
-    },
-    {
-      "parameters": {
         "jsCode": "const j = $input.first().json;\nconst hub = j.body && typeof j.body === 'object' && (j.body.properties !== undefined || j.body.id !== undefined) ? j.body : j;\nconst props = hub.properties || hub;\nconst sheetId = j.google?.masterSheetId || '';\n\nreturn [{\n  json: {\n    sheetId,\n    timestamp: new Date().toISOString(),\n    name: `${props.firstname || ''} ${props.lastname || ''}`.trim(),\n    company: props.company || '',\n    industry: props.industry || '',\n    source: props.lead_source || '',\n    leadScore: props.lead_score || 0,\n    status: props.hs_lead_status || props.lead_status || ''\n  }\n}];"
       },
       "id": "70a2fee8-9d18-4d34-b548-92cfc2f4ba07",
@@ -232,27 +211,6 @@
         848,
         432
       ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "={{ \"INSERT INTO public.os_leads (source_kind, name, company, industry, source, lead_score, status) VALUES ('hubspot_webhook','\" + String($json.name||'').replace(/'/g,\"''\") + \"','\" + String($json.company||'').replace(/'/g,\"''\") + \"','\" + String($json.industry||'').replace(/'/g,\"''\") + \"','\" + String($json.source||'').replace(/'/g,\"''\") + \"',\" + (Number($json.leadScore)||0) + \",'\" + String($json.status||'').replace(/'/g,\"''\") + \"');\" }}",
-        "options": {}
-      },
-      "id": "9ddb3b61-137b-4c99-af23-3f01412fbeae",
-      "name": "Append to Leads",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
-      "position": [
-        1072,
-        432
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "OS_SUPABASE_POSTGRES",
-          "name": "Supabase OS Postgres"
-        }
-      }
     },
     {
       "parameters": {
@@ -293,21 +251,65 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ \"INSERT INTO public.os_summary_metrics (metric, value_text, last_updated) VALUES ('\" + String($json.Metric||'').replace(/'/g,\"''\") + \"','\" + String($json.Value??'').replace(/'/g,\"''\") + \"', now()) ON CONFLICT (metric) DO UPDATE SET value_text = EXCLUDED.value_text, last_updated = EXCLUDED.last_updated;\" }}",
-        "options": {}
+        "query": "INSERT INTO public.os_summary_metrics (metric, value_text, last_updated) VALUES (($1::jsonb)->>'metric', ($1::jsonb)->>'value', now()) ON CONFLICT (metric) DO UPDATE SET value_text = EXCLUDED.value_text, last_updated = EXCLUDED.last_updated;",
+        "options": {
+          "queryReplacement": "={{ JSON.stringify({ metric: String($json.Metric ?? ''), value: $json.Value === undefined || $json.Value === null ? '' : String($json.Value) }) }}"
+        }
       },
-      "id": "37ff83d2-5fcb-41a2-9abf-179f119229f1",
-      "name": "Update Summary Tab",
       "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.5,
+      "typeVersion": 2.6,
       "position": [
-        1072,
+        1056,
         720
       ],
+      "id": "40893e9a-fd17-4509-9503-28295721a9b8",
+      "name": "Update Summary Tab",
       "credentials": {
         "postgres": {
-          "id": "OS_SUPABASE_POSTGRES",
-          "name": "Supabase OS Postgres"
+          "id": "SHSVYlQKM9cAdx5k",
+          "name": "Supabase IW-Portal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ \"INSERT INTO public.os_leads (source_kind, name, company, industry, source, lead_score, status) VALUES ('hubspot_webhook','\" + String($json.name||'').replace(/'/g,\"''\") + \"','\" + String($json.company||'').replace(/'/g,\"''\") + \"','\" + String($json.industry||'').replace(/'/g,\"''\") + \"','\" + String($json.source||'').replace(/'/g,\"''\") + \"',\" + (Number($json.leadScore)||0) + \",'\" + String($json.status||'').replace(/'/g,\"''\") + \"');\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1056,
+        432
+      ],
+      "id": "82cd761e-56f5-4fb6-b821-d41d048e6815",
+      "name": "Append to Leads",
+      "credentials": {
+        "postgres": {
+          "id": "SHSVYlQKM9cAdx5k",
+          "name": "Supabase IW-Portal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ \"INSERT INTO public.os_pipeline_snapshots (deal_name, stage, value, close_date, days_in_stage, owner) VALUES ('\" + String($json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($json.stage||'').replace(/'/g,\"''\") + \"',\" + (Number($json.value)||0) + \",'\" + String($json.closeDate||'').replace(/'/g,\"''\") + \"',\" + (Number($json.daysInStage)||0) + \",'\" + String($json.owner||'').replace(/'/g,\"''\") + \"');\" }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1040,
+        128
+      ],
+      "id": "5d4e9feb-b264-4149-be34-8e94debfd6ce",
+      "name": "Append to Pipeline",
+      "credentials": {
+        "postgres": {
+          "id": "SHSVYlQKM9cAdx5k",
+          "name": "Supabase IW-Portal"
         }
       }
     }
@@ -468,11 +470,13 @@
       "recurrenceRules": []
     }
   },
-  "meta": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
   "pinData": {},
-  "versionId": "403b8fcb-c7c8-4866-b0eb-2644d74cf80d",
+  "versionId": "3feb3c39-9e23-4038-be43-eb5ec99531d7",
   "activeVersionId": "403b8fcb-c7c8-4866-b0eb-2644d74cf80d",
-  "versionCounter": 145,
+  "versionCounter": 165,
   "triggerCount": 3,
   "shared": [
     {
@@ -495,7 +499,7 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-19T19:25:36.872Z",
+    "updatedAt": "2026-04-22T00:27:04.308Z",
     "createdAt": "2026-04-19T19:25:36.872Z",
     "versionId": "403b8fcb-c7c8-4866-b0eb-2644d74cf80d",
     "workflowId": "EZe0M0WcHC6bOsdg",
@@ -694,27 +698,6 @@
       },
       {
         "parameters": {
-          "operation": "executeQuery",
-          "query": "={{ \"INSERT INTO public.os_pipeline_snapshots (deal_name, stage, value, close_date, days_in_stage, owner) VALUES ('\" + String($json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($json.stage||'').replace(/'/g,\"''\") + \"',\" + (Number($json.value)||0) + \",'\" + String($json.closeDate||'').replace(/'/g,\"''\") + \"',\" + (Number($json.daysInStage)||0) + \",'\" + String($json.owner||'').replace(/'/g,\"''\") + \"');\" }}",
-          "options": {}
-        },
-        "id": "69a7742d-9811-45c2-bf4b-c53e3d3a1a73",
-        "name": "Append to Pipeline",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          1072,
-          128
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "OS_SUPABASE_POSTGRES",
-            "name": "Supabase OS Postgres"
-          }
-        }
-      },
-      {
-        "parameters": {
           "jsCode": "const j = $input.first().json;\nconst hub = j.body && typeof j.body === 'object' && (j.body.properties !== undefined || j.body.id !== undefined) ? j.body : j;\nconst props = hub.properties || hub;\nconst sheetId = j.google?.masterSheetId || '';\n\nreturn [{\n  json: {\n    sheetId,\n    timestamp: new Date().toISOString(),\n    name: `${props.firstname || ''} ${props.lastname || ''}`.trim(),\n    company: props.company || '',\n    industry: props.industry || '',\n    source: props.lead_source || '',\n    leadScore: props.lead_score || 0,\n    status: props.hs_lead_status || props.lead_status || ''\n  }\n}];"
         },
         "id": "70a2fee8-9d18-4d34-b548-92cfc2f4ba07",
@@ -725,27 +708,6 @@
           848,
           432
         ]
-      },
-      {
-        "parameters": {
-          "operation": "executeQuery",
-          "query": "={{ \"INSERT INTO public.os_leads (source_kind, name, company, industry, source, lead_score, status) VALUES ('hubspot_webhook','\" + String($json.name||'').replace(/'/g,\"''\") + \"','\" + String($json.company||'').replace(/'/g,\"''\") + \"','\" + String($json.industry||'').replace(/'/g,\"''\") + \"','\" + String($json.source||'').replace(/'/g,\"''\") + \"',\" + (Number($json.leadScore)||0) + \",'\" + String($json.status||'').replace(/'/g,\"''\") + \"');\" }}",
-          "options": {}
-        },
-        "id": "9ddb3b61-137b-4c99-af23-3f01412fbeae",
-        "name": "Append to Leads",
-        "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
-        "position": [
-          1072,
-          432
-        ],
-        "credentials": {
-          "postgres": {
-            "id": "OS_SUPABASE_POSTGRES",
-            "name": "Supabase OS Postgres"
-          }
-        }
       },
       {
         "parameters": {
@@ -786,21 +748,65 @@
       {
         "parameters": {
           "operation": "executeQuery",
-          "query": "={{ \"INSERT INTO public.os_summary_metrics (metric, value_text, last_updated) VALUES ('\" + String($json.Metric||'').replace(/'/g,\"''\") + \"','\" + String($json.Value??'').replace(/'/g,\"''\") + \"', now()) ON CONFLICT (metric) DO UPDATE SET value_text = EXCLUDED.value_text, last_updated = EXCLUDED.last_updated;\" }}",
-          "options": {}
+          "query": "INSERT INTO public.os_summary_metrics (metric, value_text, last_updated) VALUES (($1::jsonb)->>'metric', ($1::jsonb)->>'value', now()) ON CONFLICT (metric) DO UPDATE SET value_text = EXCLUDED.value_text, last_updated = EXCLUDED.last_updated;",
+          "options": {
+            "queryReplacement": "={{ JSON.stringify({ metric: String($json.Metric ?? ''), value: $json.Value === undefined || $json.Value === null ? '' : String($json.Value) }) }}"
+          }
         },
-        "id": "37ff83d2-5fcb-41a2-9abf-179f119229f1",
-        "name": "Update Summary Tab",
         "type": "n8n-nodes-base.postgres",
-        "typeVersion": 2.5,
+        "typeVersion": 2.6,
         "position": [
-          1072,
+          1056,
           720
         ],
+        "id": "40893e9a-fd17-4509-9503-28295721a9b8",
+        "name": "Update Summary Tab",
         "credentials": {
           "postgres": {
-            "id": "OS_SUPABASE_POSTGRES",
-            "name": "Supabase OS Postgres"
+            "id": "SHSVYlQKM9cAdx5k",
+            "name": "Supabase IW-Portal"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "{{ \"INSERT INTO public.os_leads (source_kind, name, company, industry, source, lead_score, status) VALUES ('hubspot_webhook','\" + String($json.name||'').replace(/'/g,\"''\") + \"','\" + String($json.company||'').replace(/'/g,\"''\") + \"','\" + String($json.industry||'').replace(/'/g,\"''\") + \"','\" + String($json.source||'').replace(/'/g,\"''\") + \"',\" + (Number($json.leadScore)||0) + \",'\" + String($json.status||'').replace(/'/g,\"''\") + \"');\" }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          1056,
+          432
+        ],
+        "id": "82cd761e-56f5-4fb6-b821-d41d048e6815",
+        "name": "Append to Leads",
+        "credentials": {
+          "postgres": {
+            "id": "SHSVYlQKM9cAdx5k",
+            "name": "Supabase IW-Portal"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "{{ \"INSERT INTO public.os_pipeline_snapshots (deal_name, stage, value, close_date, days_in_stage, owner) VALUES ('\" + String($json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($json.stage||'').replace(/'/g,\"''\") + \"',\" + (Number($json.value)||0) + \",'\" + String($json.closeDate||'').replace(/'/g,\"''\") + \"',\" + (Number($json.daysInStage)||0) + \",'\" + String($json.owner||'').replace(/'/g,\"''\") + \"');\" }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.6,
+        "position": [
+          1040,
+          128
+        ],
+        "id": "5d4e9feb-b264-4149-be34-8e94debfd6ce",
+        "name": "Append to Pipeline",
+        "credentials": {
+          "postgres": {
+            "id": "SHSVYlQKM9cAdx5k",
+            "name": "Supabase IW-Portal"
           }
         }
       }

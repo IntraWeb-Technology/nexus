@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-19T19:25:35.635Z",
+  "updatedAt": "2026-04-21T02:56:25.301Z",
   "createdAt": "2026-02-23T02:02:11.116Z",
   "id": "mH67fjS4eC9amV4n",
   "name": "SYS 03 — Pre-Call Diagnostic Brief",
@@ -42,7 +42,6 @@
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
@@ -84,11 +83,8 @@
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "send",
         "sendTo": "={{ $json.email }}",
         "subject": "=Quick prep for our call, {{ $json.firstName }} (takes 3 min)",
-        "emailType": "html",
         "message": "=<p>Hi {{ $json.firstName }},</p>\n\n<p>Looking forward to our call on <strong>{{ $json.formattedDate }}</strong>.</p>\n\n<p>To make sure we use the time well, I put together 6 quick questions. Your answers help me walk in with specific ideas for your situation — not a generic pitch.</p>\n\n<p><strong>It takes about 3 minutes:</strong></p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your pre-call prep here</a></p>\n\n<p>If you'd rather just talk through it live, no worries — we'll cover it on the call.</p>\n\n<p>See you soon,<br>John Schibelli<br>Founder, IntraWeb Technologies<br><a href=\"https://intrawebtech.com\">intrawebtech.com</a></p>",
         "options": {
           "replyTo": "john.schibelli@intrawebtech.com"
@@ -128,7 +124,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ \"SELECT COALESCE((SELECT email FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '') AS email, COALESCE((SELECT payload FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '{}'::jsonb) AS payload;\" }}",
+        "query": "{{ \"SELECT COALESCE((SELECT email FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '') AS email, COALESCE((SELECT payload FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '{}'::jsonb) AS payload;\" }}",
         "options": {}
       },
       "id": "2a854935-32da-48b3-b604-8c1ab9268349",
@@ -181,11 +177,8 @@
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "send",
         "sendTo": "={{ $('📋 Parse Booking Data').first().json.email }}",
         "subject": "=One quick thing before our call, {{ $('📋 Parse Booking Data').first().json.firstName }}",
-        "emailType": "html",
         "message": "=<p>Hi {{ $('📋 Parse Booking Data').first().json.firstName }},</p>\n\n<p>Just a quick nudge — our call is coming up and I want to make sure I have enough context to be genuinely useful to you.</p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your 3-minute prep form here</a></p>\n\n<p>No pressure if you'd rather just wing it — I'll see you on the call either way.</p>\n\n<p>John</p>",
         "options": {
           "replyTo": "john@intrawebtech.com"
@@ -231,8 +224,8 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        -800,
-        96
+        -832,
+        64
       ],
       "id": "89e7046f-eb68-40bf-ab36-221198187230",
       "name": "🤖 Generate Diagnostic Brief",
@@ -278,11 +271,8 @@
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "send",
         "sendTo": "john.schibelli@intrawebtech.com",
         "subject": "=🔥 Pre-Call Brief Ready: {{ $('📋 Parse Booking Data').first().json.fullName }} — {{ $('📋 Parse Booking Data').first().json.formattedDate }}",
-        "emailType": "html",
         "message": "=<p><strong>Your pre-call diagnostic brief is ready.</strong></p>\n\n<table style='border-collapse:collapse;width:100%;margin-bottom:16px'>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold;width:140px'>Prospect</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.fullName }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Email</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.email }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Call Time</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.formattedDate }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Form Submitted</td><td style='padding:8px'>{{ $('📄 Assemble Brief').first().json.formSubmitted ? '✅ Yes' : '⚠️ No — brief generated from booking data only' }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Meeting Link</td><td style='padding:8px'><a href='{{ $('📋 Parse Booking Data').first().json.meetingUrl }}'>{{ $('📋 Parse Booking Data').first().json.meetingUrl }}</a></td></tr>\n</table>\n\n<p>📄 <strong><a href='{{ $json.webViewLink }}'>Open Full Diagnostic Brief in Google Docs</a></strong></p>\n\n<hr>\n\n<div style='background:#f9f9f9;padding:16px;border-left:4px solid #333;white-space:pre-wrap;font-family:monospace;font-size:13px'>{{ $('📄 Assemble Brief').first().json.briefText }}</div>\n\n<hr>\n<p style='color:#999;font-size:12px'>Generated by IntraWeb n8n automation</p>",
         "options": {
           "replyTo": "john@intrawebtech.com"
@@ -340,7 +330,6 @@
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "HbPxMMcf5tGERxEr",
@@ -375,7 +364,6 @@
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1qQFLOSHZsS9JPKP",
@@ -410,7 +398,6 @@
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1qQFLOSHZsS9JPKP",
@@ -618,9 +605,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "361eb467-9793-4f71-83b4-c4505aab6210",
+  "versionId": "cdfda9da-3098-4fc5-98ac-d348706b2cc5",
   "activeVersionId": "361eb467-9793-4f71-83b4-c4505aab6210",
-  "versionCounter": 179,
+  "versionCounter": 180,
   "triggerCount": 1,
   "shared": [
     {

@@ -807,7 +807,7 @@
   "staticData": {
     "node:Schedule Every 12 Hours": {
       "recurrenceRules": [
-        0
+        12
       ]
     }
   },
@@ -817,7 +817,7 @@
   "pinData": {},
   "versionId": "b4f9e429-bb2e-4a0e-91a1-ed25f7f2a967",
   "activeVersionId": "b4f9e429-bb2e-4a0e-91a1-ed25f7f2a967",
-  "versionCounter": 293,
+  "versionCounter": 296,
   "triggerCount": 1,
   "shared": [
     {

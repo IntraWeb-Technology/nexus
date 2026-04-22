@@ -57,6 +57,8 @@ export default async function PortalLayout({ children }: { children: ReactNode }
           clientName={bundle.client.name}
           projects={bundle.projects}
           activeSlug={bundle.project.slug}
+          activeHubspotDealId={bundle.project.hubspot_deal_id}
+          activeHubspotContactId={bundle.client.hubspot_contact_id}
           unreadNotifications={bundle.unreadNotifications}
         />
         {/*

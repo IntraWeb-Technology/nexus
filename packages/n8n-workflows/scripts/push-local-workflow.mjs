@@ -5,6 +5,10 @@
  *
  * Requires N8N_API_URL (or N8N_BASE_URL) + N8N_API_KEY (see .env.example; loadEnvLocal reads repo .env.local).
  *
+ * If the file includes `activeVersion` (n8n 2.x), top-level `nodes` / `connections` are copied into
+ * it before the request so the export graph is not stale relative to the payload (avoids
+ * WorkflowHasIssuesError when another workflow runs this one as a sub-workflow).
+ *
  * After a successful PUT, if any Code node’s `jsCode` contains the IntraWeb email shell marker
  * `data-iw-email-shell`, we assert the graph no longer uses legacy horizontal shell padding. That
  * catches n8n 2.x cases where the UI draft `nodes` blob drifted from `activeVersion` (emails still
@@ -89,6 +93,16 @@ const id = wf?.id
 if (!id || typeof id !== 'string') {
   console.error('Workflow JSON missing string id:', abs)
   process.exit(1)
+}
+
+// n8n 2.x exports include `activeVersion` (published snapshot). Git edits often touch only
+// top-level `nodes`; drift makes sub-workflow execution validate the stale graph (e.g. missing
+// credentials). Mirror nodes into activeVersion in memory so committed JSON can be fixed with
+// `pnpm ... sync:n8n:package` pull, or run a one-off sync script before commit.
+if (wf.activeVersion && Array.isArray(wf.nodes) && wf.connections) {
+  wf.activeVersion.nodes = structuredClone(wf.nodes)
+  wf.activeVersion.connections = structuredClone(wf.connections)
+  wf.activeVersion.updatedAt = new Date().toISOString()
 }
 
 const body = JSON.stringify({

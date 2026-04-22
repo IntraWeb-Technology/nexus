@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-19T19:25:35.421Z",
+  "updatedAt": "2026-04-20T05:25:58.993Z",
   "createdAt": "2026-03-21T17:14:25.980Z",
   "id": "5gXQdYfFgl0JStaA",
   "name": "SYS 03 — Contract Generation",
@@ -8,12 +8,7 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "content": "## SYS 03 — Contract Generation\n\n### Purpose\nGenerate a **Master Services Agreement (MSA) PDF** when a deal enters **Contract Sent**: AI-written **Exhibit A — Statement of Work summary** plus **fixed** commercial terms (fees from deal/tier, signatures). Same human-in-the-loop pattern as SYS 03 — Proposal and Contract Delivery (**Contracts** tab in the master sheet).\n\n### What this workflow does *not* do\nIt does **not** provide legal advice or replace attorney review. It does **not** run e-signature (use DocuSign, HubSpot quotes, or similar after the PDF is approved). Requires **`client_drive_folder_id`** on the deal for upload (same as SYS 03 — Proposal and Contract Delivery).\n\n### When it fires\n- **Webhook:** `POST` → `/webhook/hubspot-deal-contract-sent`\n- **HubSpot:** Deal enters **Contract Sent** (direct workflow, or **SYS 00** router on `dealstage`).\n\n### Dependencies\nCONFIG, Anthropic, Google Drive & Sheets, Send Email, Send Google Chat Alert, Log sub-workflows. Add a **Contracts** tab to the master sheet (see `docs/google-sheets-setup.md`). Create deal property **`contract_sent_date`** (see `docs/hubspot-setup.md`).",
-        "height": 520,
-        "width": 500,
-        "color": 5
-      },
+      "parameters": {},
       "id": "note-sys15",
       "name": "Note — About this workflow",
       "type": "n8n-nodes-base.stickyNote",
@@ -35,27 +30,27 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        250,
-        300
+        256,
+        280
       ],
       "webhookId": "2a83d054-b43e-407c-a1c9-321910ab0019"
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
           "mode": "id"
-        }
+        },
+        "options": {}
       },
       "id": "sys15-config",
       "name": "Get Config",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        470,
-        300
+        480,
+        280
       ]
     },
     {
@@ -67,8 +62,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        690,
-        300
+        704,
+        280
       ]
     },
     {
@@ -100,8 +95,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        910,
-        300
+        928,
+        280
       ]
     },
     {
@@ -113,26 +108,26 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        910,
-        480
+        1152,
+        376
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "PGf6jPoWtxSPlr0h",
           "mode": "id"
-        }
+        },
+        "options": {}
       },
       "id": "sys15-skip-alert-send",
       "name": "Send Missing Folder Alert",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        1130,
-        480
+        1376,
+        376
       ]
     },
     {
@@ -144,8 +139,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1130,
-        200
+        1152,
+        184
       ]
     },
     {
@@ -179,8 +174,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1350,
-        200
+        1376,
+        184
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -198,8 +193,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1470,
-        200
+        1600,
+        184
       ]
     },
     {
@@ -211,8 +206,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1690,
-        200
+        1824,
+        184
       ]
     },
     {
@@ -249,8 +244,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1910,
-        200
+        2048,
+        184
       ]
     },
     {
@@ -262,17 +257,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2020,
-        200
+        2272,
+        184
       ]
     },
     {
       "parameters": {
-        "operation": "upload",
         "name": "={{ $('Prep Contract PDF').first().json.fileName }}",
-        "parents": [
-          "={{ $('Extract Deal Data').first().json.driveFolderId }}"
-        ],
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
         "options": {}
       },
       "id": "sys15-upload",
@@ -280,8 +282,8 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        2130,
-        200
+        2496,
+        184
       ],
       "credentials": {
         "googleDriveOAuth2Api": {
@@ -299,14 +301,14 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2230,
-        200
+        2720,
+        184
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ $json._sql }}",
+        "query": "{{ $json._sql }}",
         "options": {}
       },
       "id": "sys15-sheets",
@@ -314,8 +316,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        2350,
-        200
+        2944,
+        184
       ],
       "credentials": {
         "postgres": {
@@ -333,31 +335,31 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2570,
-        200
+        3168,
+        184
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "PGf6jPoWtxSPlr0h",
           "mode": "id"
-        }
+        },
+        "options": {}
       },
       "id": "sys15-alert",
       "name": "Send Alert",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2790,
-        200
+        3392,
+        184
       ]
     },
     {
       "parameters": {
-        "amount": 30,
+        "amount": 1,
         "unit": "minutes"
       },
       "id": "sys15-poll-wait",
@@ -365,15 +367,15 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3010,
-        200
+        3616,
+        184
       ],
       "webhookId": "7e1eb85d-fd7d-44d2-b928-e7db2d1a14f6"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "={{ \"SELECT status AS \\\"Status\\\", status FROM public.os_contracts_queue WHERE queue_type = 'contract' AND hubspot_deal_id = '\" + String($('Extract Deal Data').first().json.dealId||'').replace(/'/g,\"''\") + \"' ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 1;\" }}",
+        "query": "{{ \"SELECT status AS \\\"Status\\\", status FROM public.os_contracts_queue WHERE queue_type = 'contract' AND hubspot_deal_id = '\" + String($('Extract Deal Data').first().json.dealId||'').replace(/'/g,\"''\") + \"' ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 1;\" }}",
         "options": {}
       },
       "id": "sys15-check-approval",
@@ -381,8 +383,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.5,
       "position": [
-        3230,
-        200
+        3840,
+        112
       ],
       "credentials": {
         "postgres": {
@@ -420,8 +422,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3450,
-        200
+        4064,
+        184
       ]
     },
     {
@@ -433,13 +435,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3670,
-        100
+        4288,
+        184
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "FF6VOLCcRxI4uNYD",
@@ -465,8 +466,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3890,
-        100
+        4512,
+        184
       ]
     },
     {
@@ -483,16 +484,15 @@
               }
             ]
           }
-        },
-        "options": {}
+        }
       },
       "id": "sys15-update-deal",
       "name": "Update Deal",
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2,
       "position": [
-        4110,
-        100
+        4736,
+        176
       ],
       "credentials": {
         "hubspotApi": {
@@ -510,31 +510,30 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4330,
-        100
+        4960,
+        184
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1qQFLOSHZsS9JPKP",
           "mode": "id"
-        }
+        },
+        "options": {}
       },
       "id": "sys15-log",
       "name": "Log to Sheet",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        4550,
-        100
+        5184,
+        184
       ]
     },
     {
       "parameters": {
-        "mode": "once",
         "minutesSaved": 120
       },
       "id": "sys15-track-time",
@@ -542,8 +541,8 @@
       "type": "n8n-nodes-base.timeSaved",
       "typeVersion": 1,
       "position": [
-        4770,
-        100
+        5408,
+        184
       ]
     }
   ],
@@ -841,9 +840,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "8d5022cb-68fe-463d-9cca-e9b0668a606a",
+  "versionId": "319e3683-11f4-41cb-b007-db45ea44f054",
   "activeVersionId": "8d5022cb-68fe-463d-9cca-e9b0668a606a",
-  "versionCounter": 299,
+  "versionCounter": 302,
   "triggerCount": 1,
   "shared": [
     {

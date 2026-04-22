@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-19T19:25:30.110Z",
+  "updatedAt": "2026-04-20T15:46:10.637Z",
   "createdAt": "2026-03-21T17:17:54.963Z",
   "id": "JzghCkfPxT5CV1iT",
   "name": "SYS 01 — Website Form Lead Intake",
@@ -81,7 +81,7 @@
           "conditions": [
             {
               "id": "has-id",
-              "leftValue": "={{ $json.contactId }}",
+              "leftValue": "={{ String($json.contactId ?? '') }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -351,11 +351,11 @@
           "conditions": [
             {
               "id": "has-deal-id",
-              "leftValue": "={{ Number($('Build CRM Context').first().json.dealId) || 0 }}",
-              "rightValue": 0,
+              "leftValue": "={{ String($('Build CRM Context').first().json.dealId ?? '').trim() }}",
+              "rightValue": "",
               "operator": {
-                "type": "number",
-                "operation": "gt"
+                "type": "string",
+                "operation": "notEquals"
               }
             }
           ],
@@ -1063,7 +1063,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": true,
+    "availableInMCP": false,
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedMode": "dynamic",
     "errorWorkflow": "w9S9LovIY8CxchZm",
@@ -1074,9 +1074,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
-  "activeVersionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
-  "versionCounter": 507,
+  "versionId": "3774389a-385d-4430-9258-229c4fd36378",
+  "activeVersionId": "3774389a-385d-4430-9258-229c4fd36378",
+  "versionCounter": 510,
   "triggerCount": 1,
   "shared": [
     {
@@ -1099,9 +1099,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-19T19:25:30.112Z",
-    "createdAt": "2026-04-19T19:25:30.112Z",
-    "versionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
+    "updatedAt": "2026-04-20T15:46:10.639Z",
+    "createdAt": "2026-04-20T15:46:10.639Z",
+    "versionId": "3774389a-385d-4430-9258-229c4fd36378",
     "workflowId": "JzghCkfPxT5CV1iT",
     "nodes": [
       {
@@ -1178,7 +1178,7 @@
             "conditions": [
               {
                 "id": "has-id",
-                "leftValue": "={{ $json.contactId }}",
+                "leftValue": "={{ String($json.contactId ?? '') }}",
                 "rightValue": "",
                 "operator": {
                   "type": "string",
@@ -1448,11 +1448,11 @@
             "conditions": [
               {
                 "id": "has-deal-id",
-                "leftValue": "={{ Number($('Build CRM Context').first().json.dealId) || 0 }}",
-                "rightValue": 0,
+                "leftValue": "={{ String($('Build CRM Context').first().json.dealId ?? '').trim() }}",
+                "rightValue": "",
                 "operator": {
-                  "type": "number",
-                  "operation": "gt"
+                  "type": "string",
+                  "operation": "notEquals"
                 }
               }
             ],
@@ -2163,18 +2163,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-19T19:25:30.222Z",
-        "id": 3021,
+        "createdAt": "2026-04-20T15:46:10.800Z",
+        "id": 3095,
         "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
+        "versionId": "3774389a-385d-4430-9258-229c4fd36378",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-19T19:25:30.199Z",
-        "id": 3020,
+        "createdAt": "2026-04-20T15:46:10.772Z",
+        "id": 3094,
         "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "3d0573ab-56eb-4587-9ce4-014491a77dcc",
+        "versionId": "3774389a-385d-4430-9258-229c4fd36378",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }

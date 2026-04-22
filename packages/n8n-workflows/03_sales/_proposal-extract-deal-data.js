@@ -1,7 +1,27 @@
 const deal = $('Deal Proposal Stage Webhook').first().json;
 const config = $('Get Config').first().json;
-const body = deal.body && typeof deal.body === 'object' ? deal.body : deal;
-const props = body.properties || body;
+
+/** n8n may receive flat HubSpot shape, { body }, or router envelope { webhookBody }. */
+const unwrapPayload = (root) => {
+  if (!root || typeof root !== 'object') return root;
+  if (root.webhookBody && typeof root.webhookBody === 'object') return root.webhookBody;
+  if (root.payload && typeof root.payload === 'object') return root.payload;
+  return root;
+};
+
+const inner = unwrapPayload(deal);
+const body =
+  inner.body && typeof inner.body === 'object' && !Array.isArray(inner.body) ? inner.body : inner;
+const props =
+  body.properties && typeof body.properties === 'object' && !Array.isArray(body.properties)
+    ? body.properties
+    : body;
+
+/** HubSpot router envelope may include merged contact props (preferred for client-facing fields). */
+const merged =
+  (deal.source && typeof deal.source === 'object' && deal.source.contactsMerged) ||
+  (typeof deal.contactsMerged === 'object' && deal.contactsMerged) ||
+  {};
 
 const valueFrom = (...values) => {
   for (const value of values) {
@@ -19,6 +39,14 @@ const money = (value) => {
 };
 
 const titleCase = (value) => (value ? value.charAt(0).toUpperCase() + value.slice(1) : '');
+
+/** PDF / UI: avoid em/en dashes in names and labels. */
+const cleanDashes = (value) =>
+  String(value ?? '')
+    .replace(/\u2014/g, '-')
+    .replace(/\u2013/g, '-')
+    .replace(/\u2212/g, '-')
+    .replace(/—/g, '-');
 
 /** Parse line items from payload: arrays on body/properties, JSON string, or HubSpot hs_line_items JSON. */
 const parseLineItemsRaw = () => {
@@ -97,7 +125,7 @@ const uniquePainSources = [...new Set(rawPainSources)];
 const painPoints = uniquePainSources.join('\n\n');
 const contactFirstName = valueFrom(props.contact_firstname, props.firstName, props.firstname);
 const contactLastName = valueFrom(props.contact_lastname, props.lastName, props.lastname);
-const contactName = [contactFirstName, contactLastName].filter(Boolean).join(' ');
+const contactName = cleanDashes([contactFirstName, contactLastName].filter(Boolean).join(' '));
 
 const companyName = valueFrom(
   props.company,
@@ -105,6 +133,27 @@ const companyName = valueFrom(
   props.business_name,
   props.dealname,
   props.name,
+);
+
+const companyDisplay = (() => {
+  const c = String(companyName || '').trim();
+  if (c && c.toUpperCase() !== 'UNKNOWN') return cleanDashes(c);
+  const m = valueFrom(merged.company, merged.business_name, merged.company_name);
+  if (m && String(m).trim().toUpperCase() !== 'UNKNOWN') return cleanDashes(m);
+  const dn = valueFrom(props.dealname, props.name);
+  if (dn) {
+    const short = dn.split(/\s*[–\u2013\u2014-]\s*/)[0].trim();
+    return cleanDashes(short || dn);
+  }
+  return '';
+})();
+
+const industryDisplay = cleanDashes(
+  valueFrom(props.industry, merged.industry, merged.website_intake_industry),
+);
+
+const contactEmailDisplay = cleanDashes(
+  valueFrom(merged.email, merged.contact_email, props.contact_email, props.email),
 );
 
 const tierMonthly = money(tierInfo.monthlyPrice);
@@ -149,9 +198,13 @@ const productList = lineItems.map((i) => ({
 return [
   {
     json: {
-      clientName: valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),
+      clientName: cleanDashes(
+        valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),
+      ),
       company: companyName,
+      companyDisplay,
       industry: valueFrom(props.industry),
+      industryDisplay,
       painPoints,
       painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),
       rawPainPoints: valueFrom(props.deal_pain_points, painPoints),
@@ -169,8 +222,9 @@ return [
       remainingTierBalance,
       launchBalance,
       finalDueAtPreLaunch: launchBalance,
-      dealId: valueFrom(body.id, deal.id, body.dealId, deal.dealId),
+      dealId: valueFrom(body.id, inner.id, deal.dealId, deal.id, body.dealId),
       contactEmail: valueFrom(props.contact_email, props.email),
+      contactEmailDisplay,
       contactPhone: valueFrom(props.contact_phone, props.phone, props.mobilephone),
       contactFirstName,
       contactName: contactName || contactFirstName,
@@ -179,7 +233,14 @@ return [
       state: valueFrom(props.state, props.state_region, props.company_state),
       postalCode: valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),
       country: valueFrom(props.country, props.company_country),
-      website: valueFrom(props.website, props.domain, props.company_domain),
+      website: valueFrom(
+        props.website,
+        props.domain,
+        props.company_domain,
+        merged.website,
+        merged.company_website,
+        merged.hs_website,
+      ),
       driveFolderId: valueFrom(props.client_drive_folder_id),
       lineItems,
       lineItemsTotal: lineItemsSubtotal,
