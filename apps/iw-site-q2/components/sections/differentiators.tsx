@@ -38,7 +38,7 @@ const cols = [
 
 export function DifferentiatorsSection() {
   return (
-    <section id="differentiators" style={{ padding: "140px 0", position: "relative" }}>
+    <section id="differentiators" className="marketing-slab">
       <div className="container">
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48 }}>
           <span className="section-marker">[ 06 — POSITIONING ]</span>

@@ -45,8 +45,8 @@ export function StatsSection() {
   return (
     <section
       id="stats"
+      className="marketing-slab"
       style={{
-        padding: "120px 0",
         position: "relative",
         borderTop: "1px solid var(--iw-hairline)",
         borderBottom: "1px solid var(--iw-hairline)",

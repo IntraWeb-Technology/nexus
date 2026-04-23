@@ -1,10 +1,21 @@
 import Link from "next/link";
-import { contactEmail } from "@/lib/site";
+import { companyLegalName, contactEmail } from "@/lib/site";
+import { IntraWebSymbol } from "@/components/intraweb-symbol";
+import { IntraWebWordmark } from "@/components/intraweb-wordmark";
 import { StatusDot } from "@/components/primitives";
 import { Ic } from "@/components/icons";
 
 const footerColumns = [
-  { h: "Company", links: [{ label: "About", href: "/about" }, { label: "Work", href: "/work" }, { label: "Contact", href: "/contact" }] },
+  {
+    h: "Company",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Work", href: "/work" },
+      { label: "Blog", href: "/blog" },
+      { label: "Get started", href: "/start" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
   {
     h: "Services",
     links: [
@@ -43,35 +54,20 @@ export function Footer() {
             background: "linear-gradient(180deg, var(--iw-fg-1) 0%, transparent 120%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
             marginBottom: 60,
             userSelect: "none",
           }}
         >
-          IntraWeb<span style={{ color: "var(--accent)", WebkitTextFillColor: "var(--accent)" }}>.</span>
+          IntraWeb
+          <span style={{ color: "var(--accent)", WebkitTextFillColor: "var(--accent)" }}>.</span>
         </div>
 
         <div className="footer-grid">
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <div
-                style={{
-                  width: 24,
-                  height: 24,
-                  background: "var(--iw-fg)",
-                  borderRadius: 3,
-                  display: "grid",
-                  placeItems: "center",
-                  fontFamily: "var(--iw-display)",
-                  fontWeight: 800,
-                  fontSize: 12,
-                  color: "var(--iw-void)",
-                }}
-              >
-                IW
-              </div>
-              <span style={{ fontFamily: "var(--iw-display)", fontWeight: 700, fontSize: 15 }}>
-                IntraWeb Technologies
-              </span>
+              <IntraWebSymbol size={24} />
+              <IntraWebWordmark size="compact" />
             </div>
             <p style={{ fontSize: 14, color: "var(--iw-fg-2)", maxWidth: 340, lineHeight: 1.55 }}>
               AI systems and automation infrastructure for SMBs that want to operate smarter. Based in New Jersey,
@@ -135,10 +131,15 @@ export function Footer() {
 
           {footerColumns.map((col) => (
             <div key={col.h}>
-              <div className="mono" style={{ fontSize: 10, color: "var(--iw-fg-3)", letterSpacing: "0.2em", marginBottom: 16 }}>
+              <div
+                className="mono"
+                style={{ fontSize: 10, color: "var(--iw-fg-3)", letterSpacing: "0.2em", marginBottom: 16 }}
+              >
                 {col.h.toUpperCase()}
               </div>
-              <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+              <ul
+                style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}
+              >
                 {col.links.map((l) => (
                   <li key={l.href}>
                     <Link href={l.href} style={{ fontSize: 14, color: "var(--iw-fg-1)" }}>
@@ -164,7 +165,7 @@ export function Footer() {
             letterSpacing: "0.1em",
           }}
         >
-          <span>© 2026 INTRAWEB TECHNOLOGIES, LLC</span>
+          <span>© 2026 {companyLegalName}</span>
           <span style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <span>
               <StatusDot size={5} /> SYSTEM OPERATIONAL

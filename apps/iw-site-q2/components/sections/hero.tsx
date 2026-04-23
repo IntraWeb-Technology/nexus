@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { HeroDiagram } from "@/components/hero-diagram";
-import { Btn, Eyebrow, Reveal, StatusDot } from "@/components/primitives";
+import { Btn, HeroRise, StatusDot, Reveal } from "@/components/primitives";
+import { SectionLabel } from "@/components/section-label";
 import { Ic } from "@/components/icons";
 
 export function Hero({ intensity = 1 }: { intensity?: number }) {
@@ -31,17 +32,18 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
   }, [intensity]);
 
   return (
-    <section
-      ref={heroRef}
-      id="hero"
-      style={{
-        position: "relative",
-        minHeight: "100vh",
-        paddingTop: 140,
-        paddingBottom: 80,
-        overflow: "hidden",
-      }}
-    >
+    <section ref={heroRef} id="hero" className="home-hero">
+      <div
+        className="page-hero__bg page-hero__drift"
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: 0.35,
+          zIndex: 0,
+        }}
+        aria-hidden
+      />
+
       <div
         style={{
           position: "absolute",
@@ -52,6 +54,7 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
           radial-gradient(600px 400px at ${(1 - mouse.x) * 100}% ${mouse.y * 100}%, rgba(255,161,85,0.10), transparent 60%)
         `,
           transition: "background 200ms linear",
+          zIndex: 0,
         }}
       />
 
@@ -67,7 +70,9 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
           filter: "blur(40px)",
           animation: "orb-float 12s ease-in-out infinite",
           pointerEvents: "none",
+          zIndex: 0,
         }}
+        data-orb-float
       />
       <div
         style={{
@@ -81,14 +86,19 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
           filter: "blur(40px)",
           animation: "orb-float 14s ease-in-out infinite reverse",
           pointerEvents: "none",
+          zIndex: 0,
         }}
+        data-orb-float
       />
 
       <div
+        className="page-hero__drift"
         style={{
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
+          zIndex: 0,
+          opacity: 0.5,
           backgroundImage:
             "linear-gradient(rgba(147,197,253,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(147,197,253,0.04) 1px, transparent 1px)",
           backgroundSize: "60px 60px",
@@ -120,7 +130,7 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
               padding: "8px 14px",
               border: "1px solid var(--iw-hairline)",
               borderRadius: 999,
-              background: "rgba(16,26,46,0.5)",
+              background: "rgba(30,37,53,0.65)",
               backdropFilter: "blur(10px)",
             }}
           >
@@ -132,19 +142,20 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
 
         <div className="hero-grid">
           <div>
-            <Reveal>
-              <Eyebrow n="02">AI systems for SMB operations</Eyebrow>
-            </Reveal>
+            <HeroRise delay={0} duration={500}>
+              <SectionLabel>AI systems for SMB operations</SectionLabel>
+            </HeroRise>
 
-            <Reveal delay={120}>
+            <HeroRise delay={0} duration={500} y={20}>
               <h1
                 style={{
-                  fontSize: "clamp(40px, 6vw, 84px)",
+                  fontSize: "clamp(2rem, 5vw, 3.5rem)",
                   lineHeight: 1.02,
                   letterSpacing: "-0.035em",
                   fontWeight: 700,
-                  marginTop: 28,
-                  marginBottom: 36,
+                  marginTop: 24,
+                  marginBottom: 28,
+                  fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
                 }}
               >
                 <span style={{ display: "block", color: "var(--iw-fg)" }}>
@@ -153,82 +164,81 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
                 <span
                   style={{
                     display: "block",
-                    background:
-                      "linear-gradient(100deg, var(--iw-fg-2) 0%, var(--iw-fg-2) 30%, var(--iw-fg-3) 60%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    color: "var(--iw-fg-2)",
                   }}
                 >
                   It doesn&apos;t have to.
                 </span>
               </h1>
-            </Reveal>
+            </HeroRise>
 
-            <Reveal delay={220}>
+            <HeroRise delay={100} duration={500} y={20}>
               <p
                 style={{
-                  fontSize: 19,
-                  lineHeight: 1.55,
-                  maxWidth: 520,
+                  fontSize: 18,
+                  lineHeight: 1.7,
+                  maxWidth: 560,
                   color: "var(--iw-fg-1)",
                   marginBottom: 24,
                 }}
               >
-                IntraWeb builds AI-powered web systems, workflow automation, and intelligent
-                integrations for small and mid-sized businesses, so you can stop doing the work your
-                systems should be doing.
+                IntraWeb builds AI-powered web systems, workflow automation, and intelligent integrations for
+                small and mid-sized businesses — so you can stop doing the work your systems should be doing.
               </p>
-            </Reveal>
+            </HeroRise>
 
-            <Reveal delay={280}>
+            <HeroRise delay={200} duration={500} y={20}>
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
                 <Btn variant="primary" href="/diagnostic">
                   Start with a Free Diagnostic
                 </Btn>
                 <Btn variant="secondary" href="#services-overview" icon={false}>
-                  <Ic.arrowDown width={14} height={14} /> <span>See What We Build</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    See What We Build <span aria-hidden>↓</span>
+                  </span>
                 </Btn>
               </div>
-            </Reveal>
+            </HeroRise>
 
-            <Reveal delay={320}>
+            <HeroRise delay={300} duration={500} y={20}>
               <p
                 className="mono"
                 style={{
                   marginTop: 20,
-                  fontSize: 12,
+                  fontSize: 13,
                   color: "var(--iw-fg-2)",
                   maxWidth: 560,
-                  lineHeight: 1.55,
+                  lineHeight: 1.6,
                   letterSpacing: "0.04em",
                 }}
               >
-                No sales pitch. A structured audit of where AI and automation can cut your operational
-                load, with a clear roadmap you keep.
+                No sales pitch. A structured audit of where AI and automation can cut your operational load — with
+                a clear roadmap you keep.
               </p>
-            </Reveal>
+            </HeroRise>
 
-            <Reveal delay={400}>
+            <HeroRise delay={300} duration={500} y={20}>
               <div
                 className="hero-metrics"
                 style={{
-                  marginTop: 48,
+                  marginTop: 40,
                   borderTop: "1px solid var(--iw-hairline)",
                   paddingTop: 24,
                 }}
               >
                 {[
-                  ["2–3 wk", "Diagnostic"],
-                  ["From $7.5K", "Roadmap you own"],
+                  ["2–3 wk", "Typical diagnostic"],
+                  ["Yours to keep", "Written roadmap"],
                   ["NJ · Remote", "NY metro + nationwide"],
                 ].map(([v, l], i) => (
                   <div key={i}>
                     <div
                       style={{
-                        fontFamily: "var(--iw-display)",
+                        fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
                         fontSize: 26,
                         fontWeight: 700,
                         letterSpacing: "-0.02em",
+                        color: "var(--iw-fg)",
                       }}
                     >
                       {v}
@@ -248,7 +258,7 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
                   </div>
                 ))}
               </div>
-            </Reveal>
+            </HeroRise>
           </div>
 
           <Reveal delay={200}>

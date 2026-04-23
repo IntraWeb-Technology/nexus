@@ -1,4 +1,8 @@
-/* IntraWeb 2026 — cinematic dark; tokens from design prototype + DM Sans (copy system) */
+/* IntraWeb 2026 — cinematic dark; design prototype + DM Sans */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --iw-display: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
@@ -16,6 +20,7 @@
   --iw-fg-2: #7a879d;
   --iw-fg-3: #4a5467;
 
+  /* Luminous teal + warm amber (prototype) */
   --iw-teal: #34e7d0;
   --iw-teal-dim: #15b8a1;
   --iw-teal-deep: #0f766e;
@@ -36,8 +41,31 @@
 
   --density: 1;
 
+  /* Semantic: accent = primary interactive / labels */
+  --color-accent: var(--iw-teal);
+  --color-accent-hover: var(--iw-teal-dim);
   --accent: var(--iw-teal);
   --accent-2: var(--iw-amber);
+  /* Elevated panels on inner pages (cards, callouts) */
+  --page-bg-elevated-dark: rgba(16, 26, 46, 0.75);
+  --card-border-on-dark: rgba(255, 255, 255, 0.08);
+
+  /* Vertical rhythm — nav, heroes, sections, page content (single source of truth) */
+  --nav-h: 72px;
+  --space-hero-pt: calc(var(--nav-h) + 2.5rem);
+  --space-hero-pb: 3.5rem;
+  --space-home-hero-pb: 4rem;
+  --space-section-y: 4.5rem;
+  --space-section-y-lg: 5.5rem;
+  --space-after-hero: 2.5rem;
+  --space-page-bottom: 5rem;
+  --space-page-pt: calc(var(--nav-h) + 2.5rem);
+  /* First headline → body / blocks inside a section */
+  --space-section-inner-gap: 3rem;
+  --space-cta-inset-y: 2.5rem;
+  --space-cta-inset-y-lg: 3.5rem;
+  --space-cta-inset-x: 1.5rem;
+  --space-cta-inset-x-lg: 2.5rem;
 }
 
 * {
@@ -93,6 +121,7 @@ p {
   font-size: 17px;
   line-height: 1.6;
   color: var(--iw-fg-1);
+  font-family: var(--iw-body);
 }
 
 a {
@@ -119,6 +148,25 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.section-label {
+  font-family: var(--iw-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--iw-fg-2);
+  margin: 0 0 0.75rem;
+}
+
+/* Strong section kicker: teal (was orange in interim spec) */
+.section-label--accent {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-family: var(--iw-body);
 }
 
 .eyebrow::before {
@@ -180,20 +228,22 @@ a {
   border-radius: var(--r-sm);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 240ms var(--ease);
   position: relative;
   overflow: hidden;
   text-transform: none;
+  transition: all 240ms var(--ease);
 }
 
 .btn-primary {
   background: var(--iw-fg);
   color: var(--iw-void);
+  border-color: var(--iw-fg);
 }
 
 .btn-primary:hover {
   background: var(--accent);
   color: var(--iw-void);
+  border-color: var(--accent);
   transform: translateY(-1px);
   box-shadow: 0 10px 30px rgba(52, 231, 208, 0.25);
 }
@@ -269,20 +319,112 @@ a {
   }
 }
 
+/* Prefer reduced: leave transitions usable for a11y; only neutralize long decorative loops */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  .page-hero__drift,
+  [data-orb-float] {
+    animation: none !important;
   }
 }
 
-/* Inner pages: readable column */
+/* Hero background drift — homepage hero only, subtle (opacity in layer) */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes page-hero-drift {
+    0% {
+      transform: translate(0, 0);
+    }
+    100% {
+      transform: translate(-18px, 10px);
+    }
+  }
+}
+
+.page-hero__bg {
+  background-color: var(--iw-abyss);
+  background-image:
+    linear-gradient(rgba(147, 197, 253, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(147, 197, 253, 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+  opacity: 0.2;
+  mask-image: linear-gradient(180deg, #000, transparent 95%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page-hero__bg.page-hero__drift {
+    animation: page-hero-drift 60s linear infinite alternate;
+  }
+}
+
+/* Section rhythm — same top/bottom on all marketing sections */
+section.marketing-slab {
+  padding: var(--space-section-y) 0;
+  position: relative;
+}
+
+@media (min-width: 1024px) {
+  section.marketing-slab {
+    padding: var(--space-section-y-lg) 0;
+  }
+}
+
+/* Continuation block on inner pages (tighter top, hairline) */
+section.marketing-slab--continue {
+  padding-top: var(--space-after-hero);
+  border-top: 1px solid var(--iw-hairline);
+}
+
+@media (min-width: 1024px) {
+  section.marketing-slab--continue {
+    padding-top: 3rem;
+  }
+}
+
+/* Immediately after another .marketing-slab: avoid double vertical padding */
+section.marketing-slab--stack {
+  padding-top: 0;
+  border-top: 1px solid var(--iw-hairline);
+}
+
+/* Last slab before footer: align with .page-inner bottom */
+section.marketing-slab--page-end {
+  padding-bottom: var(--space-page-bottom);
+}
+
+.page-hero {
+  position: relative;
+  width: 100%;
+  background: var(--iw-abyss);
+  padding-top: var(--space-hero-pt);
+  padding-bottom: var(--space-hero-pb);
+  border-bottom: 1px solid var(--iw-hairline);
+}
+
+.page-hero--tall {
+  min-height: clamp(240px, 38vh, 400px);
+}
+
+/* Homepage hero — same top offset as inner PageHero */
+main .home-hero {
+  position: relative;
+  min-height: min(100vh, 920px);
+  padding-top: var(--space-hero-pt);
+  padding-bottom: var(--space-home-hero-pb);
+  overflow: hidden;
+}
+
+/* Use top/bottom longhands only — .container provides horizontal padding; a padding
+   shorthand here would override it and break layouts (e.g. contact, legal, blog). */
 .page-inner {
-  padding: 140px 0 100px;
+  padding-top: var(--space-page-pt);
+  padding-bottom: var(--space-page-bottom);
   position: relative;
   z-index: 2;
+}
+
+/* After a PageHero: no duplicate “nav + huge gap” */
+.page-inner--after-hero {
+  padding-top: var(--space-after-hero);
+  padding-bottom: var(--space-page-bottom);
 }
 
 .page-inner h1 {
@@ -327,23 +469,34 @@ a {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 12px 16px;
+}
+
+.nav-shell__left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .nav-shell__links {
   display: flex;
   flex-wrap: wrap;
-  flex: 1 1 100%;
-  justify-content: center;
+  align-items: center;
+  justify-content: flex-start;
   gap: 4px;
-  order: 3;
 }
 
-.nav-shell__cta {
+.nav-shell__right {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-left: auto;
+  justify-content: flex-end;
+  gap: 10px 14px;
+  flex: 0 0 auto;
 }
 
 .nav-shell__badge {
@@ -362,14 +515,35 @@ a {
     flex-wrap: nowrap;
   }
 
-  .nav-shell__links {
-    flex: 1 1 auto;
-    order: 0;
-    justify-content: center;
-  }
-
   .nav-shell__badge {
     display: flex;
+  }
+}
+
+.nav-shell__signin {
+  text-decoration: none;
+  border-radius: 4px;
+  color: var(--iw-fg-2);
+  transition: color 180ms var(--ease);
+}
+
+.nav-shell__signin:hover {
+  color: var(--iw-fg-1);
+}
+
+.nav-shell__signin:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 959px) {
+  .nav-shell__left {
+    width: 100%;
+  }
+
+  .nav-shell__right {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
@@ -536,6 +710,76 @@ a {
   }
 }
 
+/* Contact: form + aside at 50/50 from ~900px; stack on small viewports */
+.contact-page__grid {
+  display: grid;
+  gap: clamp(2.25rem, 4vw, 3.5rem);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .contact-page__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(2.5rem, 5vw, 4.5rem);
+  }
+}
+
+.contact-page__aside {
+  position: relative;
+  padding-top: 2px; /* optically align with first form label */
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+@media (min-width: 900px) {
+  .contact-page__aside {
+    border-left: 1px solid var(--iw-hairline);
+    padding-left: clamp(1.5rem, 3vw, 2.5rem);
+  }
+}
+
+/* Override .page-inner h2 for aside title */
+.page-inner .contact-page__aside-title {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.35rem, 2vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--iw-fg);
+}
+
+.contact-page__aside-lead {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--iw-fg-1);
+  margin: 0 0 1.25rem;
+}
+
+.contact-page__aside-cta {
+  margin-bottom: 2.5rem;
+}
+
+.contact-page__aside-meta {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--iw-fg-2);
+}
+
+.contact-page__aside-meta strong {
+  color: var(--iw-fg);
+  font-weight: 600;
+}
+
+.contact-page__aside-email {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.contact-page__aside-email:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+}
+
 .contact-input {
   width: 100%;
   padding: 12px 14px;
@@ -550,4 +794,15 @@ a {
 .contact-input:focus {
   outline: 1px solid var(--accent);
   border-color: var(--accent);
+}
+
+/* /start — intake-only: single headline + ported form */
+.start-page__title {
+  font-family: var(--iw-display);
+  font-size: clamp(1.75rem, 2.5vw + 1rem, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--iw-fg);
+  max-width: 42rem;
 }

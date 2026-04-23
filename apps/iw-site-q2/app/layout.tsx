@@ -18,13 +18,13 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "IntraWeb Technologies | AI Automation & Web Systems for SMBs",
-    template: "%s | IntraWeb Technologies",
+    default: "IntraWeb | AI Automation & Web Systems for SMBs",
+    template: "%s | IntraWeb",
   },
   description:
     "IntraWeb builds AI-powered web systems, workflow automation, and intelligent integrations for SMBs. Based in NJ, serving the NY metro and remote nationwide.",
   openGraph: {
-    title: "IntraWeb Technologies",
+    title: "IntraWeb",
     description:
       "AI systems and automation infrastructure for SMBs that want to operate smarter.",
     type: "website",

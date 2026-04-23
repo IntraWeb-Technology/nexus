@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms",
-  description: "Terms of use for IntraWeb Technologies LLC.",
+  description: "Terms of use for IntraWeb Technologies, LLC.",
 };
 
 export default function TermsPage() {

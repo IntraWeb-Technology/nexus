@@ -1,6 +1,7 @@
 "use client";
 
-import { Btn, Eyebrow, Reveal } from "@/components/primitives";
+import { Btn, Reveal } from "@/components/primitives";
+import { SectionLabel } from "@/components/section-label";
 import { Ic } from "@/components/icons";
 
 const cards = [
@@ -8,28 +9,25 @@ const cards = [
     title: "AI & Automation",
     headline: "Automate what drains you",
     body: "Lead intake. Client onboarding. Proposal delivery. Invoice collection. Reporting. We map your highest-friction processes and replace manual work with intelligent, monitored workflows.",
-    note: "Starting at $7,500 with a free diagnostic",
     icon: Ic.sparkles,
   },
   {
     title: "Web & Product",
     headline: "Build systems that convert and scale",
-    body: "From foundational SMB websites to SaaS-grade platforms, engineered in Next.js and React with performance, integrations, and a clear upgrade path built in from day one.",
-    note: "Starting at $7,000",
+    body: "From foundational SMB websites to SaaS-grade platforms — engineered for performance, built with integrations in mind, and structured with a clear upgrade path from day one.",
     icon: Ic.code,
   },
   {
     title: "AI Integration",
     headline: "Bring AI into your existing product",
     body: "Whether you need a mid-level assistant workflow or a production-grade AI architecture, we integrate models, guardrails, and data pipelines into what you already have.",
-    note: "Starting at $25,000",
     icon: Ic.shield,
   },
 ];
 
 export function ServicesOverviewSection() {
   return (
-    <section id="services-overview" style={{ padding: "140px 0", position: "relative" }}>
+    <section id="services-overview" className="marketing-slab">
       <div className="container">
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48 }}>
           <span className="section-marker">[ 03 — WHAT WE BUILD ]</span>
@@ -37,7 +35,7 @@ export function ServicesOverviewSection() {
         </div>
 
         <Reveal>
-          <Eyebrow>What we build</Eyebrow>
+          <SectionLabel>What we build</SectionLabel>
           <h2
             style={{
               fontSize: "clamp(36px, 4.5vw, 64px)",
@@ -94,12 +92,7 @@ export function ServicesOverviewSection() {
                   >
                     {c.headline}
                   </h3>
-                  <p style={{ marginTop: 14, fontSize: 15, color: "var(--iw-fg-2)", lineHeight: 1.6, flex: 1 }}>
-                    {c.body}
-                  </p>
-                  <p className="mono" style={{ marginTop: 20, fontSize: 11, color: "var(--accent)" }}>
-                    {c.note}
-                  </p>
+                  <p style={{ marginTop: 14, fontSize: 16, color: "var(--iw-fg-1)", lineHeight: 1.7, flex: 1 }}>{c.body}</p>
                 </div>
               </Reveal>
             );

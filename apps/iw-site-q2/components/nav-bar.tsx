@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { navLinks } from "@/lib/site";
+import { accountsUrl, navLinks } from "@/lib/site";
+import { IntraWebSymbol } from "@/components/intraweb-symbol";
+import { IntraWebWordmark } from "@/components/intraweb-wordmark";
 import { Btn, StatusDot } from "@/components/primitives";
 
 export function NavBar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -31,79 +35,53 @@ export function NavBar() {
       }}
     >
       <div className="container nav-shell">
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              position: "relative",
-              display: "grid",
-              placeItems: "center",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(135deg, var(--iw-teal) 0%, var(--iw-amber) 100%)",
-                borderRadius: 4,
-                filter: "blur(8px)",
-                opacity: 0.6,
-              }}
-            />
-            <div
-              style={{
-                position: "relative",
-                width: 24,
-                height: 24,
-                background: "var(--iw-fg)",
-                borderRadius: 3,
-                display: "grid",
-                placeItems: "center",
-                fontFamily: "var(--iw-display)",
-                fontWeight: 800,
-                fontSize: 13,
-                color: "var(--iw-void)",
-                letterSpacing: "-0.03em",
-              }}
-            >
-              IW
-            </div>
-          </div>
-          <span
-            style={{
-              fontFamily: "var(--iw-display)",
-              fontWeight: 700,
-              fontSize: 16,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            IntraWeb Technologies
-          </span>
-        </Link>
+        <div className="nav-shell__left">
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }} aria-label="IntraWeb — home">
+            <IntraWebSymbol size={28} priority />
+            <IntraWebWordmark size="nav" />
+          </Link>
 
-        <div className="nav-shell__links">
-          {navLinks.map(({ label, href }) => (
-            <Link
-              key={href}
-              href={href}
-              style={{
-                padding: "8px 12px",
-                fontSize: 14,
-                color: "var(--iw-fg-1)",
-              }}
-            >
-              {label}
-            </Link>
-          ))}
+          <div className="nav-shell__links">
+            {navLinks.map(({ label, href }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  style={{
+                    padding: "8px 12px",
+                    fontSize: 14,
+                    borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
+                    marginBottom: -2,
+                    fontWeight: active ? 600 : 400,
+                    color: active ? "var(--accent)" : "var(--iw-fg-1)",
+                  }}
+                >
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="nav-shell__cta">
+        <div className="nav-shell__right">
+          <a
+            href={accountsUrl}
+            rel="noopener noreferrer"
+            target="_blank"
+            className="nav-shell__signin"
+            style={{ padding: "8px 12px", fontSize: 14, fontWeight: 500, whiteSpace: "nowrap" }}
+          >
+            Sign in
+          </a>
           <div className="mono nav-shell__badge">
             <StatusDot color="var(--iw-teal)" size={5} />
             <span>ACCEPTING Q2 ENGAGEMENTS</span>
           </div>
-          <Btn variant="primary" icon href="/diagnostic">
+          <Btn variant="secondary" href="/start" icon={false}>
+            Get started
+          </Btn>
+          <Btn variant="primary" href="/diagnostic">
             Get a Free Diagnostic
           </Btn>
         </div>

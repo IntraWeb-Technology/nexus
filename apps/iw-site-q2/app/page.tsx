@@ -11,7 +11,7 @@ import { CtaSection } from "@/components/sections/cta";
 import { FaqSection } from "@/components/sections/faq";
 
 export const metadata: Metadata = {
-  title: "IntraWeb Technologies | AI Automation & Web Systems for SMBs",
+  title: "IntraWeb | AI Automation & Web Systems for SMBs",
   description:
     "IntraWeb builds AI-powered web systems, workflow automation, and intelligent integrations for SMBs. Based in NJ, serving the NY metro and remote nationwide.",
 };

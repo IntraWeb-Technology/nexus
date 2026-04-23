@@ -35,7 +35,7 @@ export function ProcessSection() {
   const [active, setActive] = useState(0);
 
   return (
-    <section id="process" style={{ padding: "140px 0", position: "relative" }}>
+    <section id="process" className="marketing-slab">
       <div className="container">
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48 }}>
           <span className="section-marker">[ 04 — HOW IT WORKS ]</span>

@@ -7,7 +7,7 @@ import { Ic } from "@/components/icons";
 const items = [
   {
     q: "What is the Diagnostic?",
-    a: "The AI Workflow Diagnostic is a structured engagement (not a generic discovery call) that maps your operations, identifies where automation delivers value, and produces a prioritized roadmap you own. Standard is $7,500; Premium is $12,000 for multi-team or complex systems.",
+    a: "The AI Workflow Diagnostic is a structured engagement (not a generic discovery call) that maps your operations, identifies where automation delivers value, and produces a prioritized roadmap you own. We align scope to your situation before scheduling.",
   },
   {
     q: "How long does implementation take?",
@@ -31,7 +31,7 @@ export function FaqSection() {
   const [open, setOpen] = useState(0);
 
   return (
-    <section id="faq" style={{ padding: "140px 0", position: "relative" }}>
+    <section id="faq" className="marketing-slab marketing-slab--page-end">
       <div className="container">
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48 }}>
           <span className="section-marker">[ 09 — FAQ ]</span>

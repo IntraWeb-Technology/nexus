@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy",
-  description: "Privacy policy for IntraWeb Technologies LLC.",
+  description: "Privacy policy for IntraWeb Technologies, LLC.",
 };
 
 export default function PrivacyPage() {
