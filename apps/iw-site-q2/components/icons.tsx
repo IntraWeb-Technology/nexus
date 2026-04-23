@@ -38,6 +38,14 @@ export const Ic = {
       <path d="m6 6 12 12" />
     </svg>
   ),
+  /** Hamburger — mobile nav toggle */
+  menu: (p: IconProps) => (
+    <svg {...iconBase} {...p}>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h16" />
+    </svg>
+  ),
   plus: (p: IconProps) => (
     <svg {...iconBase} {...p}>
       <path d="M5 12h14" />

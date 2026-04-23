@@ -12,7 +12,7 @@ export default function BlogPage() {
       <h1>Blog</h1>
       <p className="lead">Articles and updates are coming soon. In the meantime, start with a diagnostic to map your automation opportunities.</p>
       <Btn href="/diagnostic" variant="primary">
-        Book a Diagnostic
+        Book an AI Workflow Diagnostic
       </Btn>
     </div>
   );

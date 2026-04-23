@@ -1,0 +1,37 @@
+# IntraWeb Technologies
+
+> AI-first product and automation studio for small and mid-sized businesses. We build workflow automation, AI integrations, and web systems that replace manual operational work.
+
+IntraWeb Technologies LLC is based in Towaco, NJ and serves SMBs across the NJ/NYC metro and remotely nationwide. Founded by John Schibelli, a senior engineer and AI systems architect with 15+ years of experience.
+
+## Core Services
+
+- AI Workflow Diagnostic: Structured operational assessment that maps manual processes, identifies automation opportunities, and delivers a prioritized roadmap the client keeps.
+- Workflow Automation: End-to-end automation for lead intake, onboarding, proposals, invoicing, and reporting. Built on n8n with HubSpot and Stripe integration. 62 workflows currently in production.
+- AI Integration: Embedding AI models, retrieval workflows, and prompt guardrails into existing products and operations stacks.
+- E-commerce Automation: Full order lifecycle automation — abandoned cart recovery, order processing, fulfillment, shipping, returns, post-purchase retention, and operations reporting.
+- Website Development: Performance-engineered websites and SaaS platforms built with automation integration from day one.
+- MVP and SaaS Platform Build: Full product engineering from validated first release to production-hardened platform.
+- Retainers: Ongoing maintenance, monitoring, and optimization for all systems built by IntraWeb.
+
+## Key Facts
+
+- 62 automation workflows in production across 8 operational categories
+- Entry point for all engagements: AI Workflow Diagnostic
+- No hourly billing — all engagements structured as fixed deliverables, retainers, or value outcomes
+- NJ-based, available for on-site engagements in NY metro
+- All systems include post-launch retainer coverage
+
+## Pages
+
+- Homepage: https://intrawebtech.com
+- Services: https://intrawebtech.com/services
+- AI Workflow Diagnostic: https://intrawebtech.com/diagnostic
+- About: https://intrawebtech.com/about
+- Work / Case Studies: https://intrawebtech.com/work
+- Contact: https://intrawebtech.com/contact
+
+## Contact
+
+Email: human@intrawebtech.com
+Location: Towaco, NJ (NJ/NYC metro + remote nationwide)

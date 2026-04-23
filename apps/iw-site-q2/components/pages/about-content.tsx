@@ -1,5 +1,6 @@
 "use client";
 
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
 import { PageHero } from "@/components/page-hero";
 import { SectionLabel } from "@/components/section-label";
 import { Btn, Reveal } from "@/components/primitives";
@@ -21,7 +22,13 @@ const values = [
 
 export function AboutPageContent() {
   return (
-    <main>
+    <main className="iw-with-bc">
+      <BreadcrumbNav
+        items={[
+          { name: "IntraWeb Technologies", href: "/" },
+          { name: "About", current: true },
+        ]}
+      />
       <PageHero
         title={
           <>

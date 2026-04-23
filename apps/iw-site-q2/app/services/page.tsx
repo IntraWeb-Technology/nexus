@@ -1,14 +1,23 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/json-ld";
 import { ServicesPageContent } from "@/components/pages/services-content";
+import { buildBreadcrumbJsonLd, homeFaqPageJsonLd, itemListServiceJsonLd } from "@/lib/geo-jsonld";
+import { pageMetadata, servicesSeo } from "@/lib/seo-meta";
 
-export const metadata: Metadata = {
-  title: {
-    absolute: "Services | AI Integration, Workflow Automation & Web Development — IntraWeb",
-  },
-  description:
-    "From AI workflow diagnostics to SaaS product builds, IntraWeb designs and delivers systems that reduce manual work and scale your operations.",
-};
+export const metadata: Metadata = pageMetadata(servicesSeo, { titleAbsolute: true });
 
 export default function ServicesPage() {
-  return <ServicesPageContent />;
+  return (
+    <>
+      <JsonLd data={itemListServiceJsonLd} />
+      <JsonLd
+        data={buildBreadcrumbJsonLd([
+          { name: "IntraWeb Technologies", path: "/" },
+          { name: "Services", path: "/services" },
+        ])}
+      />
+      <JsonLd data={homeFaqPageJsonLd} />
+      <ServicesPageContent />
+    </>
+  );
 }

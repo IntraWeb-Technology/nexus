@@ -1,5 +1,7 @@
 "use client";
 
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
+import { GeoFaqBlock } from "@/components/geo-faq-block";
 import { PageHero } from "@/components/page-hero";
 import { SectionLabel } from "@/components/section-label";
 import { DiagnosticCalEmbed } from "@/components/diagnostic-cal-embed";
@@ -36,7 +38,13 @@ const everyIncludes = [
 
 export function DiagnosticPageContent() {
   return (
-    <main>
+    <main className="iw-with-bc">
+      <BreadcrumbNav
+        items={[
+          { name: "IntraWeb Technologies", href: "/" },
+          { name: "AI Workflow Diagnostic", current: true },
+        ]}
+      />
       <PageHero
         title="Find out exactly where AI can cut your operational load."
         subhead="The IntraWeb AI Workflow Diagnostic is a structured assessment — not a discovery call — that maps your current operations, identifies where automation delivers real value, and gives you a prioritized roadmap you own. Whether you engage us to build it or not."
@@ -153,6 +161,8 @@ export function DiagnosticPageContent() {
         </div>
       </section>
 
+      <GeoFaqBlock className="marketing-slab" />
+
       <section className="marketing-slab marketing-slab--stack marketing-slab--page-end">
         <div className="container" style={{ maxWidth: 720 }}>
           <Reveal>
@@ -186,7 +196,7 @@ export function DiagnosticPageContent() {
             </ul>
             <div style={{ marginTop: 32 }}>
               <Btn href="#book-diagnostic" variant="primary">
-                Open the calendar
+                Book a time for your AI Workflow Diagnostic
               </Btn>
             </div>
           </Reveal>

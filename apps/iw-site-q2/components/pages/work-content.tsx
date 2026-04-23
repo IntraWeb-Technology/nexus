@@ -1,12 +1,19 @@
 "use client";
 
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
 import { PageHero } from "@/components/page-hero";
 import { SectionLabel } from "@/components/section-label";
 import { Btn, Reveal } from "@/components/primitives";
 
 export function WorkPageContent() {
   return (
-    <main>
+    <main className="iw-with-bc">
+      <BreadcrumbNav
+        items={[
+          { name: "IntraWeb Technologies", href: "/" },
+          { name: "Work", current: true },
+        ]}
+      />
       <PageHero
         title="Real systems. Real results."
         subhead="Every engagement is different. This section will host case studies as they are published: client type, challenge, what we built, quantified outcomes, and service tags."

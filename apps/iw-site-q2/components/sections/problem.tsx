@@ -7,13 +7,17 @@ function StatBig({
   index,
   children,
   label,
+  micro,
 }: {
   index: number;
   children: React.ReactNode;
   label: string;
+  micro: { name: string; value: string; unitText: string };
 }) {
   return (
     <div
+      itemScope
+      itemType="https://schema.org/StatisticalVariable"
       style={{
         padding: "28px 24px",
         background: "var(--iw-void)",
@@ -23,6 +27,11 @@ function StatBig({
         alignItems: "start",
       }}
     >
+      <span className="sr-only">
+        <span itemProp="name">{micro.name}</span>
+        <span itemProp="value">{micro.value}</span>
+        <span itemProp="unitText">{micro.unitText}</span>
+      </span>
       <div
         className="mono"
         style={{
@@ -59,6 +68,21 @@ export function ProblemSection() {
   const s0 = { k: 0, label: "the average ROI of an unmanaged AI integration after 90 days" };
   const s1 = { n: 68, label: "of SMB automation projects fail at the handoff stage" };
   const s2 = { n: 3, label: "faster operations when AI is built around your real workflows" };
+  const s0Micro = {
+    name: s0.label,
+    value: "0",
+    unitText: "USD",
+  };
+  const s1Micro = {
+    name: "Share of SMB automation projects that fail at the handoff stage",
+    value: "68",
+    unitText: "percent",
+  };
+  const s2Micro = {
+    name: s2.label,
+    value: "3",
+    unitText: "times",
+  };
 
   return (
     <section id="problem" className="marketing-slab marketing-slab--continue">
@@ -115,7 +139,7 @@ export function ProblemSection() {
                 borderRadius: 12,
               }}
             >
-              <StatBig index={0} label={s0.label}>
+              <StatBig index={0} label={s0.label} micro={s0Micro}>
                 {reduce || s0.k === 0 ? (
                   <>
                     <span style={{ color: "var(--color-accent)" }}>$</span>0
@@ -128,13 +152,13 @@ export function ProblemSection() {
                 )}
               </StatBig>
               <div style={{ height: 1, background: "var(--iw-hairline)" }} />
-              <StatBig index={1} label={s1.label}>
+              <StatBig index={1} label={s1.label} micro={s1Micro}>
                 <span style={{ color: "var(--color-accent)" }}>
                   <Counter to={68} suffix="%" duration={1200} />
                 </span>
               </StatBig>
               <div style={{ height: 1, background: "var(--iw-hairline)" }} />
-              <StatBig index={2} label={s2.label}>
+              <StatBig index={2} label={s2.label} micro={s2Micro}>
                 <span style={{ color: "var(--color-accent)" }}>
                   <Counter to={3} suffix="x" duration={1200} />
                 </span>

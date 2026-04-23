@@ -45,7 +45,7 @@ export function TrustSection() {
             <p style={{ marginTop: 28, fontSize: 16, color: "var(--iw-fg-1)" }}>
               Want the longer story?{" "}
               <Link href="/about" style={{ color: "var(--color-accent)" }}>
-                Read About →
+                Read the IntraWeb about page →
               </Link>
             </p>
           </Reveal>

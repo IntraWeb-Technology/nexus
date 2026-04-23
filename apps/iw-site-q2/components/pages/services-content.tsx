@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
+import { GeoFaqBlock } from "@/components/geo-faq-block";
 import { PageHero } from "@/components/page-hero";
 import { SectionLabel } from "@/components/section-label";
 import { Btn, Reveal } from "@/components/primitives";
@@ -14,17 +16,50 @@ const diagnosticList = [
   "Written deliverable you keep, no matter what you decide next",
 ];
 
-const webTiers = [
+/** Website offers — product-style marketing cards */
+const websiteProductCards = [
   {
-    t: "Starter",
-    b: "Conversion-focused marketing site. Speed, clarity, core pages, standard CMS integration.",
+    id: "web-starter",
+    name: "Starter",
+    tagline: "A crisp site that makes the first impression — and the first lead — easy.",
+    /** Rough page budget so buyers know what “a site” means at this tier */
+    pages: "4–6 pages",
+    pagesNote: "Most often: home, your offer, about, contact, and one more (e.g. FAQ, landing, or policy).",
+    highlights: [
+      "The pages buyers expect: your story, your offer, proof, and a clear way to reach you",
+      "Fast on mobile, structured for search — performance is part of the product",
+      "Leads go to your team’s inbox and CRM, not into the void",
+      "You can update copy and images without opening a dev ticket every week",
+    ],
   },
-  { t: "Growth", b: "Richer content architecture, integrations, UX patterns designed for lead generation." },
   {
-    t: "Advanced / SaaS",
-    b: "Product-grade web experience with deeper architecture, auth patterns, and integrations.",
+    id: "web-growth",
+    name: "Growth",
+    tagline: "More room to grow: content, campaigns, and conversion paths that scale with you.",
+    pages: "6–12 pages",
+    pagesNote: "Space for a fuller map — extra landings, blog or resources, campaign pages, and supporting URLs.",
+    highlights: [
+      "A bigger site map — more landings, resources, and room to test what pulls leads in",
+      "Smarter paths to “book a call” and “talk to sales” — not just a static form",
+      "Connects to the tools you already run — CRM, calendar, and email in one flow",
+      "Tuned to turn traffic into pipeline, not just win a design award",
+    ],
   },
-];
+  {
+    id: "web-advanced",
+    name: "Advanced / SaaS",
+    tagline: "When the web is the product: accounts, product UI, and serious engineering.",
+    pages: "8–15+ public pages, plus app UI",
+    pagesNote:
+      "It’s not only “more blog pages” — you’re usually looking at a wider marketing set plus in-app or product screens (sign-in, dashboard, wizards, etc.). Exact sitemap and screens are set in scoping so you know what you’re getting.",
+    highlights: [
+      "Sign-in, roles, and app-style screens for customers and partners — not only marketing pages",
+      "Dashboards, wizards, and data where your business actually runs",
+      "Hooks into your product and billing so the experience feels like one system",
+      "Built to hold up under real users, real traffic, and real roadmaps",
+    ],
+  },
+] as const;
 
 const addons = [
   "Additional Pages",
@@ -84,7 +119,13 @@ function SectionBlock({ children, id, firstAfterHero }: { children: React.ReactN
 
 export function ServicesPageContent() {
   return (
-    <main>
+    <main className="iw-with-bc">
+      <BreadcrumbNav
+        items={[
+          { name: "IntraWeb Technologies", href: "/" },
+          { name: "Services", current: true },
+        ]}
+      />
       <PageHero
         title="What we build — and how it fits together."
         subhead={
@@ -148,37 +189,90 @@ export function ServicesPageContent() {
               Websites built to do more than sit there.
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--iw-fg-1)", marginTop: 20, maxWidth: 800 }}>
-              Most websites are marketing surfaces. Ours are operational infrastructure. Every package below connects your
-              web presence to the systems behind it — lead capture, qualification, scheduling, and follow-up run
-              automatically from day one.
+              Three ways to show up online. Each one is built to work with your business — not just go live and get
+              forgotten. Not sure which fits? That&apos;s what the Diagnostic is for.
             </p>
           </Reveal>
-          <div className="services-three" style={{ marginTop: 40, gap: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px,1fr))" }}>
-            {[0, 1, 2].map((i) => (
-              <Reveal key={i} delay={i * 80}>
-                <div className="card" style={{ padding: 24, minHeight: 160, borderLeft: "3px solid var(--color-accent)" }}>
-                  <p className="mono" style={{ fontSize: 10, color: "var(--iw-fg-3)", letterSpacing: "0.15em" }}>
-                    BUNDLE {i + 1}
-                  </p>
-                  <p style={{ marginTop: 12, fontSize: 15, color: "var(--iw-fg-1)", lineHeight: 1.6 }}>
-                    [COPY PLACEHOLDER — package name and description TBD]
-                  </p>
+          <div
+            className="services-three"
+            style={{ marginTop: 40, gap: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px,1fr))" }}
+          >
+            {websiteProductCards.map((pkg, i) => (
+              <Reveal key={pkg.id} delay={i * 80}>
+                <div
+                  className="card"
+                  style={{
+                    height: "100%",
+                    padding: 28,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 16,
+                    borderRadius: 12,
+                    border: "1px solid var(--card-border-on-dark, rgba(255,255,255,0.08))",
+                    background: "var(--page-bg-elevated-dark, rgba(16, 26, 46, 0.75))",
+                    boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+                  }}
+                >
+                  <div>
+                    <h3
+                      style={{
+                        margin: 0,
+                        fontSize: "clamp(1.25rem, 1.5vw, 1.4rem)",
+                        fontWeight: 700,
+                        fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
+                        color: "var(--iw-fg)",
+                        letterSpacing: "-0.03em",
+                      }}
+                    >
+                      {pkg.name}
+                    </h3>
+                    <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.5, color: "var(--iw-fg-2)" }}>{pkg.tagline}</p>
+                    <div
+                      style={{
+                        marginTop: 14,
+                        padding: "14px 16px",
+                        borderRadius: 8,
+                        background: "rgba(52, 231, 208, 0.06)",
+                        border: "1px solid rgba(52, 231, 208, 0.12)",
+                      }}
+                    >
+                      <p
+                        className="mono"
+                        style={{ margin: 0, fontSize: 9, color: "var(--iw-amber)", letterSpacing: "0.12em" }}
+                      >
+                        ABOUT THIS SIZE
+                      </p>
+                      <p
+                        style={{
+                          margin: "6px 0 0",
+                          fontSize: "clamp(1.25rem, 1.3vw, 1.4rem)",
+                          fontWeight: 700,
+                          color: "var(--iw-fg)",
+                          letterSpacing: "-0.03em",
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {pkg.pages}
+                      </p>
+                      <p style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.5, color: "var(--iw-fg-2)" }}>
+                        {pkg.pagesNote}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {pkg.highlights.map((h) => (
+                      <div key={h} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                        <Ic.check width={18} height={18} style={{ color: "var(--color-accent)", flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ fontSize: 15, lineHeight: 1.5, color: "var(--iw-fg-1)" }}>{h}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </Reveal>
             ))}
           </div>
           <Reveal delay={120}>
-            <h3 style={{ marginTop: 48, fontSize: 20, fontWeight: 600, fontFamily: "var(--font-dm-sans), var(--iw-display)" }}>
-              Standalone web
-            </h3>
-            <ul style={{ marginTop: 16, color: "var(--iw-fg-1)", lineHeight: 1.7 }}>
-              {webTiers.map((r) => (
-                <li key={r.t} style={{ marginBottom: 10 }}>
-                  <strong>{r.t}</strong> — {r.b}
-                </li>
-              ))}
-            </ul>
-            <h3 style={{ marginTop: 32, fontSize: 20, fontWeight: 600 }}>Add-ons</h3>
+            <h3 style={{ marginTop: 48, fontSize: 20, fontWeight: 600 }}>Add-ons</h3>
             <ul style={{ marginTop: 12, color: "var(--iw-fg-1)" }}>
               {addons.map((a) => (
                 <li key={a} style={{ marginBottom: 6 }}>
@@ -411,6 +505,7 @@ export function ServicesPageContent() {
           </Reveal>
         </div>
       </SectionBlock>
+      <GeoFaqBlock className="marketing-slab marketing-slab--page-end" id="faq" />
     </main>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { BreadcrumbNav } from "@/components/breadcrumb-nav";
 import { PageHero } from "@/components/page-hero";
 import { Btn, Reveal } from "@/components/primitives";
 import { ContactForm } from "@/components/contact-form";
@@ -7,7 +8,13 @@ import { companyLegalName, contactEmail, scheduleUrl } from "@/lib/site";
 
 export function ContactPageContent() {
   return (
-    <main>
+    <main className="iw-with-bc">
+      <BreadcrumbNav
+        items={[
+          { name: "IntraWeb Technologies", href: "/" },
+          { name: "Contact", current: true },
+        ]}
+      />
       <PageHero
         title={
           <>
