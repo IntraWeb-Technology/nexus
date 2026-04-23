@@ -828,6 +828,62 @@ a.nav-mobile-panel__item[aria-current="page"],
   }
 }
 
+/* Home / services / diagnostic: FAQ (matches FAQPage JSON-LD content) */
+.geo-faq-accordion {
+  margin: 0;
+  border-top: 1px solid var(--iw-hairline);
+}
+
+.geo-faq-accordion__item {
+  border-bottom: 1px solid var(--iw-hairline);
+}
+
+.geo-faq-accordion__summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.15rem 0;
+  font-weight: 600;
+  color: var(--iw-fg);
+  font-size: 1rem;
+  line-height: 1.4;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.geo-faq-accordion__summary::marker,
+.geo-faq-accordion__summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron */
+.geo-faq-accordion__summary::after {
+  content: "";
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.35em;
+  border-right: 2px solid var(--iw-fg-2);
+  border-bottom: 2px solid var(--iw-fg-2);
+  transform: rotate(45deg);
+  transition: transform 0.2s var(--ease);
+}
+
+.geo-faq-accordion__item[open] .geo-faq-accordion__summary::after {
+  transform: rotate(225deg);
+  margin-top: 0.5em;
+}
+
+.geo-faq-accordion__body {
+  margin: 0 0 1.15rem 0;
+  color: var(--iw-fg-1);
+  font-size: 1rem;
+  line-height: 1.65;
+  padding-right: 0.5rem;
+}
+
 .faq-grid {
   display: grid;
   grid-template-columns: 1fr 1.6fr;

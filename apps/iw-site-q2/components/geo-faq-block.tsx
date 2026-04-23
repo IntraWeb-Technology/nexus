@@ -5,7 +5,7 @@ import { geoFaqItems } from "@/lib/geo-faq";
 type Props = { className?: string; id?: string };
 
 /**
- * FAQ content matching FAQPage JSON-LD — semantic dl/dt/dd for AI crawlers.
+ * FAQ content matching FAQPage JSON-LD — collapsible rows (native `details` / `summary`).
  */
 export function GeoFaqBlock({ className, id }: Props) {
   return (
@@ -26,38 +26,14 @@ export function GeoFaqBlock({ className, id }: Props) {
         >
           Common questions
         </h2>
-        <dl
-          style={{
-            margin: 0,
-            display: "grid",
-            gap: 0,
-            borderTop: "1px solid var(--iw-hairline)",
-          }}
-        >
+        <div className="geo-faq-accordion">
           {geoFaqItems.map((item) => (
-            <div
-              key={item.q}
-              style={{
-                borderBottom: "1px solid var(--iw-hairline)",
-                padding: "20px 0",
-                display: "grid",
-                gap: 8,
-              }}
-            >
-              <dt
-                style={{
-                  fontWeight: 600,
-                  color: "var(--iw-fg)",
-                  fontSize: 16,
-                  margin: 0,
-                }}
-              >
-                {item.q}
-              </dt>
-              <dd style={{ margin: 0, color: "var(--iw-fg-1)", fontSize: 16, lineHeight: 1.65 }}>{item.a}</dd>
-            </div>
+            <details key={item.q} className="geo-faq-accordion__item" name="geo-faq-accordion">
+              <summary className="geo-faq-accordion__summary">{item.q}</summary>
+              <p className="geo-faq-accordion__body">{item.a}</p>
+            </details>
           ))}
-        </dl>
+        </div>
       </div>
     </section>
   );
