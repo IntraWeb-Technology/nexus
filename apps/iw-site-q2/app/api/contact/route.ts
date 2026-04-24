@@ -7,6 +7,7 @@ import { writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { timingSafeEqual } from "crypto";
+import Anthropic from "@anthropic-ai/sdk";
 import { buildN8nContactLeadWebhookPayload } from "@/lib/n8nLeadIntakeDealStage";
 import { escapeHtml, wrapIntraWebStaffEmailHtml } from "@/lib/emailShell";
 
@@ -244,42 +245,28 @@ type ContactSyncResult = {
 };
 
 async function classifyPainTier(painPoint: string): Promise<Tier> {
-  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY?.trim()) {
     return "starter";
   }
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 32,
-        messages: [
-          {
-            role: "user",
-            content:
-              `Reply with exactly one word: starter or growth.\n` +
-              `starter = early-stage, small/solo, simple or first website, MVP, tight budget.\n` +
-              `growth = scaling, larger org, replatform, automation, integrations, complex rebuild, enterprise.\n\n` +
-              `Pain description:\n${painPoint.slice(0, 2000)}`,
-          },
-        ],
-      }),
+    const client = new Anthropic();
+    const message = await client.messages.create({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 32,
+      messages: [
+        {
+          role: "user",
+          content:
+            `Reply with exactly one word: starter or growth.\n` +
+            `starter = early-stage, small/solo, simple or first website, MVP, tight budget.\n` +
+            `growth = scaling, larger org, replatform, automation, integrations, complex rebuild, enterprise.\n\n` +
+            `Pain description:\n${painPoint.slice(0, 2000)}`,
+        },
+      ],
     });
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("[tier] Claude API HTTP", res.status, errText.slice(0, 300));
-      return "starter";
-    }
-    const data = (await res.json()) as {
-      content?: Array<{ text?: string }>;
-    };
-    const raw = data.content?.[0]?.text?.trim().toLowerCase() ?? "";
+    const raw = message.content[0]?.type === "text"
+      ? message.content[0].text.trim().toLowerCase()
+      : "";
     if (raw.includes("growth")) return "growth";
     return "starter";
   } catch (err) {
@@ -548,7 +535,7 @@ ${websiteForHubSpot ? `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e
       subject: "New Contact Form Submission",
       text: emailContent,
       html: wrapIntraWebStaffEmailHtml(htmlInner),
-      replyTo: email,
+      reply_to: email,
     });
 
     // 2. Submit to HubSpot Forms API (for attribution)
