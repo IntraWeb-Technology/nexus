@@ -13,6 +13,8 @@ import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+export const maxDuration = 60
+
 export async function POST(request: Request) {
   const secret = process.env.CLERK_WEBHOOK_SECRET
   if (!secret) {

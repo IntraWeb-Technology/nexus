@@ -4,12 +4,16 @@ import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { Invoice } from '@/lib/supabase/types'
 import { NextResponse } from 'next/server'
 
+export const maxDuration = 60
+
 const MIN_AMOUNT_CENTS = 50
 
 function appOrigin(): string {
-  const u = process.env.NEXT_PUBLIC_APP_URL
-  if (u) return u.replace(/\/$/, '')
-  return 'http://localhost:3000'
+  const u = process.env.NEXT_PUBLIC_APP_URL?.trim()
+  if (!u) {
+    throw new Error('NEXT_PUBLIC_APP_URL is not set — required for Stripe redirect URLs')
+  }
+  return u.replace(/\/$/, '')
 }
 
 export async function POST(request: Request) {

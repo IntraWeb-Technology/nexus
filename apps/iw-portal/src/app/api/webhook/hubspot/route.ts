@@ -3,6 +3,8 @@ import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
 import { NextResponse } from 'next/server'
 
+export const maxDuration = 60
+
 type HubSpotEvent = {
   eventId?: number
   subscriptionType?: string

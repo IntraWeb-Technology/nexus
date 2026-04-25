@@ -1,8 +1,11 @@
 /* IntraWeb 2026 — cinematic dark; design prototype + DM Sans */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --font-heading: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
 
 :root {
   --iw-display: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;

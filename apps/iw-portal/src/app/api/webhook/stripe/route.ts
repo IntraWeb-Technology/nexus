@@ -9,6 +9,7 @@ import type { Invoice } from '@/lib/supabase/types'
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 
+export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
 async function markInvoicePaidFromSession(session: Stripe.Checkout.Session) {

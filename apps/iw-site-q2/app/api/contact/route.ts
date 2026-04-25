@@ -535,7 +535,7 @@ ${websiteForHubSpot ? `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e
       subject: "New Contact Form Submission",
       text: emailContent,
       html: wrapIntraWebStaffEmailHtml(htmlInner),
-      reply_to: email,
+      replyTo: email,
     });
 
     // 2. Submit to HubSpot Forms API (for attribution)
@@ -709,8 +709,8 @@ ${websiteForHubSpot ? `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e
       return NextResponse.json(
         {
           message: "Invalid form data",
-          error: error.errors.map((e) => e.message).join("; "),
-          errors: error.errors,
+          error: error.issues.map((e) => e.message).join("; "),
+          errors: error.issues,
         },
         { status: 400 }
       );

@@ -5,6 +5,8 @@ import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
 import { NextResponse } from 'next/server'
 
+export const maxDuration = 60
+
 export async function GET(request: Request, ctx: { params: Promise<{ dealId: string }> }) {
   if (!validateIntrawebSecret(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

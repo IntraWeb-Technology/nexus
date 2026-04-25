@@ -13,6 +13,8 @@ import { validateIntrawebSecret } from '@/lib/webhooks/secret'
 import { findProjectByHubSpotDealId } from '@/lib/webhooks/provision-client-idempotency'
 import { NextResponse } from 'next/server'
 
+export const maxDuration = 60
+
 export async function POST(request: Request) {
   if (!validateIntrawebSecret(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
