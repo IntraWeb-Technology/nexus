@@ -1,4 +1,4 @@
-import { createRlsSupabaseForUser } from '@/lib/supabase/server'
+import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { StaffAuditLogRow, StaffRole, StaffUser } from '@/lib/supabase/types'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
@@ -13,7 +13,12 @@ export async function getStaffProfile(): Promise<StaffProfile | null> {
   const { userId } = await auth()
   if (!userId) return null
 
-  const supabase = await createRlsSupabaseForUser()
+  let supabase = null
+  try {
+    supabase = await createServerSupabaseForUser()
+  } catch {
+    return null
+  }
   if (!supabase) return null
 
   const { data, error } = await supabase
@@ -47,7 +52,12 @@ export async function logStaffAction(input: {
 }): Promise<StaffAuditLogRow | null> {
   const staff = await getStaffProfile()
   if (!staff) return null
-  const supabase = await createRlsSupabaseForUser()
+  let supabase = null
+  try {
+    supabase = await createServerSupabaseForUser()
+  } catch {
+    return null
+  }
   if (!supabase) return null
 
   const { data, error } = await supabase
