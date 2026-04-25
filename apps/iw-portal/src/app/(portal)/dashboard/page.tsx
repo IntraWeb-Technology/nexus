@@ -164,11 +164,22 @@ export default async function DashboardPage() {
             <span className="iw-chip">{automations.length}</span>
           </div>
           {automations.length ? (
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               {automations.map((event) => (
-                <li key={event.id} className="border-t border-[var(--hairline)] pt-3 first:border-0 first:pt-0">
-                  <p className="text-sm font-medium">{event.workflow_name}</p>
-                  <p className="text-xs text-[var(--iw-text-3)]">{event.event_type} · {event.status}</p>
+                <li
+                  key={event.id}
+                  className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)]/50 px-3 py-2.5 transition-colors duration-200 hover:border-[var(--iw-border-2)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-[var(--iw-text)]">{event.workflow_name}</p>
+                    <span className="iw-chip shrink-0">{shortDateTime(event.logged_at)}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--iw-text-3)]">
+                    {event.event_type} · {event.status}
+                  </p>
+                  {event.notes?.trim() ? (
+                    <p className="mt-1.5 text-sm text-[var(--iw-text-2)] line-clamp-2">{event.notes}</p>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -227,11 +238,24 @@ export default async function DashboardPage() {
             <h2 className="iw-card-title">Latest messages</h2>
             <Link href="/messages" className="iw-chip">Open thread</Link>
           </div>
-          {messages.length ? messages.map((message) => (
-            <p key={message.id} className="mt-3 border-t border-[var(--hairline)] pt-3 text-sm first:border-0 first:pt-0">
-              <b>{message.sender_name}</b>: {message.body}
-            </p>
-          )) : <p className="text-sm text-[var(--iw-text-2)]">No messages yet.</p>}
+          {messages.length ? (
+            <ul className="space-y-2.5">
+              {messages.map((message) => (
+                <li
+                  key={message.id}
+                  className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)]/50 px-3 py-2.5 transition-colors duration-200 hover:border-[var(--iw-border-2)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-[var(--iw-text)]">{message.sender_name}</p>
+                    <span className="iw-chip shrink-0">{shortDateTime(message.created_at)}</span>
+                  </div>
+                  <p className="mt-1.5 text-sm leading-relaxed text-[var(--iw-text-2)]">{message.body}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-[var(--iw-text-2)]">No messages yet.</p>
+          )}
         </Card>
 
         <Card className="lg:col-span-3">
