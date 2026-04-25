@@ -7,6 +7,7 @@ import {
 } from '@/lib/data/link-hubspot-provisioned-clerk'
 import { insertProvisionedEngagementContent } from '@/lib/data/provision-client-engagement'
 import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webhooks'
+import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { progressFromMilestones } from '@/lib/progress'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
@@ -26,6 +27,13 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
+
+  await recordIntegrationEvent({
+    provider: 'n8n',
+    eventType: String((payload as { action?: string }).action ?? 'unknown'),
+    status: 'received',
+    payload,
+  })
 
   try {
     const supabase = createServiceSupabase()
@@ -414,6 +422,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'unknown action' }, { status: 400 })
     }
   } catch (e) {
+    await recordIntegrationEvent({
+      provider: 'n8n',
+      eventType: String((payload as { action?: string }).action ?? 'unknown'),
+      status: 'failed',
+      payload,
+      lastError: e instanceof Error ? e.message : 'n8n webhook failed',
+    })
     console.error('[webhook/n8n]', e)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

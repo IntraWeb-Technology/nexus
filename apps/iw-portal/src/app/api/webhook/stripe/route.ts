@@ -3,6 +3,7 @@ import {
   buildStripeCatalogCheckoutPayload,
   shouldForwardCatalogPayment,
 } from '@/lib/stripe/catalog-checkout-n8n'
+import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { getStripe, getStripeWebhookSecret } from '@/lib/stripe/server'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import type { Invoice } from '@/lib/supabase/types'
@@ -107,9 +108,23 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(raw, sig, secret)
   } catch (err) {
+    await recordIntegrationEvent({
+      provider: 'stripe',
+      eventType: 'signature.invalid',
+      status: 'failed',
+      lastError: err instanceof Error ? err.message : 'Invalid signature',
+    })
     console.error('[stripe webhook] signature verification failed', err)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
+
+  await recordIntegrationEvent({
+    provider: 'stripe',
+    eventType: event.type,
+    externalEventId: event.id,
+    status: 'received',
+    payload: event.data.object,
+  })
 
   try {
     if (event.type === 'checkout.session.completed') {
@@ -122,6 +137,14 @@ export async function POST(request: Request) {
       }
     }
   } catch (e) {
+    await recordIntegrationEvent({
+      provider: 'stripe',
+      eventType: event.type,
+      externalEventId: event.id,
+      status: 'failed',
+      payload: event.data.object,
+      lastError: e instanceof Error ? e.message : 'Stripe webhook handler failed',
+    })
     console.error('[stripe webhook] handler error', e)
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 })
   }

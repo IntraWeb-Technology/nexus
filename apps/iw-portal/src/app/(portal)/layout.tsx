@@ -1,4 +1,5 @@
 import { BottomNav } from '@/components/layout/BottomNav'
+import { CommandPalette } from '@/components/command/CommandPalette'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { Topbar } from '@/components/layout/Topbar'
 import { ProjectProvider } from '@/contexts/project-context'
@@ -21,8 +22,8 @@ export default async function PortalLayout({ children }: { children: ReactNode }
         <p className="max-w-md text-center text-sm text-[var(--iw-text)]">
           No client record is linked to this account yet. If you were invited to the portal,
           contact{' '}
-          <a className="text-[var(--iw-teal-light)] underline" href="mailto:john.schibelli@intrawebtech.com">
-            john.schibelli@intrawebtech.com
+          <a className="text-[var(--iw-teal-light)] underline" href="mailto:human@intrawebtech.com">
+            human@intrawebtech.com
           </a>
           .
         </p>
@@ -65,15 +66,16 @@ export default async function PortalLayout({ children }: { children: ReactNode }
          * Sidebar-aware content column:
          *   - Mobile: full-width, padded inset
          *   - md+:  left margin clears the fixed sidebar; inner div centres content with max-w
-         * Max-w-[960px] keeps line-length comfortable on wide desktops while the sidebar
-         * occupies the left 256px — total used: 256 + 960 = 1216px at 1440px viewport.
+         * The static IW Portal design uses a wider bento canvas; individual text blocks
+         * still cap line length inside cards.
          */}
         <main id="portal-main" className="pt-[var(--iw-topbar-height)] md:ml-[var(--iw-sidebar-width)]">
-          <div className="mx-auto max-w-[960px] px-4 pb-10 pt-8 sm:px-6 md:px-8 md:pt-10">
+          <div className="mx-auto max-w-[1380px] px-4 pb-10 pt-8 sm:px-6 md:px-8 md:pt-10">
             {children}
           </div>
         </main>
         <BottomNav />
+        <CommandPalette />
       </div>
     </ProjectProvider>
   )

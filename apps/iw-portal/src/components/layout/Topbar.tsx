@@ -1,5 +1,6 @@
 import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
+import { CommandButton } from '@/components/command/CommandButton'
 import { IwLogo } from '@/components/layout/IwLogo'
 import { ProjectSwitcher } from '@/components/portal/ProjectSwitcher'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
@@ -42,7 +43,7 @@ export function Topbar({
     .toUpperCase()
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 flex h-[var(--iw-topbar-height)] items-center justify-between border-b border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-4 transition-[background-color,border-color] duration-300 md:left-[var(--iw-sidebar-width)]">
+    <header className="iw-topbar-glass fixed left-0 right-0 top-0 z-40 flex h-[var(--iw-topbar-height)] items-center justify-between border-b border-[var(--hairline)] px-4 transition-[background-color,border-color] duration-300 md:left-[var(--iw-sidebar-width)]">
       {/* Single-row layout on all screen sizes — prevents 2-row overflow in 64px header */}
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <div className="flex shrink-0 items-center gap-3">
@@ -57,7 +58,8 @@ export function Topbar({
           <ProjectSwitcher projects={projects} activeSlug={activeSlug} />
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <CommandButton />
         <ThemeToggle />
         <Link
           href="/notifications"

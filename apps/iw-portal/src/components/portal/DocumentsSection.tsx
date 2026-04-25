@@ -14,12 +14,7 @@ export function DocumentsSection({ initialDocuments }: { initialDocuments: Docum
   const [documents, setDocuments] = useState(initialDocuments)
   const [signTarget, setSignTarget] = useState<Document | null>(null)
   const [signOpen, setSignOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const modalWrapRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const onUploaded = useCallback((doc: Document) => {
     setDocuments((prev) => [doc, ...prev])
@@ -69,7 +64,7 @@ export function DocumentsSection({ initialDocuments }: { initialDocuments: Docum
   }, [signOpen, closeModal])
 
   const modal =
-    mounted && signOpen && signTarget
+    signOpen && signTarget
       ? createPortal(
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"

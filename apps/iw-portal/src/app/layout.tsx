@@ -1,16 +1,22 @@
 import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
-import { DM_Sans } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import ClerkProviderFromRequest from '@/components/auth/ClerkProviderFromRequest'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { clerkAfterSignOutUrl, clerkProviderSatelliteProps, clerkSatelliteConfigured } from '@/lib/clerk-satellite'
 import { portalThemeBootScript } from '@/lib/theme-storage'
 import './globals.css'
 
-const dmSans = DM_Sans({
-  variable: '--font-dm-sans',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
+})
+
+const jetBrainsMono = JetBrains_Mono({
+  variable: '--font-mono',
+  subsets: ['latin'],
+  weight: ['400', '500'],
 })
 
 export const metadata: Metadata = {
@@ -40,7 +46,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.variable} min-h-screen antialiased`}>
+      <body className={`${inter.variable} ${jetBrainsMono.variable} min-h-screen antialiased`}>
         <script
           // Runs before paint; keeps `data-theme` aligned with localStorage (issue #2).
           dangerouslySetInnerHTML={{ __html: portalThemeBootScript() }}
