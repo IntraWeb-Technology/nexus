@@ -93,7 +93,7 @@ export function Topbar({
         <div className="flex h-8 w-8 items-center justify-center rounded border border-[var(--iw-border)] bg-[var(--iw-slate-3)] text-xs font-medium text-[var(--iw-text)] md:hidden">
           {initials}
         </div>
-        <UserButton afterSignOutUrl="/sign-in" />
+        <UserButton />
       </div>
     </header>
   )

@@ -1,9 +1,9 @@
 {
-  "updatedAt": "2026-04-13T23:04:50.378Z",
-  "createdAt": "2026-04-13T23:04:50.378Z",
-  "id": "qTbPortalClerk01",
+  "updatedAt": "2026-04-25T15:18:47.468Z",
+  "createdAt": "2026-04-13T23:33:39.748Z",
+  "id": "jERY0wN0aZ5kpOAR",
   "name": "SYS 03 — Qualified to Buy → Portal + Clerk",
-  "description": "HubSpot dealstage Qualified to buy (SYS 00 route hubspot-deal-qualified-portal): provision_client on the portal, then Clerk invitation when no user exists.",
+  "description": null,
   "active": true,
   "isArchived": false,
   "nodes": [
@@ -100,27 +100,50 @@
     },
     {
       "parameters": {
-        "jsCode": "const deal = $json;\nconst ctx = $('Prep Context').first().json;\nconst config = ctx.config;\nconst props = deal.properties || ctx.props || {};\nconst assoc = deal.associations?.contacts?.results || [];\nconst hubspotContactId = assoc[0]?.id ? String(assoc[0].id) : '';\nconst email = (props.contact_email || '').trim().toLowerCase();\nconst first = (props.contact_firstname || '').trim();\nconst last = (props.contact_lastname || '').trim();\nconst phone = (props.contact_phone || '').trim();\nconst companyName = (props.dealname || props.company || '').trim() || 'Client';\nconst dealId = ctx.dealId;\nif (!hubspotContactId) {\n  throw new Error('Deal has no associated contact. Associate a primary contact in HubSpot before this stage.');\n}\nif (!email) {\n  throw new Error('Missing contact_email on deal. Populate deal contact_email (or sync from contact) before this stage.');\n}\nconst tier = (props.tier || '').toLowerCase();\nconst plan = tier === 'growth' ? 'growth' : tier === 'custom' ? 'custom' : 'starter';\nconst slugBase = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'client';\nconst project_slug = (slugBase + '-' + dealId).slice(0, 48);\nconst portalBase = (config.owner.portalN8nWebhookUrl || '').trim();\nconst portalUrl = portalBase\n  ? (portalBase.includes('/api/webhook/n8n') ? portalBase : portalBase.replace(/\\/$/, '') + '/api/webhook/n8n')\n  : '';\nconst signUp = (config.owner.portalSignUpUrl || '').trim();\nconst today = new Date().toISOString().slice(0, 10);\nconst provisionBody = {\n  action: 'provision_client',\n  project_slug,\n  data: {\n    name: (first + ' ' + last).trim() || companyName,\n    email,\n    phone: phone || undefined,\n    hubspot_contact_id: hubspotContactId,\n    hubspot_deal_id: dealId,\n    plan,\n    start_date: today,\n    engagement_phase: 'qualified',\n  },\n};\nreturn [{\n  json: {\n    portalUrl,\n    signUp,\n    provisionBody,\n    inviteEmail: email,\n  },\n}];"
+        "method": "GET",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Fetch Deal From HubSpot').first().json.associations?.contacts?.results?.[0]?.id }}?properties=email,firstname,lastname,phone",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "id": "q-fetch-contact",
+      "name": "Fetch Primary Contact From HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1160,
+        300
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const deal = $('Fetch Deal From HubSpot').first().json;\nconst contact = $json;\nconst ctx = $('Prep Context').first().json;\nconst config = ctx.config;\nconst props = deal.properties || ctx.props || {};\nconst contactProps = contact.properties || {};\nconst assoc = deal.associations?.contacts?.results || [];\nconst hubspotContactId = assoc[0]?.id ? String(assoc[0].id) : '';\nconst email = (props.contact_email || contactProps.email || '').trim().toLowerCase();\nconst first = (props.contact_firstname || contactProps.firstname || '').trim();\nconst last = (props.contact_lastname || contactProps.lastname || '').trim();\nconst phone = (props.contact_phone || contactProps.phone || '').trim();\nconst companyName = (props.dealname || props.company || '').trim() || 'Client';\nconst dealId = ctx.dealId;\nif (!hubspotContactId) {\n  throw new Error('Deal has no associated contact. Associate a primary contact in HubSpot before this stage.');\n}\nif (!email) {\n  throw new Error('Missing contact email. Populate deal contact_email or associated contact email before this stage.');\n}\nconst secrets = config.secrets || {};\nconst webhookSecret = String(secrets.webhookSecret || '').trim();\nconst clerkSecret = String(secrets.clerkSecretKey || '').trim();\nconst portalCfg = String(config.owner?.portalN8nWebhookUrl || '').trim();\nconst portalTbl = String(secrets.portalWebhookUrl || '').trim();\nconst signUpCfg = String(config.owner?.portalSignUpUrl || '').trim();\nconst signUpTbl = String(secrets.portalSignUpRedirectUrl || '').trim();\nconst tier = (props.tier || '').toLowerCase();\nconst plan = tier === 'growth' ? 'growth' : tier === 'custom' ? 'custom' : 'starter';\nconst slugBase = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'client';\nconst project_slug = (slugBase + '-' + dealId).slice(0, 48);\nconst portalBase = (portalCfg || portalTbl || 'https://portal.intrawebtech.com').trim();\nlet portalUrl = '';\nif (portalBase) {\n  portalUrl = portalBase.includes('/api/webhook/n8n')\n    ? portalBase\n    : portalBase.replace(/\\/$/, '') + '/api/webhook/n8n';\n}\nconst signUp = (signUpCfg || signUpTbl || '').trim();\nif (!portalUrl) {\n  throw new Error('Missing portal webhook URL. Configure CONFIG owner.portalN8nWebhookUrl or secrets.portalWebhookUrl.');\n}\nif (!webhookSecret) {\n  throw new Error('Missing webhookSecret in CONFIG secrets table.');\n}\nif (!clerkSecret) {\n  throw new Error('Missing clerkSecretKey in CONFIG secrets table.');\n}\nconst today = new Date().toISOString().slice(0, 10);\nconst provisionBody = {\n  action: 'provision_client',\n  project_slug,\n  data: {\n    name: (first + ' ' + last).trim() || companyName,\n    email,\n    phone: phone || undefined,\n    hubspot_contact_id: hubspotContactId,\n    hubspot_deal_id: dealId,\n    plan,\n    start_date: today,\n    engagement_phase: 'qualified',\n  },\n};\nreturn [{\n  json: {\n    portalUrl,\n    signUp,\n    webhookSecret,\n    clerkSecret,\n    provisionBody,\n    inviteEmail: email,\n  },\n}];"
       },
       "id": "q-build",
       "name": "Build provision payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1160,
+        1380,
         300
       ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ ($json.portalUrl && String($json.portalUrl).trim()) || $env.PORTAL_WEBHOOK_URL }}",
+        "url": "={{ $json.portalUrl }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "x-intrawebtech-secret",
-              "value": "={{ $env.WEBHOOK_SECRET }}"
+              "value": "={{ $json.webhookSecret }}"
             },
             {
               "name": "Content-Type",
@@ -195,7 +218,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $env.CLERK_SECRET_KEY }}"
+              "value": "={{ 'Bearer ' + $json.clerkSecret }}"
             }
           ]
         },
@@ -251,7 +274,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer {{ $env.CLERK_SECRET_KEY }}"
+              "value": "={{ 'Bearer ' + $json.clerkSecret }}"
             },
             {
               "name": "Content-Type",
@@ -261,7 +284,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ email_address: $('After portal response').first().json.inviteEmail, redirect_url: (($('After portal response').first().json.signUp || '').trim() || $env.PORTAL_SIGNUP_REDIRECT_URL || '').trim() }) }}",
+        "jsonBody": "={{ JSON.stringify({ email_address: $('After portal response').first().json.inviteEmail, redirect_url: $('After portal response').first().json.signUp }) }}",
         "options": {}
       },
       "id": "q-clerk-invite",
@@ -335,6 +358,17 @@
       ]
     },
     "Fetch Deal From HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Fetch Primary Contact From HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Primary Contact From HubSpot": {
       "main": [
         [
           {
@@ -440,14 +474,527 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": true,
+    "availableInMCP": false,
     "binaryMode": "separate"
   },
   "staticData": null,
-  "meta": {
-    "templateCredsSetupCompleted": false
-  },
+  "meta": null,
   "pinData": {},
-  "versionId": "qual-portal-v1",
-  "activeVersionId": null
+  "versionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
+  "activeVersionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
+  "versionCounter": 90,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-13T23:33:39.750Z",
+      "createdAt": "2026-04-13T23:33:39.750Z",
+      "role": "workflow:owner",
+      "workflowId": "jERY0wN0aZ5kpOAR",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-25T15:18:47.502Z",
+    "createdAt": "2026-04-25T15:18:47.502Z",
+    "versionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
+    "workflowId": "jERY0wN0aZ5kpOAR",
+    "nodes": [
+      {
+        "parameters": {
+          "content": "## Qualified → Portal + Clerk\n\n**Trigger:** `POST /webhook/hubspot-deal-qualified-portal` (from **SYS 00** after dealstage matches qualified union).\n\n**Env (n8n):** `WEBHOOK_SECRET`, `CLERK_SECRET_KEY`, `PORTAL_WEBHOOK_URL` (full URL to `…/api/webhook/n8n` if CONFIG `owner.portalN8nWebhookUrl` is empty), `PORTAL_SIGNUP_REDIRECT_URL` (if CONFIG `owner.portalSignUpUrl` is empty).\n\n**CONFIG:** `hubspot.dealStageIds.qualifiedToBuy` (comma IDs) + built-in `qualifiedtobuy`; union with `leadQualified`. `owner.portalN8nWebhookUrl`, `owner.portalSignUpUrl`.\n\n**HubSpot:** Deal must have an associated contact and `contact_email` on deal properties for v1.",
+          "height": 420,
+          "width": 520,
+          "color": 5
+        },
+        "id": "note-qualified",
+        "name": "Note — About",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1.3,
+        "position": [
+          60,
+          60
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "hubspot-deal-qualified-portal",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "id": "q-webhook",
+        "name": "Qualified to Buy Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          280,
+          300
+        ],
+        "webhookId": "a7c3e9b1-2d4f-4a8e-9c1b-qualified-portal"
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "1eTTVoSFSlSPvZV4",
+            "mode": "id"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {}
+          },
+          "options": {}
+        },
+        "id": "q-get-config",
+        "name": "Get Config",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          500,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const w = $('Qualified to Buy Webhook').first().json;\nconst raw = w.body ?? w;\nconst dealId = String(raw.id || '').trim();\nconst props = raw.properties || {};\nconst config = $('Get Config').first().json;\nif (!dealId) throw new Error('Missing deal id on webhook body');\nreturn [{ json: { dealId, props, config } }];"
+        },
+        "id": "q-prep",
+        "name": "Prep Context",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          720,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.dealId }}?associations=contacts&properties=dealname,tier,contact_email,contact_firstname,contact_lastname,contact_phone,amount,closedate,company",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "options": {}
+        },
+        "id": "q-fetch-deal",
+        "name": "Fetch Deal From HubSpot",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          940,
+          300
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Fetch Deal From HubSpot').first().json.associations?.contacts?.results?.[0]?.id }}?properties=email,firstname,lastname,phone",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "options": {}
+        },
+        "id": "q-fetch-contact",
+        "name": "Fetch Primary Contact From HubSpot",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1160,
+          300
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const deal = $('Fetch Deal From HubSpot').first().json;\nconst contact = $json;\nconst ctx = $('Prep Context').first().json;\nconst config = ctx.config;\nconst props = deal.properties || ctx.props || {};\nconst contactProps = contact.properties || {};\nconst assoc = deal.associations?.contacts?.results || [];\nconst hubspotContactId = assoc[0]?.id ? String(assoc[0].id) : '';\nconst email = (props.contact_email || contactProps.email || '').trim().toLowerCase();\nconst first = (props.contact_firstname || contactProps.firstname || '').trim();\nconst last = (props.contact_lastname || contactProps.lastname || '').trim();\nconst phone = (props.contact_phone || contactProps.phone || '').trim();\nconst companyName = (props.dealname || props.company || '').trim() || 'Client';\nconst dealId = ctx.dealId;\nif (!hubspotContactId) {\n  throw new Error('Deal has no associated contact. Associate a primary contact in HubSpot before this stage.');\n}\nif (!email) {\n  throw new Error('Missing contact email. Populate deal contact_email or associated contact email before this stage.');\n}\nconst secrets = config.secrets || {};\nconst webhookSecret = String(secrets.webhookSecret || '').trim();\nconst clerkSecret = String(secrets.clerkSecretKey || '').trim();\nconst portalCfg = String(config.owner?.portalN8nWebhookUrl || '').trim();\nconst portalTbl = String(secrets.portalWebhookUrl || '').trim();\nconst signUpCfg = String(config.owner?.portalSignUpUrl || '').trim();\nconst signUpTbl = String(secrets.portalSignUpRedirectUrl || '').trim();\nconst tier = (props.tier || '').toLowerCase();\nconst plan = tier === 'growth' ? 'growth' : tier === 'custom' ? 'custom' : 'starter';\nconst slugBase = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'client';\nconst project_slug = (slugBase + '-' + dealId).slice(0, 48);\nconst portalBase = (portalCfg || portalTbl || 'https://portal.intrawebtech.com').trim();\nlet portalUrl = '';\nif (portalBase) {\n  portalUrl = portalBase.includes('/api/webhook/n8n')\n    ? portalBase\n    : portalBase.replace(/\\/$/, '') + '/api/webhook/n8n';\n}\nconst signUp = (signUpCfg || signUpTbl || '').trim();\nif (!portalUrl) {\n  throw new Error('Missing portal webhook URL. Configure CONFIG owner.portalN8nWebhookUrl or secrets.portalWebhookUrl.');\n}\nif (!webhookSecret) {\n  throw new Error('Missing webhookSecret in CONFIG secrets table.');\n}\nif (!clerkSecret) {\n  throw new Error('Missing clerkSecretKey in CONFIG secrets table.');\n}\nconst today = new Date().toISOString().slice(0, 10);\nconst provisionBody = {\n  action: 'provision_client',\n  project_slug,\n  data: {\n    name: (first + ' ' + last).trim() || companyName,\n    email,\n    phone: phone || undefined,\n    hubspot_contact_id: hubspotContactId,\n    hubspot_deal_id: dealId,\n    plan,\n    start_date: today,\n    engagement_phase: 'qualified',\n  },\n};\nreturn [{\n  json: {\n    portalUrl,\n    signUp,\n    webhookSecret,\n    clerkSecret,\n    provisionBody,\n    inviteEmail: email,\n  },\n}];"
+        },
+        "id": "q-build",
+        "name": "Build provision payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1380,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.portalUrl }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-intrawebtech-secret",
+                "value": "={{ $json.webhookSecret }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.provisionBody) }}",
+          "options": {}
+        },
+        "id": "q-post-portal",
+        "name": "POST Portal provision_client",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1380,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const portal = $('POST Portal provision_client').first().json;\nconst bp = $('Build provision payload').first().json;\nconst skipInvite = !!portal.idempotent;\nreturn [{ json: { ...bp, skipInvite, portal } }];"
+        },
+        "id": "q-after-portal",
+        "name": "After portal response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1600,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "skip-inv",
+                "leftValue": "={{ $json.skipInvite }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "q-if-skip",
+        "name": "Skip Clerk invite?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1820,
+          300
+        ]
+      },
+      {
+        "parameters": {
+          "url": "={{ 'https://api.clerk.com/v1/users?limit=5&email_address[]=' + encodeURIComponent($json.inviteEmail) }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ 'Bearer ' + $json.clerkSecret }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "q-clerk-list",
+        "name": "Clerk list users by email",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2040,
+          180
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "has-users",
+                "leftValue": "={{ ($json.data || []).length }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "q-if-user",
+        "name": "Clerk user already exists?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          2260,
+          180
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.clerk.com/v1/invitations",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "={{ 'Bearer ' + $json.clerkSecret }}"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ email_address: $('After portal response').first().json.inviteEmail, redirect_url: $('After portal response').first().json.signUp }) }}",
+          "options": {}
+        },
+        "id": "q-clerk-invite",
+        "name": "Clerk create invitation",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2480,
+          260
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const bp = $('After portal response').first().json;\nlet clerk = 'skipped_user_exists';\nif (bp.skipInvite) clerk = 'skipped_portal_idempotent';\nreturn [{ json: { ok: true, clerk, portal: bp.portal, inviteEmail: bp.inviteEmail } }];"
+        },
+        "id": "q-final-skip",
+        "name": "Final response (skip / existing)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2700,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const bp = $('After portal response').first().json;\nconst inv = $json;\nreturn [{ json: { ok: true, clerk: 'invited', invitation_id: inv.id || null, portal: bp.portal, inviteEmail: bp.inviteEmail } }];"
+        },
+        "id": "q-final-invite",
+        "name": "Final response (after invite)",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2700,
+          300
+        ]
+      }
+    ],
+    "connections": {
+      "Qualified to Buy Webhook": {
+        "main": [
+          [
+            {
+              "node": "Get Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Config": {
+        "main": [
+          [
+            {
+              "node": "Prep Context",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep Context": {
+        "main": [
+          [
+            {
+              "node": "Fetch Deal From HubSpot",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Deal From HubSpot": {
+        "main": [
+          [
+            {
+              "node": "Fetch Primary Contact From HubSpot",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Primary Contact From HubSpot": {
+        "main": [
+          [
+            {
+              "node": "Build provision payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build provision payload": {
+        "main": [
+          [
+            {
+              "node": "POST Portal provision_client",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "POST Portal provision_client": {
+        "main": [
+          [
+            {
+              "node": "After portal response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "After portal response": {
+        "main": [
+          [
+            {
+              "node": "Skip Clerk invite?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Skip Clerk invite?": {
+        "main": [
+          [
+            {
+              "node": "Final response (skip / existing)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Clerk list users by email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Clerk list users by email": {
+        "main": [
+          [
+            {
+              "node": "Clerk user already exists?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Clerk user already exists?": {
+        "main": [
+          [
+            {
+              "node": "Final response (skip / existing)",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Clerk create invitation",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Clerk create invitation": {
+        "main": [
+          [
+            {
+              "node": "Final response (after invite)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "John Schibelli",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-25T15:18:47.885Z",
+        "id": 3137,
+        "workflowId": "jERY0wN0aZ5kpOAR",
+        "versionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-25T15:18:47.869Z",
+        "id": 3136,
+        "workflowId": "jERY0wN0aZ5kpOAR",
+        "versionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
+  }
 }
