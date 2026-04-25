@@ -1,0 +1,920 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:36:50.525Z",
+  "id": "ZhyZErWgTFlVUDzB",
+  "name": "System 10 — Client Health Monitoring",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "c23aa38b-962c-4d06-9e2f-e2f02c13cea2",
+      "name": "Monday 8AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -880,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.hubapi.com/crm/v3/objects/deals?properties=dealname,dealstage,hs_lastmodifieddate,closedate,amount,hubspot_owner_id,client_health_score&filterGroups[0][filters][0][propertyName]=dealstage&filterGroups[0][filters][0][operator]=NOT_IN&filterGroups[0][filters][0][values][0]=closedlost&filterGroups[0][filters][0][values][1]=closedwon&limit=250",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c8be1344-38a6-434d-b50c-542838078c45",
+      "name": "Get All Active Client Deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter deals to only active client deals\nconst response = $input.first().json;\nconst deals = response.results || [];\n\nconst activeClientStages = [\n  'active_client', 'onboarding', 'in_progress', 'delivery',\n  'active', 'contracted', 'client', 'implementation', 'production'\n];\n\nconst activeDeals = deals.filter(deal => {\n  const stage = (deal.properties?.dealstage || '').toLowerCase();\n  return activeClientStages.some(s => stage.includes(s));\n}) || deals; // Fall back to all non-closed if no matches\n\nreturn activeDeals.map(d => ({ json: d }));\n"
+      },
+      "id": "d7d4d097-6f65-4696-9fbf-482f73d95103",
+      "name": "Filter to Active Clients Only",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d3e953f6-853d-4bf6-9cc3-de9aa09a664b",
+      "name": "Split Active Clients",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -224,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$json.id}}/associations/notes?limit=50",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "80931a18-cf7c-49e3-8b88-32f951b75595",
+      "name": "Get Deal Activities Last 30 Days",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/tasks?properties=hs_task_subject,hs_task_status,hs_due_date,hs_task_type&filterGroups[0][filters][0][propertyName]=hs_task_status&filterGroups[0][filters][0][operator]=NEQ&filterGroups[0][filters][0][value]=COMPLETED&limit=50",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "19c2ff84-2bd5-48cb-92ed-8ce9b31237f6",
+      "name": "Get Open Tasks for This Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Split Active Clients').item.json.id}}?properties=dealstage,hs_lastmodifieddate,amount,closedate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "63f8af0d-2339-4085-b28c-efe185792f9c",
+      "name": "Get Invoice and Payment Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate client health score\nconst deal = $('Split Active Clients').item.json;\nconst activitiesResponse = $('Get Deal Activities Last 30 Days').item.json;\nconst tasksResponse = $('Get Open Tasks for This Deal').item.json;\nconst invoiceResponse = $('Get Invoice and Payment Status').item.json;\n\nconst now = new Date();\nconst thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);\nconst thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);\nconst sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);\n\nlet score = 5; // Start at baseline\n\n// 1. Days since last HubSpot activity\nconst lastModifiedStr = deal.properties?.hs_lastmodifieddate;\nconst lastModified = lastModifiedStr ? new Date(lastModifiedStr) : null;\nconst lastContactDays = lastModified\n  ? Math.floor((now - lastModified) / (1000 * 60 * 60 * 24))\n  : 30;\n\nif (lastContactDays < 7) {\n  score += 3;\n} else if (lastContactDays >= 7 && lastContactDays < 14) {\n  score += 1;\n} else if (lastContactDays >= 14) {\n  score -= 2;\n}\n\n// 2. Overdue tasks penalty\nconst openTasks = tasksResponse.results || [];\nconst overdueTasks = openTasks.filter(task => {\n  const dueDate = task.properties?.hs_due_date;\n  if (!dueDate) return false;\n  return new Date(dueDate) < now;\n});\nscore -= overdueTasks.length * 2;\n\n// 3. Overdue invoice check (Invoice Sent > 30 days)\nconst invoiceStage = (invoiceResponse.properties?.dealstage || '').toLowerCase();\nconst invoiceLastModified = invoiceResponse.properties?.hs_lastmodifieddate\n  ? new Date(invoiceResponse.properties.hs_lastmodifieddate)\n  : null;\n\nconst isInvoiceSent = invoiceStage.includes('invoice_sent') || invoiceStage.includes('invoicesent');\nconst isInvoiceOverdue = isInvoiceSent && invoiceLastModified && invoiceLastModified < thirtyDaysAgo;\n\nif (isInvoiceOverdue) {\n  score -= 3;\n}\n\n// 4. Upcoming milestone this week (close date within 7 days)\nconst closeDate = deal.properties?.closedate;\nif (closeDate) {\n  const closeDateObj = new Date(closeDate);\n  if (closeDateObj >= now && closeDateObj <= sevenDaysFromNow) {\n    score += 2;\n  }\n}\n\nconst dealName = deal.properties?.dealname || 'Unknown Client';\n\nreturn [{\n  json: {\n    dealId: deal.id,\n    dealName,\n    dealStage: deal.properties?.dealstage || '',\n    lastContactDays,\n    overdueTaskCount: overdueTasks.length,\n    openTaskCount: openTasks.length,\n    isInvoiceOverdue,\n    closeDate: closeDate || '',\n    finalHealthScore: score,\n    isLowHealth: score < 4,\n    lastModified: lastModified ? lastModified.toISOString() : 'Unknown',\n    calculatedAt: now.toISOString()\n  }\n}];\n"
+      },
+      "id": "aef27c06-a10c-4e1b-9ff3-f786256c9441",
+      "name": "Calculate Health Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$json.dealId}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "681195f5-6672-418e-88e3-5c3d80c8121f",
+      "name": "Update HubSpot Health Score",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Clients!A:Z:append?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "3dac5629-20d2-4f4a-b8b1-821267f0f3ac",
+      "name": "Update Clients Tab in Google Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s10-cond-01",
+              "leftValue": "={{$('Calculate Health Score').item.json.isLowHealth}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "96b7e0df-15ed-4068-bcc1-a3a4c4e6628f",
+      "name": "If Low Health Score",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "fcdffca7-aa27-496c-99e4-1972a427cc7e",
+      "name": "Google Chat Low Health Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1104,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Calculate Health Score').item.json.dealId}}/associations/contacts?limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5918f7d7-70d3-4637-abfe-550b42e82bfb",
+      "name": "Get Client Contact for Low Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1104,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.results[0].id}}?properties=email,firstname,lastname,company",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "71eed8b5-c5d3-4c3c-97e2-b71648589d1f",
+      "name": "Get Contact Details for Low Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "{{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "e0a2ff44-60bd-4a78-bd3b-7418d24cd55d",
+      "name": "Claude Generate Check-In Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract Claude email text and prep send data\nconst claudeResponse = $input.first().json;\nconst emailBody = claudeResponse.content?.[0]?.text || 'Hi, just checking in to see how things are going. Let me know if you need anything. - John';\nconst contact = $('Get Contact Details for Low Health').item.json;\nconst healthData = $('Calculate Health Score').item.json;\n\nreturn [{\n  json: {\n    emailBody,\n    toEmail: contact.properties?.email || '',\n    firstName: contact.properties?.firstname || 'there',\n    company: contact.properties?.company || healthData.dealName,\n    dealName: healthData.dealName,\n    dealId: healthData.dealId,\n    healthScore: healthData.finalHealthScore\n  }\n}];\n"
+      },
+      "id": "a9487f47-141c-41ed-a913-ed64813e4710",
+      "name": "Prepare Check-In Email Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s10-cond-02",
+              "leftValue": "={{$json.toEmail}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "933ab00f-fe02-4a09-971f-1d6c50783c24",
+      "name": "If Check-In Email Valid",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1984,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "b40132f2-07f3-4e94-a822-f2094e712e4a",
+      "name": "Send Check-In Email via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2208,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "fb664c56-e7c1-4f06-a1e6-4c130e4be6dd",
+      "name": "Log Check-In Email to HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2432,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s10-assign-01",
+              "name": "healthCheckComplete",
+              "value": "=true",
+              "type": "boolean"
+            },
+            {
+              "id": "s10-assign-02",
+              "name": "processedClient",
+              "value": "={{$('Calculate Health Score').item.json.dealName}}",
+              "type": "string"
+            },
+            {
+              "id": "s10-assign-03",
+              "name": "healthScore",
+              "value": "={{$('Calculate Health Score').item.json.finalHealthScore}}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "40e5879b-6dd0-424e-8ac6-c6eb4096ef23",
+      "name": "Mark Client Health Checked",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2640,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Compile health score summary across all clients processed\nconst allItems = $input.all();\n\nlet totalClients = 0;\nlet criticalClients = 0;\nlet goodClients = 0;\nlet avgScore = 0;\nlet scoreSum = 0;\nconst criticalList = [];\n\nallItems.forEach(item => {\n  totalClients++;\n  const score = item.json.healthScore || item.json.finalHealthScore || 0;\n  scoreSum += score;\n\n  if (score < 4) {\n    criticalClients++;\n    criticalList.push(`${item.json.processedClient || item.json.dealName}: ${score}`);\n  } else {\n    goodClients++;\n  }\n});\n\navgScore = totalClients > 0 ? (scoreSum / totalClients).toFixed(1) : 0;\n\nreturn [{\n  json: {\n    totalClients,\n    criticalClients,\n    goodClients,\n    avgScore,\n    criticalList: criticalList.join(', ') || 'None',\n    summaryText: `📊 Client Health Report: ${totalClients} clients. Critical: ${criticalClients} | Good: ${goodClients} | Avg Score: ${avgScore}`\n  }\n}];\n"
+      },
+      "id": "f1b84def-6a29-4a50-9648-a5c5594a937d",
+      "name": "Compile Health Score Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "4b1d95dd-ac3a-4b69-9163-dd82750ab26e",
+      "name": "Google Chat Weekly Health Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3088,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations Log!A:Z:append?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "953d3563-124f-4cde-a484-e011ffa7f38d",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3312,
+        160
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fc1ad1d1-1eda-4257-84a9-5f3098444312",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "a33761b8-359a-4522-afbe-8917a61566ac",
+      "name": "Google Chat Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        512
+      ]
+    }
+  ],
+  "connections": {
+    "Monday 8AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Active Client Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Active Client Deals": {
+      "main": [
+        [
+          {
+            "node": "Filter to Active Clients Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter to Active Clients Only": {
+      "main": [
+        [
+          {
+            "node": "Split Active Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Active Clients": {
+      "main": [
+        [
+          {
+            "node": "Get Deal Activities Last 30 Days",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Open Tasks for This Deal",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Invoice and Payment Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Deal Activities Last 30 Days": {
+      "main": [
+        [
+          {
+            "node": "Calculate Health Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Open Tasks for This Deal": {
+      "main": [
+        [
+          {
+            "node": "Calculate Health Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Invoice and Payment Status": {
+      "main": [
+        [
+          {
+            "node": "Calculate Health Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Health Score": {
+      "main": [
+        [
+          {
+            "node": "Update HubSpot Health Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update HubSpot Health Score": {
+      "main": [
+        [
+          {
+            "node": "Update Clients Tab in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Clients Tab in Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "If Low Health Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Low Health Score": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Low Health Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Client Contact for Low Health",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Client Health Checked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Low Health Alert": {
+      "main": [
+        [
+          {
+            "node": "Get Client Contact for Low Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Client Contact for Low Health": {
+      "main": [
+        [
+          {
+            "node": "Get Contact Details for Low Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contact Details for Low Health": {
+      "main": [
+        [
+          {
+            "node": "Claude Generate Check-In Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Generate Check-In Email": {
+      "main": [
+        [
+          {
+            "node": "Prepare Check-In Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Check-In Email Data": {
+      "main": [
+        [
+          {
+            "node": "If Check-In Email Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Check-In Email Valid": {
+      "main": [
+        [
+          {
+            "node": "Send Check-In Email via Resend",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Client Health Checked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Check-In Email via Resend": {
+      "main": [
+        [
+          {
+            "node": "Log Check-In Email to HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Check-In Email to HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Mark Client Health Checked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Client Health Checked": {
+      "main": [
+        [
+          {
+            "node": "Split Active Clients",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compile Health Score Summary": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Weekly Health Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Weekly Health Summary": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "f9a718b6-aafa-4335-ad13-6334e9e47bec",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:36:50.528Z",
+      "createdAt": "2026-03-05T05:36:50.528Z",
+      "role": "workflow:owner",
+      "workflowId": "ZhyZErWgTFlVUDzB",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

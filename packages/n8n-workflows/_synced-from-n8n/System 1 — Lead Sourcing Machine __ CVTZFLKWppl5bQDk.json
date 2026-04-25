@@ -1,0 +1,1187 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:05:51.877Z",
+  "id": "CVTZFLKWppl5bQDk",
+  "name": "System 1 — Lead Sourcing Machine",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "c826fc9d-d704-4b54-8cd2-fdbc0ac5d9b3",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -10320,
+        2008
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfg-01",
+              "name": "masterSheetId",
+              "value": "1xLDa332CG-EUGnbIKrJBlCa3AFuJpEXxIbJa2KvrwdA",
+              "type": "string"
+            },
+            {
+              "id": "cfg-02",
+              "name": "alertsWebhookUrl",
+              "value": "https://chat.googleapis.com/v1/spaces/AAQAyignKMU/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=Pr7GY0SuteoygoE-FhMcTd3Vg-jnwzID0_TIxjtZTQ0",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b9cd7874-38b8-4496-9761-50ad229ac05e",
+      "name": "Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -10096,
+        2008
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Define search queries for NJ businesses\nconst queries = [\n  { query: \"HVAC company NJ\", industry: \"HVAC\" },\n  { query: \"plumbing company NJ\", industry: \"Plumbing\" },\n  { query: \"accounting firm NJ\", industry: \"Accounting\" },\n  { query: \"insurance agency NJ\", industry: \"Insurance\" },\n  { query: \"landscaping company NJ\", industry: \"Landscaping\" },\n  { query: \"med spa NJ\", industry: \"Med Spa\" },\n  { query: \"dental practice NJ\", industry: \"Dental\" }\n];\n\nreturn queries.map(q => ({ json: q }));"
+      },
+      "id": "8f3e0efb-afd8-468b-b696-0d5bb62a0300",
+      "name": "Define Search Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -9872,
+        2008
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "52975658-8145-4b6e-a88f-f5e62eafbc1b",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -9648,
+        2008
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/textsearch/json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.query }}"
+            },
+            {
+              "name": "fields",
+              "value": "name,formatted_phone_number,website,formatted_address,rating,user_ratings_total,place_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c76adceb-57c1-4ffb-a9ec-63b98d82f25a",
+      "name": "Google Maps Places Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -9424,
+        1936
+      ],
+      "credentials": {
+        "googleOAuth2Api": {
+          "id": "BGHCqND9O0bLvMT8",
+          "name": "Google account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Expand Text Search results to one item per place (max 10 per query to limit Place Details cost)\nconst industry = $('Split In Batches').item.json.industry;\nconst results = $input.item.json.results || [];\nconst limit = 10;\nconst items = results.slice(0, limit).map(place => ({\n  json: {\n    place_id: place.place_id,\n    name: place.name,\n    formatted_address: place.formatted_address || '',\n    rating: place.rating || 0,\n    user_ratings_total: place.user_ratings_total || 0,\n    industry\n  }\n}));\nif (items.length === 0) {\n  return [{ json: { skip: true, industry, count: 0 } }];\n}\nreturn items;"
+      },
+      "id": "213d670c-e94b-4eaf-bfcc-62dbfcd0a8a0",
+      "name": "Expand Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -9200,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-has-place",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEqual"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "124b64d5-fe1f-48f6-9c8c-06cfa004dc9e",
+      "name": "Has Results",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -8976,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pass through skip item when Text Search returned no results\nreturn [$input.first()];"
+      },
+      "id": "92104104-b908-4333-9fc2-43c7ab90be9f",
+      "name": "No Results From Search",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -8304,
+        2032
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/place/details/json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "place_id",
+              "value": "={{ $json.place_id }}"
+            },
+            {
+              "name": "fields",
+              "value": "name,formatted_phone_number,website,formatted_address,rating,user_ratings_total,place_id"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d0825b75-46c8-4716-b33f-101280580abc",
+      "name": "Place Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -8752,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge Place Details result with industry from Expand Results\nconst raw = $input.item.json;\nconst result = raw.result || raw;\nconst industry = $('Expand Results').item.json.industry;\nreturn [{ json: { ...result, industry } }];"
+      },
+      "id": "dda0bd0f-a41d-4a46-8266-668f95813df0",
+      "name": "Merge Details",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -8528,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Score each place (input is one item per place with full details from Place Details)\nconst items = $input.all();\nif (items.length === 0) {\n  return [{ json: { skip: true, industry: '', count: 0 } }];\n}\nconst industry = items[0].json.industry || '';\nconst scoredLeads = [];\n\nfor (const item of items) {\n  const place = item.json;\n  if (place.skip) continue;\n  let score = 0;\n  const reasons = [];\n\n  const reviewCount = place.user_ratings_total || 0;\n  if (reviewCount >= 10 && reviewCount <= 75) {\n    score += 2;\n    reasons.push('Review count 10-75 (+2)');\n  }\n\n  const website = place.website || '';\n  const hasSSL = website.startsWith('https://');\n  const hasWebsite = website.length > 0;\n  if (!hasWebsite || !hasSSL) {\n    score += 2;\n    reasons.push('No website or no SSL (+2)');\n  }\n\n  const rating = place.rating || 0;\n  if (rating >= 3.5 && rating <= 4.2) {\n    score += 1;\n    reasons.push('Rating 3.5-4.2 (+1)');\n  }\n\n  const phone = place.formatted_phone_number || '';\n  if (phone.length > 0) {\n    score += 1;\n    reasons.push('Phone present (+1)');\n  }\n\n  if (score >= 4) {\n    const address = place.formatted_address || '';\n    const addressParts = address.split(',');\n    const city = addressParts.length >= 2 ? addressParts[addressParts.length - 3]?.trim() || '' : '';\n    let normalizedPhone = phone.replace(/[^0-9]/g, '');\n    if (normalizedPhone.length === 10) normalizedPhone = '+1' + normalizedPhone;\n    else if (normalizedPhone.length === 11 && normalizedPhone.startsWith('1')) normalizedPhone = '+' + normalizedPhone;\n    else normalizedPhone = phone;\n    scoredLeads.push({\n      name: place.name,\n      phone: normalizedPhone,\n      phone_raw: phone,\n      website: website,\n      address: address,\n      city: city,\n      rating: rating,\n      review_count: reviewCount,\n      place_id: place.place_id,\n      industry: place.industry,\n      lead_score: score,\n      score_reasons: reasons.join(', '),\n      source: 'google_maps_scraper'\n    });\n  }\n}\n\nif (scoredLeads.length === 0) {\n  return [{ json: { skip: true, industry: industry, count: 0 } }];\n}\nreturn scoredLeads.map(lead => ({ json: lead }));"
+      },
+      "id": "e2f20d26-bfcf-473b-8b34-eb2f9c19b58c",
+      "name": "Score and Filter Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -8304,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-skip",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c38f3dae-093e-4268-ae16-b727a7ab971d",
+      "name": "Skip Empty Results",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -8080,
+        1936
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"phone\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.phone }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"phone\", \"email\", \"website\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "7d74ac4a-3250-414c-a538-8f10df5816e7",
+      "name": "Check HubSpot by Phone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -7856,
+        1864
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"website\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $('Score and Filter Leads').item.json.website }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"phone\", \"email\", \"website\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "c7cac89c-8815-4505-abe2-71b4c48ce32a",
+      "name": "Check HubSpot by Website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -7632,
+        1864
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge phone and website check results to determine if contact exists\nconst phoneCheckResult = $('Check HubSpot by Phone').item.json;\nconst websiteCheckResult = $('Check HubSpot by Website').item.json;\nconst lead = $('Score and Filter Leads').item.json;\n\nconst phoneExists = (phoneCheckResult.total || 0) > 0;\nconst websiteExists = (websiteCheckResult.total || 0) > 0 && lead.website && lead.website.length > 0;\n\nreturn [{\n  json: {\n    ...lead,\n    already_exists: phoneExists || websiteExists,\n    phone_match: phoneExists,\n    website_match: websiteExists\n  }\n}];"
+      },
+      "id": "89fc311c-b880-4a41-833f-316098ed2b34",
+      "name": "Evaluate Duplicate Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -7408,
+        1864
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-exists",
+              "leftValue": "={{ $json.already_exists }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "27ef9c63-bb16-4d31-ad1a-899466a5ff49",
+      "name": "Skip If Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -7184,
+        1864
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"company\": \"{{ $json.name }}\",\n    \"phone\": \"{{ $json.phone }}\",\n    \"website\": \"{{ $json.website }}\",\n    \"city\": \"{{ $json.city }}\",\n    \"industry\": \"{{ $json.industry }}\",\n    \"lead_score\": \"{{ $json.lead_score }}\",\n    \"hs_lead_status\": \"NEW\",\n    \"lifecyclestage\": \"lead\",\n    \"source\": \"google_maps_scraper\",\n    \"address\": \"{{ $json.address }}\",\n    \"notes_last_updated\": \"Sourced via Google Maps. Score reasons: {{ $json.score_reasons }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "a8d65dcb-2d68-4705-a6a8-1505e2d8e23b",
+      "name": "Create HubSpot Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -6960,
+        1816
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "leads-1",
+              "name": "Timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "leads-2",
+              "name": "Name",
+              "value": "={{ $('Score and Filter Leads').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "leads-3",
+              "name": "Company",
+              "value": "={{ $('Score and Filter Leads').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "leads-4",
+              "name": "Phone",
+              "value": "={{ $('Score and Filter Leads').item.json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "leads-5",
+              "name": "Email",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "leads-6",
+              "name": "Website",
+              "value": "={{ $('Score and Filter Leads').item.json.website }}",
+              "type": "string"
+            },
+            {
+              "id": "leads-7",
+              "name": "City",
+              "value": "={{ $('Score and Filter Leads').item.json.city }}",
+              "type": "string"
+            },
+            {
+              "id": "leads-8",
+              "name": "State",
+              "value": "NJ",
+              "type": "string"
+            },
+            {
+              "id": "leads-9",
+              "name": "Industry",
+              "value": "={{ $('Score and Filter Leads').item.json.industry }}",
+              "type": "string"
+            },
+            {
+              "id": "leads-10",
+              "name": "Lead Score",
+              "value": "={{ $('Score and Filter Leads').item.json.lead_score }}",
+              "type": "number"
+            },
+            {
+              "id": "leads-11",
+              "name": "Source",
+              "value": "google_maps_scraper",
+              "type": "string"
+            },
+            {
+              "id": "leads-12",
+              "name": "Google Maps Rating",
+              "value": "={{ $('Score and Filter Leads').item.json.rating }}",
+              "type": "number"
+            },
+            {
+              "id": "leads-13",
+              "name": "Review Count",
+              "value": "={{ $('Score and Filter Leads').item.json.review_count }}",
+              "type": "number"
+            },
+            {
+              "id": "leads-14",
+              "name": "Place ID",
+              "value": "={{ $('Score and Filter Leads').item.json.place_id }}",
+              "type": "string"
+            },
+            {
+              "id": "leads-15",
+              "name": "Status",
+              "value": "New",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e1f2daf0-42de-4996-8370-1bbf05eebced",
+      "name": "Prepare Leads Row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -6736,
+        1816
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.masterSheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "auto"
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "4fddeed7-8a62-4bcb-bcbb-89eb959ccd68",
+      "name": "Append to Leads Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        -6512,
+        2008
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build a true end-of-run summary after Split In Batches finishes.\nconst safeAll = (nodeName) => {\n  try {\n    return $(nodeName).all();\n  } catch {\n    return [];\n  }\n};\n\nconst queries = safeAll('Define Search Queries');\nconst scoredItems = safeAll('Score and Filter Leads');\nconst appendedItems = safeAll('Append to Leads Sheet');\nconst duplicateChecks = safeAll('Evaluate Duplicate Check');\n\nconst emptyIndustries = scoredItems.filter(item => item.json.skip === true).length;\nconst qualifyingLeads = scoredItems.filter(item => item.json.skip !== true).length;\nconst duplicateLeads = duplicateChecks.filter(item => item.json.already_exists === true).length;\nconst newLeadsAdded = appendedItems.length;\n\nconst summary = {\n  run_date: new Date().toISOString(),\n  queries_processed: queries.length,\n  industries_with_no_results: emptyIndustries,\n  qualifying_leads_found: qualifyingLeads,\n  duplicates_skipped: duplicateLeads,\n  new_leads_added: newLeadsAdded,\n  message: `Lead sourcing run complete. ${newLeadsAdded} new leads added to HubSpot and Google Sheets.`\n};\n\nreturn [{ json: summary }];"
+      },
+      "id": "cdcb7953-69b4-4cfc-ba3e-ae7e62a70fa1",
+      "name": "Tally Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -9424,
+        1648
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Config').first().json.alertsWebhookUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*System 1 — Lead Sourcing Complete*\\n\\nRun Date: {{ $json.run_date }}\\nQueries Processed: {{ $json.queries_processed }}\\nIndustries With No Results: {{ $json.industries_with_no_results }}\\nQualifying Leads Found: {{ $json.qualifying_leads_found }}\\nDuplicates Skipped: {{ $json.duplicates_skipped }}\\nNew Leads Added: {{ $json.new_leads_added }}\\n\\nAll qualifying leads have been added to HubSpot and the Leads Google Sheet.\"\n}",
+        "options": {}
+      },
+      "id": "52e75dd5-3d4b-4163-a205-70ca02888ab4",
+      "name": "Google Chat Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -9200,
+        1648
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "log-1",
+              "name": "Timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "log-2",
+              "name": "Workflow Name",
+              "value": "System 1 — Lead Sourcing Machine",
+              "type": "string"
+            },
+            {
+              "id": "log-3",
+              "name": "Execution ID",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "log-4",
+              "name": "Contact Name",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "log-5",
+              "name": "Company",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "log-6",
+              "name": "HubSpot ID",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "log-7",
+              "name": "Event Type",
+              "value": "lead_sourced",
+              "type": "string"
+            },
+            {
+              "id": "log-8",
+              "name": "Status",
+              "value": "Success",
+              "type": "string"
+            },
+            {
+              "id": "log-9",
+              "name": "Details",
+              "value": "={{ $('Tally Results').item.json.new_leads_added }} new leads added. Scheduled Monday 7AM EST.",
+              "type": "string"
+            },
+            {
+              "id": "log-10",
+              "name": "Error Message",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "log-11",
+              "name": "Duration (ms)",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1314c8c0-c2c1-40d4-bfd0-55e55f899a74",
+      "name": "Prepare Automations Log Row",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -8976,
+        1648
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ $('Config').first().json.masterSheetId }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Automations Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Workflow Name",
+              "displayName": "Workflow Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Execution ID",
+              "displayName": "Execution ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Contact Name",
+              "displayName": "Contact Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "HubSpot ID",
+              "displayName": "HubSpot ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Event Type",
+              "displayName": "Event Type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Details",
+              "displayName": "Details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Error Message",
+              "displayName": "Error Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Duration (ms)",
+              "displayName": "Duration (ms)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "useAppend": true
+        }
+      },
+      "id": "69b245bc-c26c-4f14-bc42-4f460e709d92",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        -8752,
+        1648
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IJzDJS1jpbItegZD",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "4b51e519-01a4-4770-996f-12ebaf3dc344",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -10320,
+        2256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "REPLACE_WITH_GOOGLE_CHAT_WEBHOOK_URL",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*ERROR — System 1: Lead Sourcing Machine*\\n\\nWorkflow: {{ $json.workflow.name }}\\nNode: {{ $json.execution.lastNodeExecuted }}\\nError: {{ $json.execution.error.message }}\\nTime: {{ $now.toISO() }}\\n\\nImmediate attention required.\"\n}",
+        "options": {}
+      },
+      "id": "965ee112-425b-48fe-9497-58695d102ca8",
+      "name": "Error Alert Google Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -10096,
+        2256
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "efd1c138-fad1-4233-9d09-ad4d2dcbeb5c",
+      "name": "No Op Skipped",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -6960,
+        2032
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Define Search Queries",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Define Search Queries": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [
+          {
+            "node": "Tally Results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Maps Places Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Maps Places Search": {
+      "main": [
+        [
+          {
+            "node": "Expand Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand Results": {
+      "main": [
+        [
+          {
+            "node": "Has Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Results": {
+      "main": [
+        [
+          {
+            "node": "Place Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Results From Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Place Details": {
+      "main": [
+        [
+          {
+            "node": "Merge Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Details": {
+      "main": [
+        [
+          {
+            "node": "Score and Filter Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Results From Search": {
+      "main": [
+        [
+          {
+            "node": "Skip Empty Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score and Filter Leads": {
+      "main": [
+        [
+          {
+            "node": "Skip Empty Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Empty Results": {
+      "main": [
+        [
+          {
+            "node": "Check HubSpot by Phone",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Op Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check HubSpot by Phone": {
+      "main": [
+        [
+          {
+            "node": "Check HubSpot by Website",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check HubSpot by Website": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Duplicate Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Duplicate Check": {
+      "main": [
+        [
+          {
+            "node": "Skip If Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip If Exists": {
+      "main": [
+        [
+          {
+            "node": "Create HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Op Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "Prepare Leads Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Leads Row": {
+      "main": [
+        [
+          {
+            "node": "Append to Leads Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Leads Sheet": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Op Skipped": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tally Results": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Summary": {
+      "main": [
+        [
+          {
+            "node": "Prepare Automations Log Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Automations Log Row": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Error Alert Google Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "7608208c-617f-48d4-b7fa-f9b503a8c038",
+  "activeVersionId": null,
+  "versionCounter": 244,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:05:51.881Z",
+      "createdAt": "2026-03-05T05:05:51.881Z",
+      "role": "workflow:owner",
+      "workflowId": "CVTZFLKWppl5bQDk",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

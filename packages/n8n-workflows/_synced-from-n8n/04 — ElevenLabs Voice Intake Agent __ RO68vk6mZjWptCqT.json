@@ -1,0 +1,398 @@
+{
+  "updatedAt": "2026-04-18T22:45:41.041Z",
+  "createdAt": "2026-03-04T01:43:04.632Z",
+  "id": "RO68vk6mZjWptCqT",
+  "name": "04 — ElevenLabs Voice Intake Agent",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "elevenlabs-voice-intake",
+        "options": {}
+      },
+      "id": "abf003ba-c0dc-4348-a44e-e63a288cbd17",
+      "name": "ElevenLabs Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        144
+      ],
+      "webhookId": "wh-04-elevenlabs-intake"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// ElevenLabs post-call webhook payload\nconst conversationId = body.conversation_id || '';\nconst agentId = body.agent_id || '';\nconst callDuration = body.call_duration_secs || 0;\nconst transcript = body.transcript || '';\nconst summary = body.summary || '';\nconst callSuccessful = body.call_successful !== false;\n\n// Collected data from agent's submit_lead_data tool\nconst data = body.data_collection || body.collected_data || {};\n\nconst callerName = data.caller_name || 'Unknown';\nconst nameParts = callerName.trim().split(' ');\nconst firstname = nameParts[0] || 'Unknown';\nconst lastname = nameParts.slice(1).join(' ') || '';\n\nlet phone = (data.phone || '').trim();\nif (phone && !phone.startsWith('+')) {\n  phone = '+1' + phone.replace(/\\D/g, '');\n}\n\nconst serviceType = data.service_type || 'other';\nconst urgency = data.urgency || 'flexible';\nconst serviceAddress = data.service_address || '';\nconst notes = data.notes || '';\nlet leadScore = parseInt(data.lead_score || '5', 10);\n\n// Override lead score based on urgency if not set\nif (!data.lead_score) {\n  const scoreMap = { emergency: 10, urgent: 8, this_week: 6, flexible: 4 };\n  leadScore = scoreMap[urgency] || 5;\n}\n\n// Validate minimum required data\nif (!phone && !callerName) {\n  throw new Error(`ElevenLabs call ${conversationId} — no usable contact data collected`);\n}\n\nreturn [{\n  json: {\n    conversationId,\n    agentId,\n    callDuration,\n    transcript,\n    summary,\n    callSuccessful,\n    firstname,\n    lastname,\n    fullName: callerName,\n    phone,\n    serviceType,\n    urgency,\n    serviceAddress,\n    notes,\n    leadScore,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "becc9bf2-f29b-4ea2-8a41-5af88c70e43d",
+      "name": "Parse Call Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"phone_e164\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.phone }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"phone\", \"phone_e164\", \"email\", \"hs_object_id\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "48bfa343-9f22-4060-bf1e-58967869119f",
+      "name": "Search HubSpot Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-contact-exists",
+              "leftValue": "={{$json.total}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8f8ae3a5-48fa-495f-83ce-7ccf490d5c1c",
+      "name": "Contact Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"firstname\": \"{{ $('Parse Call Data').item.json.firstname }}\",\n    \"lastname\": \"{{ $('Parse Call Data').item.json.lastname }}\",\n    \"phone\": \"{{ $('Parse Call Data').item.json.phone }}\",\n    \"phone_e164\": \"{{ $('Parse Call Data').item.json.phone }}\",\n    \"job_type\": \"{{ $('Parse Call Data').item.json.serviceType }}\",\n    \"service_urgency\": \"{{ $('Parse Call Data').item.json.urgency }}\",\n    \"service_address\": \"{{ $('Parse Call Data').item.json.serviceAddress }}\",\n    \"ai_call_summary\": \"{{ $('Parse Call Data').item.json.summary }}\",\n    \"lead_score_ai\": \"{{ $('Parse Call Data').item.json.leadScore }}\",\n    \"lead_source_detail\": \"ai_voice\",\n    \"lifecyclestage\": \"lead\",\n    \"hs_lead_status\": \"NEW\",\n    \"reply_status\": \"no_reply\"\n  }\n}",
+        "options": {}
+      },
+      "id": "5afbcdc9-c703-4a36-9358-ee0ddc61ebd9",
+      "name": "Create Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.results[0].id}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"job_type\": \"{{ $('Parse Call Data').item.json.serviceType }}\",\n    \"service_urgency\": \"{{ $('Parse Call Data').item.json.urgency }}\",\n    \"service_address\": \"{{ $('Parse Call Data').item.json.serviceAddress }}\",\n    \"ai_call_summary\": \"{{ $('Parse Call Data').item.json.summary }}\",\n    \"lead_score_ai\": \"{{ $('Parse Call Data').item.json.leadScore }}\",\n    \"lead_source_detail\": \"ai_voice\",\n    \"hs_lead_status\": \"NEW\"\n  }\n}",
+        "options": {}
+      },
+      "id": "d6d5dd6b-9451-4c38-a441-18213e6b5006",
+      "name": "Update Existing Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst contactId = item.id || (item.results && item.results[0] ? item.results[0].id : 'unknown');\nconst callData = $('Parse Call Data').item.json;\n\n// Determine call-back window based on urgency\nconst callbackWindow = {\n  emergency: '30 minutes',\n  urgent: '1 hour',\n  this_week: '2 hours',\n  flexible: '24 hours'\n};\nconst window = callbackWindow[callData.urgency] || '2 hours';\n\nreturn [{\n  json: {\n    contactId,\n    fullName: callData.fullName,\n    phone: callData.phone,\n    serviceType: callData.serviceType,\n    urgency: callData.urgency,\n    serviceAddress: callData.serviceAddress,\n    leadScore: callData.leadScore,\n    notes: callData.notes,\n    summary: callData.summary,\n    callbackWindow: window,\n    timestamp: callData.timestamp\n  }\n}];"
+      },
+      "id": "a34e2655-4249-4545-b6e5-9e40fad50192",
+      "name": "Merge Contact ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"dealname\": \"{{ $json.serviceType | replace('_', ' ') | title }} — {{ $json.fullName }}\",\n    \"pipeline\": \"{{$vars.HUBSPOT_PIPELINE_ID}}\",\n    \"dealstage\": \"{{$vars.HUBSPOT_STAGE_NEW_LEAD}}\",\n    \"job_type\": \"{{ $json.serviceType }}\",\n    \"service_address\": \"{{ $json.serviceAddress }}\",\n    \"job_notes\": \"{{ $json.notes }}\",\n    \"ai_call_summary\": \"{{ $json.summary }}\",\n    \"lead_score_ai\": \"{{ $json.leadScore }}\",\n    \"intake_source\": \"ai_voice\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $json.contactId }}\" },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 3\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "a883a4db-9c4f-41fd-9fb9-2773c2953d8c",
+      "name": "Create HubSpot Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$vars.CHAT_WEBHOOK}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"📞 *New AI Voice Lead*\\n\\n*Name:* {{ $('Merge Contact ID').item.json.fullName }}\\n*Phone:* {{ $('Merge Contact ID').item.json.phone }}\\n*Service:* {{ $('Merge Contact ID').item.json.serviceType }}\\n*Urgency:* {{ $('Merge Contact ID').item.json.urgency }}\\n*Address:* {{ $('Merge Contact ID').item.json.serviceAddress }}\\n*Lead Score:* {{ $('Merge Contact ID').item.json.leadScore }}/10\\n*Callback within:* {{ $('Merge Contact ID').item.json.callbackWindow }}\\n*Summary:* {{ $('Merge Contact ID').item.json.summary }}\"\n}",
+        "options": {}
+      },
+      "id": "8e91cdfc-8253-4e1e-91c2-aba01ce37b70",
+      "name": "Notify Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$('Merge Contact ID').item.json.timestamp}}",
+            "Workflow Name": "04-ElevenLabs-Voice-Intake",
+            "Event Type": "AI_VOICE_LEAD_CAPTURED",
+            "Contact Name": "={{$('Merge Contact ID').item.json.fullName}}",
+            "Phone": "={{$('Merge Contact ID').item.json.phone}}",
+            "Email": "",
+            "Deal ID": "={{$json.id}}",
+            "Contact ID": "={{$('Merge Contact ID').item.json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "=Service: {{$('Merge Contact ID').item.json.serviceType}} | Urgency: {{$('Merge Contact ID').item.json.urgency}} | Score: {{$('Merge Contact ID').item.json.leadScore}}/10",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "New Lead",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "f15aa63a-567f-4c96-a50d-bf98d1b2d621",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        960,
+        144
+      ]
+    }
+  ],
+  "connections": {
+    "ElevenLabs Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Call Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Call Data": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "Contact Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contact Exists?": {
+      "main": [
+        [
+          {
+            "node": "Update Existing Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact": {
+      "main": [
+        [
+          {
+            "node": "Merge Contact ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Existing Contact": {
+      "main": [
+        [
+          {
+            "node": "Merge Contact ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Contact ID": {
+      "main": [
+        [
+          {
+            "node": "Create HubSpot Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HubSpot Deal": {
+      "main": [
+        [
+          {
+            "node": "Notify Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Owner": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "f168046a-b191-4e85-90e0-213d2a9fa4d1",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:43:04.635Z",
+      "createdAt": "2026-03-04T01:43:04.635Z",
+      "role": "workflow:owner",
+      "workflowId": "RO68vk6mZjWptCqT",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:04.202Z",
+      "createdAt": "2026-03-04T01:54:04.202Z",
+      "id": "CSctV9xpsnyrhuZN",
+      "name": "inbound"
+    },
+    {
+      "updatedAt": "2026-03-04T01:56:25.761Z",
+      "createdAt": "2026-03-04T01:56:25.761Z",
+      "id": "JYs2sG9UrcUzNIs7",
+      "name": "ai-voice"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:54.771Z",
+      "createdAt": "2026-03-04T01:54:54.771Z",
+      "id": "YzUdigv2Y0lrPLBM",
+      "name": "lead-gen"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    },
+    {
+      "updatedAt": "2026-03-04T01:55:02.031Z",
+      "createdAt": "2026-03-04T01:55:02.031Z",
+      "id": "zRdwAyhaw3cNUydV",
+      "name": "crm"
+    }
+  ],
+  "activeVersion": null
+}

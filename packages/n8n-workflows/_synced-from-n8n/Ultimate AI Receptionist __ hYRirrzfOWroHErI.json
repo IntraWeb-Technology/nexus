@@ -1,0 +1,741 @@
+{
+  "updatedAt": "2026-04-18T22:45:52.755Z",
+  "createdAt": "2026-03-01T03:00:01.949Z",
+  "id": "hYRirrzfOWroHErI",
+  "name": "Ultimate AI Receptionist",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s",
+          "mode": "list",
+          "cachedResultName": "Nick’s Health Clinic",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Appointment Booking",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full name": "={{ $json.body.name }}",
+            "Phone number": "='{{ $json.body.phone_number }}",
+            "Preferred time": "={{ $json.body.preferred_time }}",
+            "Service type": "={{ $json.body.service_type }}",
+            "Location type": "={{ $json.body.location_type }}",
+            "Location": "={{ $json.body.location }}",
+            "Appointment booked?": "={{ $json.body.appointment_booked }}",
+            "Email": "={{ $json.body.email }}"
+          },
+          "matchingColumns": [
+            "phone_number"
+          ],
+          "schema": [
+            {
+              "id": "Full name",
+              "displayName": "Full name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Phone number",
+              "displayName": "Phone number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Service type",
+              "displayName": "Service type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Preferred time",
+              "displayName": "Preferred time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location type",
+              "displayName": "Location type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Appointment booked?",
+              "displayName": "Appointment booked?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        368,
+        128
+      ],
+      "id": "efc3c573-846f-47e1-8905-7acd8c5c1a88",
+      "name": "Append row in sheet"
+    },
+    {
+      "parameters": {
+        "content": "## Log Appointment Details In Sheet and Send Confirmation\n",
+        "height": 508,
+        "width": 1240,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b8712408-d553-4912-ab6b-947645c67e17",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"phone_number\": {\n\t\t\t\"type\": \"string\",\n            \"description\": \"Convert phone number with AU prefix, e.g. +61480089451\"\n\t\t},\n\t\t\"message\": {\n\t\t\t\"type\": \"string\",\n            \"description\": \"The SMS message\"\n\t\t}\n\t},\n    \"required\": [ \"phone_number\", \"message\" ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        352
+      ],
+      "id": "8da233d8-6bed-446e-91a1-d2b76054d010",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        336
+      ],
+      "id": "8388c3ad-1b69-4631-af16-5e0320c65ace",
+      "name": "OpenAI Chat Model3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "9dfc3c1d-9d99-4041-9cae-3a60cc86652d",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        144,
+        128
+      ],
+      "id": "45432720-1bfb-49bf-b10b-d8bf89b34143",
+      "name": "Appointment Booking",
+      "webhookId": "9dfc3c1d-9d99-4041-9cae-3a60cc86652d"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Define the SMS message to wrap up the appointment, make sure to return the content of the message only, don't return the leading sentence.\n\nFull name: {{ $json[\"Full name\"] }}\nPhone number: {{ $json[\"Phone number\"] }}\nLocation: {{ $json.Location }}\nBooked time: {{ $json[\"Preferred time\"] }}\nService type: {{ $json[\"Service type\"] }}\nAppointment booked? or booked link: {{ $json[\"Appointment booked?\"] }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        576,
+        128
+      ],
+      "id": "7e3a594d-5166-47b7-964c-542452a48d10",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Appointment Booking').item.json.body.email }}",
+        "subject": "Appointment Booked",
+        "emailType": "text",
+        "message": "={{ $json.output.message }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        128
+      ],
+      "id": "6877ba36-6d07-4628-a505-6704cc928e11",
+      "name": "Send a message1",
+      "webhookId": "f9f143d6-e1d2-4b73-a39e-6ed30a05f269"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "56d89e8d-66c3-42bb-ae33-2c78e5d10caa",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        160,
+        704
+      ],
+      "id": "13fa9e86-94d0-4c59-b19e-98015880ec94",
+      "name": "Log Inquiry",
+      "webhookId": "56d89e8d-66c3-42bb-ae33-2c78e5d10caa"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s",
+          "mode": "list",
+          "cachedResultName": "Nick’s Health Clinic",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 596048902,
+          "mode": "list",
+          "cachedResultName": "General Inquiry",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s/edit#gid=596048902"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full name": "={{ $json.body.name }}",
+            "Phone number": "='{{ $json.body.phone_number }}",
+            "Location": "={{ $json.body.location }}",
+            "Inquiry details": "={{ $json.body.inquiry_details }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full name",
+              "displayName": "Full name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone number",
+              "displayName": "Phone number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Inquiry details",
+              "displayName": "Inquiry details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        384,
+        704
+      ],
+      "id": "295b75eb-746f-4bb1-96e8-d5f2ae9cd32d",
+      "name": "Append row in Inquiry"
+    },
+    {
+      "parameters": {
+        "sendTo": "nabin7358@gmail.com",
+        "subject": "New inquiry",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        704
+      ],
+      "id": "dbc38d3b-6c18-4fe8-ba19-b7369cde6637",
+      "name": "Send a message",
+      "webhookId": "036e7c1e-11ac-4635-a8a2-1a5614bbd821"
+    },
+    {
+      "parameters": {
+        "content": "## Log the General inquiry\n\n\n",
+        "height": 476,
+        "width": 1240,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        16,
+        576
+      ],
+      "id": "7636fd42-71a1-4bd6-b689-595aabe2b6f9",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Define the wrap-up HTML email content with styles, without any leading sentences. Make sure that the response is in a valid HTML format, start with <!DOCTYPE html>, without any wrapper (e.g. \\`\\`\\` or \\`\\`\\`html).\n\nFull name: {{ $json[\"Full name\"] }}\nPhone number: {{ $json[\"Phone number\"] }}\nLocation: {{ $json.Location }}\nInquiry: {{ $json[\"Inquiry details\"] }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        640,
+        704
+      ],
+      "id": "113630cc-d85a-4655-8d97-6886e6c1be56",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        912
+      ],
+      "id": "2b475dd1-a141-4624-ac64-1255a16103c3",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "e5563a13-1323-4109-ae88-5e87b8d48d3c",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        160,
+        1264
+      ],
+      "id": "a4f9bbee-e7ae-4939-a936-c5ffdf71f0fc",
+      "name": "Log Emergency",
+      "webhookId": "e5563a13-1323-4109-ae88-5e87b8d48d3c"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s",
+          "mode": "list",
+          "cachedResultName": "Nick’s Health Clinic",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 707955307,
+          "mode": "list",
+          "cachedResultName": "Emergency",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lTXWyr9HjGIGszsWA4XV8BkkC_d5Wt90BK8CMV80o1s/edit#gid=707955307"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Full name": "={{ $json.body.name }}",
+            "Phone number": "='{{ $json.body.phone_number }}",
+            "Location": "={{ $json.body.location }}",
+            "Emergency details": "={{ $json.body.emergency_details }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Full name",
+              "displayName": "Full name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone number",
+              "displayName": "Phone number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Emergency details",
+              "displayName": "Emergency details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        384,
+        1264
+      ],
+      "id": "227c2d95-e4af-4758-85cf-4550433ba5b7",
+      "name": "Append row in Emergency"
+    },
+    {
+      "parameters": {
+        "content": "## Log the emergency case\n\n",
+        "height": 508,
+        "width": 1232,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        32,
+        1152
+      ],
+      "id": "a7448834-421e-4be9-adac-6b794b76d1d9",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Define the HTML email content with styles, without any leading sentences for that message. Make sure that the response is in a valid HTML format, start with <!DOCTYPE html>, without any wrapper (e.g. \\`\\`\\` or \\`\\`\\`html)\n\n\nFull name: {{ $('Append row in Emergency').item.json[\"Full name\"] }}\nPhone number: {{ $('Append row in Emergency').item.json[\"Phone number\"] }}\nLocation: {{ $('Append row in Emergency').item.json.Location }}\nEmergency details: {{ $('Append row in Emergency').item.json[\"Emergency details\"] }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        592,
+        1264
+      ],
+      "id": "8113ed99-0fc1-446e-8bfc-f38b002a1353",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        1472
+      ],
+      "id": "623d9071-18b8-451d-8c71-6658fc1ec8fc",
+      "name": "OpenAI Chat Model2"
+    },
+    {
+      "parameters": {
+        "sendTo": "nabin7358@gmail.com",
+        "subject": "Emergency case",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        1264
+      ],
+      "id": "cc1a266c-695f-40fa-af2f-3d5306f2e4af",
+      "name": "Send a message2",
+      "webhookId": "036e7c1e-11ac-4635-a8a2-1a5614bbd821"
+    }
+  ],
+  "connections": {
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Appointment Booking": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Inquiry": {
+      "main": [
+        [
+          {
+            "node": "Append row in Inquiry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in Inquiry": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Emergency": {
+      "main": [
+        [
+          {
+            "node": "Append row in Emergency",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in Emergency": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "8fdeddc0-1c00-4d06-9a87-96d0576fc1a3",
+  "activeVersionId": null,
+  "versionCounter": 3,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-01T03:00:02.014Z",
+      "createdAt": "2026-03-01T03:00:02.014Z",
+      "role": "workflow:owner",
+      "workflowId": "hYRirrzfOWroHErI",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

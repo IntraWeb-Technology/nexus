@@ -1,0 +1,596 @@
+{
+  "updatedAt": "2026-04-18T22:45:41.307Z",
+  "createdAt": "2026-03-04T01:50:02.342Z",
+  "id": "Eic0J12mSmyEwEVE",
+  "name": "08 — Seasonal Reactivation Campaign",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            },
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "7c192506-3b63-4c9e-86aa-13fea4e2a388",
+      "name": "Schedule Trigger (Mar 1 & Oct 1)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Determine which season we're in\nconst now = new Date();\nconst month = now.getMonth() + 1; // 1-12\n\nconst isSpring = month <= 6;\nconst season = isSpring ? 'Spring' : 'Fall';\nconst serviceType = isSpring ? 'AC' : 'heating';\nconst campaignName = `${season} ${now.getFullYear()} ${serviceType.toUpperCase()} Check`;\n\n// Calculate cutoff date — contacts whose last_job_date is more than 6 months ago\nconst sixMonthsAgo = new Date();\nsixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);\nconst cutoffTimestamp = sixMonthsAgo.getTime();\n\nreturn [{\n  json: {\n    season,\n    serviceType,\n    campaignName,\n    cutoffTimestamp,\n    cutoffDate: sixMonthsAgo.toISOString().split('T')[0],\n    month,\n    isSpring,\n    runDate: now.toISOString()\n  }\n}];"
+      },
+      "id": "a4878f6d-020c-427e-a489-0aad59b842b8",
+      "name": "Set Season Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"lifecyclestage\",\n          \"operator\": \"EQ\",\n          \"value\": \"customer\"\n        },\n        {\n          \"propertyName\": \"last_job_date\",\n          \"operator\": \"LT\",\n          \"value\": \"{{ $json.cutoffTimestamp }}\"\n        },\n        {\n          \"propertyName\": \"phone_e164\",\n          \"operator\": \"HAS_PROPERTY\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"phone_e164\", \"phone\", \"last_job_date\", \"spring_campaign_sent\", \"fall_campaign_sent\"],\n  \"limit\": 100,\n  \"after\": 0\n}",
+        "options": {}
+      },
+      "id": "56f4c535-93c5-4918-aedb-f0d9a30a7bd1",
+      "name": "Get Eligible Customers — Page 1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter out contacts who already received this season's campaign\nconst searchResult = $input.first().json;\nconst seasonCtx = $('Set Season Context').item.json;\n\nconst contacts = searchResult.results || [];\nconst campaignField = seasonCtx.isSpring ? 'spring_campaign_sent' : 'fall_campaign_sent';\nconst currentYear = new Date().getFullYear().toString();\n\nconst eligible = contacts.filter(contact => {\n  const campaignSent = contact.properties?.[campaignField]?.value;\n  // Skip if already sent this year\n  if (campaignSent && campaignSent.includes(currentYear)) return false;\n  // Skip if no phone\n  const phone = contact.properties?.phone_e164?.value || contact.properties?.phone?.value;\n  if (!phone) return false;\n  return true;\n});\n\nreturn eligible.map(contact => ({\n  json: {\n    contactId: contact.id,\n    firstname: contact.properties?.firstname?.value || 'there',\n    phone: contact.properties?.phone_e164?.value || contact.properties?.phone?.value,\n    lastJobDate: contact.properties?.last_job_date?.value,\n    season: seasonCtx.season,\n    serviceType: seasonCtx.serviceType,\n    campaignName: seasonCtx.campaignName,\n    campaignField\n  }\n}));"
+      },
+      "id": "759360cb-93f4-40c2-9c89-97ed47000b3b",
+      "name": "Filter Already-Messaged",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6aa0f8d0-d64d-4389-9570-577b2454ecd5",
+      "name": "Loop Over Contacts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$json.firstname}}, it's {{$json.season}} — time to get your {{$json.serviceType}} checked before the rush! Reply YES and we'll get you scheduled. — Apex Comfort"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8987d957-bd4a-438d-be21-6175e5f8b8ea",
+      "name": "Send Campaign SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.contactId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"{{ $json.campaignField }}\": \"{{ new Date().toISOString().split('T')[0] }}\",\n    \"campaign_sent\": \"{{ $json.campaignName }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "62c5eaf0-63f5-4928-b29f-8410a2f9fddf",
+      "name": "Log Campaign on Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{new Date().toISOString()}}",
+            "Workflow Name": "08-Seasonal-Reactivation",
+            "Event Type": "CAMPAIGN_SMS_SENT",
+            "Contact Name": "={{$json.firstname}}",
+            "Phone": "={{$json.phone}}",
+            "Email": "",
+            "Deal ID": "",
+            "Contact ID": "={{$json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "={{$json.campaignName}}",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "c331e675-483a-4530-9d5c-72613c785196",
+      "name": "Log Send to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "seasonal-campaign-reply",
+        "options": {}
+      },
+      "id": "c20b4e8a-65d1-4496-be69-93259e4ceac4",
+      "name": "Reply Webhook (YES Response)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        304
+      ],
+      "webhookId": "wh-08-campaign-reply",
+      "notes": "Configure in Twilio: When an inbound SMS contains 'YES', forward to this webhook. Or use a separate Twilio Studio flow to capture replies and POST here."
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// Twilio inbound SMS\nconst from = body.From || body.from || '';\nconst messageBody = (body.Body || body.body || '').toUpperCase().trim();\n\nlet phone = from.trim();\nif (phone && !phone.startsWith('+')) {\n  phone = '+1' + phone.replace(/\\D/g, '');\n}\n\nconst isYes = messageBody === 'YES' || messageBody === 'Y' || messageBody.startsWith('YES');\n\nreturn [{\n  json: {\n    phone,\n    messageBody,\n    isYes,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "14097f5a-c376-4e27-8867-367726b7e8fe",
+      "name": "Parse Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-is-yes",
+              "leftValue": "={{$json.isYes}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "40454b2f-230e-40fc-a38f-6eaed3e89849",
+      "name": "Replied YES?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        480,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"phone_e164\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.phone }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"phone_e164\", \"email\", \"hs_object_id\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "fe1cf654-e109-4d9a-b1c9-3578ecfb7792",
+      "name": "Find Contact by Phone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const searchResult = $input.first().json;\nconst replyData = $('Parse Reply').item.json;\n\nconst contact = searchResult.results?.[0];\nconst contactId = contact?.id || 'unknown';\nconst firstname = contact?.properties?.firstname?.value || 'Customer';\nconst email = contact?.properties?.email?.value || '';\n\n// Determine season based on current month\nconst month = new Date().getMonth() + 1;\nconst season = month <= 6 ? 'Spring' : 'Fall';\nconst serviceType = month <= 6 ? 'AC tune-up/check' : 'heating check';\n\nreturn [{\n  json: {\n    contactId,\n    firstname,\n    email,\n    phone: replyData.phone,\n    season,\n    serviceType,\n    timestamp: replyData.timestamp\n  }\n}];"
+      },
+      "id": "c244d72d-b263-43d4-9f39-41c3691e5185",
+      "name": "Build Deal Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"dealname\": \"{{ $json.season }} Campaign — {{ $json.firstname }}\",\n    \"pipeline\": \"{{$vars.HUBSPOT_PIPELINE_ID}}\",\n    \"dealstage\": \"{{$vars.HUBSPOT_STAGE_NEW_LEAD}}\",\n    \"job_type\": \"tune_up\",\n    \"intake_source\": \"seasonal\",\n    \"job_notes\": \"Responded YES to {{ $json.season }} reactivation campaign\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $json.contactId }}\" },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 3\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "6bdbc9db-1f01-4626-b07e-a56df751f68a",
+      "name": "Create Deal from Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$vars.CHAT_WEBHOOK}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"🌟 *Campaign Reply — YES!*\\n\\n*Name:* {{ $('Build Deal Data').item.json.firstname }}\\n*Phone:* {{ $('Build Deal Data').item.json.phone }}\\n*Campaign:* {{ $('Build Deal Data').item.json.season }} Reactivation\\n*Action:* New deal created — ready to schedule!\"\n}",
+        "options": {}
+      },
+      "id": "40e32f5a-d78b-4fc3-9d2a-94d380b7ca9f",
+      "name": "Notify Owner of YES Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$('Build Deal Data').item.json.timestamp}}",
+            "Workflow Name": "08-Seasonal-Reactivation",
+            "Event Type": "CAMPAIGN_YES_REPLY",
+            "Contact Name": "={{$('Build Deal Data').item.json.firstname}}",
+            "Phone": "={{$('Build Deal Data').item.json.phone}}",
+            "Email": "={{$('Build Deal Data').item.json.email}}",
+            "Deal ID": "={{$json.id}}",
+            "Contact ID": "={{$('Build Deal Data').item.json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "=Customer replied YES to {{$('Build Deal Data').item.json.season}} campaign. Deal created.",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "New Lead",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "c34bcffa-f23f-4313-a994-92cf0727df7a",
+      "name": "Log YES Reply to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1680,
+        272
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Mar 1 & Oct 1)": {
+      "main": [
+        [
+          {
+            "node": "Set Season Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Season Context": {
+      "main": [
+        [
+          {
+            "node": "Get Eligible Customers — Page 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Eligible Customers — Page 1": {
+      "main": [
+        [
+          {
+            "node": "Filter Already-Messaged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Already-Messaged": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Contacts": {
+      "main": [
+        [
+          {
+            "node": "Send Campaign SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Campaign SMS": {
+      "main": [
+        [
+          {
+            "node": "Log Campaign on Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Campaign on Contact": {
+      "main": [
+        [
+          {
+            "node": "Log Send to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Send to Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply Webhook (YES Response)": {
+      "main": [
+        [
+          {
+            "node": "Parse Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reply": {
+      "main": [
+        [
+          {
+            "node": "Replied YES?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replied YES?": {
+      "main": [
+        [
+          {
+            "node": "Find Contact by Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Contact by Phone": {
+      "main": [
+        [
+          {
+            "node": "Build Deal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Deal Data": {
+      "main": [
+        [
+          {
+            "node": "Create Deal from Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Deal from Reply": {
+      "main": [
+        [
+          {
+            "node": "Notify Owner of YES Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Owner of YES Reply": {
+      "main": [
+        [
+          {
+            "node": "Log YES Reply to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "c62884c6-bbe1-4dad-a272-0654e7ea9a59",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:50:02.352Z",
+      "createdAt": "2026-03-04T01:50:02.352Z",
+      "role": "workflow:owner",
+      "workflowId": "Eic0J12mSmyEwEVE",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:34.370Z",
+      "createdAt": "2026-03-04T01:54:34.370Z",
+      "id": "6DOAorHv7f45HDuG",
+      "name": "sms"
+    },
+    {
+      "updatedAt": "2026-03-04T01:56:41.039Z",
+      "createdAt": "2026-03-04T01:56:41.039Z",
+      "id": "QRFCEGv7qWHScYoZ",
+      "name": "campaigns"
+    },
+    {
+      "updatedAt": "2026-03-04T01:55:38.649Z",
+      "createdAt": "2026-03-04T01:55:38.649Z",
+      "id": "eqhblLcwiqx2WvB7",
+      "name": "marketing"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    },
+    {
+      "updatedAt": "2026-03-04T01:55:23.935Z",
+      "createdAt": "2026-03-04T01:55:23.935Z",
+      "id": "q23CJPNcCiuRKcaa",
+      "name": "retention"
+    }
+  ],
+  "activeVersion": null
+}

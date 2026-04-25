@@ -1,0 +1,633 @@
+{
+  "updatedAt": "2026-03-17T02:40:23.000Z",
+  "createdAt": "2026-03-08T22:49:05.144Z",
+  "id": "Y6RCHRSY7dbnVClY",
+  "name": "SYS 05: Proposal & Contract Delivery",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "note-sys05",
+      "name": "Note — About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hubspot-deal-proposal-stage",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "sys05-trigger",
+      "name": "Deal Proposal Stage Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        256,
+        280
+      ],
+      "webhookId": "984787c4-d40c-4891-9dc3-b21566963b18"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "1eTTVoSFSlSPvZV4",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "sys05-config",
+      "name": "Get Config",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const deal = $('Deal Proposal Stage Webhook').first().json;\nconst config = $('Get Config').first().json;\nconst props = deal.properties || deal;\n\nreturn [{\n  json: {\n    clientName: props.dealname || props.name || '',\n    company: props.company || props.dealname || '',\n    industry: props.industry || '',\n    painPoints: props.deal_pain_points || props.painPoints || props.pain_point_summary || '',\n    dealValue: props.amount || 0,\n    tier: props.tier || 'starter',\n    dealId: deal.id || deal.dealId || '',\n    contactEmail: props.contact_email || props.email || '',\n    contactFirstName: props.contact_firstname || props.firstName || '',\n    driveFolderId: props.client_drive_folder_id || '',\n    config\n  }\n}];"
+      },
+      "id": "sys05-extract",
+      "name": "Extract Deal Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst tierInfo = d.config.tiers[d.tier] || d.config.tiers.starter;\nconst painPointsBlock = (d.painPoints || '').trim() ? d.painPoints.trim() : '(None provided)';\n\nreturn [{\n  json: {\n    systemPrompt: 'You are writing a formal consulting proposal for IntraWeb Technologies LLC. We are the implementation layer for AI-enabled operations; we build, we do not just advise. Tone: direct, confident, professional. Use specific outcomes and numbers. Return ONLY the main proposal body as clean semantic HTML: no DOCTYPE, no html/head/body tags, no markdown, no backticks. Use headings (h2, h3), paragraphs, and lists. The content will be wrapped in a branded PDF template.\\n\\nMANDATORY — Pain points from the payload:\\n1. The Problem section MUST quote or closely paraphrase the EXACT pain points provided in the user message. Do not substitute generic challenges. Use the customer\\'s own words or near-verbatim. List each distinct pain point they provided.\\n2. What We\\'ll Build MUST be structured as one bullet or paragraph per pain point. For each pain point from The Problem, write exactly how we address it: use the format \"You said [their pain] — we address this by [specific automation/solution].\" Do not write a generic list of capabilities. Every item in What We\\'ll Build must explicitly reference a pain point stated above.\\n\\nInvestment: Use ONLY the package and numbers provided in the user message. Do not mention other packages.',\n    userPrompt: `Write a complete, professional consulting proposal.\\n\\nClient: ${d.clientName}\\nCompany: ${d.company}\\nIndustry: ${d.industry}\\nDeal Value: $${d.dealValue}\\n\\nCUSTOMER PAIN POINTS FROM PAYLOAD — You MUST use these in The Problem (in their words) and map each one to a specific solution in What We'll Build:\\n\"\"\"\\n${painPointsBlock}\\n\"\"\"\\n\\nPACKAGE (use only this in Investment): ${tierInfo.name} — $${tierInfo.monthlyPrice}/month + $${tierInfo.setupFee} one-time setup. Investment section must show exactly $${tierInfo.monthlyPrice}/mo and $${tierInfo.setupFee} setup.\\n\\nSections (in order):\\n1. Executive Summary\\n2. The Problem — state each pain point from the block above in the customer's words; do not generalize.\\n3. What We'll Build — for EACH pain point above, one bullet/paragraph: \"You said [X] — we address this by [Y].\"\\n4. Timeline (8-week implementation)\\n5. Investment (${tierInfo.name} figures only)\\n6. Why IntraWeb\\n7. Next Steps\\n\\nReturn only HTML body content.`,\n    maxTokens: 4000\n  }\n}];"
+      },
+      "id": "sys05-claude-prep",
+      "name": "Prep Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: $json.maxTokens, system: $json.systemPrompt, messages: [{ role: 'user', content: $json.userPrompt }] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "sys05-claude",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1152,
+        280
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "weYEDVXsLfY0tPqi",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $('Call Claude API').first().json;\nconst text = (raw.content && raw.content[0] && raw.content[0].text) ? raw.content[0].text : '';\nconst d = $('Extract Deal Data').first().json;\nreturn [{ json: { data: { text }, html: text, fileName: `IntraWeb — ${d.clientName} — Proposal.pdf` } }];"
+      },
+      "id": "sys05-parse-claude",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResult = $('Parse Claude Response').first().json;\nconst d = $('Extract Deal Data').first().json;\nconst config = d.config || {};\nconst branding = config.branding || {};\nconst owner = config.owner || {};\nconst companyName = owner.companyName || 'IntraWeb Technologies LLC';\nconst ownerEmail = owner.email || '';\nconst ownerPhone = owner.phone || '';\nconst bodyContent = (claudeResult.data ? claudeResult.data.text : claudeResult.html || '').trim();\nconst clientName = d.clientName || 'Client';\nconst proposalDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });\nconst DEFAULT_LOGO_BASE64 = 'UklGRqAbAABXRUJQVlA4WAoAAAAQAAAA/wAAPwAAQUxQSK4UAAAB8Mb/v3o5zbZ9fmutmRghxBM0WCNIDE/gQEOxutNgZ4H6WQguBx5Cj+IuR9EqGqwGOYoHhyDFgrvFJzN7rf/6Pthr75nZ6Ys+jYgJMNekmW/a6KZv0tGzvlnjP8NuNWs99MV9+IZj1i+O2Wi1wTtOm954h0FYU32nTS9P23F9rHvGgOmNp+04HPsidZWWdxaX67BBK5RVjjqc0IThF6hSfdK8nvD8QEnFrNoE3BepaxVVjDqJP6mWy1EPYE3gOUwx11c5b4Xrgd+rlotRd+D4In2NarlY03/zFVUqZ9Um4Jow1v5cWfVRF+G7Y6z+jioVk/bF40K9fSG6VlHFqBMY8IKqkqKOwTeB5xqlQtYHw7BueGaoUjHr/cEYX6S7wUmKDZIepmnPLsoFJR2M79Z5iqWkK/GOLWb95Gc/+9lg7AvXuE7lUlY1CdcE2BOqGjyINWf451SVsnbGB05UzNJ4XO+4VnH1jVzRGphzzlkPmXPOtV4bdymVFHUioZnAr5QKOWsarinHllIuVHo2YIFjtbIW47jecY4WNeqtQXeNf4Pd6MP3mkh6gqaNtT9TrlPUFfimAscqqhh1IoHA8YpZGt8b5rEpba3gmPr4/Q/Mv30gBhiXPnn/g/c9ewAe8OzzzH33P3Ue1gOOC56676H/WwtrsTYGvq2qlJUn45rAc41iIeuTkVgzxv1KhayuCbjWcKw19yVaY62lyllTcGCMWqSspNtxQOBCxahzCD0yT1FdG+NaLHjOVSwp6hR8czsq5zol/RzfhGOjDuVC0t8xWsFom7VIz7YExgPq6tSPCOD5irpSqumdQRgYD6urS3vhe+Qf6swrNmw9x1ZSLlV6ymFNGAPfUtVgPs0GDlFSgwPxrWD0vV81PdcagbMVo67EQ+AcRUlZ0/AYIz5XpSVrYT0yT1GdG7UexgNKpZy1Da4Jz47KuZCzdsQ3csxtkPXxcKxbVg+Y896VHKMWqabnMQOsHsx718Cc995bwfNNpaQnKD6uSllRRxHw7KSc9DBl89476wHz3lsreX7SSFFzCE1do6hy0tVNGCM+US4kXY2nW2Xz1DtfZwz/WEnP07QH8AZ4T9mCgWP9DlVatibmWH+lcs5Kuh1H4EjFqLMJgPcUg2tuQ9qod651jFGfKJcqPe+xBsbanyk3yFq0FlbyfFOV6nOlGT0xcMjgIQPNGLj1XjM2MhzQNnDjz5X04qDBQzwMGDJ4yOqO0bvvvjaAMwZNmbHPHtPW8zjD4CmlSjPwge8rKXao0rsDMc9Niklfx4OH4dP32n3zfphv6kswYse9dxiBuZbBc7ViKWdti2sQ+JWSGicdhm90lVKh0gvtWHeM29LH6U5GnPOBsmrz98Z5pncuqiSlRYuXbgbX6uPa/RzRIa28ZjUCk//0cZaklQt+2Y7huUwx6gRC4ArVtPBypaxpeNpeUVLHGByeqbcsVlb11nlr4ZvoGjPsmiXKWvKncfgW2lW5pKhf4xtgT6pqotKTHqszBixUVYg6nUD37lGX7p7wrqpaV5UrHUMbO6pSfZYmwY3q0rxDVKWoD9aA/ZJy1bmyM6nSvIFY4IdKSbfhCS+optu2UxV1FO2MqynpCTDHkVlKnZ1V1uf74Bst3v9tpa6uKqvjO/hWMcLTqkqVXuiDFTy7KKvZSjPwdZ4dlVWfFSfiuuX4u2p69U1VUq5yrKotaSbX/Vld+vhT1WJN18J2UbUkSblKnboI7xhXqdIbfWHzSjUdx8eq6U7a+I5S1MV4z9GKMUlSrKnaA19Iih2qJFVVzNUMfIsQOFqxlLN2xDe4TqmppN/hSmcpFpLmYfTAP5SkpOfP+5/nlBV1AWzx3DNRWR1PPPn0l+BGRalKUtJ34B9amfTCebOvfEO50tsDMMJLSsqbwk8VK+3Enarpg0FwtmLS92lneq6qSs+de85zyklvDcVKSvrXeWc9pKyoF/tjLeLYcLlyQVHnl4x1Fik3lbV0DA7AnlLV4GB8TyWdjuHuVKr0EOYY/qmSngPwhVxpwdy3F41mO+Wk2wOO4a+rUm0sznODYtJ+cKNqencohylmTYf7lNS1EZ67FSudhxkXqarpKEKp0sUOx0+Vc9T++BbBcYtSqdKrfTDAM0tJzUcdTQDHxEq5Luvz0VgPJd2OC+1sq1zpVYdj5GdKeh6zBpWOhdV38Iz5xVk3PrEZ/fu0cY5i1pb4wE+Uoi5ijXdU080wVYo6mpEfKek5jPE1JT0TXL9+rm2Boh4DX5f0IBZC4FLFpFtxreL5eqNcaWc8gHtaVTcqLWjDCMxSVH3SDXh6bF8CxqjPlPRWXxwjSlCq9AR4mu83+V6lStPxjslS0mNMV476Ba7PQtV0FzsoR/2WPhyoGHU8AQInqaaOMYTSQbSBZ2vlSm+0Yy1i9F+oqqCoC+s8uymru5X2xGPco1SotFfPZW2LwxjwlpLe7t8TUacRMA/W7rB19z7htreypILR7y0lLQtHqiZNoo3fqaaP+Jli0oH04WzFpCu/NnPffWd+/X+VKu1CG/MUpak4MAZ/oEpL18K1CJ4zFUuVFg7A8Fyv1CA3SLoR51hvmXJdpVf6Yj0ljS/0WdgLPyBQ7xh65PwOZakW67bF47hVMWvrm1TTS4HAjxSzJl6hqLQp7VynqMa5Fjs1k/bCivVK7jkl1ca2jmNiUi7kSl/GO9ZbolzKKZeyVmxMG/srqT7qLDw9FFVtUGh/TbGHKu2Or3P81wfKVVelYqWt8QRmKSad+apquhrvGB8VdfyDinopEPhjU5KiftWgY0wd8LSS4rjWwbhXqaCoK/GBI5RU7jyzQ7lOUSfSzp9LWdVUXM+l9Xsra3rBscEnqsWsla/+9ai5SpW2xOOZrpz1Saei9iMY7llFvfy5oq7HB65WzPrLeZdecskll1x+xRWXXL8jbYU8qc5oe0lJy9dtIc9BjSq9PRD8s6oKSffzqFKh0r/6M/gD5bqkBzBWHWkrHBA4T11Zz3x3/bbA6aplTcVhDPpAWTlndW2Mw3ORoiRFHUoInKoYNZNAs455SknfxteNXqJK7w3AWsYY9r6qgirtBburUrHS9/hlA1X6JvuoUn3UzwitNPxTJb2AeWswtQCPKWnZupj142rFrCk4cPxdSVmVngbwfFNJOWdpMs7zNaWoP9G/va0vx5z9oz0m98WXfk+7s3a+q5R0D0bL4LlUsRR1FfxeqVDpmXZGf6JcSLqTSxTrshavi2uloR8r6WWA5ow+rypp6dqYY/2PVWVtURc4RVFS1AV4cKy9VFmqtLAfZgz/WJWqXXGOSV2q9O6gUs76Ks4Y+KyqqGMJLbW9cqnSe/3XXqZcSDqEdq5QKmR1bPakqrqkP+FopdXeUqXaHgO/PJKmMB5SqnTflMFjDn5LlSptjwfPDFWSkr5eh3G/kpR0Ix48F6iWtegX6wzZ+SV1dWgO3tUpVyuOWmfw9PmqshaPwbUQ8JiqQq6044+VVF/p1dXwTFfOdcq6Z6lyXaWv4lvIjMdUSbUl2q0bgVPVpaxqcaeyspK+XWeM+kxZWYvXwoDAaYpS1C8JYIx+W7VcaeWSnHNNrwzGSjElrVxcqcpdOg5PKwUOUyoo6Y8PqyokHYUHHlEqSFnFSm8MwJo6VitrMY7DGX/VytTZ4CV16o3+mOdMdaaYovaDP2plrKYUjOELVUu1pCrryg/UoVMJgHGfOmOn/okBeHZVV4w1bYUDHNstVqp1ZdW6kj7fCofjH1qhv16jWqXYFZN+j9FSjnUXKRekKquY9cFwDM9Pm6hyIeocPE2dqJil8XXzlJQ3KPRZqKR3BmDG0KdVSVEnwI2K0pYFHBNeUJayPt2PR1XTy+0YBH6tqKhTCXXGkI+VK727GgbgGTdPWZKyHpqAA8c8dekfnF8pKyvN8dZiOH6v2CA3iDoTD8aoj5RL5SxtjWvGsfMFs+fMmTMCM3507uw5s4dggD/yN7N/c2wbYAz8+V1PPHLzCRvAvufPnnPWWlgdjv4H/mn+43N/ORy+fv7sOb8eXeeYfN7sObPPHY+rw/jxObNnn3sIRtFh251x+/wn7rlgN48DjIPPPePcg2HTM+958t45m+KNFvPsqaqRilmL18cBnisUm0t6hJY3o6edUTRPSztHQ3M0a56yN1rN6POSqlLDqEvxFKYr56aiDiN0w4V6q/MhhGAlH0IIBSx4Mx8MfAghWCMseDMXDHwIIVjJhXrXhA8hBN8E+ODMXPA09CEEDy44c8HRiz2G52TF5rK6NsPVAQ8rNZO1bH1cN3DN06vOGS1qztHbzrEq9pxjQpdyU0l/wFMM/Li5pFtwfGHvORx3KzWTs6bhSsbID5Wb+ha+O+2bT2o8ccqGvXPpi7vjW8Hz5Rcuw3rDGPnXf66D/Rvx/KC5pLtwNPRcptio0tuDsOY8u6pSw0rvDcR6Yb72I7RC4CA90TuO9VdqHO7fiLH626qaqLQHvpFjO+VGURfi6c53lCTlnKWsjpEFM2vGzKzwkH5IMLOmzJoxMyvtr0camFkzZlYw1nzm5fVLZtaMma0ieM5TbFTpQbr5kFIpZ03DdcMx7oH7H5j3mrKe+Od9828IgDfAu5IFA7wDHtFM2gHv6pzDGxCsYAHAu7oD9GjBO8CFknnAeXMGeE+984AFK3gPWLBVwrG1lBskfQ/fjOfQRpWepGcDP1eqJuAAzGFrjOiHuTpn+KHD2jBXtz9h0Mi+mFHvcENGtGEGOCMMHd4Hc02Yg4EjVwdngBntw9cAo1ln9B0xxOEMcDBgxGCH2aoAPKBUqvRsO9aMMeIj5ULUMYTumXPt/FIpb05wDqPt0Pkr9NEfJuHAGHbKc7X02rkjcTyib212f0d845KROAbeeUe/7zzT1fniSQMwHMPPeLGW37ziSzhfMsc3/rFIS+Z9BwNj8OxXUtdDW2z7r5Ng5N/uWwdzjP/ft3PXM7/qi+HY9e5PtXLB6cOwVSHwk0ZJh+Bp2nOJYl3Wio1x3QMCP1fKm+LA6H+38usPf6r4A5xj7OtKLzy5Uq+tC4/pb0v02ntZC1aHIUvfv0QrX/okay44Jr2tuODxDi3bi/YG9lvp/QfflX5rOEYtUHzuGS25XTfDmJUaS+CrHVr++PNR961OYKb03sMv1vTMGtgqYIz+RLmu0hurY805tlXOkpLuwNFbjiv17p5Gv9PVOQmzh/XUJPjSU7oJHpfu3MD7gzv1MxjygXT+MNfvTGkXWP0Fzd8ERt+sReMoBE5Ux6GBcPAKnULgRr2yNWyyQPozrLcsj4UJS3XNcJi8QNfBam/ql+bY+h2dTFgF8FyjWJd0LJ5uP6hU+D6+txwTo/amrc1zg66Fr2jxOJxnB3Wsz2N6ti/muFFXF27EGeFZHQW/1Hvr4ox+j+mqEiM/1Cy8eQ7TZ+uxjappeMf4xboR1uvQWLhK9xht7Uzt0pZsrk+GEtr5f3/dF7dq7KJKUtZHo7DueA6py3p/CNZbgaN1PwaeXfXuEC7WH2kD6zNjYjuP6HTarY1jNLewL20W+JPOgDt1Lu3QzsFaOIgD676hD4bicAx+V/tzku4lQBs36I+FcQx6S1/Dg+MuHc+YpbpgtNG7vWOEZ1VJUXPwdNcY9qGyoi7D01ue32nBSbPPOGP2KZfF2mbcq6MJgAE8ooMIBA7XXTDkQ03D47lOc+j3qmYSwDFVaQIH1R2v/8MAx991FrfoPDwEZjUYz+aVfnvy7DPOmH3So7oeLlO1/L7T/qs/ftXAc4yispZugOsWnouVctaOLeD4u5KKOWs6T+mQAu3tjkc0szCr8JG2amLw+9oTX7dxp6aUztJNOMDzR13APTqJULd/gwlsr0rlpL9j7ad9qCy9+d99sVXCsWGHctTleLrv2EZKesZhLXCHbt5+7z322GOPPff5+hDm6+cFA5o4vMHWeEJh9bf1jdKmlTYtna67Co7b9Bvu1P/g637WxHaq7b/rnnvssccee31jW5xn0J7nPLqy0nW4VQLHbYqqTcT1AMYD6tKJeHrNc5FuwlF23Kpz6oyZh67D/F5wj+hIAnj20kdrcmDdoXqhDcD8Av2Ks3UHAdq4qMF4NliuaXiaDAZu/WvV+SXcKuH5prr0Jxw96TlYuXM8rvcC+2rRBvTr059vvzN3GMfqSWdtbazxnvbisR47E87V/bgQ2rlK8+CAukmVdqA9tDNNmsYMLRtLCAx5Q38ujMUe04X07dM3+NtfP4SvLLiGPn3bGLNc2+BXCWPAQuXte8gY9q7+gqNXqjpj0Gua2wfH6Jd0G2y0RMfgHKfoxb7M740pUcfgHN+qaf+S4y49NgzHkIf1T2Ce7hsNA2+VbmrAL7Ty6zjH4dIM9lC1G87zPX0+Clsl8MzWXRg96zlfM/G98P9Vy5vhwLN30otHfe/EN/Xe+gR+oTz3wP1vlb4GDzdxJwz5UFsVrtVs2jlRuuugfa/t1O8J7K/5eMZ/qDeO/86xC/XJRAITPtLnc29ZvOJV/RnWW6GxOLtdXTfsf8BNSb/G82ctvmjmDy9aptPx9PDV6kzFTh3XI45J2gffQ47pH4/EeuEA5eUb1eHY9UXlLN0/AYfjoI+Us97/Jo752q9whO6GoR9p68J1mkNw/Pgj5azFJ7cROFCPY44J/5Sy8r0TcHjG3bZCem+n2boOxnRoLJ7+569UzlpyHGYM+mOlnLX8ZEePX6+oYtRJPQJtp65Gzw/Yn15t22TL9Sk7+mz/06MOnupwgGPwVw6ftc8gHIzbdiiGMXLbjSBM3GoAhjFmu7UwHIP3PnzWN0bgzBi6zTjA4aYecvTBEw1HcdTEsf24VOfi2idP7QvmWOe7sw77+ggcmDF+5pGzvjmKXtjy+9/8VvGbPxiP9QjBesFoXW/UO0e9p948ve4peqNJ56h3DsfUc78O4LhPvyRQNk/RG2COoreea0XrDayXnHONMB9CcDQ0H4I3AOesYM4A50rmrA7zIXij3pyrAxdCcIBnmjon4hz7Km6Gw7k6cCEEb5RdCMEbveh8k9ZTX1wN5umdU79/wDUr9Rsc/4Eba86tlLMWH2f8Z27GJvsfedjXRuBWIVZQOCDMBgAAsCMAnQEqAAFAAD4xFolDIiEhFIzlpCADBKCHAA/p7L/MPxP/Zz4aKr/M/tl+TuZg8Rfzr8jP65//+5B5gH6C/7HqjeYD9MP269nj+q+y39L/YA/UP0APYv/Zn2Bf2b9U/+4/td8DX7Fftj8Bn6/f/S9AfxX0zXQ/1r4M97Nyh2k+I+7X1ArzfxZvBh8S9R/+X+Zvm2+cfYL/Tb0mfYB6IX6sf/8bzvzKA0w49vUqHExvjY3l2wEJX7vZbmKgqBlvKvIO1dlqajHztXEcPRO+7QypPQ0VXyRcEpjcqD1aiE+LmcZmZ4gId+fa7IzVSMFO51MwFPgINx4b/+3LR3cJbGzPa0vVsohHX4wKNHDHDbP1Rr2vL7Apwf0RFFNPys/WNFwTf2IAAOI2M3S1JCV5xxY+yDk3OqjgHdNpMCsCZLGOkQzrJFMplax6SLfUFNvj//4eSidMQnHMPBbdDnZqihv//+quObPCXIjE8rTJ4kzbNYfA6V+7vuHRlkHprumdyfQxO2/NiKQP81iC/6S4g3EbNFGTGU/KgSWBrakqWS5bghgX5ZLV8nMmoF9pXxesjYOa/jbXKaEqWZon7jVmJjwd5QVaZLAlxZ5VTL7KTvJUgXxZDEuAWG2tXtDZOw/6zH1HhP1hd/dIcQIFwBIP5FFFZSS7lYa//y35B2gVX4VBlx+vWMm0/ZfCnkjNWC9ibpvZPdvojxYz8/RblibEMWbMJmNJkHYyAXUF/fN5hq+SBckfhnQhehc4neTK0gYjrz5yrhKc7HYFhq8J6S1iQshFya/RAQ6CMK+/9rWVdgJdwCzigqCnpDOxaJoomzGzP1Ly/Kijqmbu+18CKUpsQ9tlarE+cbbY2J+DJB+apHPi6FPFKMdj+iHkI02jz0nNp6FYyS4WMngLL7wTCB+zExr2AAcFMvDr2v5BkB7/nPAX/fn9TP/Jt/BzwhU9gFjBpl3t8f9S3/AfGxGao+B/7r3IdELNjw72p5jow1NZdva4xs2KqPqCufD+MBrRXkeQq+G/D7d6V4ltpGz0HXHYpePP//6GA6RavJm+wZjqFYupaFgOMZ1PzxWJBZP5yPnz3mNI7SMNhEr6zfkEH9wMX8sXhUU/TbgVc6moV9SdooUqC5bIT0whsEu840/xDiOwQbK5sAvvOZ/AcGHwjUGpkkhb6LfR05gRli3lJnFnJaUkz0NJUwgAdPjg08YrYKgJUAJ+OHPhTGxS7wt4gB+zzvMb3qn0MOW+XJYIHJO21hIdSxQZ3KaMovfnwIGLhYHZbpnE/z2iYTY/Xs8B61qJprNAkomdghkrcgTra+9vTnwKQtna6dEnEzC2nKXDN/MWGuV6G7AL3YkUt71+l2EXSwZhCElyQz9Von4ojg/Ox9KFELvXPJ974psShUH5pC99FtDHyqXU5z1o9bhLN87lLjZ6UBogI8PUbL7ktmIamMaVp0Tb3pReDOG9cMqShUFn9qWn1hbsDVpS1sAtDwfROmFlBZnjI0esqcCUkV5qZsYAAAAeHggpcAgfoRAf4vDDi2oEudQyye8C4NCQ+IbLVK8Ivgze/EEs05h0eGHe6eNXr5VrCGwSW7enT3qR1XR//sctZ3Ty84lvJcUVc0Mn4Jw8J1OCMMxD2ioTbAYcZ7xQJhAVGIkJlCM+H7SoqnJUtB2hkmNJ5OLqHuxjnhAZIyloEGCfjx4isRFNgccgAXSkxh61vJAxLNKGzN7HQUu4IatsFluEUB8AtKLHA76E51QlG8mKIdmx4snBQSz6gIr6J5S1wQfpAb42b9dKMG+Pbu/7dUlli9H4WCuZbjHi8R0Ij96iXNEaLJog+XXKUSASd23M5V9kn69PLPsTGApKPtx/7EPim5ov9dADm2A3Da7NpKp6+5UQ7Vsnt0Uq10C/3P2pAWUtkQUnnTNZ+aK9ysIgnRZ2WQGHF54AlIrh3JV13HtLBFf/Ir3ZCVxR0ynGLzJ2MLQe0ZLXX6eVhFG68kbuxutBDWY5esSkTuuAJSB1c/UnQpZI/dCgV7cj/9WBMEZKg/7YI32c2jOPK9Ygb1MG9TYesx9d6Ia8pjZle5sGIP4V//Fdh6IbHuCL4ufKxfdMJ0pkA7eHxZCKj3wKGj1VTJ0eaRjskeDtnwWiazQdDwfJY3Zikz6x4g3V0K+IQGeGtM9o87Eza350acGB7zEMALXDLod+zxaeCJ+1KSmQkYWFnqSLYWpOvp8fYlRr0Vkw2tQon0sxEe7kezbbJ0p4yv28SGNZgkfZTps8eQJZhb5scymQn0tIy6/GMBIRG9gAMHybuaJ2neYE+0edbfRV5qTYAnWf4AAA';\nconst logoSrc = branding.logoUrl || (DEFAULT_LOGO_BASE64 ? 'data:image/webp;base64,' + DEFAULT_LOGO_BASE64 : '');\n\nconst html = `<!DOCTYPE html>\n<html lang=\\\"en\\\">\n<head>\n  <meta charset=\\\"UTF-8\\\">\n  <meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\n  <title>Proposal for ${clientName} — ${companyName}</title>\n  <link href=\\\"https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap\\\" rel=\\\"stylesheet\\\">\n  <style>\n    @page { size: letter; margin: 0.85in 0.75in; }\n    * { box-sizing: border-box; }\n    body { font-family: 'DM Sans', sans-serif; color: #1a1f2e; margin: 0; padding: 0 0 0 0; line-height: 1.55; font-size: 14px; padding-top: 44px; padding-bottom: 28px; min-height: 100vh; }\n    .page-header { position: fixed; top: 0; left: 0; right: 0; height: 64px; padding: 12px 0.75in 0; background: #fff; border-bottom: 2px solid #E87B2B; display: flex; align-items: center; gap: 14px; z-index: 10; }\n    .page-header img { height: 40px; width: auto; display: block; }\n    .page-header .company-name { font-size: 16px; font-weight: 700; color: #6B4E9B; margin: 0; }\n    .page-header .proposal-title { font-size: 12px; color: #5a6578; margin: 2px 0 0 0; }\n    .page-footer { position: fixed; bottom: 0; left: 0; right: 0; min-height: 56px; padding: 6px 0.75in 8px; background: #fff; border-top: 1px solid #e5e7eb; font-size: 11px; color: #6b7280; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; z-index: 10; gap: 4px; }\n    .proposal-body { max-width: 100%; padding: 0; }\n    .proposal-body h2 { color: #6B4E9B; font-size: 18px; margin: 22px 0 10px 0; page-break-after: avoid; }\n    .proposal-body h3 { color: #1a1f2e; font-size: 15px; margin: 14px 0 6px 0; page-break-after: avoid; }\n    .proposal-body p { margin: 0 0 10px 0; }\n    .proposal-body ul, .proposal-body ol { margin: 0 0 10px 0; padding-left: 20px; page-break-inside: avoid; }\n    .proposal-body li { margin-bottom: 4px; }\n    .proposal-body section, .proposal-body .section { page-break-inside: avoid; }\n    .highlight { background: #f5f2f8; border-left: 4px solid #E87B2B; padding: 10px 14px; margin: 12px 0; border-radius: 0 4px 4px 0; page-break-inside: avoid; }\n    .cta { background: linear-gradient(135deg, #6B4E9B 0%, #5a3d84 100%); color: #fff; padding: 16px 20px; margin-top: 20px; border-radius: 6px; text-align: center; page-break-inside: avoid; }\n  </style>\n</head>\n<body>\n  <header class=\\\"page-header\\\">\n    ${logoSrc ? `<img src=\\\"${logoSrc}\\\" alt=\\\"IntraWeb\\\" />` : '<span style=\\\"font-size:24px;font-weight:700;color:#6B4E9B\\\">I</span><span style=\\\"font-size:24px;font-weight:700;color:#E87B2B\\\">W</span>'}\n    <p class=\\\"proposal-title\\\">Proposal for ${clientName}</p>\n  </header>\n  <main class=\\\"proposal-body\\\">\n    ${bodyContent}\n  </main>\n  <footer class=\\\"page-footer\\\">\n    <div style=\\\"display:flex;justify-content:space-between;\\\"><span>${companyName}</span><span>Confidential — ${proposalDate}</span></div>\n    <div style=\\\"display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;\\\"><span>Contact: ${ownerEmail}${ownerPhone ? ' | ' + ownerPhone : ''}</span><span>To approve: set Status to Approved in the Proposals queue, or reply to the proposal email.</span></div>\n  </footer>\n</body>\n</html>`;\n\nreturn [{ json: { html, fileName: `IntraWeb — ${d.clientName} — Proposal.pdf` } }];"
+      },
+      "id": "sys05-pdf-prep",
+      "name": "Prep PDF Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://html2pdf.fly.dev/api/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ html: $json.html }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "sys05-pdf",
+      "name": "Call PDF Service",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1824,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst fileName = $('Prep PDF Input').first().json.fileName || 'document.pdf';\nreturn [{ json: { fileName }, binary: item.binary ? { ...item.binary } : {} }];"
+      },
+      "id": "sys05-pdf-ensure",
+      "name": "Ensure PDF Item",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2048,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\n\nreturn [{\n  json: {\n    message: driveLink ? `Proposal ready for ${d.clientName} — set Status to Approved to send: ${driveLink}` : `Proposal ready for ${d.clientName} — set Status to Approved to send. (Drive link unavailable.)`,\n    priority: 'info'\n  }\n}];"
+      },
+      "id": "sys05-alert-prep",
+      "name": "Prep Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "minutes"
+      },
+      "id": "sys05-poll-wait",
+      "name": "Wait 30min",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3168,
+        280
+      ],
+      "webhookId": "ad8b1e83-2b1b-45fc-a723-b1770daa60ae"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "mode": "id",
+          "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
+        },
+        "sheetName": {
+          "mode": "name",
+          "value": "Proposals"
+        },
+        "options": {}
+      },
+      "id": "sys05-check-approval",
+      "name": "Check Approval Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        3392,
+        208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SERVICE_ACCOUNT_CREDENTIAL_ID",
+          "name": "Google Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-approved",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "Approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "sys05-is-approved",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3616,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Your IntraWeb proposal is ready — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your proposal is attached. I've outlined exactly what we'll build, the timeline, and the investment.</p>${driveLink ? `<p>You can also <a href=\"${driveLink}\">view it in Google Drive here</a>.</p>` : ''}<p>Take a look and let me know if you have any questions. When you're ready to move forward, reply to this email and I'll send the contract for e-signature.</p><p>— John<br/>${d.config?.owner?.companyName || 'IntraWeb'}</p>`,\n    workflowName: 'SYS 05: Proposal & Contract Delivery'\n  }\n}];"
+      },
+      "id": "sys05-send-prep",
+      "name": "Prep Send Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3840,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "FF6VOLCcRxI4uNYD",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "sys05-send-email",
+      "name": "Send Proposal Email",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        4064,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "deal",
+        "operation": "update",
+        "dealId": "={{ $('Extract Deal Data').first().json.dealId }}",
+        "updateFields": {
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "proposal_sent_date",
+                "value": "={{ new Date().toISOString().split('T')[0] }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "sys05-update-deal",
+      "name": "Update Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2,
+      "position": [
+        4288,
+        280
+      ],
+      "credentials": {
+        "hubspotApi": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    workflowName: 'SYS 05: Proposal & Contract Delivery',\n    contactName: $('Extract Deal Data').first().json.clientName,\n    phone: '',\n    eventType: 'proposal_sent',\n    status: 'success',\n    notes: `Deal value: $${$('Extract Deal Data').first().json.dealValue}`\n  }\n}];"
+      },
+      "id": "sys05-log-prep",
+      "name": "Prep Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4512,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Prep PDF Input').first().json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1eP-Og3KF5nBMN9UWyfeTup8diLaaOs0M",
+          "mode": "list",
+          "cachedResultName": "Intraweb - Proposals",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1eP-Og3KF5nBMN9UWyfeTup8diLaaOs0M"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2256,
+        288
+      ],
+      "id": "eff74279-9fee-4de5-b2e0-74b064349165",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "oPioaF4sFaVsK13H",
+          "name": "Google Drive account 2"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Deal Proposal Stage Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Config": {
+      "main": [
+        [
+          {
+            "node": "Extract Deal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Deal Data": {
+      "main": [
+        [
+          {
+            "node": "Prep Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Prep PDF Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep PDF Input": {
+      "main": [
+        [
+          {
+            "node": "Call PDF Service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call PDF Service": {
+      "main": [
+        [
+          {
+            "node": "Ensure PDF Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure PDF Item": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Alert": {
+      "main": [
+        [
+          {
+            "node": "Wait 30min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30min": {
+      "main": [
+        [
+          {
+            "node": "Check Approval Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Approval Status": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Prep Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 30min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Send Email": {
+      "main": [
+        [
+          {
+            "node": "Send Proposal Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Proposal Email": {
+      "main": [
+        [
+          {
+            "node": "Update Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Deal": {
+      "main": [
+        [
+          {
+            "node": "Prep Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Log": {
+      "main": [
+        []
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Prep Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner",
+    "timeSavedMode": "fixed"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "69fb8c69-ea9a-4b01-a5fd-e13fc5eae798",
+  "activeVersionId": null,
+  "versionCounter": 260,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-08T22:49:05.149Z",
+      "createdAt": "2026-03-08T22:49:05.149Z",
+      "role": "workflow:owner",
+      "workflowId": "Y6RCHRSY7dbnVClY",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

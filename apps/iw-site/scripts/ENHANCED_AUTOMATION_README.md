@@ -177,7 +177,7 @@ When creating issues, the script automatically:
 - `-IssueNumber` (required): GitHub issue number
 - `-AgentName` (required): Agent name (chris, jason, agent-1-chris, agent-2-jason)
 - `-IssueTitle` (required): Issue title for display
-- `-WorkflowFile`: Workflow doc path (default: "prompts/workflows/multi-agent-e2e-workflow.md")
+- `-WorkflowFile`: Workflow doc path (default: "prompts/multi-agent-e2e-workflow.md")
 - `-Remove`: Remove issue from agent's list instead of adding
 - `-DryRun`: Preview changes without updating file
 
@@ -466,7 +466,7 @@ git push origin --delete issue-XXX-name
 ### Issue: Workflow Doc Not Updating
 ```powershell
 # Check if workflow file exists
-Test-Path prompts/workflows/multi-agent-e2e-workflow.md
+Test-Path prompts/multi-agent-e2e-workflow.md
 
 # Manually run updater with dry run
 .\scripts\core-utilities\update-workflow-docs.ps1 `
@@ -476,7 +476,7 @@ Test-Path prompts/workflows/multi-agent-e2e-workflow.md
   -DryRun
 
 # Check permissions
-Get-Acl prompts/workflows/multi-agent-e2e-workflow.md
+Get-Acl prompts/multi-agent-e2e-workflow.md
 ```
 
 ### Issue: Agent Auto-Assignment Not Working

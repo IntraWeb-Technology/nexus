@@ -1,0 +1,299 @@
+{
+  "updatedAt": "2026-04-18T22:43:36.000Z",
+  "createdAt": "2026-04-11T03:28:58.042Z",
+  "id": "qOOtSSUTNltxR4ce",
+  "name": "Proposal Generator",
+  "description": "Takes a deal ID, fetches deal and associated contact from HubSpot, generates a formatted client proposal via Claude.",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "id": "4a1a939c-1410-40c1-bd1d-bde891364fc0",
+      "name": "Sticky Note 22e33117",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        190,
+        250
+      ],
+      "parameters": {
+        "content": "## Proposal Generator — Deal-Based\n\n**How to use from Cowork:**\n1. Open the \"Set Deal ID\" node\n2. Change the `dealId` value to the HubSpot Deal ID you want to generate a proposal for\n3. Click Test Workflow\n4. The `proposal` field in the output contains the full generated text\n\nFind deal IDs in HubSpot: open any deal record and copy the numeric ID from the URL.",
+        "color": 3,
+        "width": 520,
+        "height": 200
+      }
+    },
+    {
+      "id": "8fa5a7c0-f479-438e-baf9-8e6895031b80",
+      "name": "Run: Enter Deal ID Below",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "id": "8ddeb6e0-6ead-435b-9170-1b55d301dd71",
+      "name": "Set Deal ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        460,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "fields": {
+          "values": [
+            {
+              "name": "dealId",
+              "type": "stringValue",
+              "value": "318902781628"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "553b2fd7-1888-422d-8f6b-abb7eb7a60c0",
+      "name": "Get Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        680,
+        300
+      ],
+      "parameters": {
+        "resource": "deal",
+        "operation": "get",
+        "authentication": "appToken",
+        "dealId": "={{ $json.dealId }}",
+        "additionalFields": {
+          "properties": [
+            "dealname",
+            "amount",
+            "dealstage",
+            "description",
+            "hs_priority",
+            "hs_next_step",
+            "closedate",
+            "dealtype"
+          ]
+        }
+      },
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ZDFqX6DMxufgJufI",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "id": "c1fa4f43-122b-4baa-9d88-3168b9338bd4",
+      "name": "Get Associated Contact",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        900,
+        300
+      ],
+      "parameters": {
+        "resource": "contact",
+        "operation": "get",
+        "authentication": "appToken",
+        "contactId": "={{ $json.associations.contacts.results[0].id }}",
+        "additionalFields": {
+          "properties": [
+            "firstname",
+            "lastname",
+            "email",
+            "phone",
+            "company",
+            "website",
+            "message",
+            "lead_score",
+            "lead_tier",
+            "scoring_breakdown",
+            "jobtitle",
+            "decision_maker"
+          ]
+        }
+      },
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ZDFqX6DMxufgJufI",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "id": "8eb99ec9-146e-4146-8d46-5942e0ed539c",
+      "name": "Generate Proposal via Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "specifyHeaders": "keypair",
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"claude-sonnet-4-20250514\", \"max_tokens\": 1500, \"system\": \"You are a senior proposal writer for IntraWeb Technologies LLC, a New Jersey-based AI automation and operations firm. Positioning: 95% of AI pilots fail to deliver ROI. We fix that. IntraWeb delivers Operations as a Service for SMBs with 10-150 employees. Two tracks: AI Transformation (strategy, long-term partnerships) and AI Engineering (hands-on technical execution). Pricing: Automation Starter $2,500 ($1k upfront plus $1,500 and $300/mo at go-live). Automation Growth $4,000 ($2k down plus $2k and $450/mo). SaaS Website Launch $6k-$10k. Premium $32k-$65k. Hourly $150-$175/hr. Tone: precise, operator-minded. No em dashes. No fluff. Problems feel systemic not the clients fault. Change feels rational and safe. Sections: Executive Summary, The Problem We Are Addressing, Proposed Approach, Scope of Work, Investment, Timeline, Why IntraWeb, Next Steps. Under 700 words. Use [CONFIRM WITH CLIENT] for gaps.\", \"messages\": [{ \"role\": \"user\", \"content\": \"Generate a client proposal.\\n\\nDEAL\\nName: \" + $(\"Get Deal\").item.json.properties.dealname + \"\\nAmount: \" + ($(\"Get Deal\").item.json.properties.amount ? \"$\" + $(\"Get Deal\").item.json.properties.amount : \"TBD\") + \"\\nStage: \" + ($(\"Get Deal\").item.json.properties.dealstage || \"Unknown\") + \"\\nType: \" + ($(\"Get Deal\").item.json.properties.dealtype || \"Unknown\") + \"\\nDescription: \" + ($(\"Get Deal\").item.json.properties.description || \"None\") + \"\\nPriority: \" + ($(\"Get Deal\").item.json.properties.hs_priority || \"Not set\") + \"\\nNext Step: \" + ($(\"Get Deal\").item.json.properties.hs_next_step || \"Not set\") + \"\\nClose Date: \" + ($(\"Get Deal\").item.json.properties.closedate || \"Not set\") + \"\\n\\nCLIENT\\nName: \" + $json.properties.firstname + \" \" + $json.properties.lastname + \"\\nCompany: \" + $json.properties.company + \"\\nEmail: \" + $json.properties.email + \"\\nPhone: \" + $json.properties.phone + \"\\nWebsite: \" + ($json.properties.website || \"Not provided\") + \"\\nJob Title: \" + ($json.properties.jobtitle || \"Not provided\") + \"\\nDecision Maker: \" + ($json.properties.decision_maker || \"Unknown\") + \"\\nLead Tier: \" + ($json.properties.lead_tier || \"Unknown\") + \"\\nIntake Message: \" + ($json.properties.message || \"No intake message.\") + \"\\nScore Breakdown: \" + ($json.properties.scoring_breakdown || \"N/A\") }] } }}"
+      },
+      "credentials": {}
+    },
+    {
+      "id": "74d4ec51-44c4-49a2-a324-3e53645c9d89",
+      "name": "Proposal Ready",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1340,
+        300
+      ],
+      "parameters": {
+        "mode": "manual",
+        "fields": {
+          "values": [
+            {
+              "name": "proposal",
+              "type": "stringValue",
+              "value": "={{ $json.content[0].text }}"
+            },
+            {
+              "name": "deal",
+              "type": "stringValue",
+              "value": "={{ $(\"Get Deal\").item.json.properties.dealname }}"
+            },
+            {
+              "name": "client",
+              "type": "stringValue",
+              "value": "={{ $(\"Get Associated Contact\").item.json.properties.firstname + \" \" + $(\"Get Associated Contact\").item.json.properties.lastname }}"
+            },
+            {
+              "name": "amount",
+              "type": "stringValue",
+              "value": "={{ $(\"Get Deal\").item.json.properties.amount ? \"$\" + $(\"Get Deal\").item.json.properties.amount : \"TBD\" }}"
+            },
+            {
+              "name": "generated_at",
+              "type": "stringValue",
+              "value": "={{ $now.toISO() }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run: Enter Deal ID Below": {
+      "main": [
+        [
+          {
+            "node": "Set Deal ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Deal ID": {
+      "main": [
+        [
+          {
+            "node": "Get Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Deal": {
+      "main": [
+        [
+          {
+            "node": "Get Associated Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Associated Contact": {
+      "main": [
+        [
+          {
+            "node": "Generate Proposal via Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Proposal via Claude": {
+      "main": [
+        [
+          {
+            "node": "Proposal Ready",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true
+  },
+  "pinData": null,
+  "versionId": "ff375ad9-6ccb-4c40-bdca-328cfb04448e",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-11T03:28:58.050Z",
+      "createdAt": "2026-04-11T03:28:58.050Z",
+      "role": "workflow:owner",
+      "workflowId": "qOOtSSUTNltxR4ce",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

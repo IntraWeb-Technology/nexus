@@ -14,6 +14,7 @@ import { config } from 'dotenv'
 import { createClerkClient } from '@clerk/backend'
 import { createClient } from '@supabase/supabase-js'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
+import { resolveSupabaseScriptEnv } from './lib/supabase-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 
@@ -73,10 +74,14 @@ async function resolveHubSpotDealId(contactId: string): Promise<string | null> {
 }
 
 async function main() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !service) {
-    console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+  let url: string
+  let service: string
+  try {
+    const env = resolveSupabaseScriptEnv()
+    url = env.url
+    service = env.serviceRoleKey
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error))
     process.exit(1)
   }
 

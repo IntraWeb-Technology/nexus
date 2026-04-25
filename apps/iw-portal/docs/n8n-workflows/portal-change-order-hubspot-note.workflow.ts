@@ -181,7 +181,7 @@ const respondError = node({
         '={{ { ok: false, message: $json.message, httpStatus: $json.httpStatus } }}',
       ),
       options: {
-        responseCode: 200,
+        responseCode: expr('={{ Number($json.httpStatus || 400) }}'),
       },
     },
     position: [1020, 520],

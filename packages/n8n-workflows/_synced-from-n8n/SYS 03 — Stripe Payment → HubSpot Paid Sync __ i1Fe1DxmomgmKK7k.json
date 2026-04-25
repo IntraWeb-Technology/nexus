@@ -1,0 +1,924 @@
+{
+  "updatedAt": "2026-04-19T19:25:35.938Z",
+  "createdAt": "2026-03-31T02:42:24.194Z",
+  "id": "i1Fe1DxmomgmKK7k",
+  "name": "SYS 03 — Stripe Payment → HubSpot Paid Sync",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "note-paid-sync",
+      "name": "Note — About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1.3,
+      "position": [
+        64,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "stripe-payment-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "stripe-webhook",
+      "name": "Stripe Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        272,
+        320
+      ],
+      "webhookId": "87142032-4d59-4c38-b217-b8eb255cbb60"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1eTTVoSFSlSPvZV4",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+          "cachedResultName": "CONFIG — Global Settings"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "get-config",
+      "name": "Get Config",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Stripe Webhook').first().json;\nconst config = $('Get Config').first().json;\n\nconst eventId = body?.id;\nif (!eventId) throw new Error('Missing Stripe event id on webhook body');\n\nreturn [{\n  json: {\n    eventId,\n    config\n  }\n}];"
+      },
+      "id": "extract-event-id",
+      "name": "Extract Event ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.stripe.com/v1/events/{{$json.eventId}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.STRIPE_SECRET_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-event",
+      "name": "Fetch Stripe Event (verify)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        928,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const config = $('Extract Event ID').first().json.config;\nconst e = $json;\n\nconst type = e?.type || '';\nconst obj = e?.data?.object || {};\n\n// Supported payment success signals (v1)\nconst supported = new Set(['checkout.session.completed', 'invoice.paid', 'payment_intent.succeeded']);\nif (!supported.has(type)) {\n  return [{ json: { ignore: true, reason: `Unhandled stripe event type: ${type}`, type } }];\n}\n\nconst metadata = obj?.metadata || {};\nconst hubspotDealId = metadata.hubspotDealId || metadata.hubspot_deal_id || '';\nif (!hubspotDealId) {\n  return [{ json: { ignore: true, reason: 'Missing metadata.hubspotDealId on Stripe object', type } }];\n}\n\nreturn [{\n  json: {\n    ignore: false,\n    type,\n    hubspotDealId,\n    sku: metadata.sku || '',\n    stripeCustomerId: obj.customer || '',\n    stripePaymentIntentId: obj.payment_intent || obj.id || '',\n    stripeCheckoutSessionId: type === 'checkout.session.completed' ? obj.id : '',\n    stripeSubscriptionId: obj.subscription || '',\n    stripeInvoiceId: type === 'invoice.paid' ? obj.id : '',\n    config\n  }\n}];"
+      },
+      "id": "normalize",
+      "name": "Normalize Stripe Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ignore",
+              "leftValue": "={{ $json.ignore }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-ignore",
+      "name": "Ignore?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "deal",
+        "operation": "update",
+        "dealId": "={{ $json.hubspotDealId }}",
+        "updateFields": {
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "dealstage",
+                "value": "={{ $json.config.hubspot.dealStageIds.paid }}"
+              },
+              {
+                "property": "selected_sku",
+                "value": "={{ $json.sku }}"
+              },
+              {
+                "property": "stripe_customer_id",
+                "value": "={{ $json.stripeCustomerId }}"
+              },
+              {
+                "property": "stripe_payment_intent_id",
+                "value": "={{ $json.stripePaymentIntentId }}"
+              },
+              {
+                "property": "stripe_checkout_session_id",
+                "value": "={{ $json.stripeCheckoutSessionId }}"
+              },
+              {
+                "property": "stripe_subscription_id",
+                "value": "={{ $json.stripeSubscriptionId }}"
+              },
+              {
+                "property": "stripe_invoice_id",
+                "value": "={{ $json.stripeInvoiceId }}"
+              },
+              {
+                "property": "stripe_payment_status",
+                "value": "paid"
+              }
+            ]
+          }
+        }
+      },
+      "id": "hs-update",
+      "name": "Update HubSpot Deal → Paid",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        16
+      ],
+      "credentials": {
+        "hubspotApi": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    ok: true,\n    ignored: $json.ignore,\n    reason: $json.reason || null,\n    hubspotDealId: $json.hubspotDealId || null,\n    type: $json.type || null\n  }\n}];"
+      },
+      "id": "respond",
+      "name": "Return Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "deal",
+        "operation": "update",
+        "dealId": {
+          "__rl": true,
+          "value": "={{ $json.hubspotDealId }}",
+          "mode": "id"
+        },
+        "updateFields": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1584,
+        432
+      ],
+      "id": "68d77c8f-ce48-4db2-a910-4da339bfd6c2",
+      "name": "Update a deal",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Stripe Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Config": {
+      "main": [
+        [
+          {
+            "node": "Extract Event ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Event ID": {
+      "main": [
+        [
+          {
+            "node": "Fetch Stripe Event (verify)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Stripe Event (verify)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Stripe Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Stripe Data": {
+      "main": [
+        [
+          {
+            "node": "Ignore?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ignore?": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update a deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update HubSpot Deal → Paid": {
+      "main": [
+        []
+      ]
+    },
+    "Update a deal": {
+      "main": [
+        [
+          {
+            "node": "Return Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+  "activeVersionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+  "versionCounter": 96,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-03-31T02:42:24.198Z",
+      "createdAt": "2026-03-31T02:42:24.198Z",
+      "role": "workflow:owner",
+      "workflowId": "i1Fe1DxmomgmKK7k",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-14T03:12:36.874Z",
+    "createdAt": "2026-04-14T03:12:36.874Z",
+    "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+    "workflowId": "i1Fe1DxmomgmKK7k",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "note-paid-sync",
+        "name": "Note — About this workflow",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1.3,
+        "position": [
+          64,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "stripe-payment-webhook",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "id": "stripe-webhook",
+        "name": "Stripe Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          272,
+          320
+        ],
+        "webhookId": "87142032-4d59-4c38-b217-b8eb255cbb60"
+      },
+      {
+        "parameters": {
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "1eTTVoSFSlSPvZV4",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+            "cachedResultName": "CONFIG — Global Settings"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "get-config",
+        "name": "Get Config",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          480,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $('Stripe Webhook').first().json;\nconst config = $('Get Config').first().json;\n\nconst eventId = body?.id;\nif (!eventId) throw new Error('Missing Stripe event id on webhook body');\n\nreturn [{\n  json: {\n    eventId,\n    config\n  }\n}];"
+        },
+        "id": "extract-event-id",
+        "name": "Extract Event ID",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          704,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "url": "=https://api.stripe.com/v1/events/{{$json.eventId}}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "=Bearer {{$env.STRIPE_SECRET_KEY}}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "fetch-event",
+        "name": "Fetch Stripe Event (verify)",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          928,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const config = $('Extract Event ID').first().json.config;\nconst e = $json;\n\nconst type = e?.type || '';\nconst obj = e?.data?.object || {};\n\n// Supported payment success signals (v1)\nconst supported = new Set(['checkout.session.completed', 'invoice.paid', 'payment_intent.succeeded']);\nif (!supported.has(type)) {\n  return [{ json: { ignore: true, reason: `Unhandled stripe event type: ${type}`, type } }];\n}\n\nconst metadata = obj?.metadata || {};\nconst hubspotDealId = metadata.hubspotDealId || metadata.hubspot_deal_id || '';\nif (!hubspotDealId) {\n  return [{ json: { ignore: true, reason: 'Missing metadata.hubspotDealId on Stripe object', type } }];\n}\n\nreturn [{\n  json: {\n    ignore: false,\n    type,\n    hubspotDealId,\n    sku: metadata.sku || '',\n    stripeCustomerId: obj.customer || '',\n    stripePaymentIntentId: obj.payment_intent || obj.id || '',\n    stripeCheckoutSessionId: type === 'checkout.session.completed' ? obj.id : '',\n    stripeSubscriptionId: obj.subscription || '',\n    stripeInvoiceId: type === 'invoice.paid' ? obj.id : '',\n    config\n  }\n}];"
+        },
+        "id": "normalize",
+        "name": "Normalize Stripe Data",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1152,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict"
+            },
+            "conditions": [
+              {
+                "id": "ignore",
+                "leftValue": "={{ $json.ignore }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "if-ignore",
+        "name": "Ignore?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          1360,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "resource": "deal",
+          "operation": "update",
+          "dealId": "={{ $json.hubspotDealId }}",
+          "updateFields": {
+            "customPropertiesUi": {
+              "customPropertiesValues": [
+                {
+                  "property": "dealstage",
+                  "value": "={{ $json.config.hubspot.dealStageIds.paid }}"
+                },
+                {
+                  "property": "selected_sku",
+                  "value": "={{ $json.sku }}"
+                },
+                {
+                  "property": "stripe_customer_id",
+                  "value": "={{ $json.stripeCustomerId }}"
+                },
+                {
+                  "property": "stripe_payment_intent_id",
+                  "value": "={{ $json.stripePaymentIntentId }}"
+                },
+                {
+                  "property": "stripe_checkout_session_id",
+                  "value": "={{ $json.stripeCheckoutSessionId }}"
+                },
+                {
+                  "property": "stripe_subscription_id",
+                  "value": "={{ $json.stripeSubscriptionId }}"
+                },
+                {
+                  "property": "stripe_invoice_id",
+                  "value": "={{ $json.stripeInvoiceId }}"
+                },
+                {
+                  "property": "stripe_payment_status",
+                  "value": "paid"
+                }
+              ]
+            }
+          }
+        },
+        "id": "hs-update",
+        "name": "Update HubSpot Deal → Paid",
+        "type": "n8n-nodes-base.hubspot",
+        "typeVersion": 2,
+        "position": [
+          1536,
+          16
+        ],
+        "credentials": {
+          "hubspotApi": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    ok: true,\n    ignored: $json.ignore,\n    reason: $json.reason || null,\n    hubspotDealId: $json.hubspotDealId || null,\n    type: $json.type || null\n  }\n}];"
+        },
+        "id": "respond",
+        "name": "Return Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1808,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "authentication": "appToken",
+          "resource": "deal",
+          "operation": "update",
+          "dealId": {
+            "__rl": true,
+            "value": "={{ $json.hubspotDealId }}",
+            "mode": "id"
+          },
+          "updateFields": {}
+        },
+        "type": "n8n-nodes-base.hubspot",
+        "typeVersion": 2.2,
+        "position": [
+          1584,
+          432
+        ],
+        "id": "68d77c8f-ce48-4db2-a910-4da339bfd6c2",
+        "name": "Update a deal",
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Stripe Webhook": {
+        "main": [
+          [
+            {
+              "node": "Get Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Config": {
+        "main": [
+          [
+            {
+              "node": "Extract Event ID",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract Event ID": {
+        "main": [
+          [
+            {
+              "node": "Fetch Stripe Event (verify)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Stripe Event (verify)": {
+        "main": [
+          [
+            {
+              "node": "Normalize Stripe Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize Stripe Data": {
+        "main": [
+          [
+            {
+              "node": "Ignore?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ignore?": {
+        "main": [
+          [
+            {
+              "node": "Return Response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Update a deal",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update HubSpot Deal → Paid": {
+        "main": [
+          []
+        ]
+      },
+      "Update a deal": {
+        "main": [
+          [
+            {
+              "node": "Return Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "John Schibelli",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-14T03:12:36.910Z",
+        "id": 2133,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:45.875Z",
+        "id": 2199,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:32.887Z",
+        "id": 2265,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:17:01.458Z",
+        "id": 2331,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:13.949Z",
+        "id": 2397,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:56.875Z",
+        "id": 2463,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:33.148Z",
+        "id": 2529,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:40.529Z",
+        "id": 2601,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:19:47.435Z",
+        "id": 2631,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:51.049Z",
+        "id": 2779,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:46:01.596Z",
+        "id": 2829,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:00:24.313Z",
+        "id": 2875,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.984Z",
+        "id": 3039,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:36.901Z",
+        "id": 2132,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:45.862Z",
+        "id": 2198,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:32.873Z",
+        "id": 2264,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:17:01.427Z",
+        "id": 2330,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:13.931Z",
+        "id": 2396,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:56.862Z",
+        "id": 2462,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:33.132Z",
+        "id": 2528,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:40.509Z",
+        "id": 2600,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:19:47.412Z",
+        "id": 2630,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:51.039Z",
+        "id": 2778,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:46:01.571Z",
+        "id": 2828,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:00:24.216Z",
+        "id": 2874,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.972Z",
+        "id": 3038,
+        "workflowId": "i1Fe1DxmomgmKK7k",
+        "versionId": "f0c3dacd-bfaf-4d3c-aee8-cf24f66c0c61",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
+  }
+}

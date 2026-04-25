@@ -134,7 +134,7 @@ export async function POST(request: Request) {
             .order('created_at', { ascending: true })
             .limit(1)
             .maybeSingle()
-          triggerLoginEvent({
+          await triggerLoginEvent({
             project_slug: project?.slug ?? 'unknown',
             client_name: client.name,
             client_email: client.email,

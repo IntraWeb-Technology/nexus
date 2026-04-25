@@ -80,7 +80,7 @@ async function markInvoicePaidFromSession(session: Stripe.Checkout.Session) {
   })
 
   if (project?.slug) {
-    triggerInvoicePaid({
+    await triggerInvoicePaid({
       project_slug: project.slug,
       invoice_number: invoice.invoice_number,
       amount_cents: invoice.amount_cents,
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
         await markInvoicePaidFromSession(session)
       }
       if (shouldForwardCatalogPayment(session)) {
-        triggerStripeCatalogCheckout(buildStripeCatalogCheckoutPayload(session))
+        await triggerStripeCatalogCheckout(buildStripeCatalogCheckoutPayload(session))
       }
     }
   } catch (e) {

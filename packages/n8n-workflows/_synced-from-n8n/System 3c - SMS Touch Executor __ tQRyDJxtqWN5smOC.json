@@ -1,0 +1,183 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T04:55:36.151Z",
+  "id": "tQRyDJxtqWN5smOC",
+  "name": "System 3c - SMS Touch Executor",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## README\nReusable SMS sub-workflow for Touch 2 and 4.\n\nExpected input includes `contact_id`, `phone`, `sms_body`, and `hubspot_note_intro`.\n\nSends via Twilio, then logs the send as a HubSpot note.",
+        "height": 200,
+        "width": 400,
+        "color": 5
+      },
+      "id": "2705cbf3-c1fb-4db2-83ec-2d30d20652c8",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "77549cbe-0e68-455b-903a-507915ab7608",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{ $json.phone }}"
+            },
+            {
+              "name": "From",
+              "value": "={{ $env.TWILIO_PHONE_NUMBER }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $json.sms_body }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "346d31a8-b42c-4e7f-aafa-5f03f6ea2257",
+      "name": "Twilio: Send SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $json.hubspot_note_intro }} Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $json.contact_id }}\" },\n      \"types\": [{ \"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 202 }]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "95a24433-6618-4216-aabb-9eee798eaa03",
+      "name": "HubSpot: Log SMS Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        672,
+        288
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "cb1b4079-8d87-4d65-b927-d6db37fc5923",
+      "name": "SMS Touch Complete",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        288
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Twilio: Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio: Send SMS": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Log SMS Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Log SMS Note": {
+      "main": [
+        [
+          {
+            "node": "SMS Touch Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "10467d47-a912-48b9-a59e-b47f39eea676",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T04:55:36.153Z",
+      "createdAt": "2026-03-06T04:55:36.153Z",
+      "role": "workflow:owner",
+      "workflowId": "tQRyDJxtqWN5smOC",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

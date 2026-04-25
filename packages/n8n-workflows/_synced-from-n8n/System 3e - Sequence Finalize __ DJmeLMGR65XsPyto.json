@@ -1,0 +1,188 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T04:53:38.813Z",
+  "id": "DJmeLMGR65XsPyto",
+  "name": "System 3e - Sequence Finalize",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## README\nRuns after Touch 5 completes.\n\nMarks the HubSpot contact as sequence complete and appends the final Automations Log row in Google Sheets.",
+        "height": 180,
+        "width": 380,
+        "color": 5
+      },
+      "id": "0e113351-95e0-4cdc-bc25-420b27104cc6",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "30c9c181-0ec5-40c2-b35e-82744823843f",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.contact_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"sequence_completed\": \"true\",\n    \"sequence_completed_date\": \"{{ $now.toISO() }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "49a0cb76-bc43-471c-b19f-ea7888ffef9d",
+      "name": "HubSpot: Mark Sequence Complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Automations Log!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"System 3 - Outbound Sequence\",\n      \"Completed\",\n      \"Full 5-touch sequence completed for {{ $json.contact_name }} at {{ $json.company_name }}\",\n      \"14-day sequence finished\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "c25e406b-1268-4e0e-8ffa-3a5afeec4e0f",
+      "name": "Sheets: Log Sequence Complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        672,
+        288
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "18033d1f-5c8b-4723-8c8e-e280bd332630",
+      "name": "Finalize Complete",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        288
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Mark Sequence Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Mark Sequence Complete": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Log Sequence Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Log Sequence Complete": {
+      "main": [
+        [
+          {
+            "node": "Finalize Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "1f51a1b9-dcec-4577-b617-1021b25542dc",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T04:53:38.817Z",
+      "createdAt": "2026-03-06T04:53:38.817Z",
+      "role": "workflow:owner",
+      "workflowId": "DJmeLMGR65XsPyto",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

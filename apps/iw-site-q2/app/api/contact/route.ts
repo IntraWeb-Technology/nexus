@@ -635,10 +635,21 @@ ${websiteForHubSpot ? `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e
           tier,
         });
         console.log("[n8n] Firing webhook for", sync.contactId, "tier", tier);
+        const webhookHeaders: Record<string, string> = { "Content-Type": "application/json" };
+        const marketingWebhookSecret =
+          process.env.MARKETING_N8N_WEBHOOK_SECRET?.trim() ||
+          process.env.N8N_WEBHOOK_SECRET?.trim();
+        if (marketingWebhookSecret) {
+          const headerName =
+            process.env.MARKETING_N8N_WEBHOOK_SECRET_HEADER?.trim() ||
+            process.env.N8N_WEBHOOK_SECRET_HEADER?.trim() ||
+            "X-Intraweb-Website-Intake-Secret";
+          webhookHeaders[headerName] = marketingWebhookSecret;
+        }
         try {
           const n8nRes = await fetch(n8nUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: webhookHeaders,
             body: JSON.stringify(n8nPayload),
           });
           console.log("[n8n] Webhook response:", n8nRes.status, n8nRes.statusText, n8nUrl.slice(-40));

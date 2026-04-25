@@ -81,6 +81,9 @@ pnpm --filter @repo/n8n-workflows sync:n8n:package
 pnpm --filter @repo/n8n-workflows push:n8n:workflow
 ```
 
+Legacy note: `apps/iw-site/scripts` contains deprecated compatibility wrappers and hard-stops for older n8n commands. Use `packages/n8n-workflows/scripts` as the only source of truth.
+Operational runbook: `packages/n8n-workflows/RUNBOOK.md`.
+
 ## Workspace Notes
 
 - `pnpm-workspace.yaml` includes `apps/*` and `packages/*`, with `apps/iw-site` excluded.
