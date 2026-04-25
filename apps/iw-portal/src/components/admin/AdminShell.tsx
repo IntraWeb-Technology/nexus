@@ -49,7 +49,7 @@ export function AdminShell({ staff, children }: { staff: StaffUser; children: Re
           <Link href="/dashboard" className="iw-chip iw-chip-teal">
             Client portal
           </Link>
-          <UserButton />
+          <UserButton afterSignOutUrl="/sign-in" />
         </div>
       </header>
       <main className="pt-[var(--iw-topbar-height)] md:ml-[var(--iw-sidebar-width)]">{children}</main>

@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
   const { userId, redirectToSignIn } = await auth()
-  if (!userId) return redirectToSignIn()
+  if (!userId) return redirectToSignIn({ returnBackUrl: '/dashboard' })
 
   const bundle = await getPortalBundle()
   if (!bundle) {

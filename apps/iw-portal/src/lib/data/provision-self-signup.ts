@@ -10,7 +10,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 const DEFAULT_PLAN: Plan = 'starter'
 
 export function isPortalAutoProvisionEnabled(): boolean {
-  const v = process.env.PORTAL_AUTO_PROVISION_SIGNUPS?.toLowerCase()
+  const v = process.env.PORTAL_AUTO_PROVISION_SIGNUPS?.trim().toLowerCase()
+  if (!v) return process.env.NODE_ENV !== 'production'
   return v === '1' || v === 'true' || v === 'yes'
 }
 

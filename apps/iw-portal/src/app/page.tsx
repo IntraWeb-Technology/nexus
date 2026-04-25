@@ -3,6 +3,6 @@ import { redirect } from 'next/navigation'
 
 export default async function Home() {
   const { userId, redirectToSignIn } = await auth()
-  if (userId) redirect('/dashboard')
-  return redirectToSignIn()
+  if (userId) redirect('/post-auth')
+  return redirectToSignIn({ returnBackUrl: '/post-auth' })
 }

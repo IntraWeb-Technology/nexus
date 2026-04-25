@@ -1,6 +1,11 @@
 import { SignIn } from '@clerk/nextjs'
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const { userId } = await auth()
+  if (userId) redirect('/post-auth')
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
       <p className="mb-6 text-center text-sm text-[var(--iw-text-2)]">
@@ -20,7 +25,8 @@ export default function SignInPage() {
             formButtonPrimary: 'bg-[var(--iw-teal)] hover:bg-[var(--iw-teal-light)] text-white',
           },
         }}
-        forceRedirectUrl="/dashboard"
+        fallbackRedirectUrl="/post-auth"
+        forceRedirectUrl="/post-auth"
         signUpUrl="/sign-up"
       />
     </div>
