@@ -11,8 +11,8 @@ const DEFAULT_PLAN: Plan = 'starter'
 
 export function isPortalAutoProvisionEnabled(): boolean {
   const v = process.env.PORTAL_AUTO_PROVISION_SIGNUPS?.trim().toLowerCase()
-  if (!v) return process.env.NODE_ENV !== 'production'
-  return v === '1' || v === 'true' || v === 'yes'
+  if (!v) return true
+  return !(v === '0' || v === 'false' || v === 'no')
 }
 
 /** Parse Clerk `user.*` webhook payloads (snake_case fields per Clerk). */
