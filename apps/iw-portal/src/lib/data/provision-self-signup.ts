@@ -51,7 +51,48 @@ export function parseClerkWebhookUser(
  * were not delivered or configured.
  */
 export async function ensureSelfSignupProvisionForClerkUser(userId: string): Promise<void> {
+  return ensureSelfSignupProvisionForClerkUserWithClaims({ userId })
+}
+
+export async function ensureSelfSignupProvisionForClerkUserWithClaims(input: {
+  userId: string
+  email?: string | null
+  name?: string | null
+}): Promise<void> {
+  const { userId, email: claimEmail, name: claimName } = input
   if (!isPortalAutoProvisionEnabled() || !userId.startsWith('user_')) return
+
+  const normalizedClaimEmail = (claimEmail ?? '').trim().toLowerCase()
+  const normalizedClaimName = (claimName ?? '').trim()
+
+  // When Clerk backend key is absent or unavailable, fall back to session claims.
+  if (!process.env.CLERK_SECRET_KEY && normalizedClaimEmail) {
+    try {
+      const supabase = createServiceSupabase()
+      await linkPlaceholderClientToClerkUser(supabase, { clerkUserId: userId, email: normalizedClaimEmail })
+      const { data: existing } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('clerk_user_id', userId)
+        .maybeSingle()
+      if (existing) {
+        await mergeProvisionedClientsByEmailIntoClerkUser(supabase, {
+          clerkUserId: userId,
+          email: normalizedClaimEmail,
+        })
+        return
+      }
+      await provisionSelfSignupCustomer(supabase, {
+        userId,
+        email: normalizedClaimEmail,
+        name: normalizedClaimName || normalizedClaimEmail.split('@')[0] || 'Client',
+      })
+    } catch (e) {
+      console.error('[provision-self-signup] ensureSelfSignupProvisionForClerkUserWithClaims', e)
+    }
+    return
+  }
+
   const sk = process.env.CLERK_SECRET_KEY
   if (!sk) return
   try {

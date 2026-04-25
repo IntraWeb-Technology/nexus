@@ -1,4 +1,4 @@
-import { ensureSelfSignupProvisionForClerkUser } from '@/lib/data/provision-self-signup'
+import { ensureSelfSignupProvisionForClerkUserWithClaims } from '@/lib/data/provision-self-signup'
 import { syncPortalMissingHubSpotIdsFromCrm } from '@/lib/data/sync-portal-hubspot-from-crm'
 import { auth } from '@clerk/nextjs/server'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
@@ -59,7 +59,7 @@ export interface PortalBundle {
 }
 
 export const getPortalBundle = cache(async (): Promise<PortalBundle | null> => {
-  const { userId } = await auth()
+  const { userId, sessionClaims } = await auth()
   if (!userId) return null
   const supabase = await createServerSupabaseForUser()
   if (!supabase) return null
@@ -70,7 +70,21 @@ export const getPortalBundle = cache(async (): Promise<PortalBundle | null> => {
     .eq('clerk_user_id', userId)
     .maybeSingle()
   if (!client && !cErr) {
-    await ensureSelfSignupProvisionForClerkUser(userId)
+    const claimEmail =
+      (typeof sessionClaims?.email === 'string' && sessionClaims.email) ||
+      (typeof sessionClaims?.email_address === 'string' && sessionClaims.email_address) ||
+      null
+    const claimName =
+      (typeof sessionClaims?.name === 'string' && sessionClaims.name) ||
+      [sessionClaims?.given_name, sessionClaims?.family_name]
+        .filter((v): v is string => typeof v === 'string' && Boolean(v.trim()))
+        .join(' ') ||
+      null
+    await ensureSelfSignupProvisionForClerkUserWithClaims({
+      userId,
+      email: claimEmail,
+      name: claimName,
+    })
     const again = await supabase.from('clients').select('*').eq('clerk_user_id', userId).maybeSingle()
     client = again.data
     cErr = again.error
