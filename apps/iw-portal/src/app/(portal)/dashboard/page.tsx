@@ -13,6 +13,7 @@ import { billingTotals, mergeBillingRows } from '@/lib/billing/types'
 import { getPortalBundle } from '@/lib/data/portal'
 import { isHubSpotConfigured } from '@/lib/hubspot/config'
 import { fetchHubSpotBillingInvoices } from '@/lib/hubspot/invoices'
+import { fetchHubSpotDealLineItems } from '@/lib/hubspot/line-items'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { ActivityLogRow, Invoice, Message, Milestone, NotificationRow, OsAutomationLogRow } from '@/lib/supabase/types'
 import Link from 'next/link'
@@ -32,6 +33,17 @@ function partOfDay() {
   return 'Good evening'
 }
 
+function shortDateTime(iso: string): string {
+  const t = Date.parse(iso)
+  if (Number.isNaN(t)) return 'Just now'
+  return new Date(t).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 export default async function DashboardPage() {
   const bundle = await getPortalBundle()
   const supabase = await createServerSupabaseForUser()
@@ -39,7 +51,7 @@ export default async function DashboardPage() {
   const pid = bundle.project.id
   const multiProject = bundle.projects.length > 1
 
-  const [msRes, invRes, notRes, activityRes, messageRes, automationRes, hubspotInvoices] = await Promise.all([
+  const [msRes, invRes, notRes, activityRes, messageRes, automationRes, hubspotInvoices, dealLineItems] = await Promise.all([
     supabase.from('milestones').select('*').eq('project_id', pid).order('sort_order', { ascending: true }),
     supabase.from('invoices').select('*').eq('project_id', pid),
     supabase.from('notifications').select('*').eq('project_id', pid).order('created_at', { ascending: false }),
@@ -66,6 +78,7 @@ export default async function DashboardPage() {
           hubspotContactId: bundle.client.hubspot_contact_id,
         })
       : Promise.resolve([]),
+    isHubSpotConfigured() ? fetchHubSpotDealLineItems(bundle.project.hubspot_deal_id) : Promise.resolve([]),
   ])
 
   const milestones = (msRes.data ?? []) as Milestone[]
@@ -79,6 +92,10 @@ export default async function DashboardPage() {
   const billingRows = mergeBillingRows(supabaseInvoices, hubspotInvoices)
   const { paid: paidCents, balance: balanceDue } = billingTotals(billingRows)
   const invoiceCount = billingRows.length
+  const lineItemTotalCents = dealLineItems.reduce((sum, item) => sum + item.totalAmountCents, 0)
+  const displayBalanceDue =
+    balanceDue > 0 ? balanceDue : invoiceCount === 0 ? lineItemTotalCents : balanceDue
+  const usingLineItemFallback = displayBalanceDue > 0 && invoiceCount === 0 && balanceDue === 0
 
   const start = bundle.project.start_date ? new Date(bundle.project.start_date) : null
   /* Server component: wall clock for “days since start” — not a pure function by design. */
@@ -164,8 +181,15 @@ export default async function DashboardPage() {
           <div className="iw-card-head">
             <h2 className="iw-card-title">Balance due</h2>
           </div>
-          <p className="text-3xl font-semibold tracking-tight">{money(balanceDue)}</p>
-          <p className="mt-2 text-sm text-[var(--iw-text-2)]">{invoiceCount} invoice rows · {money(paidCents)} paid</p>
+          <p className="text-3xl font-semibold tracking-tight">{money(displayBalanceDue)}</p>
+          <p className="mt-2 text-sm text-[var(--iw-text-2)]">
+            {invoiceCount} invoice rows · {money(paidCents)} paid
+          </p>
+          {usingLineItemFallback ? (
+            <p className="mt-2 text-xs text-[var(--iw-text-3)]">
+              No invoice rows yet — showing total from current deal line items.
+            </p>
+          ) : null}
           <Link href="/billing" className="mt-4 inline-flex">
             <Button variant="ghost">Open billing</Button>
           </Link>
@@ -176,11 +200,26 @@ export default async function DashboardPage() {
             <h2 className="iw-card-title">Recent activity</h2>
             <Link href="/activity" className="iw-chip">Full log</Link>
           </div>
-          {activities.length ? activities.map((item) => (
-            <p key={item.id} className="mt-3 border-t border-[var(--hairline)] pt-3 text-sm first:border-0 first:pt-0">
-              <b>{item.label}</b>{item.detail ? ` — ${item.detail}` : ''}
-            </p>
-          )) : <p className="text-sm text-[var(--iw-text-2)]">No activity has been recorded yet.</p>}
+          {activities.length ? (
+            <ul className="space-y-2.5">
+              {activities.map((item) => (
+                <li
+                  key={item.id}
+                  className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)]/50 px-3 py-2.5 transition-colors duration-200 hover:border-[var(--iw-border-2)]"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-[var(--iw-text)]">{item.label}</p>
+                    <span className="iw-chip shrink-0">{shortDateTime(item.created_at)}</span>
+                  </div>
+                  {item.detail ? (
+                    <p className="mt-1.5 text-sm text-[var(--iw-text-2)]">{item.detail}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-[var(--iw-text-2)]">No activity has been recorded yet.</p>
+          )}
         </Card>
 
         <Card className="lg:col-span-5">
@@ -272,7 +311,15 @@ export default async function DashboardPage() {
                 <p className="text-sm text-[var(--iw-text-2)]">Nothing pending right now.</p>
               </Card>
             )}
-            <PlanSummary plan={bundle.project.plan} />
+            <PlanSummary
+              plan={bundle.project.plan}
+              includedItems={dealLineItems.map((item) => ({
+                id: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                totalAmountCents: item.totalAmountCents,
+              }))}
+            />
           </div>
         </div>
       </section>
