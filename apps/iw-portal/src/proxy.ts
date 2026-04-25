@@ -7,6 +7,8 @@ const CANONICAL_PORTAL_HOST = 'dashboard.intrawebtech.com'
 
 const isPublicRoute = createRouteMatcher([
   '/',
+  '/post-auth',
+  '/post-auth(.*)',
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/webhook(.*)',
