@@ -290,9 +290,36 @@ export async function POST(request: Request) {
           })
         }
 
-        const { data: slugRow } = await supabase.from('projects').select('id').eq('slug', slug).maybeSingle()
+        const { data: slugRow, error: slugErr } = await supabase
+          .from('projects')
+          .select('id, client_id, hubspot_deal_id')
+          .eq('slug', slug)
+          .maybeSingle()
+        if (slugErr) {
+          console.error('[webhook/n8n] provision_client slug lookup', slugErr)
+          return NextResponse.json({ error: 'project lookup failed' }, { status: 500 })
+        }
         if (slugRow) {
-          return NextResponse.json({ error: 'project slug already exists' }, { status: 409 })
+          const incomingDealId = data.hubspot_deal_id?.trim()
+          const existingDealId = slugRow.hubspot_deal_id?.trim()
+          if (existingDealId && incomingDealId && existingDealId !== incomingDealId) {
+            return NextResponse.json({ error: 'project slug already exists' }, { status: 409 })
+          }
+          if (!existingDealId && incomingDealId) {
+            const { error: backfillErr } = await supabase
+              .from('projects')
+              .update({ hubspot_deal_id: incomingDealId })
+              .eq('id', slugRow.id)
+            if (backfillErr) {
+              console.error('[webhook/n8n] provision_client deal id backfill', backfillErr)
+              return NextResponse.json({ error: 'project update failed' }, { status: 500 })
+            }
+          }
+          return NextResponse.json({
+            client_id: slugRow.client_id,
+            project_id: slugRow.id,
+            idempotent: true,
+          })
         }
 
         const clerkFromPayload = data.clerk_user_id?.trim()
