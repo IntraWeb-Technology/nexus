@@ -274,7 +274,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "={{ 'Bearer ' + $json.clerkSecret }}"
+              "value": "={{ 'Bearer ' + $('After portal response').first().json.clerkSecret }}"
             },
             {
               "name": "Content-Type",

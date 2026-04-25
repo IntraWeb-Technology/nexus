@@ -371,23 +371,45 @@ export async function POST(request: Request) {
             clientId = client.id
           }
         } else {
-          insertedNewClientForRollback = true
-          const { data: client, error: cErr } = await supabase
+          const { data: existingClient, error: exErr } = await supabase
             .from('clients')
-            .insert({
-              clerk_user_id: clerkUserId,
-              name: data.name,
-              email: data.email,
-              phone: data.phone ?? null,
-              company: null,
-              hubspot_contact_id: data.hubspot_contact_id,
-            })
-            .select('id')
-            .single()
-          if (cErr || !client) {
-            return NextResponse.json({ error: cErr?.message ?? 'client insert failed' }, { status: 500 })
+            .select('id, hubspot_contact_id')
+            .eq('clerk_user_id', clerkUserId)
+            .maybeSingle()
+          if (exErr) {
+            console.error('[webhook/n8n] provision_client placeholder client lookup', exErr)
+            return NextResponse.json({ error: 'client lookup failed' }, { status: 500 })
           }
-          clientId = client.id
+          if (existingClient) {
+            clientId = existingClient.id
+            const patch: { hubspot_contact_id?: string; name?: string; phone?: string | null } = {}
+            if (!existingClient.hubspot_contact_id?.trim()) {
+              patch.hubspot_contact_id = data.hubspot_contact_id
+            }
+            if (data.name?.trim()) patch.name = data.name.trim()
+            if (data.phone !== undefined) patch.phone = data.phone ?? null
+            if (Object.keys(patch).length) {
+              await supabase.from('clients').update(patch).eq('id', clientId)
+            }
+          } else {
+            insertedNewClientForRollback = true
+            const { data: client, error: cErr } = await supabase
+              .from('clients')
+              .insert({
+                clerk_user_id: clerkUserId,
+                name: data.name,
+                email: data.email,
+                phone: data.phone ?? null,
+                company: null,
+                hubspot_contact_id: data.hubspot_contact_id,
+              })
+              .select('id')
+              .single()
+            if (cErr || !client) {
+              return NextResponse.json({ error: cErr?.message ?? 'client insert failed' }, { status: 500 })
+            }
+            clientId = client.id
+          }
         }
 
         const { data: project, error: pErr } = await supabase
