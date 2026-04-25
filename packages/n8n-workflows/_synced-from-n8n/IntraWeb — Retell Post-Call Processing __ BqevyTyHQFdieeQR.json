@@ -1,0 +1,496 @@
+{
+  "updatedAt": "2026-04-18T22:45:42.412Z",
+  "createdAt": "2026-03-01T04:11:23.663Z",
+  "id": "BqevyTyHQFdieeQR",
+  "name": "IntraWeb — Retell Post-Call Processing",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## IntraWeb — Retell Post-Call Processing\n\nTriggered by Retell AI webhook after every outbound call ends.\n\n**Flow:**\n1. Receive Retell webhook\n2. Parse outcome + transcript\n3. Update HubSpot contact\n4. Route by outcome:\n   - booked → create deal + confirmation alert\n   - not_interested → log + cold nurture\n   - callback → log + schedule reminder\n   - disqualified → log reason\n5. Fire Google Chat alert for all outcomes\n\n**⚠️ Before activating:**\n1. Set this webhook URL in Retell agent settings:\n   https://n8n.intrawebtech.com/webhook/retell-call-complete\n2. Connect HubSpot App Token credential\n3. Connect Gmail OAuth credential  \n4. Replace YOUR_SPACE_ID in all Google Chat nodes\n5. Confirm HubSpot custom properties exist:\n   - call_outcome\n   - call_summary\n   - call_recording_url\n   - last_call_timestamp\n   - disqualification_reason\n   - callback_requested_time",
+        "height": 440,
+        "width": 520,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -96
+      ],
+      "id": "e870b269-690d-4ccc-a44f-89d5e483419f",
+      "name": "📋 Setup Notes"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "retell-call-complete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        432
+      ],
+      "id": "3a591f4d-0aff-4d42-b401-3d2d189ae4ad",
+      "name": "📞 Retell Call Complete Webhook",
+      "webhookId": "retell-call-complete-001"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "OK",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        432
+      ],
+      "id": "cbc99c1f-18ba-40da-bedd-3c3140e38349",
+      "name": "Respond 200 OK"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// ── Retell post-call payload fields ──────────────────────────\nconst callId          = body.call_id || '';\nconst agentId         = body.agent_id || '';\nconst callStatus      = body.call_status || '';\nconst transcript      = body.transcript || '';\nconst recordingUrl    = body.recording_url || '';\nconst startTs         = body.start_timestamp || null;\nconst endTs           = body.end_timestamp || null;\nconst durationMs      = body.duration_ms || 0;\nconst durationMins    = durationMs ? (durationMs / 60000).toFixed(1) : '0';\n\n// ── Post-call analysis (Retell fills these after analysis) ───\nconst analysis        = body.call_analysis || {};\nconst callSuccessful  = analysis.call_successful || false;\nconst summary         = analysis.custom_analysis_data?.summary || analysis.call_summary || 'No summary available';\nconst sentiment       = analysis.user_sentiment || 'Unknown';\n\n// ── Dynamic variables set during call ─────────────────────────\nconst dynVars         = body.retell_llm_dynamic_variables || {};\nconst collectedVars   = body.collected_dynamic_variables || {};\n\nconst customerName    = dynVars.customer_name || collectedVars.customer_name || '';\nconst leadPain        = dynVars.lead_pain || collectedVars.lead_pain || '';\n\n// ── Collected during call ─────────────────────────────────────\nconst collectedEmail      = collectedVars.email || '';\nconst bookedTime          = collectedVars.booked_time || collectedVars.booking_time || '';\nconst callbackTime        = collectedVars.callback_time || '';\nconst disqualifyReason    = collectedVars.disqualify_reason || collectedVars.disqualification_reason || '';\nconst decisionMaker       = collectedVars.decision_maker || 'unknown';\nconst teamSize            = collectedVars.team_size || '';\nconst toNumber            = body.to_number || '';\n\n// ── Determine outcome ─────────────────────────────────────────\n// Retell doesn't set this — we infer from collected variables + call success\nlet outcome = 'unknown';\nif (bookedTime)                                        outcome = 'booked';\nelse if (callbackTime)                                 outcome = 'callback';\nelse if (disqualifyReason)                             outcome = 'disqualified';\nelse if (callStatus === 'ended' && !callSuccessful)    outcome = 'not_interested';\nelse if (callStatus === 'ended' && callSuccessful)     outcome = 'not_interested'; // successful call but no booking\nelse if (['no_answer','voicemail','busy'].includes(callStatus)) outcome = 'no_answer';\n\n// ── Format duration ───────────────────────────────────────────\nconst durationLabel = durationMs\n  ? `${Math.floor(durationMs/60000)}m ${Math.round((durationMs%60000)/1000)}s`\n  : 'n/a';\n\nreturn [{ json: {\n  callId,\n  agentId,\n  callStatus,\n  callSuccessful,\n  outcome,\n  customerName,\n  toNumber,\n  collectedEmail,\n  bookedTime,\n  callbackTime,\n  disqualifyReason,\n  decisionMaker,\n  teamSize,\n  leadPain,\n  summary,\n  sentiment,\n  transcript,\n  recordingUrl,\n  durationLabel,\n  startTs,\n  endTs\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        432
+      ],
+      "id": "49f80c16-68ed-49a6-8a35-8b6165c21108",
+      "name": "📋 Parse Retell Payload"
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $json.collectedEmail || $json.toNumber }}",
+        "additionalFields": {
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "call_outcome",
+                "value": "={{ $json.outcome }}"
+              },
+              {
+                "property": "call_summary",
+                "value": "={{ $json.summary }}"
+              },
+              {
+                "property": "call_recording_url",
+                "value": "={{ $json.recordingUrl }}"
+              },
+              {
+                "property": "last_call_timestamp",
+                "value": "={{ $json.startTs }}"
+              },
+              {
+                "property": "disqualification_reason",
+                "value": "={{ $json.disqualifyReason }}"
+              },
+              {
+                "property": "callback_requested_time",
+                "value": "={{ $json.callbackTime }}"
+              },
+              {
+                "property": "lead_tier",
+                "value": "Growth"
+              }
+            ]
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        704,
+        432
+      ],
+      "id": "d2d64046-bbce-4692-91d8-c52262cb1ca4",
+      "name": "📊 Update HubSpot Contact",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "booked-check",
+              "leftValue": "={{ $json.outcome }}",
+              "rightValue": "booked",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        432
+      ],
+      "id": "33b4f5a4-316a-4e88-83e0-438a86c92873",
+      "name": "📅 Was Call Booked?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "callback-check",
+              "leftValue": "={{ $('📋 Parse Retell Payload').first().json.outcome }}",
+              "rightValue": "callback",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        688
+      ],
+      "id": "540a0781-e48e-4df6-bed5-6ea6c40b3136",
+      "name": "📞 Callback Requested?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "noanswer-check",
+              "leftValue": "={{ $('📋 Parse Retell Payload').first().json.outcome }}",
+              "rightValue": "no_answer",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        944
+      ],
+      "id": "e8b79e17-7772-473c-904a-9ed6b25c0b8a",
+      "name": "📵 No Answer?"
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "deal",
+        "stage": "appointmentscheduled",
+        "additionalFields": {
+          "amount": "10000",
+          "associatedVids": "={{ $('📊 Update HubSpot Contact').first().json.vid || '' }}",
+          "dealName": "={{ $('📋 Parse Retell Payload').first().json.customerName }} — AI Discovery Call",
+          "pipeline": "default"
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1328,
+        208
+      ],
+      "id": "6b3ba79a-6a05-40ce-8b74-35e5ed01f6b4",
+      "name": "💼 Create HubSpot Deal",
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://chat.googleapis.com/v1/spaces/YOUR_SPACE_ID/messages",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: '📅 *DISCOVERY CALL BOOKED*\\n\\n*Lead:* ' + $('📋 Parse Retell Payload').first().json.customerName + '\\n*Phone:* ' + $('📋 Parse Retell Payload').first().json.toNumber + '\\n*Email:* ' + $('📋 Parse Retell Payload').first().json.collectedEmail + '\\n*Booked for:* ' + $('📋 Parse Retell Payload').first().json.bookedTime + '\\n*Pain point:* ' + $('📋 Parse Retell Payload').first().json.leadPain + '\\n*Decision maker:* ' + $('📋 Parse Retell Payload').first().json.decisionMaker + '\\n*Team size:* ' + $('📋 Parse Retell Payload').first().json.teamSize + '\\n*Sentiment:* ' + $('📋 Parse Retell Payload').first().json.sentiment + '\\n*Call duration:* ' + $('📋 Parse Retell Payload').first().json.durationLabel + '\\n*Summary:* ' + $('📋 Parse Retell Payload').first().json.summary + '\\n*Recording:* ' + $('📋 Parse Retell Payload').first().json.recordingUrl + '\\n\\n✅ HubSpot deal created at $10K.' }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        384
+      ],
+      "id": "1009cb43-2a4c-4709-9baf-0cd89a58fdc1",
+      "name": "💬 Google Chat — Booked Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://chat.googleapis.com/v1/spaces/YOUR_SPACE_ID/messages",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: '📞 *CALLBACK REQUESTED*\\n\\n*Lead:* ' + $('📋 Parse Retell Payload').first().json.customerName + '\\n*Phone:* ' + $('📋 Parse Retell Payload').first().json.toNumber + '\\n*Call back at:* ' + $('📋 Parse Retell Payload').first().json.callbackTime + '\\n*Pain point:* ' + $('📋 Parse Retell Payload').first().json.leadPain + '\\n*Sentiment:* ' + $('📋 Parse Retell Payload').first().json.sentiment + '\\n*Call duration:* ' + $('📋 Parse Retell Payload').first().json.durationLabel + '\\n*Summary:* ' + $('📋 Parse Retell Payload').first().json.summary + '\\n\\n⏰ Schedule a manual callback at the requested time.' }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        640
+      ],
+      "id": "370735ee-d531-4362-9c9c-64466db79342",
+      "name": "💬 Google Chat — Callback Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://chat.googleapis.com/v1/spaces/YOUR_SPACE_ID/messages",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: '📵 *NO ANSWER*\\n\\n*Lead:* ' + $('📋 Parse Retell Payload').first().json.customerName + '\\n*Phone:* ' + $('📋 Parse Retell Payload').first().json.toNumber + '\\n*Call status:* ' + $('📋 Parse Retell Payload').first().json.callStatus + '\\n\\n🔁 Consider retry attempt in 4 hours.' }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        880
+      ],
+      "id": "35ed5f15-06d7-498d-92de-4d921513c2ee",
+      "name": "💬 Google Chat — No Answer Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://chat.googleapis.com/v1/spaces/YOUR_SPACE_ID/messages",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: '❌ *NOT INTERESTED / DISQUALIFIED*\\n\\n*Lead:* ' + $('📋 Parse Retell Payload').first().json.customerName + '\\n*Phone:* ' + $('📋 Parse Retell Payload').first().json.toNumber + '\\n*Outcome:* ' + $('📋 Parse Retell Payload').first().json.outcome + '\\n*Reason:* ' + ($('📋 Parse Retell Payload').first().json.disqualifyReason || 'Not specified') + '\\n*Sentiment:* ' + $('📋 Parse Retell Payload').first().json.sentiment + '\\n*Call duration:* ' + $('📋 Parse Retell Payload').first().json.durationLabel + '\\n*Summary:* ' + $('📋 Parse Retell Payload').first().json.summary + '\\n*Recording:* ' + $('📋 Parse Retell Payload').first().json.recordingUrl }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        1120
+      ],
+      "id": "ecaa4eac-46d0-43f0-b602-91b7c14c2a54",
+      "name": "💬 Google Chat — Not Interested / Disqualified"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Discovery call booked — {{ $('📋 Parse Retell Payload').first().json.customerName }}",
+        "message": "=<p>A discovery call was just booked by the AI agent.</p>\n\n<table>\n<tr><td><strong>Lead</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.customerName }}</td></tr>\n<tr><td><strong>Phone</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.toNumber }}</td></tr>\n<tr><td><strong>Email</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.collectedEmail }}</td></tr>\n<tr><td><strong>Booked for</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.bookedTime }}</td></tr>\n<tr><td><strong>Pain point</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.leadPain }}</td></tr>\n<tr><td><strong>Decision maker</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.decisionMaker }}</td></tr>\n<tr><td><strong>Team size</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.teamSize }}</td></tr>\n<tr><td><strong>Sentiment</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.sentiment }}</td></tr>\n<tr><td><strong>Call duration</strong></td><td>{{ $('📋 Parse Retell Payload').first().json.durationLabel }}</td></tr>\n</table>\n\n<p><strong>AI Summary:</strong><br>{{ $('📋 Parse Retell Payload').first().json.summary }}</p>\n\n<p><a href=\"{{ $('📋 Parse Retell Payload').first().json.recordingUrl }}\">→ Listen to call recording</a></p>",
+        "options": {
+          "replyTo": "john@intrawebtech.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1328,
+        48
+      ],
+      "id": "fc79c068-1f7e-4657-9e8a-09000592a3f6",
+      "name": "📧 Email John — Call Booked",
+      "webhookId": "6f0ee3a8-f32d-4e80-b4bb-08fad030b8c5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "q0R87wvDrXfMypYW",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "📞 Retell Call Complete Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 200 OK": {
+      "main": [
+        [
+          {
+            "node": "📋 Parse Retell Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Parse Retell Payload": {
+      "main": [
+        [
+          {
+            "node": "📊 Update HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Update HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "📅 Was Call Booked?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📅 Was Call Booked?": {
+      "main": [
+        [
+          {
+            "node": "📧 Email John — Call Booked",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "💼 Create HubSpot Deal",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "💬 Google Chat — Booked Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📞 Callback Requested?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📞 Callback Requested?": {
+      "main": [
+        [
+          {
+            "node": "💬 Google Chat — Callback Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📵 No Answer?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📵 No Answer?": {
+      "main": [
+        [
+          {
+            "node": "💬 Google Chat — No Answer Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "💬 Google Chat — Not Interested / Disqualified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "708a611b-119a-47ce-a85f-b3bac3f4fd3c",
+  "activeVersionId": null,
+  "versionCounter": 12,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-01T04:11:23.672Z",
+      "createdAt": "2026-03-01T04:11:23.672Z",
+      "role": "workflow:owner",
+      "workflowId": "BqevyTyHQFdieeQR",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

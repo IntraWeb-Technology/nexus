@@ -21,6 +21,7 @@ export default function SignUpPage() {
             formButtonPrimary: 'bg-[var(--iw-teal)] hover:bg-[var(--iw-teal-light)] text-white',
           },
         }}
+        fallbackRedirectUrl="/dashboard"
         forceRedirectUrl="/dashboard"
         signInUrl="/sign-in"
       />

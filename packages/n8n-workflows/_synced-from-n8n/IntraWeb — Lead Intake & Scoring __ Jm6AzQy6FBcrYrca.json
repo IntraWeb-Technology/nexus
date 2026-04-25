@@ -1,0 +1,552 @@
+{
+  "updatedAt": "2026-03-01T06:51:00.000Z",
+  "createdAt": "2026-03-01T06:38:41.936Z",
+  "id": "Jm6AzQy6FBcrYrca",
+  "name": "IntraWeb — Lead Intake & Scoring",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intraweb-lead-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1680,
+        320
+      ],
+      "id": "bfed3b5a-8d78-4893-921e-0c57965fbf03",
+      "name": "📥 HubSpot Contact Webhook",
+      "webhookId": "be8c663c-5384-48ed-a752-48d0d1b1416f"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "OK",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -1472,
+        320
+      ],
+      "id": "6b6849fb-b49b-4fa2-a53f-884748b30f3b",
+      "name": "Respond 200 OK"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\n// ── FIX: data arrives nested under 'body' from webhook ──\nconst raw = input.body || input;\n\nconst get = (key) => {\n  return raw[key] \n    || raw?.properties?.[key]?.value \n    || raw?.properties?.[key] \n    || input[key]\n    || '';\n};\n\nconst firstName     = get('firstName') || get('firstname');\nconst lastName      = get('lastName') || get('lastname');\nconst email         = get('email');\nconst phone         = get('phone') || get('mobilephone') || '';\nconst website       = get('website');\nconst reasonForCall = get('reasonForCall') || get('reason_for_call');\nconst decisionMaker = get('decisionMaker') || get('decision_maker');\nconst annualRevenue = get('annualRevenue') || get('annual_revenue');\nconst numberOfEmployees = parseInt(get('numberOfEmployees') || get('numberofemployees')) || 0;\nconst message       = get('message');\nconst contactId     = raw.id || raw.contactId || input.id || '';\n\nlet score = 0;\nconst breakdown = [];\n\n// ── REASON FOR CALL (30pts) ──────────────────────────\nconst reasonScores = {\n  'AI Transformation': 30,\n  'Custom AI Engineer': 20,\n  'Reselling/White-label': 15,\n  'Educating Team': 10\n};\nconst reasonPts = reasonScores[reasonForCall] || 0;\nscore += reasonPts;\nbreakdown.push(`Reason (${reasonForCall}): +${reasonPts}pts`);\n\n// ── ANNUAL REVENUE (25pts) ───────────────────────────\nconst revenueScores = {\n  '$5M - $10M': 25,\n  '$1M - $5M': 20,\n  '$10M+': 20,\n  '$500K - $1M': 10,\n  '$100K - $500K': 5,\n  'Under $100K': 0,\n  'Prefer not to say': 5\n};\nconst revenuePts = revenueScores[annualRevenue] || 0;\nscore += revenuePts;\nbreakdown.push(`Revenue (${annualRevenue}): +${revenuePts}pts`);\n\n// ── DECISION MAKER (20pts) ───────────────────────────\nconst dmPts = decisionMaker === 'Yes' ? 20 : 0;\nscore += dmPts;\nbreakdown.push(`Decision Maker (${decisionMaker}): +${dmPts}pts`);\n\n// ── EMPLOYEE COUNT (15pts) ───────────────────────────\nlet empPts = 0;\nif (numberOfEmployees >= 10 && numberOfEmployees <= 150) empPts = 15;\nelse if (numberOfEmployees > 150) empPts = 8;\nelse if (numberOfEmployees > 0) empPts = 5;\nscore += empPts;\nbreakdown.push(`Employees (${numberOfEmployees || 'not provided'}): +${empPts}pts`);\n\n// ── EMAIL QUALITY (5pts) ─────────────────────────────\nconst genericDomains = ['gmail.com','yahoo.com','hotmail.com','outlook.com','icloud.com'];\nconst emailDomain = email.split('@')[1]?.toLowerCase() || '';\nconst emailPts = !genericDomains.includes(emailDomain) ? 5 : 0;\nscore += emailPts;\nbreakdown.push(`Business email: +${emailPts}pts`);\n\nlet bucket = 'cold';\nif (score >= 65) bucket = 'hot';\nelse if (score >= 38) bucket = 'warm';\n\nreturn [{\n  json: {\n    contactId,\n    firstName,\n    lastName,\n    email,\n    phone,\n    website,\n    reasonForCall,\n    decisionMaker,\n    annualRevenue,\n    numberOfEmployees,\n    message,\n    hardScore: score,\n    preBucket: bucket,\n    breakdown: breakdown.join(' | ')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1280,
+        320
+      ],
+      "id": "876a58e0-66f3-4256-bb75-4b06dda4f0ea",
+      "name": "⚡ Score Lead (Hard Fields)"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You are a lead qualification assistant for IntraWeb Technologies, an AI transformation firm targeting mid-market companies. Analyze the prospect's message for specificity, urgency, and clarity of business pain. Return ONLY a valid JSON object with no markdown, no code fences, no explanation.",
+              "role": "system"
+            },
+            {
+              "content": "=Score this message from 0-10 and extract a one-sentence pain point summary.\\n\\nRules:\\n- 0-2: Vague, no specific pain (e.g. 'just interested', 'want to learn more')\\n- 3-5: Some context but generic (e.g. 'want to improve efficiency')\\n- 6-8: Specific pain point mentioned (e.g. 'our team spends 15hrs/week on manual reporting')\\n- 9-10: Specific pain + urgency + clear business impact\\n\\nMessage: {{ $json.message }}\\n\\nRespond with ONLY this JSON:\\n{\\\"messageScore\\\": <number 0-10>, \\\"painPoint\\\": \\\"<one sentence summary of their core pain, or 'Not specified' if vague>\\\"}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -1104,
+        320
+      ],
+      "id": "91cf6df9-e3c8-4a29-845f-798f603db0a9",
+      "name": "🤖 AI Message Scorer",
+      "credentials": {
+        "openAiApi": {
+          "id": "3W5Kyj3ksFlPlXpf",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('⚡ Score Lead (Hard Fields)').first().json;\nconst aiInput = $input.first().json;\n\nlet aiData = { messageScore: 0, painPoint: 'Not specified' };\ntry {\n  if (aiInput?.messageScore !== undefined) {\n    aiData = { messageScore: aiInput.messageScore, painPoint: aiInput.painPoint || 'Not specified' };\n  } else if (aiInput?.message?.content) {\n    const cleaned = aiInput.message.content.replace(/```json|```/g, '').trim();\n    aiData = JSON.parse(cleaned);\n  } else if (aiInput?.text) {\n    const cleaned = aiInput.text.replace(/```json|```/g, '').trim();\n    aiData = JSON.parse(cleaned);\n  }\n} catch(e) {}\n\nconst totalScore = Math.min(100, prev.hardScore + aiData.messageScore);\n\nlet bucket = 'cold';\nif (totalScore >= 70) bucket = 'hot';\nelse if (totalScore >= 40) bucket = 'warm';\n\n// ── Determine lead_tier for ElevenLabs dynamic variable ──\n// Growth: 10-150 employees OR $5M+ revenue\n// Starter: everyone else who qualifies\nconst emp = prev.numberOfEmployees || 0;\nconst rev = prev.annualRevenue || '';\nconst isGrowth = (emp >= 10 && emp <= 150) || ['$5M - $10M','$10M+'].includes(rev);\nconst leadTier = bucket === 'hot' ? (isGrowth ? 'growth' : 'starter') : 'starter';\n\nreturn [{\n  json: {\n    ...prev,\n    messageScore: aiData.messageScore,\n    painPoint: aiData.painPoint,\n    totalScore,\n    bucket,\n    leadTier,\n    fullBreakdown: prev.breakdown + ` | Message quality: +${aiData.messageScore}pts | TOTAL: ${totalScore}/100 → ${bucket.toUpperCase()}`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        320
+      ],
+      "id": "6aa62dde-58e7-4506-8300-12716b673435",
+      "name": "🔢 Combine Scores & Bucket"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $json.email }}",
+        "additionalFields": {
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "=lead_score",
+                "value": "={{ $json.totalScore }}"
+              },
+              {
+                "property": "=lead_tier",
+                "value": "={{ $json.bucket.charAt(0).toUpperCase() + $json.bucket.slice(1).toLowerCase() }}"
+              },
+              {
+                "property": "=pain_point_summary",
+                "value": "={{ $json.painPoint }}"
+              },
+              {
+                "property": "=scoring_breakdown",
+                "value": "={{ $json.fullBreakdown }}"
+              }
+            ]
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        320
+      ],
+      "id": "2755a32d-d427-47af-b3ed-4a21537fadd8",
+      "name": "📊 Update HubSpot Contact",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "ZRIrnXjLJc2Cek2l",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "hot-check",
+              "leftValue": "={{ $('🔢 Combine Scores & Bucket').first().json.bucket }}",
+              "rightValue": "hot",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -320,
+        320
+      ],
+      "id": "15b50a53-b32c-4fec-a935-4aa0f7ef0540",
+      "name": "🔥 Is Hot Lead?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "warm-check",
+              "leftValue": "={{ $('🔢 Combine Scores & Bucket').first().json.bucket }}",
+              "rightValue": "warm",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -320,
+        560
+      ],
+      "id": "8da6ac67-42cf-4a4d-ae29-17c5dd331303",
+      "name": "☀️ Is Warm Lead?"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "deal",
+        "stage": "=appointmentscheduled",
+        "additionalFields": {
+          "amount": "10000",
+          "associatedVids": "={{ $('🔢 Combine Scores & Bucket').first().json.contactId || $json.vid }}",
+          "dealName": "={{ $('🔢 Combine Scores & Bucket').first().json.firstName }} {{ $('🔢 Combine Scores & Bucket').first().json.lastName }} — AI Diagnostic",
+          "pipeline": "default"
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        160
+      ],
+      "id": "e16e5912-6cdd-479a-999f-5b4c48e58f2e",
+      "name": "💼 Create HubSpot Deal ($10K)",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "ZRIrnXjLJc2Cek2l",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('🔢 Combine Scores & Bucket').first().json.email }}",
+        "subject": "=Quick question before we connect, {{ $('🔢 Combine Scores & Bucket').first().json.firstName }}",
+        "message": "=<p>Hi {{ $('🔢 Combine Scores & Bucket').first().json.firstName }},</p>\n\n<p>Thanks for reaching out to IntraWeb. Based on what you shared about <strong>{{ $('🔢 Combine Scores & Bucket').first().json.painPoint }}</strong>, I think we can make meaningful progress in a single conversation.</p>\n\n<p>I'd like to set aside 30 minutes to walk through where AI automation can deliver real ROI for your business — not theory, but specific workflows we could implement within 30 days.</p>\n\n<p><strong><a href=\"https://cal.com/intraweb/discovery\">→ Book your Discovery Call here</a></strong></p>\n\n<p>Come ready to talk about your current operations, team size, and where your biggest bottlenecks are. I'll do the rest.</p>\n\n<p>Talk soon,<br>John Schibelli<br>Founder, IntraWeb Technologies<br><a href=\"https://intrawebtech.com\">intrawebtech.com</a></p>",
+        "options": {
+          "replyTo": "human@intrawebtech.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        320
+      ],
+      "id": "3aa61441-a94e-48cf-87b8-c9ef298df0bd",
+      "name": "📧 Send Booking Invite (Hot)",
+      "webhookId": "716abaec-9526-4553-848b-008321be4e17",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "q0R87wvDrXfMypYW",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://chat.googleapis.com/v1/spaces/AAQAaHc_yMI/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=8k0OJoMEPfnorVu33gwgOEm05DP7Vk0lwDX5jkShhh4",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \n  text: '🔥 *HOT LEAD — Action Required*\\n\\n*Name:* ' + $('🔢 Combine Scores & Bucket').first().json.firstName + ' ' + $('🔢 Combine Scores & Bucket').first().json.lastName + \n  '\\n*Email:* ' + $('🔢 Combine Scores & Bucket').first().json.email + \n  '\\n*Website:* ' + $('🔢 Combine Scores & Bucket').first().json.website + \n  '\\n*Score:* ' + $('🔢 Combine Scores & Bucket').first().json.totalScore + '/100' + \n  '\\n*Tier:* ' + $('🔢 Combine Scores & Bucket').first().json.leadTier.toUpperCase() + \n  '\\n*Reason:* ' + $('🔢 Combine Scores & Bucket').first().json.reasonForCall + \n  '\\n*Revenue:* ' + $('🔢 Combine Scores & Bucket').first().json.annualRevenue + \n  '\\n*Decision Maker:* ' + $('🔢 Combine Scores & Bucket').first().json.decisionMaker + \n  '\\n*Pain Point:* ' + $('🔢 Combine Scores & Bucket').first().json.painPoint + \n  '\\n\\n✅ Booking invite sent.\\n💼 HubSpot deal created at $10K.\\n📲 ElevenLabs call queued.'\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        480
+      ],
+      "id": "61ce20e5-5cdd-4bf0-822a-e03a6a42fcd0",
+      "name": "💬 Google Chat — Hot Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/convai/twilio/outbound-call",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "xi-api-key",
+              "value": "YOUR_ELEVENLABS_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"agent_id\": \"YOUR_ELEVENLABS_AGENT_ID\",\n  \"agent_phone_number_id\": \"YOUR_IMPORTED_PHONE_NUMBER_ID\",\n  \"to_number\": $('🔢 Combine Scores & Bucket').first().json.phone || '',\n  \"conversation_initiation_client_data\": {\n    \"dynamic_variables\": {\n      \"customer_name\": $('🔢 Combine Scores & Bucket').first().json.firstName + ' ' + $('🔢 Combine Scores & Bucket').first().json.lastName,\n      \"lead_pain\": $('🔢 Combine Scores & Bucket').first().json.painPoint || 'operational efficiency',\n      \"lead_tier\": $('🔢 Combine Scores & Bucket').first().json.leadTier\n    }\n  }\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b92094c9-9767-4459-b765-ff9d9ec0c5f3",
+      "name": "📲 ElevenLabs — Fire Outbound Call"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('🔢 Combine Scores & Bucket').first().json.email }}",
+        "subject": "=AI transformation for {{ $('🔢 Combine Scores & Bucket').first().json.firstName }}'s team — a few thoughts",
+        "message": "=<p>Hi {{ $('🔢 Combine Scores & Bucket').first().json.firstName }},</p><p>Thanks for getting in touch. I took a look at what you shared and wanted to follow up personally.</p><p>A lot of companies at your stage are dealing with the same challenge — processes that worked at 10 people start breaking down at 30, and AI tools get bolted on without a real strategy. The result is wasted spend and frustrated teams.</p><p>IntraWeb's approach is different. We start with a structured diagnostic to find where automation actually moves the needle, then implement it in a way your team can own.</p><p>If that resonates, I'd love to find 30 minutes to talk through your situation specifically.</p><p><strong><a href=\"https://cal.com/intraweb/discovery\">→ Book a Discovery Call</a></strong></p><p>No pressure — just a conversation.</p><p>John Schibelli<br>Founder, IntraWeb Technologies<br><a href=\"https://intrawebtech.com\">intrawebtech.com</a></p>",
+        "options": {
+          "replyTo": "human@intrawebtech.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        640
+      ],
+      "id": "c84a5194-532e-4d88-b402-e3d3a6abe7dd",
+      "name": "📧 Send Nurture Email (Warm)",
+      "webhookId": "0d3e453e-1cff-4a6e-95f8-33ee991d5037",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "q0R87wvDrXfMypYW",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://chat.googleapis.com/v1/spaces/AAQAX-GYL6w/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=gE-XUjC4Xe6yZG583pew7shnfyqM8ZpbgTQ5AZ55h8s",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ \n  text: '☀️ *Warm Lead — Nurture Sequence Started*\\n\\n*Name:* ' + $('🔢 Combine Scores & Bucket').first().json.firstName + ' ' + $('🔢 Combine Scores & Bucket').first().json.lastName + \n  '\\n*Email:* ' + $('🔢 Combine Scores & Bucket').first().json.email + \n  '\\n*Score:* ' + $('🔢 Combine Scores & Bucket').first().json.totalScore + '/100' + \n  '\\n*Reason:* ' + $('🔢 Combine Scores & Bucket').first().json.reasonForCall + \n  '\\n*Pain Point:* ' + $('🔢 Combine Scores & Bucket').first().json.painPoint + \n  '\\n\\n📧 Nurture email sent. Follow up in 3 days if no booking.'\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        800
+      ],
+      "id": "a8296c42-fb75-47fe-885d-c3e72b5f812e",
+      "name": "💬 Google Chat — Warm Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://chat.googleapis.com/v1/spaces/YOUR_SPACE_ID/messages",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ text: '⚪ *Cold Lead Logged*\\n\\n*Name:* ' + $json.firstName + ' ' + $json.lastName + '\\n*Email:* ' + $json.email + '\\n*Score:* ' + $json.totalScore + '/100\\n*Reason:* ' + $json.reasonForCall + '\\n\\nAdded to newsletter sequence. No action needed.' }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        960
+      ],
+      "id": "9df60161-ec6f-48fe-8cb5-64e78e10ddc4",
+      "name": "💬 Google Chat — Cold Log"
+    },
+    {
+      "parameters": {
+        "content": "## IntraWeb — Lead Intake & Scoring v2\n\n**Trigger:** HubSpot sends POST to webhook on contact creation\n\n**Scoring breakdown (100pts max):**\n- Reason for call: 30pts\n- Annual revenue: 25pts\n- Decision maker: 20pts\n- Employee count: 15pts\n- Business email: 5pts\n- AI message quality: +10pts\n\n**Buckets:**\n- 🔥 HOT (70+): ElevenLabs call + Booking invite + HubSpot deal + Google Chat alert\n- ☀️ WARM (40-69): Nurture email + Google Chat alert\n- ⚪ COLD (0-39): Google Chat log only\n\n**Lead Tier logic (for ElevenLabs):**\n- growth: 10-150 employees OR $5M+ revenue\n- starter: everyone else\n\n**⚠️ Before activating:**\n1. Replace YOUR_ELEVENLABS_API_KEY\n2. Replace YOUR_ELEVENLABS_AGENT_ID\n3. Replace YOUR_IMPORTED_PHONE_NUMBER_ID\n4. Replace YOUR_SPACE_ID in Cold Log node\n5. Confirm HubSpot phone field name (phone vs mobilephone)\n6. Connect Gmail, HubSpot, OpenAI credentials",
+        "height": 440,
+        "width": 520,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        560
+      ],
+      "id": "77a7f418-91a6-42cd-b00c-3a8d1e0165e4",
+      "name": "📋 Setup Notes"
+    }
+  ],
+  "connections": {
+    "📥 HubSpot Contact Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond 200 OK": {
+      "main": [
+        [
+          {
+            "node": "⚡ Score Lead (Hard Fields)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚡ Score Lead (Hard Fields)": {
+      "main": [
+        [
+          {
+            "node": "🤖 AI Message Scorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 AI Message Scorer": {
+      "main": [
+        [
+          {
+            "node": "🔢 Combine Scores & Bucket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔢 Combine Scores & Bucket": {
+      "main": [
+        [
+          {
+            "node": "📊 Update HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📊 Update HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "🔥 Is Hot Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔥 Is Hot Lead?": {
+      "main": [
+        [
+          {
+            "node": "📲 ElevenLabs — Fire Outbound Call",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "💼 Create HubSpot Deal ($10K)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📧 Send Booking Invite (Hot)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "💬 Google Chat — Hot Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "☀️ Is Warm Lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "☀️ Is Warm Lead?": {
+      "main": [
+        [
+          {
+            "node": "📧 Send Nurture Email (Warm)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "💬 Google Chat — Warm Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "💬 Google Chat — Cold Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "01dc3906-9c32-4cd2-b341-44a4a2d6b52c",
+  "activeVersionId": null,
+  "versionCounter": 12,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-01T06:38:41.943Z",
+      "createdAt": "2026-03-01T06:38:41.943Z",
+      "role": "workflow:owner",
+      "workflowId": "Jm6AzQy6FBcrYrca",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

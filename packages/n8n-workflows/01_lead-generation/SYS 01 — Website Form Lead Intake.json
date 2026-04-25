@@ -1076,7 +1076,7 @@
   "pinData": {},
   "versionId": "3774389a-385d-4430-9258-229c4fd36378",
   "activeVersionId": "3774389a-385d-4430-9258-229c4fd36378",
-  "versionCounter": 510,
+  "versionCounter": 512,
   "triggerCount": 1,
   "shared": [
     {
@@ -2171,8 +2171,24 @@
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
+        "createdAt": "2026-04-25T14:42:42.262Z",
+        "id": 3129,
+        "workflowId": "JzghCkfPxT5CV1iT",
+        "versionId": "3774389a-385d-4430-9258-229c4fd36378",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
         "createdAt": "2026-04-20T15:46:10.772Z",
         "id": 3094,
+        "workflowId": "JzghCkfPxT5CV1iT",
+        "versionId": "3774389a-385d-4430-9258-229c4fd36378",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-25T14:42:42.230Z",
+        "id": 3128,
         "workflowId": "JzghCkfPxT5CV1iT",
         "versionId": "3774389a-385d-4430-9258-229c4fd36378",
         "event": "deactivated",

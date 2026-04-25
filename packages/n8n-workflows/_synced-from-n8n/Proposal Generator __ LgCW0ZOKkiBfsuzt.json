@@ -1,0 +1,266 @@
+{
+  "updatedAt": "2026-04-18T22:43:41.000Z",
+  "createdAt": "2026-04-11T01:30:51.438Z",
+  "id": "LgCW0ZOKkiBfsuzt",
+  "name": "Proposal Generator",
+  "description": "Takes a contact name or email from the manual trigger, pulls HubSpot contact and deal data, generates a formatted client proposal via Claude.",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Proposal Generator\n\nHow to use:\n1. Open this workflow and click **Test workflow**\n2. The trigger has a `contactQuery` field — edit it with the contact email or name before running\n3. The workflow searches HubSpot, finds the associated deal, and generates a full proposal via Claude\n4. Output contains `proposal` (full text), `client`, `company`, and `generated_at`\n\nTo run a different contact: edit the Manual Trigger node and update `contactQuery`.",
+        "height": 200,
+        "width": 300,
+        "color": 3
+      },
+      "id": "1c35d1a2-5ec3-423c-9ad8-c9c5add16a6d",
+      "name": "Sticky Note 13e783a2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        192,
+        256
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1889e9b3-29c2-4d9e-97ba-1e63050948fd",
+      "name": "Run Proposal Generator",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "operation": "search",
+        "limit": 1,
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "email|string",
+                    "operator": "CONTAINS_TOKEN",
+                    "value": "={{ $json.contactQuery }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "properties": [
+            "firstname",
+            "lastname",
+            "email",
+            "phone",
+            "company",
+            "website",
+            "message",
+            "lead_score",
+            "lead_tier",
+            "scoring_breakdown",
+            "jobtitle",
+            "decision_maker",
+            "hs_lead_status"
+          ]
+        }
+      },
+      "id": "f96d0ac4-2284-4641-b17e-a5de2102ceea",
+      "name": "Search HubSpot Contact",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        304
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ZDFqX6DMxufgJufI",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "deal",
+        "operation": "search",
+        "limit": 1,
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "associations.contact",
+                    "value": "={{ $(\"Search HubSpot Contact\").item.json.id }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "properties": [
+            "dealname",
+            "amount",
+            "dealstage",
+            "description",
+            "hs_priority",
+            "hs_next_step",
+            "closedate"
+          ]
+        }
+      },
+      "id": "14196dfb-df57-4800-9dd4-8ef1d98e846c",
+      "name": "Search Associated Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        304
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ZDFqX6DMxufgJufI",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Generate a professional client proposal for IntraWeb Technologies using this data:\n\nCLIENT\nName: {{ $(\"Search HubSpot Contact\").item.json.properties.firstname }} {{ $(\"Search HubSpot Contact\").item.json.properties.lastname }}\nCompany: {{ $(\"Search HubSpot Contact\").item.json.properties.company }}\nEmail: {{ $(\"Search HubSpot Contact\").item.json.properties.email }}\nPhone: {{ $(\"Search HubSpot Contact\").item.json.properties.phone }}\nWebsite: {{ $(\"Search HubSpot Contact\").item.json.properties.website || \"Not provided\" }}\nJob Title: {{ $(\"Search HubSpot Contact\").item.json.properties.jobtitle || \"Not provided\" }}\nDecision Maker: {{ $(\"Search HubSpot Contact\").item.json.properties.decision_maker || \"Unknown\" }}\nLead Tier: {{ $(\"Search HubSpot Contact\").item.json.properties.lead_tier || \"Unknown\" }}\nIntake Message: {{ $(\"Search HubSpot Contact\").item.json.properties.message || \"No intake message.\" }}\nScore Breakdown: {{ $(\"Search HubSpot Contact\").item.json.properties.scoring_breakdown || \"N/A\" }}\n\nDEAL\nDeal Name: {{ $json.properties.dealname || \"No deal found\" }}\nAmount: {{ $json.properties.amount ? \"$\" + $json.properties.amount : \"TBD\" }}\nStage: {{ $json.properties.dealstage || \"Early stage\" }}\nDescription: {{ $json.properties.description || \"None\" }}\nPriority: {{ $json.properties.hs_priority || \"Not set\" }}\nNext Step: {{ $json.properties.hs_next_step || \"Not set\" }}"
+            }
+          ]
+        },
+        "options": {
+          "system": "You are a senior proposal writer for IntraWeb Technologies LLC, a New Jersey-based AI automation and operations firm.\n\nIntraWeb positioning: \"95% of AI pilots fail to deliver ROI. We fix that.\" IntraWeb delivers Operations as a Service, helping SMBs (10-150 employees) restructure internal processes to adopt AI effectively. The firm differentiates from consultancies, agencies, and platform vendors.\n\nTwo service tracks:\n- AI Transformation: strategy-focused long-term partnerships with executives and operators\n- AI Engineering: hands-on technical execution for technical leadership\n\nPricing:\n- Automation Starter: $2,500 ($1k upfront, $1,500 + $300/mo at go-live)\n- Automation Growth: $4,000 ($2k down, $2k + $450/mo at go-live)\n- SaaS Website Launch: $6k-$10k | Premium: $32k-$65k\n- Hourly: $150-$175/hr\n\nTone rules: precise and operator-minded. No em dashes. No fluff. Make problems feel systemic, not the clients fault. Make change feel rational and safe.\n\nProposal structure:\n# Proposal: [Company Name]\n## Executive Summary\n## The Problem We Are Addressing\n## Proposed Approach\n## Scope of Work\n## Investment\n## Timeline\n## Why IntraWeb\n## Next Steps\n\nKeep it under 700 words. Use [CONFIRM WITH CLIENT] for missing data.",
+          "maxTokens": 1500
+        }
+      },
+      "id": "d0bb5fea-7eb3-46c7-965b-54c8a8aaa1c2",
+      "name": "Generate Proposal",
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1024,
+        304
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "HprVnCwfCT3ULYEp",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "10198516-230b-4c3a-851b-5a4e37e88c43",
+      "name": "Format Proposal Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1280,
+        304
+      ]
+    }
+  ],
+  "connections": {
+    "Run Proposal Generator": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "Search Associated Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Associated Deal": {
+      "main": [
+        [
+          {
+            "node": "Generate Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Proposal": {
+      "main": [
+        [
+          {
+            "node": "Format Proposal Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true
+  },
+  "pinData": {},
+  "versionId": "19bfda99-07fc-42ed-b073-053cbc2320bc",
+  "activeVersionId": null,
+  "versionCounter": 7,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-11T01:30:51.469Z",
+      "createdAt": "2026-04-11T01:30:51.469Z",
+      "role": "workflow:owner",
+      "workflowId": "LgCW0ZOKkiBfsuzt",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

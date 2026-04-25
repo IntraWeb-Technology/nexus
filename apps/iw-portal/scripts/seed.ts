@@ -11,14 +11,19 @@ import { milestonesForPlan } from '../src/lib/milestones-templates'
 import { invoicesForPlan } from '../src/lib/invoice-templates'
 import { exitIfOsSchemaMissing, exitIfPortalSchemaMissing } from './lib/supabase-schema-check'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
+import { resolveSupabaseScriptEnv } from './lib/supabase-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-const service = process.env.SUPABASE_SERVICE_ROLE_KEY
-if (!url || !service) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+let url: string
+let service: string
+try {
+  const env = resolveSupabaseScriptEnv()
+  url = env.url
+  service = env.serviceRoleKey
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error))
   process.exit(1)
 }
 

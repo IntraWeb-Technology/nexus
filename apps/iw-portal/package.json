@@ -6,22 +6,24 @@
     "node": "22.x"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3002",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3002",
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
     "seed:test": "tsx scripts/seed-test-client.ts",
     "upsert:jschibelli": "tsx scripts/upsert-jschibelli-portal.ts",
     "db:apply-schema": "tsx scripts/apply-portal-schema-postgres.ts",
-    "db:link": "pnpm exec supabase link --project-ref lrdovtfendpgntcouddz",
+    "db:link": "pnpm exec supabase link --project-ref wvjwibsomjecolcigjgr",
     "db:push": "pnpm exec supabase db push",
     "db:pull": "pnpm exec supabase db pull",
     "hubspot:ensure-co-properties": "tsx scripts/hubspot/ensure-change-order-properties.ts",
     "hubspot:ensure-co-form": "tsx scripts/hubspot/ensure-change-order-form.ts",
     "hubspot:update-co-form": "tsx scripts/hubspot/update-change-order-form.ts",
     "test": "tsx --test src/lib/webhooks/provision-client-idempotency.test.ts",
-    "verify:stack": "tsx scripts/verify-stack-alignment.ts"
+    "verify:stack": "tsx scripts/verify-stack-alignment.ts",
+    "vercel:align-env": "tsx scripts/vercel-align-env.ts",
+    "vercel:prune-dev-env": "tsx scripts/vercel-prune-dev-env.ts"
   },
   "dependencies": {
     "@clerk/backend": "^3.2.4",

@@ -1,0 +1,783 @@
+{
+  "updatedAt": "2026-04-18T22:45:40.503Z",
+  "createdAt": "2026-02-23T01:59:03.140Z",
+  "id": "sNWtmhatZiRaapjB",
+  "name": "🤖Calendar Agent",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "model": "gpt-5.1-chat-latest",
+        "options": {}
+      },
+      "id": "9bc6baef-1005-4609-ae18-2c15cc4c59bc",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -928,
+        368
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "3W5Kyj3ksFlPlXpf",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7ab380a2-a8d3-421c-ab4e-748ea8fb7904",
+              "name": "response",
+              "value": "Unable to perform task. Please try again.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2c897a6e-dc3b-4e5f-9b0f-a6ff0df69bca",
+      "name": "Try Again",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "39c2f302-03be-4464-a17a-d7cc481d6d44",
+              "name": "=response",
+              "value": "={{$json.output}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "60441980-e46f-4094-9e9b-2a22b7643aef",
+      "name": "Success",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.query }}",
+        "options": {
+          "systemMessage": "=# Overview\nYou are a calendar assistant. Your responsibilities include creating, getting, and deleting events in the user's calendar.\n\n**Calendar Management Tools**  \n   - Use \"Create Event with Attendee\" when an event includes a participant.  \n   - Use \"Create Event\" for solo events.   \n   - Use \"Get Events\" to fetch calendar schedules when requested.\n   - Use \"Delete Event\" to delete an event. You must use \"Get Events\" first to get the ID of the event to delete.\n   - Use \"Update Event\" to update an event. You must use \"Get Events\" first to get the ID of the event to update.\n\n## Final Notes\nHere is the current date/time: {{ $now }}\nIf a duration for an event isn't specified, assume it will be one hour."
+        }
+      },
+      "id": "96dc4a53-51de-4db7-b592-6381cb9eb678",
+      "name": "Calendar Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -688,
+        112
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "john.schibelli@intrawebtech.com",
+          "mode": "list",
+          "cachedResultName": "john.schibelli@intrawebtech.com"
+        },
+        "start": "={{ $fromAI(\"eventStart\") }}",
+        "end": "={{ $fromAI(\"eventEnd\") }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $fromAI(\"eventAttendeeEmail\") }}"
+          ],
+          "summary": "={{ $fromAI(\"eventTitle\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        368
+      ],
+      "id": "9856bff0-f85b-461f-831c-4a11327dc942",
+      "name": "Create Event with Attendee",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "deQyMC4EuO2JHVsC",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "john.schibelli@intrawebtech.com",
+          "mode": "list",
+          "cachedResultName": "john.schibelli@intrawebtech.com"
+        },
+        "start": "={{ $fromAI(\"eventStart\") }}",
+        "end": "={{ $fromAI(\"eventEnd\") }}",
+        "additionalFields": {
+          "attendees": [],
+          "summary": "={{ $fromAI(\"eventTitle\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -368,
+        464
+      ],
+      "id": "aa3774f3-e434-40fb-84bb-61e5d68c1115",
+      "name": "Create Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "deQyMC4EuO2JHVsC",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "john.schibelli@intrawebtech.com",
+          "mode": "list",
+          "cachedResultName": "john.schibelli@intrawebtech.com"
+        },
+        "timeMin": "={{ $fromAI(\"dayBefore\",\"the day before the date the user requested\") }}",
+        "timeMax": "={{ $fromAI(\"dayAfter\",\"the day after the date the user requested\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -496,
+        512
+      ],
+      "id": "2a2da020-e6b2-4321-a898-e2be5debd743",
+      "name": "Get Events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "deQyMC4EuO2JHVsC",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "john.schibelli@intrawebtech.com",
+          "mode": "list",
+          "cachedResultName": "john.schibelli@intrawebtech.com"
+        },
+        "eventId": "={{ $fromAI(\"eventID\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -640,
+        480
+      ],
+      "id": "fcc4d204-7ea3-454c-96a3-3d11f9cac188",
+      "name": "Delete Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "deQyMC4EuO2JHVsC",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "john.schibelli@intrawebtech.com",
+          "mode": "list",
+          "cachedResultName": "john.schibelli@intrawebtech.com"
+        },
+        "eventId": "={{ $fromAI(\"eventID\") }}",
+        "updateFields": {
+          "end": "={{ $fromAI(\"endTime\") }}",
+          "start": "={{ $fromAI(\"startTime\") }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        -784,
+        448
+      ],
+      "id": "19dc5134-6e71-4eda-8dfe-e4efd96e3289",
+      "name": "Update Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "deQyMC4EuO2JHVsC",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -928,
+        112
+      ],
+      "id": "2f6d2e6a-ef6d-4e66-9510-7d5fd8993609",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Agent": {
+      "main": [
+        [
+          {
+            "node": "Success",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Try Again",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event with Attendee": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Calendar Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "a3d165e7-1776-4f7b-803b-d67ef67b5654",
+  "activeVersionId": "a3d165e7-1776-4f7b-803b-d67ef67b5654",
+  "versionCounter": 32,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-02-23T01:59:03.150Z",
+      "createdAt": "2026-02-23T01:59:03.150Z",
+      "role": "workflow:owner",
+      "workflowId": "sNWtmhatZiRaapjB",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-02-23T06:39:50.000Z",
+    "createdAt": "2026-02-23T06:39:24.467Z",
+    "versionId": "a3d165e7-1776-4f7b-803b-d67ef67b5654",
+    "workflowId": "sNWtmhatZiRaapjB",
+    "nodes": [
+      {
+        "parameters": {
+          "model": "gpt-5.1-chat-latest",
+          "options": {}
+        },
+        "id": "9bc6baef-1005-4609-ae18-2c15cc4c59bc",
+        "name": "OpenAI Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1,
+        "position": [
+          -928,
+          368
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "3W5Kyj3ksFlPlXpf",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "7ab380a2-a8d3-421c-ab4e-748ea8fb7904",
+                "name": "response",
+                "value": "Unable to perform task. Please try again.",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "2c897a6e-dc3b-4e5f-9b0f-a6ff0df69bca",
+        "name": "Try Again",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          0,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "39c2f302-03be-4464-a17a-d7cc481d6d44",
+                "name": "=response",
+                "value": "={{$json.output}}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "60441980-e46f-4094-9e9b-2a22b7643aef",
+        "name": "Success",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.query }}",
+          "options": {
+            "systemMessage": "=# Overview\nYou are a calendar assistant. Your responsibilities include creating, getting, and deleting events in the user's calendar.\n\n**Calendar Management Tools**  \n   - Use \"Create Event with Attendee\" when an event includes a participant.  \n   - Use \"Create Event\" for solo events.   \n   - Use \"Get Events\" to fetch calendar schedules when requested.\n   - Use \"Delete Event\" to delete an event. You must use \"Get Events\" first to get the ID of the event to delete.\n   - Use \"Update Event\" to update an event. You must use \"Get Events\" first to get the ID of the event to update.\n\n## Final Notes\nHere is the current date/time: {{ $now }}\nIf a duration for an event isn't specified, assume it will be one hour."
+          }
+        },
+        "id": "96dc4a53-51de-4db7-b592-6381cb9eb678",
+        "name": "Calendar Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 1.6,
+        "position": [
+          -688,
+          112
+        ],
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "calendar": {
+            "__rl": true,
+            "value": "john.schibelli@intrawebtech.com",
+            "mode": "list",
+            "cachedResultName": "john.schibelli@intrawebtech.com"
+          },
+          "start": "={{ $fromAI(\"eventStart\") }}",
+          "end": "={{ $fromAI(\"eventEnd\") }}",
+          "additionalFields": {
+            "attendees": [
+              "={{ $fromAI(\"eventAttendeeEmail\") }}"
+            ],
+            "summary": "={{ $fromAI(\"eventTitle\") }}"
+          }
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          -224,
+          368
+        ],
+        "id": "9856bff0-f85b-461f-831c-4a11327dc942",
+        "name": "Create Event with Attendee",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "deQyMC4EuO2JHVsC",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "calendar": {
+            "__rl": true,
+            "value": "john.schibelli@intrawebtech.com",
+            "mode": "list",
+            "cachedResultName": "john.schibelli@intrawebtech.com"
+          },
+          "start": "={{ $fromAI(\"eventStart\") }}",
+          "end": "={{ $fromAI(\"eventEnd\") }}",
+          "additionalFields": {
+            "attendees": [],
+            "summary": "={{ $fromAI(\"eventTitle\") }}"
+          }
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          -368,
+          464
+        ],
+        "id": "aa3774f3-e434-40fb-84bb-61e5d68c1115",
+        "name": "Create Event",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "deQyMC4EuO2JHVsC",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "getAll",
+          "calendar": {
+            "__rl": true,
+            "value": "john.schibelli@intrawebtech.com",
+            "mode": "list",
+            "cachedResultName": "john.schibelli@intrawebtech.com"
+          },
+          "timeMin": "={{ $fromAI(\"dayBefore\",\"the day before the date the user requested\") }}",
+          "timeMax": "={{ $fromAI(\"dayAfter\",\"the day after the date the user requested\") }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          -496,
+          512
+        ],
+        "id": "2a2da020-e6b2-4321-a898-e2be5debd743",
+        "name": "Get Events",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "deQyMC4EuO2JHVsC",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "delete",
+          "calendar": {
+            "__rl": true,
+            "value": "john.schibelli@intrawebtech.com",
+            "mode": "list",
+            "cachedResultName": "john.schibelli@intrawebtech.com"
+          },
+          "eventId": "={{ $fromAI(\"eventID\") }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          -640,
+          480
+        ],
+        "id": "fcc4d204-7ea3-454c-96a3-3d11f9cac188",
+        "name": "Delete Event",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "deQyMC4EuO2JHVsC",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "calendar": {
+            "__rl": true,
+            "value": "john.schibelli@intrawebtech.com",
+            "mode": "list",
+            "cachedResultName": "john.schibelli@intrawebtech.com"
+          },
+          "eventId": "={{ $fromAI(\"eventID\") }}",
+          "updateFields": {
+            "end": "={{ $fromAI(\"endTime\") }}",
+            "start": "={{ $fromAI(\"startTime\") }}"
+          }
+        },
+        "type": "n8n-nodes-base.googleCalendarTool",
+        "typeVersion": 1.3,
+        "position": [
+          -784,
+          448
+        ],
+        "id": "19dc5134-6e71-4eda-8dfe-e4efd96e3289",
+        "name": "Update Event",
+        "credentials": {
+          "googleCalendarOAuth2Api": {
+            "id": "deQyMC4EuO2JHVsC",
+            "name": "Google Calendar account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "inputSource": "passthrough"
+        },
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -928,
+          112
+        ],
+        "id": "2f6d2e6a-ef6d-4e66-9510-7d5fd8993609",
+        "name": "When Executed by Another Workflow"
+      }
+    ],
+    "connections": {
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Calendar Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calendar Agent": {
+        "main": [
+          [
+            {
+              "node": "Success",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Try Again",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Event with Attendee": {
+        "ai_tool": [
+          [
+            {
+              "node": "Calendar Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Event": {
+        "ai_tool": [
+          [
+            {
+              "node": "Calendar Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Events": {
+        "ai_tool": [
+          [
+            {
+              "node": "Calendar Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Delete Event": {
+        "ai_tool": [
+          [
+            {
+              "node": "Calendar Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Event": {
+        "ai_tool": [
+          [
+            {
+              "node": "Calendar Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When Executed by Another Workflow": {
+        "main": [
+          [
+            {
+              "node": "Calendar Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "John Schibelli",
+    "name": "Version a3d165e7",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-02-23T06:39:50.840Z",
+        "id": 1,
+        "workflowId": "sNWtmhatZiRaapjB",
+        "versionId": "a3d165e7-1776-4f7b-803b-d67ef67b5654",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-02-23T06:40:00.321Z",
+        "id": 3,
+        "workflowId": "sNWtmhatZiRaapjB",
+        "versionId": "a3d165e7-1776-4f7b-803b-d67ef67b5654",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:40.559Z",
+        "id": 2715,
+        "workflowId": "sNWtmhatZiRaapjB",
+        "versionId": "a3d165e7-1776-4f7b-803b-d67ef67b5654",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-02-23T06:40:00.279Z",
+        "id": 2,
+        "workflowId": "sNWtmhatZiRaapjB",
+        "versionId": "a3d165e7-1776-4f7b-803b-d67ef67b5654",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:40.544Z",
+        "id": 2714,
+        "workflowId": "sNWtmhatZiRaapjB",
+        "versionId": "a3d165e7-1776-4f7b-803b-d67ef67b5654",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
+  }
+}

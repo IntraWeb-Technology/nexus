@@ -17,6 +17,11 @@ The app POSTs JSON to paths under `N8N_BASE_URL` with optional headers:
 
 - `x-intrawebtech-secret: <WEBHOOK_SECRET>` (omitted if `WEBHOOK_SECRET` is unset — not recommended in production)
 
+Delivery semantics:
+
+- `portal-login`, `portal-invoice-paid`, and `portal-stripe-catalog-payment` are dispatched as critical events (server awaits response with timeout + one retry).
+- Other outbound webhook calls remain best-effort fire-and-forget.
+
 Implemented webhooks (see `src/lib/n8n/client.ts`):
 
 | Path | Trigger |
@@ -179,6 +184,11 @@ After a successful call, the client sees the new **status** badge on **Change or
 - `x-intrawebtech-secret: <WEBHOOK_SECRET>` — required; validated by `validateIntrawebSecret` in `src/lib/webhooks/secret.ts`
 
 **Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `link_portal_clerk_user`, `add_invoice`, `update_milestone`, `update_change_order`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
+
+### Webhook auth model by route
+
+- Shared secret (`x-intrawebtech-secret`): `/api/webhook/n8n`, `/api/webhook/hubspot`, internal OS automation routes.
+- Provider signature verification: `/api/webhook/stripe` (Stripe signature), `/api/webhook/clerk` (Svix headers + Clerk secret).
 
 ### Example: HubSpot → `provision_client`
 

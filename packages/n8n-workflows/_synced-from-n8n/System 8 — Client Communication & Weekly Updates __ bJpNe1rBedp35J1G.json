@@ -1,0 +1,753 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:35:36.940Z",
+  "id": "bJpNe1rBedp35J1G",
+  "name": "System 8 — Client Communication & Weekly Updates",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 16 * * 5"
+            }
+          ]
+        }
+      },
+      "id": "77ae4f08-b1cd-48ad-92fd-179ff12039ba",
+      "name": "Friday 4PM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1536,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.hubapi.com/crm/v3/objects/deals?properties=dealname,dealstage,closedate,hs_lastmodifieddate,hubspot_owner_id,hs_deal_stage_probability&limit=100&filterGroups[0][filters][0][propertyName]=dealstage&filterGroups[0][filters][0][operator]=NOT_IN&filterGroups[0][filters][0][values][0]=closedlost&filterGroups[0][filters][0][values][1]=closedwon",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "02453b00-4e65-4534-a3fe-f6cb073ee0dc",
+      "name": "Get Active HubSpot Deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1328,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter deals to only active client deals (not leads, not closed)\nconst response = $input.first().json;\nconst deals = response.results || [];\n\n// Active client stages — adjust stage IDs to match your HubSpot pipeline\nconst activeClientStages = [\n  'active_client',\n  'onboarding',\n  'in_progress',\n  'delivery',\n  'active',\n  'contracted',\n  'client'\n];\n\nconst activeDeals = deals.filter(deal => {\n  const stage = (deal.properties?.dealstage || '').toLowerCase();\n  return activeClientStages.some(s => stage.includes(s));\n});\n\nif (activeDeals.length === 0) {\n  // Return all non-closed deals as fallback\n  return deals.map(d => ({ json: d }));\n}\n\nreturn activeDeals.map(d => ({ json: d }));\n"
+      },
+      "id": "7cde88f0-3eed-4017-b85c-2d0bc60cde83",
+      "name": "Filter Active Client Deals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "7d832b4f-ec15-4a7e-8ed0-21a6a477ed51",
+      "name": "Split Client Deals",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -880,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$json.id}}/associations/notes?limit=50",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bfba29f4-69ce-488c-aeb0-c3fbf4d643e1",
+      "name": "Get Deal Notes Past 7 Days",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/tasks?properties=hs_task_subject,hs_task_status,hs_task_type,hs_task_body,hubspot_owner_id,hs_due_date&filterGroups[0][filters][0][propertyName]=associations.deal&filterGroups[0][filters][0][operator]=EQ&filterGroups[0][filters][0][value]={{$('Split Client Deals').item.json.id}}&filterGroups[0][filters][1][propertyName]=hs_task_status&filterGroups[0][filters][1][operator]=NEQ&filterGroups[0][filters][1][value]=COMPLETED&limit=20",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "48c4029f-76ee-4be6-8eb1-98a75ffe846a",
+      "name": "Get Open Tasks for Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check last activity date and build context for Claude\nconst deal = $('Split Client Deals').item.json;\nconst notesResponse = $('Get Deal Notes Past 7 Days').item.json;\nconst tasksResponse = $('Get Open Tasks for Deal').item.json;\n\nconst now = new Date();\nconst sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);\n\n// Parse notes\nconst noteIds = (notesResponse.results || []).map(r => r.id);\nconst lastModified = deal.properties?.hs_lastmodifieddate\n  ? new Date(deal.properties.hs_lastmodifieddate)\n  : null;\n\nconst daysSinceActivity = lastModified\n  ? Math.floor((now - lastModified) / (1000 * 60 * 60 * 24))\n  : 99;\n\n// Parse open tasks\nconst openTasks = (tasksResponse.results || []).map(t => ({\n  subject: t.properties?.hs_task_subject || '',\n  status: t.properties?.hs_task_status || '',\n  dueDate: t.properties?.hs_due_date || '',\n  body: t.properties?.hs_task_body || ''\n}));\n\nconst openTasksSummary = openTasks.length > 0\n  ? openTasks.map(t => `- ${t.subject} (Due: ${t.dueDate || 'No date'})`).join('\\n')\n  : 'No open tasks';\n\nreturn [{\n  json: {\n    dealId: deal.id,\n    dealName: deal.properties?.dealname || 'Unknown Client',\n    dealStage: deal.properties?.dealstage || '',\n    closeDate: deal.properties?.closedate || '',\n    daysSinceActivity,\n    hasNoRecentActivity: daysSinceActivity >= 7,\n    openTasksSummary,\n    openTaskCount: openTasks.length,\n    noteCount: noteIds.length,\n    lastModified: lastModified ? lastModified.toISOString() : 'Unknown'\n  }\n}];\n"
+      },
+      "id": "a719e2cb-4a1e-4369-86e1-201e90df8177",
+      "name": "Check Last Activity and Build Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s08-cond-01",
+              "leftValue": "={{$json.hasNoRecentActivity}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4a630f0e-44c6-48b5-aaf3-39ea05e6dfeb",
+      "name": "If No Activity 7 Plus Days",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "c8f72ce1-d568-4eed-8f8c-c41acce2c525",
+      "name": "Google Chat No Activity Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$json.dealId}}/associations/contacts?limit=5",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d6b32a76-cd16-4ce9-8d7b-cd5a4b5c1ad4",
+      "name": "Get Associated Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.results[0].id}}?properties=email,firstname,lastname,company",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1840924f-134f-40e5-b379-290fd14905c1",
+      "name": "Get Contact Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "{{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "d2576227-4706-4874-bb27-fcde45181560",
+      "name": "Claude Generate Weekly Update Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract text from Claude response\nconst claudeResponse = $input.first().json;\nconst emailBody = claudeResponse.content?.[0]?.text || 'Weekly update from IntraWeb Technologies';\nconst contact = $('Get Contact Email').item.json;\nconst context = $('Check Last Activity and Build Context').item.json;\n\nreturn [{\n  json: {\n    emailBody,\n    toEmail: contact.properties?.email || '',\n    firstName: contact.properties?.firstname || 'there',\n    lastName: contact.properties?.lastname || '',\n    company: contact.properties?.company || context.dealName,\n    dealName: context.dealName,\n    dealId: context.dealId\n  }\n}];\n"
+      },
+      "id": "dad231f2-1272-4c51-b9f9-a212b94cd704",
+      "name": "Prepare Email Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s08-cond-02",
+              "leftValue": "={{$json.toEmail}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dc821442-9dac-4a5b-8d42-663401d804d7",
+      "name": "If Email Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "706e82bc-5c0f-4d0b-aa9d-25288d095090",
+      "name": "Send Weekly Update Email via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "2e65fa29-d380-426f-be20-a19562320722",
+      "name": "Log Email as HubSpot Activity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations Log!A:Z:append?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "5738863f-e8a6-4dfe-93f8-099e22134dd5",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1568,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "s08-assign-01",
+              "name": "lastProcessedDeal",
+              "value": "={{$('Prepare Email Data').item.json.dealName}}",
+              "type": "string"
+            },
+            {
+              "id": "s08-assign-02",
+              "name": "processedAt",
+              "value": "={{$now.toISO()}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4e9e169e-6d47-464b-a524-6cd010e97ccd",
+      "name": "Mark Client Processed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1776,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "48eb14cb-2cf3-4a4f-b1da-40f44de3d66f",
+      "name": "Google Chat Weekly Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1984,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "73a3dd7c-59e3-4854-97a1-0090ba36de03",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "12f80aa7-9013-4924-99a6-1cf431e02411",
+      "name": "Google Chat Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1328,
+        432
+      ]
+    }
+  ],
+  "connections": {
+    "Friday 4PM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Active HubSpot Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Active HubSpot Deals": {
+      "main": [
+        [
+          {
+            "node": "Filter Active Client Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Active Client Deals": {
+      "main": [
+        [
+          {
+            "node": "Split Client Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Client Deals": {
+      "main": [
+        [
+          {
+            "node": "Get Deal Notes Past 7 Days",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Open Tasks for Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Deal Notes Past 7 Days": {
+      "main": [
+        [
+          {
+            "node": "Check Last Activity and Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Open Tasks for Deal": {
+      "main": [
+        [
+          {
+            "node": "Check Last Activity and Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Last Activity and Build Context": {
+      "main": [
+        [
+          {
+            "node": "If No Activity 7 Plus Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If No Activity 7 Plus Days": {
+      "main": [
+        [
+          {
+            "node": "Google Chat No Activity Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Associated Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat No Activity Alert": {
+      "main": [
+        [
+          {
+            "node": "Get Associated Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Associated Contact": {
+      "main": [
+        [
+          {
+            "node": "Get Contact Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contact Email": {
+      "main": [
+        [
+          {
+            "node": "Claude Generate Weekly Update Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Generate Weekly Update Email": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Data": {
+      "main": [
+        [
+          {
+            "node": "If Email Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Email Exists": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Update Email via Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Weekly Update Email via Resend": {
+      "main": [
+        [
+          {
+            "node": "Log Email as HubSpot Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Email as HubSpot Activity": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Automations Log": {
+      "main": [
+        [
+          {
+            "node": "Mark Client Processed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Client Processed": {
+      "main": [
+        [
+          {
+            "node": "Split Client Deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "1a26d210-497e-46d7-bf02-4bd2b9b023d0",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:35:36.943Z",
+      "createdAt": "2026-03-05T05:35:36.943Z",
+      "role": "workflow:owner",
+      "workflowId": "bJpNe1rBedp35J1G",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

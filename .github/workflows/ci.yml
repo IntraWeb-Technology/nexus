@@ -26,9 +26,9 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # Only run Next builds for iw-site / iw-portal when those apps (or their deps) changed
+      # Only build production apps (iw-portal + iw-site-q2) when those apps (or their deps) changed
       # vs the PR base (pull_request) or the previous commit on the branch (push).
-      - name: Build migrated apps (affected only)
+      - name: Build production apps (affected only)
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -39,9 +39,9 @@ jobs:
             BASE=""
           fi
           if [ -z "$BASE" ]; then
-            pnpm exec turbo run build --filter=@repo/iw-site --filter=@repo/iw-portal
+            pnpm exec turbo run build --filter=@repo/iw-portal --filter=@repo/iw-site-q2
           else
             pnpm exec turbo run build \
-              --filter="@repo/iw-site...$BASE" \
-              --filter="@repo/iw-portal...$BASE"
+              --filter="@repo/iw-portal...$BASE" \
+              --filter="@repo/iw-site-q2...$BASE"
           fi

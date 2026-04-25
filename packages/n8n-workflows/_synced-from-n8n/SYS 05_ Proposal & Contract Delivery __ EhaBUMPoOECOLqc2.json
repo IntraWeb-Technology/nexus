@@ -1,0 +1,741 @@
+{
+  "updatedAt": "2026-03-21T15:58:51.000Z",
+  "createdAt": "2026-03-15T18:11:55.553Z",
+  "id": "EhaBUMPoOECOLqc2",
+  "name": "SYS 05: Proposal & Contract Delivery",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## SYS 05: Proposal & Contract Delivery\n\n**Trigger:** Webhook POST at `/hubspot-deal-proposal-stage` (deal moves to proposal stage).\n\n**What it does:** Pulls deal data from the webhook, uses Claude to generate a tailored consulting proposal (HTML), converts it to PDF via Call PDF Service (html2pdf.fly.dev), uploads to the client's Drive folder, appends a row to the Proposals sheet, and sends the client an email with the link. All content uses CONFIG tiers and branding.\n\n**Dependencies:** CONFIG (id in Get Config), Claude API (inline), PDF via Call PDF Service (inline), SW: Send Email via Resend (id set), SW: Send Google Chat Alert, SW: Log to Automations Log Sheet. After import, select the subworkflows in each remaining Execute Workflow node if they show unset.",
+        "height": 320,
+        "width": 460,
+        "color": 5
+      },
+      "id": "note-sys05",
+      "name": "Note â€” About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hubspot-deal-proposal-stage",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "sys05-trigger",
+      "name": "Deal Proposal Stage Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1eTTVoSFSlSPvZV4",
+          "mode": "id"
+        }
+      },
+      "id": "sys05-config",
+      "name": "Get Config",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const deal = $('Deal Proposal Stage Webhook').first().json;\nconst config = $('Get Config').first().json;\nconst props = deal.properties || deal;\n\nreturn [{\n  json: {\n    clientName: props.dealname || props.name || '',\n    company: props.company || props.dealname || '',\n    industry: props.industry || '',\n    painPoints: props.deal_pain_points || props.painPoints || '',\n    dealValue: props.amount || 0,\n    tier: props.tier || 'starter',\n    dealId: deal.id || deal.dealId || '',\n    contactEmail: props.contact_email || props.email || '',\n    contactFirstName: props.contact_firstname || props.firstName || '',\n    driveFolderId: props.client_drive_folder_id || '',\n    config\n  }\n}];"
+      },
+      "id": "sys05-extract",
+      "name": "Extract Deal Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst tierInfo = d.config.tiers[d.tier] || d.config.tiers.starter;\n\nreturn [{\n  json: {\n    systemPrompt: 'You are writing consulting proposals for IntraWeb Technologies LLC. Positioning: the implementation layer for AI-enabled operations. We don\\'t advise â€” we build. Tone: direct, confident, no corporate speak, no em dashes. Use specific outcomes and real numbers. Return ONLY the main proposal body as clean semantic HTML: no DOCTYPE, no html/head/body tags, no markdown, no backticks. Start with the first section (e.g. Executive Summary). Use headings (h2, h3), paragraphs, and lists. The content will be wrapped in a branded template. CRITICAL: Use ONLY the package and numbers provided in the user message for the Investment section. Do not mention or suggest any other package. CRITICAL: Include the customer\\'s pain points in the proposal. The Problem section must reflect their stated pain points (use their words where appropriate); What We\\'ll Build must tie solutions directly to those pain points. Do not omit or generalize the pain pointsâ€”the customer should see their situation clearly reflected.',\n    userPrompt: `Write a full consulting proposal for:\\n\\nClient: ${d.clientName}\\nCompany: ${d.company}\\nIndustry: ${d.industry}\\nDeal Value: $${d.dealValue}\\n\\nCUSTOMER PAIN POINTS (include these in the proposalâ€”use in The Problem section and tie What We'll Build to them):\\n${d.painPoints || '(None provided)'}\\n\\nPACKAGE (use this and only this in the Investment section): ${tierInfo.name} â€” $${tierInfo.monthlyPrice}/month + $${tierInfo.setupFee} one-time setup. Do not mention Starter, Growth, or Ops by name except to state that this proposal is for the ${tierInfo.name} package. The numbers in your Investment section must be exactly $${tierInfo.monthlyPrice}/mo and $${tierInfo.setupFee} setup.\\n\\nInclude these sections:\\n1. Executive Summary\\n2. The Problem (reflect the customer's pain points above; use their language where it fits)\\n3. What We'll Build (specific automations that address each pain point)\\n4. Timeline (8-week implementation)\\n5. Investment (use only the ${tierInfo.name} figures above: $${tierInfo.monthlyPrice}/mo, $${tierInfo.setupFee} setup)\\n6. Why IntraWeb\\n7. Next Steps\\n\\nMake it specific to their industry. Return only the HTML body content, no wrapper.`,\n    maxTokens: 4000\n  }\n}];"
+      },
+      "id": "sys05-claude-prep",
+      "name": "Prep Claude Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        910,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: $json.maxTokens, system: $json.systemPrompt, messages: [{ role: 'user', content: $json.userPrompt }] }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "sys05-claude",
+      "name": "Call Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1130,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "weYEDVXsLfY0tPqi",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $('Call Claude API').first().json;\nconst text = (raw.content && raw.content[0] && raw.content[0].text) ? raw.content[0].text : '';\nconst d = $('Extract Deal Data').first().json;\nreturn [{ json: { data: { text }, html: text, fileName: `IntraWeb â€” ${d.clientName} â€” Proposal.pdf` } }];"
+      },
+      "id": "sys05-parse-claude",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResult = $('Parse Claude Response').first().json;\nconst d = $('Extract Deal Data').first().json;\nconst config = d.config || {};\nconst branding = config.branding || {};\nconst logoUrl = branding.logoUrl || '';\nconst companyName = (config.owner && config.owner.companyName) ? config.owner.companyName : 'IntraWeb Technologies LLC';\nconst bodyContent = (claudeResult.data ? claudeResult.data.text : claudeResult.html || '').trim();\nconst clientName = d.clientName || 'Client';\n\nconst html = `<!DOCTYPE html>\n<html lang=\\\"en\\\">\n<head>\n  <meta charset=\\\"UTF-8\\\">\n  <meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1\\\">\n  <title>${companyName} â€” Proposal for ${clientName}</title>\n  <link href=\\\"https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap\\\" rel=\\\"stylesheet\\\">\n  <style>\n    * { box-sizing: border-box; }\n    body { font-family: 'DM Sans', sans-serif; color: #1a1f2e; max-width: 720px; margin: 0 auto; padding: 36px 40px; line-height: 1.55; font-size: 14px; }\n    .header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #E87B2B; }\n    .header img { height: 44px; width: auto; display: block; }\n    .header-text { }\n    .company-name { font-size: 17px; font-weight: 700; color: #6B4E9B; margin: 0; }\n    .proposal-title { font-size: 13px; color: #5a6578; margin: 2px 0 0 0; }\n    .proposal-body { margin-top: 0; padding: 0; }\n    .proposal-body h2 { color: #6B4E9B; font-size: 18px; margin: 20px 0 8px 0; }\n    .proposal-body h3 { color: #1a1f2e; font-size: 15px; margin: 14px 0 6px 0; }\n    .proposal-body p { margin: 0 0 10px 0; }\n    .proposal-body ul, .proposal-body ol { margin: 0 0 10px 0; padding-left: 20px; }\n    .proposal-body li { margin-bottom: 4px; }\n    .highlight { background: #f5f2f8; border-left: 4px solid #E87B2B; padding: 10px 14px; margin: 12px 0; border-radius: 0 4px 4px 0; }\n    .cta { background: linear-gradient(135deg, #6B4E9B 0%, #5a3d84 100%); color: #fff; padding: 16px 20px; margin-top: 20px; border-radius: 6px; text-align: center; }\n  </style>\n</head>\n<body>\n  <div class=\\\"header\\\">\n    ${logoUrl ? `<img src=\\\"${logoUrl}\\\" alt=\\\"IntraWeb\\\" />` : '<span style=\\\"font-size:28px;font-weight:700;color:#6B4E9B\\\">I</span><span style=\\\"font-size:28px;font-weight:700;color:#E87B2B\\\">W</span>'}\n    <div class=\\\"header-text\\\">\n      <p class=\\\"company-name\\\">${companyName}</p>\n      <p class=\\\"proposal-title\\\">Proposal for ${clientName}</p>\n    </div>\n  </div>\n  <div class=\\\"proposal-body\\\">\n    ${bodyContent}\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: { html, fileName: `IntraWeb â€” ${d.clientName} â€” Proposal.pdf` } }];"
+      },
+      "id": "sys05-pdf-prep",
+      "name": "Prep PDF Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://html2pdf.fly.dev/api/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ html: $json.html }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "sys05-pdf",
+      "name": "Call PDF Service",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1570,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst fileName = $('Prep PDF Input').first().json.fileName || 'document.pdf';\nreturn [{ json: { fileName }, binary: item.binary ? { ...item.binary } : {} }];"
+      },
+      "id": "sys05-pdf-ensure",
+      "name": "Ensure PDF Item",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $('Prep PDF Input').first().json.fileName }}",
+        "parents": [
+          "={{ $('Extract Deal Data').first().json.driveFolderId }}"
+        ],
+        "options": {}
+      },
+      "id": "sys05-upload",
+      "name": "Upload to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1790,
+        300
+      ],
+      "credentials": {
+        "googleApi": {
+          "id": "GOOGLE_SERVICE_ACCOUNT_CREDENTIAL_ID",
+          "name": "Google Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "mode": "id",
+          "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
+        },
+        "sheetName": {
+          "mode": "name",
+          "value": "Proposals"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ new Date().toISOString().split('T')[0] }}",
+            "Client": "={{ $('Extract Deal Data').first().json.clientName }}",
+            "Company": "={{ $('Extract Deal Data').first().json.company }}",
+            "Industry": "={{ $('Extract Deal Data').first().json.industry }}",
+            "Deal Value": "={{ $('Extract Deal Data').first().json.dealValue }}",
+            "Tier": "={{ $('Extract Deal Data').first().json.tier }}",
+            "Contact Email": "={{ $('Extract Deal Data').first().json.contactEmail }}",
+            "Pain Points": "={{ ($('Extract Deal Data').first().json.painPoints || '').toString().slice(0, 500) }}",
+            "Drive Link": "={{ 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.id }}",
+            "Status": "Pending Review"
+          }
+        },
+        "options": {}
+      },
+      "id": "sys05-sheets",
+      "name": "Add to Proposals Queue",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2010,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SERVICE_ACCOUNT_CREDENTIAL_ID",
+          "name": "Google Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst driveLink = 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.id;\n\nreturn [{\n  json: {\n    message: `Proposal ready for ${d.clientName} â€” set Status to Approved to send: ${driveLink}`,\n    priority: 'info'\n  }\n}];"
+      },
+      "id": "sys05-alert-prep",
+      "name": "Prep Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2230,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "",
+          "mode": "id"
+        }
+      },
+      "id": "sys05-alert",
+      "name": "Send Alert",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "minutes"
+      },
+      "id": "sys05-poll-wait",
+      "name": "Wait 30min",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2670,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "mode": "id",
+          "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
+        },
+        "sheetName": {
+          "mode": "name",
+          "value": "Proposals"
+        },
+        "filters": {
+          "values": [
+            {
+              "lookupColumn": "Client",
+              "lookupValue": "={{ $('Extract Deal Data').first().json.clientName }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "sys05-check-approval",
+      "name": "Check Approval Status",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        2890,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "GOOGLE_SERVICE_ACCOUNT_CREDENTIAL_ID",
+          "name": "Google Service Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-approved",
+              "leftValue": "={{ $json.Status }}",
+              "rightValue": "Approved",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "sys05-is-approved",
+      "name": "Approved?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3110,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst driveLink = 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.id;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Your IntraWeb proposal is ready â€” ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your proposal is attached. I've outlined exactly what we'll build, the timeline, and the investment.</p><p>You can also <a href=\"${driveLink}\">view it in Google Drive here</a>.</p><p>Take a look and let me know if you have any questions. When you're ready to move forward, reply to this email and I'll send the contract for e-signature.</p><p>â€” John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05: Proposal & Contract Delivery'\n  }\n}];"
+      },
+      "id": "sys05-send-prep",
+      "name": "Prep Send Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3330,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FF6VOLCcRxI4uNYD",
+          "mode": "id"
+        }
+      },
+      "id": "sys05-send-email",
+      "name": "Send Proposal Email",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        3550,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "deal",
+        "operation": "update",
+        "dealId": "={{ $('Extract Deal Data').first().json.dealId }}",
+        "updateFields": {
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "proposal_sent_date",
+                "value": "={{ new Date().toISOString().split('T')[0] }}"
+              }
+            ]
+          }
+        },
+        "options": {}
+      },
+      "id": "sys05-update-deal",
+      "name": "Update Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2,
+      "position": [
+        3770,
+        200
+      ],
+      "credentials": {
+        "hubspotApi": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    workflowName: 'SYS 05: Proposal & Contract Delivery',\n    contactName: $('Extract Deal Data').first().json.clientName,\n    phone: '',\n    eventType: 'proposal_sent',\n    status: 'success',\n    notes: `Deal value: $${$('Extract Deal Data').first().json.dealValue}`\n  }\n}];"
+      },
+      "id": "sys05-log-prep",
+      "name": "Prep Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3990,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "",
+          "mode": "id"
+        }
+      },
+      "id": "sys05-log",
+      "name": "Log to Sheet",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        4210,
+        200
+      ]
+    }
+  ],
+  "connections": {
+    "Deal Proposal Stage Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Config": {
+      "main": [
+        [
+          {
+            "node": "Extract Deal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Deal Data": {
+      "main": [
+        [
+          {
+            "node": "Prep Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Claude Prompt": {
+      "main": [
+        [
+          {
+            "node": "Call Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Prep PDF Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep PDF Input": {
+      "main": [
+        [
+          {
+            "node": "Call PDF Service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call PDF Service": {
+      "main": [
+        [
+          {
+            "node": "Ensure PDF Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure PDF Item": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive": {
+      "main": [
+        [
+          {
+            "node": "Add to Proposals Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Proposals Queue": {
+      "main": [
+        [
+          {
+            "node": "Prep Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Alert": {
+      "main": [
+        [
+          {
+            "node": "Send Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Alert": {
+      "main": [
+        [
+          {
+            "node": "Wait 30min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 30min": {
+      "main": [
+        [
+          {
+            "node": "Check Approval Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Approval Status": {
+      "main": [
+        [
+          {
+            "node": "Approved?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approved?": {
+      "main": [
+        [
+          {
+            "node": "Prep Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait 30min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Send Email": {
+      "main": [
+        [
+          {
+            "node": "Send Proposal Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Proposal Email": {
+      "main": [
+        [
+          {
+            "node": "Update Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Deal": {
+      "main": [
+        [
+          {
+            "node": "Prep Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Log": {
+      "main": [
+        [
+          {
+            "node": "Log to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": null,
+  "versionId": "74b03c5a-201e-4b71-a7a6-b7a0cc0e60a7",
+  "activeVersionId": null,
+  "versionCounter": 6,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-15T18:11:55.555Z",
+      "createdAt": "2026-03-15T18:11:55.555Z",
+      "role": "workflow:owner",
+      "workflowId": "EhaBUMPoOECOLqc2",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

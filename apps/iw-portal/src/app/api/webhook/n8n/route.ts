@@ -7,11 +7,14 @@ import {
 } from '@/lib/data/link-hubspot-provisioned-clerk'
 import { insertProvisionedEngagementContent } from '@/lib/data/provision-client-engagement'
 import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webhooks'
+import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { progressFromMilestones } from '@/lib/progress'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
 import { findProjectByHubSpotDealId } from '@/lib/webhooks/provision-client-idempotency'
 import { NextResponse } from 'next/server'
+
+export const maxDuration = 60
 
 export async function POST(request: Request) {
   if (!validateIntrawebSecret(request)) {
@@ -24,6 +27,13 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
+
+  await recordIntegrationEvent({
+    provider: 'n8n',
+    eventType: String((payload as { action?: string }).action ?? 'unknown'),
+    status: 'received',
+    payload,
+  })
 
   try {
     const supabase = createServiceSupabase()
@@ -280,9 +290,36 @@ export async function POST(request: Request) {
           })
         }
 
-        const { data: slugRow } = await supabase.from('projects').select('id').eq('slug', slug).maybeSingle()
+        const { data: slugRow, error: slugErr } = await supabase
+          .from('projects')
+          .select('id, client_id, hubspot_deal_id')
+          .eq('slug', slug)
+          .maybeSingle()
+        if (slugErr) {
+          console.error('[webhook/n8n] provision_client slug lookup', slugErr)
+          return NextResponse.json({ error: 'project lookup failed' }, { status: 500 })
+        }
         if (slugRow) {
-          return NextResponse.json({ error: 'project slug already exists' }, { status: 409 })
+          const incomingDealId = data.hubspot_deal_id?.trim()
+          const existingDealId = slugRow.hubspot_deal_id?.trim()
+          if (existingDealId && incomingDealId && existingDealId !== incomingDealId) {
+            return NextResponse.json({ error: 'project slug already exists' }, { status: 409 })
+          }
+          if (!existingDealId && incomingDealId) {
+            const { error: backfillErr } = await supabase
+              .from('projects')
+              .update({ hubspot_deal_id: incomingDealId })
+              .eq('id', slugRow.id)
+            if (backfillErr) {
+              console.error('[webhook/n8n] provision_client deal id backfill', backfillErr)
+              return NextResponse.json({ error: 'project update failed' }, { status: 500 })
+            }
+          }
+          return NextResponse.json({
+            client_id: slugRow.client_id,
+            project_id: slugRow.id,
+            idempotent: true,
+          })
         }
 
         const clerkFromPayload = data.clerk_user_id?.trim()
@@ -334,23 +371,45 @@ export async function POST(request: Request) {
             clientId = client.id
           }
         } else {
-          insertedNewClientForRollback = true
-          const { data: client, error: cErr } = await supabase
+          const { data: existingClient, error: exErr } = await supabase
             .from('clients')
-            .insert({
-              clerk_user_id: clerkUserId,
-              name: data.name,
-              email: data.email,
-              phone: data.phone ?? null,
-              company: null,
-              hubspot_contact_id: data.hubspot_contact_id,
-            })
-            .select('id')
-            .single()
-          if (cErr || !client) {
-            return NextResponse.json({ error: cErr?.message ?? 'client insert failed' }, { status: 500 })
+            .select('id, hubspot_contact_id')
+            .eq('clerk_user_id', clerkUserId)
+            .maybeSingle()
+          if (exErr) {
+            console.error('[webhook/n8n] provision_client placeholder client lookup', exErr)
+            return NextResponse.json({ error: 'client lookup failed' }, { status: 500 })
           }
-          clientId = client.id
+          if (existingClient) {
+            clientId = existingClient.id
+            const patch: { hubspot_contact_id?: string; name?: string; phone?: string | null } = {}
+            if (!existingClient.hubspot_contact_id?.trim()) {
+              patch.hubspot_contact_id = data.hubspot_contact_id
+            }
+            if (data.name?.trim()) patch.name = data.name.trim()
+            if (data.phone !== undefined) patch.phone = data.phone ?? null
+            if (Object.keys(patch).length) {
+              await supabase.from('clients').update(patch).eq('id', clientId)
+            }
+          } else {
+            insertedNewClientForRollback = true
+            const { data: client, error: cErr } = await supabase
+              .from('clients')
+              .insert({
+                clerk_user_id: clerkUserId,
+                name: data.name,
+                email: data.email,
+                phone: data.phone ?? null,
+                company: null,
+                hubspot_contact_id: data.hubspot_contact_id,
+              })
+              .select('id')
+              .single()
+            if (cErr || !client) {
+              return NextResponse.json({ error: cErr?.message ?? 'client insert failed' }, { status: 500 })
+            }
+            clientId = client.id
+          }
         }
 
         const { data: project, error: pErr } = await supabase
@@ -412,6 +471,13 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'unknown action' }, { status: 400 })
     }
   } catch (e) {
+    await recordIntegrationEvent({
+      provider: 'n8n',
+      eventType: String((payload as { action?: string }).action ?? 'unknown'),
+      status: 'failed',
+      payload,
+      lastError: e instanceof Error ? e.message : 'n8n webhook failed',
+    })
     console.error('[webhook/n8n]', e)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

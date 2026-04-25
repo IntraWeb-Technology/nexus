@@ -22,7 +22,11 @@ export async function sendStaffNewMessageAlert(params: {
   projectSlug: string
   messageBody: string
 }) {
-  const staff = process.env.STAFF_EMAIL || 'john.schibelli@intrawebtech.com'
+  const staff = process.env.STAFF_EMAIL?.trim()
+  if (!staff) {
+    console.error('[email] STAFF_EMAIL is not set — staff alerts will not be delivered')
+    return
+  }
   const { subject, html } = staffNewMessageHtml({
     clientName: params.clientName,
     projectSlug: params.projectSlug,

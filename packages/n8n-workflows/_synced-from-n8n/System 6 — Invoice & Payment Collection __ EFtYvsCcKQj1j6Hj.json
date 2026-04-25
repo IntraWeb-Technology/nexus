@@ -1,0 +1,1164 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:31:06.222Z",
+  "id": "EFtYvsCcKQj1j6Hj",
+  "name": "System 6 — Invoice & Payment Collection",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deal-invoice-sent",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "bb8ff54d-e0fc-4301-bea5-acf40b3bd8cd",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -4640,
+        416
+      ],
+      "webhookId": "feb3a0e2-19b6-4d50-b86d-3ca81301db08"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$json.body.deal_id}}?properties=dealname,dealstage,amount,hs_lastmodifieddate,closedate",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "53cb5371-fc00-4c0c-866d-089e1fa7e1b8",
+      "name": "Get Deal Details from HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4416,
+        416
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "646f8c34-a1e9-4bd7-8233-5136b842a433",
+      "name": "Wait 3 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -4208,
+        416
+      ],
+      "webhookId": "0f52d7d7-06b6-4eb1-95c8-c94669eed085"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Webhook Trigger').item.json.body.deal_id}}?properties=dealstage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2e0654f4-ef9f-49d3-a7b8-8e86615bda3d",
+      "name": "Check Deal Stage Day 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3984,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s06-cond-01",
+              "leftValue": "={{$json.properties.dealstage}}",
+              "rightValue": "paid",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1eaba9f-1e26-4e2d-bdad-6ec6a4e21985",
+      "name": "If Not Paid Day 3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3760,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "from",
+              "value": "John <john@intrawebtech.com>"
+            },
+            {
+              "name": "to",
+              "value": "={{$('Webhook Trigger').item.json.body.email}}"
+            },
+            {
+              "name": "subject",
+              "value": "=Friendly Reminder — Invoice #{{$('Webhook Trigger').item.json.body.invoice_number}} Due"
+            },
+            {
+              "name": "html",
+              "value": "=<p>Hi {{$('Webhook Trigger').item.json.body.client_name}},</p><p>Just a quick reminder that Invoice #{{$('Webhook Trigger').item.json.body.invoice_number}} for ${{$('Webhook Trigger').item.json.body.invoice_amount}} is still outstanding.</p><p><a href=\"{{$('Webhook Trigger').item.json.body.payment_link}}\">Pay Now</a></p><p>If you have questions, reply to this email or call me directly.</p><p>Thanks,<br>John<br>IntraWeb Technologies</p>"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "eeb44c2a-cf1a-4974-8fd4-9aa244894f55",
+      "name": "Send Day 3 Email Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3536,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$env.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$('Webhook Trigger').item.json.body.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "{{$env.TWILIO_FROM_NUMBER}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$('Webhook Trigger').item.json.body.client_name}}, this is John from IntraWeb Technologies. Invoice #{{$('Webhook Trigger').item.json.body.invoice_number}} (${{$('Webhook Trigger').item.json.body.invoice_amount}}) is due. Pay here: {{$('Webhook Trigger').item.json.body.payment_link}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6ffd4855-5df2-4984-b48b-0ccb42d0538a",
+      "name": "Send Day 3 SMS Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3536,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "={\"hs_note_body\": \"Day 3 payment reminder sent via email and SMS for Invoice #{{$('Webhook Trigger').item.json.body.invoice_number}} (${{$('Webhook Trigger').item.json.body.invoice_amount}}). Automated by IntraWeb n8n.\", \"hs_timestamp\": \"{{$now.toISO()}}\"}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "abb84fcd-0685-4562-a4cd-e923ce0c922b",
+      "name": "Log Day 3 Activity to HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3328,
+        384
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "99a31ddb-5e3b-4959-8fd6-579a31c52cd0",
+      "name": "Wait 4 More Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -3104,
+        384
+      ],
+      "webhookId": "ba4a389b-a169-4156-ae64-8cf052c30c7e"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Webhook Trigger').item.json.body.deal_id}}?properties=dealstage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4710fcd9-faf4-46e4-b264-6cc3be6b466e",
+      "name": "Check Deal Stage Day 7",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2880,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s06-cond-02",
+              "leftValue": "={{$json.properties.dealstage}}",
+              "rightValue": "paid",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "9ad18849-ec29-4590-8c20-763ff121dc4d",
+      "name": "If Not Paid Day 7",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2656,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "7c491e62-6acf-4549-a1bb-f707f127abc8",
+      "name": "Send Day 7 Email Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "928581ce-1b2d-40b1-aae4-936afd6610d5",
+      "name": "Log Day 7 Activity to HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2224,
+        304
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d0b33568-6ee5-4b15-9aa5-2527775e305b",
+      "name": "Wait 7 More Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -2000,
+        304
+      ],
+      "webhookId": "958ced3d-d239-44c8-b93d-99ef062e666d"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Webhook Trigger').item.json.body.deal_id}}?properties=dealstage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b19de512-0b9b-47cd-8937-926140923ca8",
+      "name": "Check Deal Stage Day 14",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1776,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s06-cond-03",
+              "leftValue": "={{$json.properties.dealstage}}",
+              "rightValue": "paid",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "28f873f6-f651-4a36-b382-ef33c4d6df23",
+      "name": "If Not Paid Day 14",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1568,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$env.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$('Webhook Trigger').item.json.body.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "{{$env.TWILIO_FROM_NUMBER}}"
+            },
+            {
+              "name": "Body",
+              "value": "=OVERDUE NOTICE: {{$('Webhook Trigger').item.json.body.client_name}}, Invoice #{{$('Webhook Trigger').item.json.body.invoice_number}} (${{$('Webhook Trigger').item.json.body.invoice_amount}}) is 14 days past due. Please contact John directly at john@intrawebtech.com or pay: {{$('Webhook Trigger').item.json.body.payment_link}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a2f199ee-d960-42db-9610-1ecb3f50de7a",
+      "name": "Send Day 14 Overdue SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1344,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "13f63c2f-0f18-45f1-9ece-f63211f98e7a",
+      "name": "Log Day 14 Activity to HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1120,
+        224
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "0a67251a-c6fd-49d1-95b0-3f85cc52e434",
+      "name": "Wait 7 More Days for Day 21",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -896,
+        224
+      ],
+      "webhookId": "1cf16168-16cb-4db7-85e3-bda16023e63c"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Webhook Trigger').item.json.body.deal_id}}?properties=dealstage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "72143e84-ed11-4f05-80cb-7dda5cad1fd6",
+      "name": "Check Deal Stage Day 21",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -688,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s06-cond-04",
+              "leftValue": "={{$json.properties.dealstage}}",
+              "rightValue": "paid",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d4629654-e944-49ff-aeba-dfca614e0565",
+      "name": "If Not Paid Day 21",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.elevenlabs.io/v1/convai/twilio/outbound-call",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "xi-api-key",
+              "value": "{{$env.ELEVENLABS_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "bd4cf3a2-5ad0-44bf-ba00-f651abf03c06",
+      "name": "ElevenLabs Outbound Call Day 21",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/notes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "1398fc7d-71fd-4a39-afe1-6bf05fc9837a",
+      "name": "Log Day 21 Call to HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -16,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deal-payment-received",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "526c6975-a3cb-4838-a32b-b8abbef3ae1f",
+      "name": "Webhook Payment Received",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -4640,
+        704
+      ],
+      "webhookId": "fa68e578-807c-47e4-9d35-e860c32823dd"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "1560fbe5-3506-4bd3-818f-0170a84f481c",
+      "name": "Send Thank You Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4416,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "50f462af-5b73-49c0-bc85-b76cac744997",
+      "name": "Google Chat Payment Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4208,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Revenue!A:Z:append?valueInputOption=USER_ENTERED",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "d27a6541-ace8-43af-882e-5d3986e7ab7a",
+      "name": "Update Revenue Tab in Google Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3984,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations Log!A:Z:append?valueInputOption=USER_ENTERED",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "22a7e6eb-a844-43af-ba30-639bf413a593",
+      "name": "Log Payment to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3760,
+        704
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a750f089-e553-4242-b9af-f5cd179c7217",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -4640,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "3ae3c4a1-0a8d-464a-84e1-fb95722054a1",
+      "name": "Google Chat Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -4416,
+        944
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Deal Details from HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Deal Details from HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage Day 3": {
+      "main": [
+        [
+          {
+            "node": "If Not Paid Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Not Paid Day 3": {
+      "main": [
+        [
+          {
+            "node": "Send Day 3 Email Reminder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Day 3 SMS Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Day 3 Email Reminder": {
+      "main": [
+        [
+          {
+            "node": "Log Day 3 Activity to HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Day 3 SMS Reminder": {
+      "main": [
+        [
+          {
+            "node": "Log Day 3 Activity to HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Day 3 Activity to HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait 4 More Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 4 More Days": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage Day 7": {
+      "main": [
+        [
+          {
+            "node": "If Not Paid Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Not Paid Day 7": {
+      "main": [
+        [
+          {
+            "node": "Send Day 7 Email Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Day 7 Email Reminder": {
+      "main": [
+        [
+          {
+            "node": "Log Day 7 Activity to HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Day 7 Activity to HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait 7 More Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 7 More Days": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage Day 14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage Day 14": {
+      "main": [
+        [
+          {
+            "node": "If Not Paid Day 14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Not Paid Day 14": {
+      "main": [
+        [
+          {
+            "node": "Send Day 14 Overdue SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Day 14 Overdue SMS": {
+      "main": [
+        [
+          {
+            "node": "Log Day 14 Activity to HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Day 14 Activity to HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait 7 More Days for Day 21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 7 More Days for Day 21": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage Day 21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage Day 21": {
+      "main": [
+        [
+          {
+            "node": "If Not Paid Day 21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Not Paid Day 21": {
+      "main": [
+        [
+          {
+            "node": "ElevenLabs Outbound Call Day 21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ElevenLabs Outbound Call Day 21": {
+      "main": [
+        [
+          {
+            "node": "Log Day 21 Call to HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Payment Received": {
+      "main": [
+        [
+          {
+            "node": "Send Thank You Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Thank You Email": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Payment Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Payment Alert": {
+      "main": [
+        [
+          {
+            "node": "Update Revenue Tab in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Revenue Tab in Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Log Payment to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "689df020-b0cf-49c0-ba63-1812a762c912",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:31:06.228Z",
+      "createdAt": "2026-03-05T05:31:06.228Z",
+      "role": "workflow:owner",
+      "workflowId": "EFtYvsCcKQj1j6Hj",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

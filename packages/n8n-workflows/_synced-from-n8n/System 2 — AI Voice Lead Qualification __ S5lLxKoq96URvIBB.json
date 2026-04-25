@@ -1,0 +1,690 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:07:38.485Z",
+  "id": "S5lLxKoq96URvIBB",
+  "name": "System 2 — AI Voice Lead Qualification",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "elevenlabs-call-end",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "097bc2b9-e888-4618-8d62-07805547b7b1",
+      "name": "Webhook ElevenLabs Call End",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        128
+      ],
+      "webhookId": "elevenlabs-call-end"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract incoming webhook payload\nconst body = $input.item.json.body || $input.item.json;\n\nconst caller_name = body.caller_name || '';\nconst company = body.company || '';\nconst phone_raw = body.phone || '';\nconst email = body.email || '';\nconst pain_point = body.pain_point || '';\nconst employee_count = parseInt(body.employee_count) || 0;\nconst budget_indication = body.budget_indication || '';\nconst decision_maker = body.decision_maker || 'N';\nconst preferred_call_time = body.preferred_call_time || '';\n\n// Score the lead\nlet score = 0;\nconst score_breakdown = [];\n\nif (decision_maker === 'Y') {\n  score += 3;\n  score_breakdown.push('Decision maker (+3)');\n}\n\nif (budget_indication && budget_indication.toLowerCase() !== 'unknown' && budget_indication.trim() !== '') {\n  score += 3;\n  score_breakdown.push('Budget indicated (+3)');\n}\n\nif (employee_count >= 10) {\n  score += 2;\n  score_breakdown.push('10+ employees (+2)');\n}\n\nif (pain_point && pain_point.trim() !== '') {\n  score += 2;\n  score_breakdown.push('Pain point identified (+2)');\n}\n\n// Normalize phone to E.164\nlet phone = phone_raw.replace(/[^0-9]/g, '');\nif (phone.length === 10) {\n  phone = '+1' + phone;\n} else if (phone.length === 11 && phone.startsWith('1')) {\n  phone = '+' + phone;\n} else {\n  phone = phone_raw;\n}\n\nreturn [{\n  json: {\n    caller_name,\n    company,\n    phone,\n    phone_raw,\n    email,\n    pain_point,\n    employee_count,\n    budget_indication,\n    decision_maker,\n    preferred_call_time,\n    lead_score: score,\n    score_breakdown: score_breakdown.join(', '),\n    scored_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "05057a75-2854-495a-b213-999b08a4c4e3",
+      "name": "Calculate Lead Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"phone\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.phone }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"hs_object_id\", \"firstname\", \"lastname\", \"phone\", \"email\", \"company\", \"lifecyclestage\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "0406132a-8475-46df-aa94-c39219f8ac72",
+      "name": "Check HubSpot by Phone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -880,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Determine if contact already exists in HubSpot\nconst hubspotResult = $input.item.json;\nconst leadData = $('Calculate Lead Score').item.json;\n\nconst existingContactId = (hubspotResult.total > 0 && hubspotResult.results && hubspotResult.results.length > 0)\n  ? hubspotResult.results[0].id\n  : null;\n\nreturn [{\n  json: {\n    ...leadData,\n    existing_contact_id: existingContactId,\n    contact_exists: existingContactId !== null\n  }\n}];"
+      },
+      "id": "3be35d94-a7b5-4a67-a460-a1c942a49821",
+      "name": "Evaluate Existing Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-hot",
+              "leftValue": "={{ $json.lead_score }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8c6362d8-a21d-4896-a692-dcd5fe30484a",
+      "name": "Score Branch",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-medium",
+              "leftValue": "={{ $json.lead_score }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "02f64d55-c9fc-4a0f-adb5-602372daab50",
+      "name": "Score Medium Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"firstname\": \"{{ $json.caller_name }}\",\n    \"company\": \"{{ $json.company }}\",\n    \"phone\": \"{{ $json.phone }}\",\n    \"email\": \"{{ $json.email }}\",\n    \"lifecyclestage\": \"opportunity\",\n    \"hs_lead_status\": \"IN_PROGRESS\",\n    \"lead_score\": \"{{ $json.lead_score }}\",\n    \"source\": \"elevenlabs_ai_call\",\n    \"notes_last_updated\": \"HOT LEAD — Score {{ $json.lead_score }}. Score breakdown: {{ $json.score_breakdown }}. Pain point: {{ $json.pain_point }}. Budget: {{ $json.budget_indication }}. Preferred call time: {{ $json.preferred_call_time }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "fed7793f-e06d-4f08-afc4-ea83cf748fa4",
+      "name": "Create Contact Hot Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals",
+        "sendHeaders": true,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"dealname\": \"{{ $('Calculate Lead Score').item.json.company }} — Discovery Call\",\n    \"dealstage\": \"appointmentscheduled\",\n    \"pipeline\": \"default\",\n    \"hs_priority\": \"high\",\n    \"description\": \"Hot lead from AI voice call. Score: {{ $('Calculate Lead Score').item.json.lead_score }}. Pain point: {{ $('Calculate Lead Score').item.json.pain_point }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $json.id }}\" },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 3\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "fb5dabde-fb6e-484a-a57f-2dfbf303807c",
+      "name": "Create HubSpot Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOOGLE_CHAT_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*HOT LEAD: {{ $('Calculate Lead Score').item.json.caller_name }} at {{ $('Calculate Lead Score').item.json.company }} — Score {{ $('Calculate Lead Score').item.json.lead_score }}. Immediate follow-up required.*\\n\\nPhone: {{ $('Calculate Lead Score').item.json.phone }}\\nEmail: {{ $('Calculate Lead Score').item.json.email }}\\nPain Point: {{ $('Calculate Lead Score').item.json.pain_point }}\\nBudget: {{ $('Calculate Lead Score').item.json.budget_indication }}\\nDecision Maker: {{ $('Calculate Lead Score').item.json.decision_maker }}\\nPreferred Call Time: {{ $('Calculate Lead Score').item.json.preferred_call_time }}\\nScore Breakdown: {{ $('Calculate Lead Score').item.json.score_breakdown }}\"\n}",
+        "options": {}
+      },
+      "id": "c0b85f05-edcb-4c78-83ec-f69d035f74de",
+      "name": "Google Chat Hot Lead Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"firstname\": \"{{ $json.caller_name }}\",\n    \"company\": \"{{ $json.company }}\",\n    \"phone\": \"{{ $json.phone }}\",\n    \"email\": \"{{ $json.email }}\",\n    \"lifecyclestage\": \"lead\",\n    \"hs_lead_status\": \"NEW\",\n    \"lead_score\": \"{{ $json.lead_score }}\",\n    \"source\": \"elevenlabs_ai_call\",\n    \"notes_last_updated\": \"Medium score lead — enroll in outbound sequence. Score breakdown: {{ $json.score_breakdown }}. Pain point: {{ $json.pain_point }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "cc3b6ae7-56f3-40f1-bd49-37f368f1f960",
+      "name": "Create Contact Medium Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"firstname\": \"{{ $json.caller_name }}\",\n    \"company\": \"{{ $json.company }}\",\n    \"phone\": \"{{ $json.phone }}\",\n    \"email\": \"{{ $json.email }}\",\n    \"lifecyclestage\": \"lead\",\n    \"hs_lead_status\": \"UNQUALIFIED\",\n    \"lead_score\": \"{{ $json.lead_score }}\",\n    \"source\": \"elevenlabs_ai_call\",\n    \"notes_last_updated\": \"Low score — log only. Score: {{ $json.lead_score }}. Score breakdown: {{ $json.score_breakdown }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "f818f7aa-0412-4417-b2b6-c5d3012d5dc4",
+      "name": "Create Contact Low Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge outputs from all three branches and prepare for note creation\n// Collect from whichever branch ran\nlet contactId = null;\nlet leadData = $('Calculate Lead Score').item.json;\n\ntry {\n  const hotContact = $('Create Contact Hot Lead').item;\n  if (hotContact && hotContact.json && hotContact.json.id) {\n    contactId = hotContact.json.id;\n  }\n} catch(e) {}\n\ntry {\n  const medContact = $('Create Contact Medium Lead').item;\n  if (medContact && medContact.json && medContact.json.id) {\n    contactId = medContact.json.id;\n  }\n} catch(e) {}\n\ntry {\n  const lowContact = $('Create Contact Low Lead').item;\n  if (lowContact && lowContact.json && lowContact.json.id) {\n    contactId = lowContact.json.id;\n  }\n} catch(e) {}\n\nreturn [{\n  json: {\n    ...leadData,\n    hubspot_contact_id: contactId\n  }\n}];"
+      },
+      "id": "41d914fb-bc67-41f5-b446-edf5716c8264",
+      "name": "Merge Branch Outputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"AI Voice Call Summary\\n\\nCaller: {{ $json.caller_name }}\\nCompany: {{ $json.company }}\\nPhone: {{ $json.phone }}\\nEmail: {{ $json.email }}\\nPain Point: {{ $json.pain_point }}\\nEmployee Count: {{ $json.employee_count }}\\nBudget Indication: {{ $json.budget_indication }}\\nDecision Maker: {{ $json.decision_maker }}\\nPreferred Call Time: {{ $json.preferred_call_time }}\\n\\nLead Score: {{ $json.lead_score }}/10\\nScore Breakdown: {{ $json.score_breakdown }}\\n\\nRecorded: {{ $json.scored_at }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $json.hubspot_contact_id }}\" },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "21d40fd1-5bbc-46df-8804-0d504dcc30bf",
+      "name": "Create HubSpot Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        672,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Leads!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"{{ $('Calculate Lead Score').item.json.caller_name }}\",\n      \"{{ $('Calculate Lead Score').item.json.company }}\",\n      \"{{ $('Calculate Lead Score').item.json.phone }}\",\n      \"{{ $('Calculate Lead Score').item.json.email }}\",\n      \"{{ $('Calculate Lead Score').item.json.lead_score }}\",\n      \"{{ $('Calculate Lead Score').item.json.pain_point }}\",\n      \"{{ $('Calculate Lead Score').item.json.budget_indication }}\",\n      \"{{ $('Calculate Lead Score').item.json.decision_maker }}\",\n      \"elevenlabs_ai_call\",\n      \"{{ $('Calculate Lead Score').item.json.lead_score >= 7 ? 'Hot' : $('Calculate Lead Score').item.json.lead_score >= 4 ? 'Medium' : 'Low' }}\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "15720746-09ca-4877-ae4c-a476acdc4edf",
+      "name": "Append to Leads Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        880,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Automations Log!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"System 2 — AI Voice Lead Qualification\",\n      \"Success\",\n      \"Lead processed: {{ $('Calculate Lead Score').item.json.caller_name }} at {{ $('Calculate Lead Score').item.json.company }}, Score: {{ $('Calculate Lead Score').item.json.lead_score }}\",\n      \"ElevenLabs webhook\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "c2730012-447d-4ec1-939a-a7f737629d14",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1104,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Lead processed\", \"lead_score\": {{ $('Calculate Lead Score').item.json.lead_score }} }",
+        "options": {}
+      },
+      "id": "083803f3-efc6-454b-983c-cebae894b0e7",
+      "name": "Return 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        272
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "47e903d1-24c8-49bb-9220-741ea61031f7",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1328,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOOGLE_CHAT_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*ERROR — System 2: AI Voice Lead Qualification*\\n\\nWorkflow: {{ $json.workflow.name }}\\nNode: {{ $json.execution.lastNodeExecuted }}\\nError: {{ $json.execution.error.message }}\\nTime: {{ $now.toISO() }}\\n\\nImmediate attention required.\"\n}",
+        "options": {}
+      },
+      "id": "cf0b529a-6edd-4882-b1ad-7111f0bb61da",
+      "name": "Error Alert Google Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1104,
+        432
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook ElevenLabs Call End": {
+      "main": [
+        [
+          {
+            "node": "Calculate Lead Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Lead Score": {
+      "main": [
+        [
+          {
+            "node": "Check HubSpot by Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check HubSpot by Phone": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Existing Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Existing Contact": {
+      "main": [
+        [
+          {
+            "node": "Score Branch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Branch": {
+      "main": [
+        [
+          {
+            "node": "Create Contact Hot Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Score Medium Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Medium Check": {
+      "main": [
+        [
+          {
+            "node": "Create Contact Medium Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Contact Low Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact Hot Lead": {
+      "main": [
+        [
+          {
+            "node": "Create HubSpot Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HubSpot Deal": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Hot Lead Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Hot Lead Alert": {
+      "main": [
+        [
+          {
+            "node": "Merge Branch Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact Medium Lead": {
+      "main": [
+        [
+          {
+            "node": "Merge Branch Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact Low Lead": {
+      "main": [
+        [
+          {
+            "node": "Merge Branch Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Branch Outputs": {
+      "main": [
+        [
+          {
+            "node": "Create HubSpot Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HubSpot Note": {
+      "main": [
+        [
+          {
+            "node": "Append to Leads Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Leads Sheet": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Automations Log": {
+      "main": [
+        [
+          {
+            "node": "Return 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Error Alert Google Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "53a760ef-1e79-447b-ae1f-53a1de0ba2c5",
+  "activeVersionId": null,
+  "versionCounter": 8,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:07:38.489Z",
+      "createdAt": "2026-03-05T05:07:38.489Z",
+      "role": "workflow:owner",
+      "workflowId": "S5lLxKoq96URvIBB",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

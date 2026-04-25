@@ -1,0 +1,370 @@
+{
+  "updatedAt": "2026-04-18T22:45:41.239Z",
+  "createdAt": "2026-03-04T01:48:58.516Z",
+  "id": "rvmE6Lxb0eGECE4r",
+  "name": "07 — Tech Scheduling Notification",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "scheduled-trigger",
+        "options": {}
+      },
+      "id": "e5e39e11-e257-48fa-a1c4-9ae7cc159dd7",
+      "name": "Scheduled Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        112
+      ],
+      "webhookId": "wh-07-scheduled",
+      "notes": "Trigger: HubSpot Workflow when deal stage = 'Scheduled'. POST deal + contact data to this URL."
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nconst dealId = body.objectId || body.deal_id || body.hs_object_id || '';\nconst dealStage = body.properties?.dealstage?.value || body.dealstage || '';\nconst dealName = body.properties?.dealname?.value || body.dealname || 'HVAC Job';\nconst scheduledDate = body.properties?.scheduled_date?.value || body.scheduled_date || '';\nconst serviceAddress = body.properties?.service_address?.value || body.service_address || 'Address not set';\nconst jobType = body.properties?.job_type?.value || body.job_type || 'Service';\nconst jobNotes = body.properties?.job_notes?.value || body.job_notes || 'None';\nlet techPhone = body.properties?.tech_phone?.value || body.tech_phone || '';\n\nconst contactId = body.associations?.contacts?.results?.[0]?.id || body.contact_id || '';\nconst customerName = body.contact_name || body.properties?.contact_firstname?.value || 'Customer';\nlet customerPhone = body.contact_phone || '';\n\n// Normalize phones\nif (techPhone && !techPhone.startsWith('+')) {\n  techPhone = '+1' + techPhone.replace(/\\D/g, '');\n}\nif (customerPhone && !customerPhone.startsWith('+')) {\n  customerPhone = '+1' + customerPhone.replace(/\\D/g, '');\n}\n\n// Fallback to env var if no tech phone on deal\nif (!techPhone) {\n  techPhone = $vars.TECH_PHONE || '';\n}\n\n// Parse scheduled date\nlet scheduledDateFormatted = 'TBD';\nlet scheduledDateObj = null;\nif (scheduledDate) {\n  scheduledDateObj = new Date(scheduledDate);\n  scheduledDateFormatted = scheduledDateObj.toLocaleString('en-US', {\n    weekday: 'short',\n    month: 'short',\n    day: 'numeric',\n    hour: 'numeric',\n    minute: '2-digit',\n    timeZone: 'America/New_York'\n  });\n}\n\nreturn [{\n  json: {\n    dealId,\n    dealStage,\n    dealName,\n    scheduledDate,\n    scheduledDateFormatted,\n    scheduledDateObj: scheduledDateObj ? scheduledDateObj.toISOString() : null,\n    serviceAddress,\n    jobType,\n    jobNotes,\n    techPhone,\n    contactId,\n    customerName,\n    customerPhone,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "12ae62c3-fe44-447f-8af2-380bba236d6a",
+      "name": "Parse Schedule Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-has-tech",
+              "leftValue": "={{$json.techPhone}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "73ef4404-9dcf-4e72-8164-c646fd2bfe52",
+      "name": "Tech Phone Available?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.techPhone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=🔧 NEW JOB SCHEDULED\\nCustomer: {{$json.customerName}}\\nAddress: {{$json.serviceAddress}}\\nDate/Time: {{$json.scheduledDateFormatted}}\\nJob Type: {{$json.jobType}}\\nNotes: {{$json.jobNotes}}\\nCustomer Phone: {{$json.customerPhone}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f81bf94d-95c6-4e17-bf37-b53f80a2e455",
+      "name": "SMS to Tech — New Job",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate day-before 7AM for the reminder\nconst jobData = $input.first().json;\nconst scheduledDateObj = jobData.scheduledDateObj ? new Date(jobData.scheduledDateObj) : null;\n\nif (!scheduledDateObj || isNaN(scheduledDateObj)) {\n  // If no scheduled date, set reminder for 1 day from now at 7AM\n  const tomorrow = new Date();\n  tomorrow.setDate(tomorrow.getDate() + 1);\n  tomorrow.setHours(7, 0, 0, 0);\n  return [{ json: { ...jobData, reminderTime: tomorrow.toISOString(), hasScheduledDate: false } }];\n}\n\n// Day before at 7:00 AM ET\nconst dayBefore = new Date(scheduledDateObj);\ndayBefore.setDate(dayBefore.getDate() - 1);\ndayBefore.setHours(12, 0, 0, 0); // 7AM ET = 12:00 UTC (EST offset)\n\n// If day before is in the past, send immediately (skip wait)\nconst now = new Date();\nconst reminderTime = dayBefore > now ? dayBefore.toISOString() : new Date(now.getTime() + 60000).toISOString();\n\nreturn [{ json: { ...jobData, reminderTime, hasScheduledDate: true } }];"
+      },
+      "id": "53b0cb25-d901-4f9a-87b1-5a81ea610236",
+      "name": "Calculate Reminder Time",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resume": "specificTime",
+        "dateTime": "={{$json.reminderTime}}"
+      },
+      "id": "c4d31560-38b2-442d-b8b8-5e91b1fd81a9",
+      "name": "Wait Until Day Before 7AM",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        480,
+        0
+      ],
+      "webhookId": "f7b14704-f31f-4b5c-a7a8-7ca84ac58f59"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.techPhone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=⏰ JOB REMINDER — TOMORROW\\nCustomer: {{$json.customerName}}\\nAddress: {{$json.serviceAddress}}\\nTime: {{$json.scheduledDateFormatted}}\\nJob: {{$json.jobType}}\\nNotes: {{$json.jobNotes}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f2ee6af0-fb40-4042-b082-f193e8d04de5",
+      "name": "SMS to Tech — Day Before Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{new Date().toISOString()}}",
+            "Workflow Name": "07-Tech-Scheduling",
+            "Event Type": "TECH_REMINDER_SENT",
+            "Contact Name": "={{$json.customerName}}",
+            "Phone": "={{$json.customerPhone}}",
+            "Email": "",
+            "Deal ID": "={{$json.dealId}}",
+            "Contact ID": "={{$json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "=Day-before reminder sent to tech at {{$json.techPhone}}. Job: {{$json.scheduledDateFormatted}}",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "Scheduled",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "fd144dc2-64d6-4c8d-b59b-affe90bb374d",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$vars.CHAT_WEBHOOK}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"⚠️ *Tech Scheduling Alert*\\n\\nNo tech phone found for deal: {{ $('Parse Schedule Data').item.json.dealName }}\\nDeal ID: {{ $('Parse Schedule Data').item.json.dealId }}\\nCustomer: {{ $('Parse Schedule Data').item.json.customerName }}\\nScheduled: {{ $('Parse Schedule Data').item.json.scheduledDateFormatted }}\\n\\nPlease add a tech phone number to the deal or set TECH_PHONE env variable.\"\n}",
+        "options": {}
+      },
+      "id": "91628b8c-66ea-4d94-a6d2-43593dcc3434",
+      "name": "Alert — No Tech Phone",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        272
+      ]
+    }
+  ],
+  "connections": {
+    "Scheduled Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Schedule Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Schedule Data": {
+      "main": [
+        [
+          {
+            "node": "Tech Phone Available?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tech Phone Available?": {
+      "main": [
+        [
+          {
+            "node": "SMS to Tech — New Job",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert — No Tech Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS to Tech — New Job": {
+      "main": [
+        [
+          {
+            "node": "Calculate Reminder Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Reminder Time": {
+      "main": [
+        [
+          {
+            "node": "Wait Until Day Before 7AM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Until Day Before 7AM": {
+      "main": [
+        [
+          {
+            "node": "SMS to Tech — Day Before Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS to Tech — Day Before Reminder": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "dc8d96d6-44ea-4f68-ad37-46f7a63816e1",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:48:58.520Z",
+      "createdAt": "2026-03-04T01:48:58.520Z",
+      "role": "workflow:owner",
+      "workflowId": "rvmE6Lxb0eGECE4r",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:34.370Z",
+      "createdAt": "2026-03-04T01:54:34.370Z",
+      "id": "6DOAorHv7f45HDuG",
+      "name": "sms"
+    },
+    {
+      "updatedAt": "2026-03-04T01:56:33.731Z",
+      "createdAt": "2026-03-04T01:56:33.731Z",
+      "id": "FZ54lcBXXShuM9Jg",
+      "name": "dispatch"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    }
+  ],
+  "activeVersion": null
+}

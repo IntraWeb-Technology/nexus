@@ -6,6 +6,7 @@ import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { Client } from 'pg'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
+import { resolveSupabaseScriptEnv } from './lib/supabase-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 
@@ -39,9 +40,16 @@ function refFromPostgresHost(host: string | undefined): string | null {
 }
 
 async function main() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || process.env.SUPABASE_URL?.trim()
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY
+  let url: string
+  let service: string
+  try {
+    const env = resolveSupabaseScriptEnv()
+    url = env.url
+    service = env.serviceRoleKey
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error))
+    process.exit(1)
+  }
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
   const pgUrl = process.env.POSTGRES_URL_NON_POOLING ?? process.env.POSTGRES_URL
   const hubToken = process.env.HUBSPOT_PRIVATE_APP_TOKEN

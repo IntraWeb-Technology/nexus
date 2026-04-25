@@ -1,0 +1,427 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:48:22.720Z",
+  "id": "Zmqe87zuqd3HWqFs",
+  "name": "System 14 — IntraWeb OS Owner's Manual Generator",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-owners-manual",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "47fa75af-dae3-4416-8c8b-713bbcabd8bc",
+      "name": "Webhook: Generate Owners Manual",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        144
+      ],
+      "webhookId": "968b4c4d-ec52-47d0-8b7d-bf1cad4dadd2"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{ \"status\": \"accepted\", \"message\": \"Owner's manual generation started. You will receive a Google Chat notification when complete.\" }",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "b438d490-cdee-40dd-9f2e-7b056bdc07cb",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the full system architecture context for Claude\nconst systems = [\n  {\n    number: 1,\n    name: 'Lead Sourcing Machine',\n    trigger: 'Schedule — every Monday 7AM EST',\n    description: 'Queries Google Maps Places API for 7 NJ business verticals (HVAC, Plumbing, Accounting, Insurance, Landscaping, Med Spa, Dental). Scores each result on review count, website quality, rating, and phone presence. Pushes leads scoring 4+ into HubSpot as contacts. Skips duplicates by checking existing phone/website.',\n    output: 'HubSpot contacts with lead_score, industry_vertical, lead_source_custom=google_maps_scraper. Google Sheets Leads tab row. Google Chat summary.',\n    dependencies: 'Google Maps Places API, HubSpot API, Google Sheets'\n  },\n  {\n    number: 2,\n    name: 'AI Voice Lead Qualification',\n    trigger: 'n8n webhook — POST from ElevenLabs on call end',\n    description: 'Receives call summary from Jordan (ElevenLabs agent) after inbound qualification calls. Scores prospect on decision-maker status, budget indication, employee count, pain point clarity. Score 7+: creates HubSpot deal + immediate Chat alert. Score 4-6: creates contact + enrolls in outreach sequence. Score <4: logs contact only.',\n    output: 'HubSpot contact and/or deal. Google Sheets Leads row. Google Chat alert for hot leads.',\n    dependencies: 'ElevenLabs Conversational AI, HubSpot API, Google Sheets'\n  },\n  {\n    number: 3,\n    name: 'Outbound Lead Outreach Sequence',\n    trigger: 'Webhook from System 1 or 2 when new contact created with lead_score >= 4',\n    description: '14-day 5-touch sequence: Day 0 email (industry-specific intro), Day 2 SMS, Day 5 email (automation examples for their industry), Day 8 SMS (demo offer), Day 14 final email (free ops audit CTA). Stops immediately on reply, booking, or unsubscribe. Logs all touches as HubSpot activities.',\n    output: 'Resend emails, Twilio SMS, HubSpot activity notes. Google Chat alert on reply.',\n    dependencies: 'HubSpot API, Resend, Twilio, Anthropic Claude, Google Sheets'\n  },\n  {\n    number: 4,\n    name: 'Client Onboarding Automation (Logistics)',\n    trigger: 'Webhook — HubSpot deal moves to Closed Won',\n    description: 'Sends welcome email with kickoff scheduler link. Sends credentials intake Google Form. Creates Google Drive folder structure (Credentials, Deliverables, Meeting Notes, Contracts, Onboarding Docs subfolders). Creates 5 HubSpot onboarding tasks. Sends Google Chat alert. 48hr follow-up if credentials form not submitted.',\n    output: 'Resend welcome email, Google Drive folder, HubSpot tasks, Google Chat alert. Triggers System 13 simultaneously.',\n    dependencies: 'HubSpot API, Resend, Google Drive, Twilio, Google Sheets'\n  },\n  {\n    number: 5,\n    name: 'Proposal & Contract Delivery',\n    trigger: 'Webhook — HubSpot deal moves to Proposal Stage',\n    description: 'Fetches deal and contact data from HubSpot. Calls Claude to generate full HTML proposal (Executive Summary, Problem, What We Build, Timeline, Investment, Why IntraWeb, Next Steps). Converts to PDF. Uploads to client Drive /Deliverables. Adds row to Google Sheets Proposals queue. Google Chat alert. On Approved status: sends via Resend with e-signature link. 48hr/96hr follow-ups.',\n    output: 'Claude-generated proposal PDF, Drive upload, Sheets Proposals row, Resend email on approval.',\n    dependencies: 'HubSpot API, Anthropic Claude, PDF API (PDFShift), Google Drive, Google Sheets, Resend, Twilio'\n  },\n  {\n    number: 6,\n    name: 'Invoice & Payment Collection',\n    trigger: 'Webhook — HubSpot deal moves to Invoice Sent',\n    description: 'Day 3: email + SMS reminder with payment link. Day 7: second email. Day 14: SMS overdue notice. Day 21: ElevenLabs outbound call via Jordan. Stops all reminders when deal moves to Paid. On payment: thank you email + Chat alert. Logs all activity to Google Sheets Revenue tab.',\n    output: 'Resend reminders, Twilio SMS, ElevenLabs outbound call, HubSpot activity logs, Google Chat alert on payment.',\n    dependencies: 'HubSpot API, Resend, Twilio, ElevenLabs, Google Sheets'\n  },\n  {\n    number: 7,\n    name: 'LinkedIn Content Pipeline',\n    trigger: 'Schedule — daily 6AM EST',\n    description: 'Pulls top 5 AI/automation news stories from RSS feeds (TechCrunch, VentureBeat, The Verge, Hacker News). For each, calls Claude to generate a 700-900 character LinkedIn post with contrarian take (builder voice, no buzzwords). Pushes all drafts to Google Sheets LinkedIn queue. Chat alert with count. On Approved status: alerts John at scheduled post time, reminds to add first comment 3 min after.',\n    output: 'Up to 5 Claude-generated LinkedIn drafts in Google Sheets. Google Chat approval alert.',\n    dependencies: 'RSS feeds, Anthropic Claude, Google Sheets'\n  },\n  {\n    number: 8,\n    name: 'Client Communication & Weekly Updates',\n    trigger: 'Schedule — every Friday 4PM EST',\n    description: 'For each active HubSpot client deal, pulls deal name, stage, last activity, open tasks, and 7-day notes. Calls Claude to generate a direct weekly update email (What we did, What is next, Items needed). Sends via Resend. Alerts John before sending if any client has zero activity in 7+ days. Logs all emails as HubSpot activities.',\n    output: 'Claude-generated weekly update emails per active client. Google Chat pre-send alert for inactive clients.',\n    dependencies: 'HubSpot API, Anthropic Claude, Resend, Google Sheets'\n  },\n  {\n    number: 9,\n    name: 'Internal Reporting Pipeline',\n    trigger: 'Schedule — triggers to sync HubSpot data to Google Sheets for Looker Studio',\n    description: 'Fetches active deals from HubSpot, active contacts/leads, revenue data. Writes to Pipeline, Clients, and Revenue tabs in Google Sheets. Looker Studio dashboard refreshes every 4 hours from Sheets data source. Dashboard pages: Executive Summary, Lead Funnel, Revenue, LinkedIn Performance, Client Health.',\n    output: 'Updated Google Sheets Pipeline, Clients, Revenue tabs. Powers Looker Studio dashboard.',\n    dependencies: 'HubSpot API, Google Sheets, Looker Studio'\n  },\n  {\n    number: 10,\n    name: 'Client Health Monitoring',\n    trigger: 'Schedule — every Monday 8AM EST',\n    description: 'For each active client, calculates health score: last contact timing (+3/+1/-2), overdue tasks (-2 each), overdue invoices (-3), upcoming milestones (+2). Updates HubSpot client_health_score property. Score < 4: Chat alert + automated check-in email. Logs all scores to Google Sheets Clients tab.',\n    output: 'Updated HubSpot client_health_score. Resend check-in emails for at-risk clients. Google Chat alerts.',\n    dependencies: 'HubSpot API, Resend, Google Sheets'\n  },\n  {\n    number: 11,\n    name: 'Referral & Reactivation Engine',\n    trigger: 'Webhook (referral) — deal moves to Project Complete; Schedule (reactivation) — contacts inactive 60+ days',\n    description: 'Referral: waits 7 days post-project, sends personal referral ask email referencing specific project, SMS 3 days later if no reply. Tracks in HubSpot. Reactivation: 60-day inactive contacts get re-engagement email referencing their company and new relevant work; SMS 4 days later. On response: creates new HubSpot deal + Chat alert.',\n    output: 'Resend referral/reactivation emails, Twilio SMS, HubSpot deal creation on response, Google Chat alert.',\n    dependencies: 'HubSpot API, Resend, Twilio, Google Sheets'\n  },\n  {\n    number: 12,\n    name: 'IntraWeb Command Center (Google Chat Bot)',\n    trigger: 'Webhook — n8n webhook listens for messages in Google Chat Command Center space',\n    description: 'Claude parses natural language commands. Supported: leads this week, pipeline status, overdue invoices, client health, post approved [row], send follow-up to [name], what is due this week, revenue this month, regenerate manual. Returns clean formatted Google Chat responses. Unknown commands return full command list.',\n    output: 'Google Chat formatted response. Can trigger other workflows (LinkedIn approval, manual follow-up, System 14).',\n    dependencies: 'Anthropic Claude, HubSpot API, Google Sheets, Google Chat webhook'\n  },\n  {\n    number: 13,\n    name: 'Client Onboarding Documentation Generator',\n    trigger: 'Webhook — fires simultaneously with System 4 when deal moves to Closed Won',\n    description: 'Pulls deal data from HubSpot. Calls Claude to generate 7-section onboarding package: Welcome Letter, Credentials Guide, What We Are Building, Project Timeline, How to Work With IntraWeb, Billing Terms, FAQ. Assembles into branded HTML, converts to PDF. Uploads to Drive /Onboarding Docs. Sends via Resend. Creates HubSpot follow-up task. 24hr SMS if email not opened.',\n    output: 'Personalized onboarding PDF, Drive upload, Resend email, HubSpot task, Twilio SMS fallback.',\n    dependencies: 'HubSpot API, Anthropic Claude, PDF API, Google Drive, Resend, Twilio, Google Sheets'\n  },\n  {\n    number: 14,\n    name: 'IntraWeb OS Owner Manual Generator',\n    trigger: 'Webhook — manual POST from John or Command Center regenerate manual command',\n    description: 'Assembles full system architecture context. Calls Claude to generate 10-section Owner Manual as structured markdown. Converts to PDF, uploads to Google Drive /IntraWeb OS/Documentation. Sends Google Chat alert with Drive link.',\n    output: 'IntraWeb-OS-Owners-Manual.pdf in Google Drive. Google Chat alert.',\n    dependencies: 'Anthropic Claude, PDF API, Google Drive, Google Sheets'\n  }\n];\n\nconst techStack = [\n  { tool: 'n8n Cloud', purpose: 'Automation engine — all 14 workflows', account: 'n8n.io cloud instance', plan: 'Starter or Pro' },\n  { tool: 'HubSpot', purpose: 'CRM — contacts, deals, tasks, activity log', account: 'app.hubspot.com', plan: 'Free (upgrade for sequences)' },\n  { tool: 'ElevenLabs', purpose: 'AI voice agent Jordan — inbound qualification + outbound invoice calls', account: 'elevenlabs.io', plan: 'Creator+' },\n  { tool: 'Twilio', purpose: 'SMS and outbound voice calls', account: 'twilio.com', plan: 'Pay-per-use' },\n  { tool: 'Resend', purpose: 'Transactional email delivery from john@intrawebtech.com', account: 'resend.com', plan: 'Free / Scale' },\n  { tool: 'Anthropic Claude', purpose: 'AI content generation — proposals, posts, updates, docs, command parsing', account: 'console.anthropic.com', plan: 'Pay-per-use' },\n  { tool: 'Google Workspace', purpose: 'Sheets (data), Drive (files), Chat (alerts), Calendar', account: 'workspace.google.com', plan: 'Business Starter' },\n  { tool: 'Google Maps Places API', purpose: 'Lead sourcing — NJ business search', account: 'console.cloud.google.com', plan: 'Pay-per-use' },\n  { tool: 'Google Looker Studio', purpose: 'Operations dashboard — connected to Google Sheets', account: 'lookerstudio.google.com', plan: 'Free' },\n  { tool: 'PDFShift', purpose: 'HTML to PDF conversion for proposals and onboarding docs', account: 'pdfshift.io', plan: 'Free / Pro' }\n];\n\nconst hubspotPipeline = {\n  name: 'IntraWeb Sales',\n  stages: [\n    'Lead Identified (5%)',\n    'Discovery Call Requested (15%) — triggers Chat alert if score 7+',\n    'Discovery Call Scheduled (25%)',\n    'Proposal Stage (40%) — triggers System 5',\n    'Proposal Sent (55%)',\n    'Contract Signed (70%)',\n    'Invoice Sent (75%) — triggers System 6',\n    'Paid (90%) — stops System 6',\n    'Closed Won (100%) — triggers System 4 + System 13',\n    'Closed Lost (0%)',\n    'Project Complete (100%) — triggers System 11'\n  ]\n};\n\nconst hubspotContactProperties = [\n  'lead_score (Number) — composite score from lead signals',\n  'lead_source_custom (Text) — google_maps_scraper, elevenlabs_inbound, manual',\n  'industry_vertical (Dropdown) — HVAC, Plumbing, Accounting, Insurance, Landscaping, Med Spa, Dental, Other',\n  'google_maps_place_id (Text) — deduplication key for Maps leads',\n  'google_maps_rating (Number)',\n  'google_maps_review_count (Number)',\n  'outreach_sequence_status (Dropdown) — Not Started, Active, Paused, Completed, Opted Out, Replied',\n  'outreach_day (Number) — current day in sequence: 0, 2, 5, 8, 14',\n  'last_touch_date (Date)',\n  'pain_point_captured (Multi-line text)',\n  'employee_count_range (Dropdown) — 1-5, 6-10, 11-25, 26-50, 51-100, 100+',\n  'budget_indication (Dropdown) — Not Mentioned, Exploring, Has Budget, Budget Confirmed',\n  'is_decision_maker (Checkbox)',\n  'preferred_call_time (Text)',\n  'qualification_call_id (Text) — ElevenLabs conversation ID',\n  'client_health_score (Number) — calculated by System 10',\n  'referral_request_sent (Checkbox)',\n  'reactivation_sent (Date)'\n];\n\nconst hubspotDealProperties = [\n  'proposal_drive_link (Text)',\n  'proposal_sent_date (Date)',\n  'proposal_status (Dropdown) — Not Generated, Draft Ready, Pending Review, Approved, Sent, Signed, Rejected',\n  'invoice_number (Text)',\n  'invoice_amount (Number)',\n  'invoice_due_date (Date)',\n  'payment_link (Text)',\n  'service_tier (Dropdown) — Diagnostic ($10K), Starter ($500/mo), Growth ($1,200/mo), Ops ($2,500/mo), Enterprise Retainer ($8K/mo)',\n  'onboarding_credentials_received (Checkbox)',\n  'onboarding_kickoff_scheduled (Checkbox)',\n  'onboarding_kickoff_complete (Checkbox)',\n  'onboarding_first_workflow_delivered (Checkbox)',\n  'onboarding_client_trained (Checkbox)',\n  'drive_folder_link (Text)',\n  'deal_industry (Text)',\n  'discovery_pain_points (Multi-line text)',\n  'onboarding_docs_delivered (Checkbox)',\n  'onboarding_docs_sent_date (Date)',\n  'onboarding_docs_drive_link (Text)',\n  'client_start_date (Date)'\n];\n\nconst sheetsStructure = [\n  { tab: 'Leads', columns: 'Timestamp, Name, Company, Phone, Email, Website, City, State, Industry, Lead Score, Source, Google Maps Rating, Review Count, Place ID, Pain Point, Employee Count, Budget Indication, Decision Maker, HubSpot Contact ID, Status, Notes' },\n  { tab: 'Pipeline', columns: 'Timestamp, Deal Name, Client Name, Company, Stage, Deal Value, Service Tier, Industry, Stage Enter Date, Days in Stage, Expected Close Date, Proposal Status, Invoice Number, Invoice Amount, Invoice Due Date, Drive Folder Link, HubSpot Deal ID, Status, Notes' },\n  { tab: 'Clients', columns: 'Client Name, Company, Email, Phone, Service Tier, MRR, Start Date, Contract End Date, HubSpot Deal ID, Drive Folder Link, Last Activity Date, Last Weekly Update Sent, Health Score, Health Score Date, Open Tasks, Overdue Tasks, Invoice Status, Status, Notes' },\n  { tab: 'Revenue', columns: 'Month, Client Name, Invoice Number, Invoice Date, Due Date, Amount Invoiced, Amount Collected, Amount Outstanding, Days Outstanding, Status, Payment Date, Payment Method, HubSpot Deal ID, Notes' },\n  { tab: 'LinkedIn', columns: 'Date Generated, News Source, News Headline, Hook, Full Post, Hashtags, Suggested Link, Status, Scheduled Time, Post Notes, Posted At, First Comment Link, Impressions, Comments, Shares, n8n Row ID' },\n  { tab: 'Proposals', columns: 'Date Generated, Client Name, Company, Industry, Service Tier, Deal Value, Drive Link, Status, Review Notes, Approved At, Sent At, Client Opened, Signed At, HubSpot Deal ID, Follow Up 1 Sent, Follow Up 2 Sent' },\n  { tab: 'Automations Log', columns: 'Timestamp, Workflow Name, Execution ID, Contact Name, Company, HubSpot ID, Event Type, Status, Details, Error Message, Duration (ms)' },\n  { tab: 'Config', columns: 'Key, Value — contains system config including pricing, thresholds, contact info, URLs' }\n];\n\nconst envVariables = [\n  'HUBSPOT_API_KEY — HubSpot Private App token',\n  'ANTHROPIC_API_KEY — Anthropic Claude API key',\n  'RESEND_API_KEY — Resend email API key',\n  'TWILIO_ACCOUNT_SID — Twilio account SID (starts with AC)',\n  'TWILIO_AUTH_TOKEN — Twilio auth token',\n  'TWILIO_PHONE_NUMBER — IntraWeb Twilio number in E.164',\n  'ELEVENLABS_API_KEY — ElevenLabs API key',\n  'ELEVENLABS_AGENT_ID — Jordan agent ID from ElevenLabs',\n  'GOOGLE_MAPS_API_KEY — Google Maps Places API key',\n  'GOOGLE_CHAT_ALERTS_WEBHOOK — IntraWeb Ops Alerts space webhook URL',\n  'GOOGLE_CHAT_COMMAND_WEBHOOK — IntraWeb Command Center space webhook URL',\n  'GOOGLE_SHEET_ID — IntraWeb Operations Master spreadsheet ID',\n  'GOOGLE_DRIVE_CLIENT_FOLDER — Drive folder ID for IntraWeb Clients',\n  'GOOGLE_DRIVE_OS_FOLDER — Drive folder ID for IntraWeb OS/Documentation',\n  'PDF_API_KEY — PDFShift API key',\n  'PDF_API_ENDPOINT — https://api.pdfshift.io/v3/convert/pdf',\n  'JOHN_EMAIL — john@intrawebtech.com',\n  'JOHN_PHONE — John phone number in E.164',\n  'CALENDLY_LINK — John Calendly booking URL',\n  'CREDENTIALS_FORM_URL — Google Form URL for client credentials intake'\n];\n\nconst contextText = `\n# IntraWeb OS — System Architecture Context for Owner's Manual Generation\n\n## Company\nIntraWeb Technologies LLC — AI automation consulting firm, NJ-based, solo founder (John). Sells AI automation consulting to small-mid market businesses. Two-phase model: $10K diagnostic, then $8K/mo enterprise retainer OR tiered packages (Starter $500/mo, Growth $1,200/mo, Ops $2,500/mo).\n\n## 14 Automated Systems\n\n${systems.map(s => `### System ${s.number}: ${s.name}\n- Trigger: ${s.trigger}\n- What it does: ${s.description}\n- Output: ${s.output}\n- Dependencies: ${s.dependencies}`).join('\\n\\n')}\n\n## Tech Stack\n\n${techStack.map(t => `- **${t.tool}**: ${t.purpose} | Account: ${t.account} | Plan: ${t.plan}`).join('\\n')}\n\n## HubSpot Pipeline: ${hubspotPipeline.name}\n\nStages:\n${hubspotPipeline.stages.map(s => `- ${s}`).join('\\n')}\n\n## HubSpot Contact Custom Properties (18)\n\n${hubspotContactProperties.map(p => `- ${p}`).join('\\n')}\n\n## HubSpot Deal Custom Properties (20)\n\n${hubspotDealProperties.map(p => `- ${p}`).join('\\n')}\n\n## Google Sheets: IntraWeb Operations Master (8 tabs)\n\n${sheetsStructure.map(s => `### ${s.tab}\\nColumns: ${s.columns}`).join('\\n\\n')}\n\n## n8n Environment Variables (20)\n\n${envVariables.map(v => `- ${v}`).join('\\n')}\n\n## Global Technical Requirements\n- All workflows have error handling: Error Trigger node fires Google Chat alert with workflow name + error detail\n- All HubSpot create operations check for existing records first (idempotent)\n- All phone numbers stored in E.164 format\n- All outbound email via Resend API\n- All Claude calls: model claude-sonnet-4-20250514, max_tokens 2000 (4000 for docs)\n- All workflows log to Automations Log tab on every execution\n- PDF generation via PDFShift API\n`;\n\nreturn [{ json: { context: contextText, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "921c7e39-e5e9-4267-bb9f-54091acb0106",
+      "name": "Code: Build Architecture Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "=Bearer {{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"system\": \"You are writing the IntraWeb OS Owner's Manual — a complete technical and operational reference document for John, the solo founder of IntraWeb Technologies LLC. This is the definitive internal document he will use to run, maintain, and scale his automated business operating system. Write in a direct, no-filler, operator tone — not corporate, not salesy. No em dashes. Use real specifics from the architecture context provided. Format as structured markdown with clear H1, H2, H3 headers. Every section must be actionable and specific to IntraWeb's actual configuration — not generic templates.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.context}}\\n\\nUsing the architecture context above, generate the complete IntraWeb OS Owner's Manual with exactly these 10 sections:\\n\\nSection 1: System Architecture Overview — what all 14 systems do, how they connect, data flow narrative (how a lead enters and moves through every stage), full tech stack table\\n\\nSection 2: Credentials and Access Master Reference — every API key needed, where to find it, which systems use it, how to rotate credentials without breaking workflows\\n\\nSection 3: System by System Runbook — for each of the 14 systems: plain English description, trigger, output, dependencies, how to test manually, what failure looks like, 3 most common failure modes and fixes, how to modify messages or timing\\n\\nSection 4: Daily / Weekly / Monthly Operating Checklist — what runs automatically (never needs attention), what to check daily, what to review weekly, what to do monthly\\n\\nSection 5: HubSpot Configuration Reference — every custom property, what it stores, which workflows read and write it, deal stage definitions, how to manually create contacts and deals\\n\\nSection 6: Google Sheets Reference — every tab, every key column, what populates it and when, how to manually log if automation fails, how to read the Looker Studio dashboard\\n\\nSection 7: Adding and Offboarding Clients — what happens automatically when a deal closes, what requires manual action, pre-launch checklist, offboarding process\\n\\nSection 8: Troubleshooting Guide — how to read n8n execution logs, test a webhook manually, resend a failed email or SMS, restart a stuck workflow, identify cascading failures, emergency contacts for each service\\n\\nSection 9: Scaling Guide — how to add a contractor or VA, which systems need attention first when adding headcount, how to add a new industry vertical to lead sourcing, when to upgrade each service tier\\n\\nSection 10: Changelog Template — columns for logging every workflow modification with instructions for maintaining it\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "2dfe4495-22fc-4d46-9129-5f7e6519f7e9",
+      "name": "Claude: Generate Owner's Manual",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst content = response.content;\nif (!content || !content[0] || !content[0].text) {\n  throw new Error('Claude returned empty response for Owner Manual generation');\n}\n\nconst markdownContent = content[0].text;\n\n// Wrap markdown in clean HTML for PDF generation\nconst htmlDoc = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>IntraWeb OS Owner's Manual</title>\n  <style>\n    * { box-sizing: border-box; margin: 0; padding: 0; }\n    body { font-family: 'Georgia', serif; color: #1a1a1a; line-height: 1.7; padding: 60px 72px; font-size: 13px; }\n    h1 { font-size: 28px; font-weight: 700; color: #0d1b2a; margin-bottom: 8px; border-bottom: 3px solid #0d1b2a; padding-bottom: 12px; }\n    h2 { font-size: 20px; font-weight: 700; color: #0d1b2a; margin-top: 40px; margin-bottom: 12px; border-bottom: 1px solid #d0d0d0; padding-bottom: 8px; }\n    h3 { font-size: 15px; font-weight: 700; color: #2c3e50; margin-top: 24px; margin-bottom: 8px; }\n    p { margin-bottom: 12px; }\n    ul, ol { margin-left: 24px; margin-bottom: 12px; }\n    li { margin-bottom: 4px; }\n    code { font-family: 'Courier New', monospace; background: #f4f4f4; padding: 2px 5px; border-radius: 3px; font-size: 12px; }\n    pre { background: #f4f4f4; border-left: 4px solid #0d1b2a; padding: 16px; margin: 16px 0; font-family: 'Courier New', monospace; font-size: 11px; white-space: pre-wrap; }\n    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }\n    th { background: #0d1b2a; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }\n    td { padding: 7px 10px; border-bottom: 1px solid #e8e8e8; vertical-align: top; }\n    tr:nth-child(even) td { background: #f9f9f9; }\n    strong, b { font-weight: 700; color: #0d1b2a; }\n    .cover-page { text-align: center; padding: 120px 60px; page-break-after: always; }\n    .cover-title { font-size: 36px; font-weight: 900; color: #0d1b2a; margin-bottom: 16px; }\n    .cover-subtitle { font-size: 18px; color: #555; margin-bottom: 48px; }\n    .cover-meta { font-size: 13px; color: #888; }\n    @media print { body { padding: 40px 54px; } }\n  </style>\n</head>\n<body>\n  <div class=\"cover-page\">\n    <div class=\"cover-title\">IntraWeb OS</div>\n    <div class=\"cover-subtitle\">Owner's Manual</div>\n    <div class=\"cover-subtitle\" style=\"font-size:14px; color:#333;\">IntraWeb Technologies LLC<br>AI Automation Operating System</div>\n    <div class=\"cover-meta\">Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}<br>14 Automated Systems | Full Stack Operations Reference</div>\n  </div>\n  <div id=\"content\">\n    ${markdownContent\n      .replace(/^# (.*$)/gm, '<h1>$1</h1>')\n      .replace(/^## (.*$)/gm, '<h2>$1</h2>')\n      .replace(/^### (.*$)/gm, '<h3>$1</h3>')\n      .replace(/^#### (.*$)/gm, '<h4 style=\"font-size:13px;font-weight:700;margin-top:16px;margin-bottom:6px;\">$1</h4>')\n      .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')\n      .replace(/`([^`]+)`/g, '<code>$1</code>')\n      .replace(/^\\* (.+)$/gm, '<li>$1</li>')\n      .replace(/^- (.+)$/gm, '<li>$1</li>')\n      .replace(/^\\d+\\. (.+)$/gm, '<li>$1</li>')\n      .replace(/\\n\\n/g, '</p><p>')\n      .replace(/^(?!<[h|l|p|u|o])/gm, '')\n    }\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: { html: htmlDoc, markdown: markdownContent, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "56c8c064-340b-4a77-a7e0-a303f923344e",
+      "name": "Code: Extract and Build HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pdfshift.io/v3/convert/pdf",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source\": \"{{$json.html}}\",\n  \"landscape\": false,\n  \"use_print\": true,\n  \"format\": \"Letter\",\n  \"margin\": { \"top\": \"0.5in\", \"bottom\": \"0.5in\", \"left\": \"0\", \"right\": \"0\" }\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "pdfData"
+            }
+          }
+        }
+      },
+      "id": "bbb428ba-c8c1-486c-9836-9d97dd024411",
+      "name": "PDFShift: Convert to PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_DRIVE_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "multipart-form-data",
+        "options": {}
+      },
+      "id": "2dd0e5b6-fa4e-4a9a-bbd9-1f24e446cf97",
+      "name": "Google Drive: Upload Manual PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const uploadResponse = $input.first().json;\nconst fileId = uploadResponse.id;\nconst fileName = uploadResponse.name || 'IntraWeb-OS-Owners-Manual.pdf';\nconst webViewLink = uploadResponse.webViewLink || `https://drive.google.com/file/d/${fileId}/view`;\n\nif (!fileId) {\n  throw new Error('Google Drive upload failed — no file ID returned');\n}\n\nreturn [{\n  json: {\n    file_id: fileId,\n    file_name: fileName,\n    drive_link: webViewLink,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "bcea0537-9123-4ebc-9071-574ec78924ee",
+      "name": "Code: Extract Drive Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chat.googleapis.com/v1/spaces/{{$env.GOOGLE_CHAT_ALERTS_SPACE_ID}}/messages?key={{$env.GOOGLE_CHAT_API_KEY}}&token={{$env.GOOGLE_CHAT_API_TOKEN}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*IntraWeb OS Owner's Manual Generated*\\n\\nYour complete operations manual has been created and saved to Google Drive.\\n\\n*File:* IntraWeb-OS-Owners-Manual.pdf\\n*Location:* IntraWeb OS/Documentation\\n*Drive Link:* {{$json.drive_link}}\\n\\n10 sections including system runbooks, troubleshooting guide, HubSpot reference, Sheets reference, and scaling guide. Generated: {{$json.timestamp}}\"\n}",
+        "options": {}
+      },
+      "id": "1d343213-60df-4ae4-b0bd-b2d5bedb7c58",
+      "name": "Google Chat: Manual Ready Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations%20Log:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            },
+            {
+              "name": "insertDataOption",
+              "value": "INSERT_ROWS"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [[\n    \"{{$now.toISO()}}\",\n    \"System 14 — IntraWeb OS Owner's Manual Generator\",\n    \"{{$execution.id}}\",\n    \"John\",\n    \"IntraWeb Technologies\",\n    \"\",\n    \"owners_manual_generated\",\n    \"Success\",\n    \"Owner's manual generated and uploaded to Google Drive: {{$('Code: Extract Drive Link').item.json.drive_link}}\",\n    \"\",\n    \"\"\n  ]]\n}",
+        "options": {}
+      },
+      "id": "bcbcb183-da63-459d-a468-bfffa3fcb579",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        144
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1b364ee3-08c6-4ad4-be47-7255d8da79ab",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://chat.googleapis.com/v1/spaces/{{$env.GOOGLE_CHAT_ALERTS_SPACE_ID}}/messages?key={{$env.GOOGLE_CHAT_API_KEY}}&token={{$env.GOOGLE_CHAT_API_TOKEN}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*WORKFLOW ERROR — System 14: Owner's Manual Generator*\\n\\nFailed node: {{$json.execution.lastNodeExecuted}}\\nError: {{$json.execution.error.message}}\\nExecution ID: {{$json.execution.id}}\\n\\nCheck n8n execution history to debug.\"\n}",
+        "options": {}
+      },
+      "id": "aabf107d-f46f-4d9d-ac09-f7b9cc6204e9",
+      "name": "Google Chat: Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        384
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Generate Owners Manual": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code: Build Architecture Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build Architecture Context": {
+      "main": [
+        [
+          {
+            "node": "Claude: Generate Owner's Manual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Generate Owner's Manual": {
+      "main": [
+        [
+          {
+            "node": "Code: Extract and Build HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Extract and Build HTML": {
+      "main": [
+        [
+          {
+            "node": "PDFShift: Convert to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDFShift: Convert to PDF": {
+      "main": [
+        [
+          {
+            "node": "Google Drive: Upload Manual PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive: Upload Manual PDF": {
+      "main": [
+        [
+          {
+            "node": "Code: Extract Drive Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Extract Drive Link": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Manual Ready Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat: Manual Ready Alert": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "0981bd27-360e-431b-9e24-035e0e6d1715",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:48:22.724Z",
+      "createdAt": "2026-03-05T05:48:22.724Z",
+      "role": "workflow:owner",
+      "workflowId": "Zmqe87zuqd3HWqFs",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

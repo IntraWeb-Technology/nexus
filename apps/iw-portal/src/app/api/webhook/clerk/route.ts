@@ -7,11 +7,14 @@ import {
   parseClerkWebhookUser,
   provisionSelfSignupCustomer,
 } from '@/lib/data/provision-self-signup'
+import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { triggerLoginEvent } from '@/lib/n8n/client'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
+
+export const maxDuration = 60
 
 export async function POST(request: Request) {
   const secret = process.env.CLERK_WEBHOOK_SECRET
@@ -36,8 +39,23 @@ export async function POST(request: Request) {
       'svix-signature': svixSig,
     }) as { type: string; data: Record<string, unknown> }
   } catch {
+    await recordIntegrationEvent({
+      provider: 'clerk',
+      eventType: 'signature.invalid',
+      status: 'failed',
+      payload: { svixId },
+      lastError: 'Invalid signature',
+    })
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
+
+  await recordIntegrationEvent({
+    provider: 'clerk',
+    eventType: evt.type,
+    externalEventId: svixId,
+    status: 'received',
+    payload: evt.data,
+  })
 
   if (evt.type === 'user.created') {
     const parsed = parseClerkWebhookUser(evt.data as Record<string, unknown>)
@@ -67,6 +85,14 @@ export async function POST(request: Request) {
           console.log('[clerk webhook] self-signup provisioned', parsed.userId)
         }
       } catch (e) {
+        await recordIntegrationEvent({
+          provider: 'clerk',
+          eventType: evt.type,
+          externalEventId: svixId,
+          status: 'failed',
+          payload: evt.data,
+          lastError: e instanceof Error ? e.message : 'user.created provision failed',
+        })
         console.error('[clerk webhook] user.created provision', e)
       }
     }
@@ -108,7 +134,7 @@ export async function POST(request: Request) {
             .order('created_at', { ascending: true })
             .limit(1)
             .maybeSingle()
-          triggerLoginEvent({
+          await triggerLoginEvent({
             project_slug: project?.slug ?? 'unknown',
             client_name: client.name,
             client_email: client.email,
@@ -116,6 +142,14 @@ export async function POST(request: Request) {
           })
         }
       } catch (e) {
+        await recordIntegrationEvent({
+          provider: 'clerk',
+          eventType: evt.type,
+          externalEventId: svixId,
+          status: 'failed',
+          payload: evt.data,
+          lastError: e instanceof Error ? e.message : 'session.created handling failed',
+        })
         console.error('[clerk webhook] session.created', e)
       }
     }

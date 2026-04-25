@@ -32,6 +32,7 @@ const workflowId = (process.env.SYS00_WORKFLOW_ID || "zIP8vhSQ1bCQP9RR").trim();
 const webhookPath = "hubspot-events";
 const dealStageChange = process.argv.includes("--deal-stage-change");
 const testDealId = (process.env.HUBSPOT_TEST_DEAL_ID || "99999999999").trim();
+const usingPlaceholderHubSpotId = testDealId === "99999999999";
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -160,6 +161,16 @@ async function main() {
   const err = d.resultData?.error;
   if (err) {
     const { node, http, msg, hints } = analyzeError(err);
+    if (usingPlaceholderHubSpotId && (http === "404" || http === 404)) {
+      console.log("\n--- EXPECTED TEST LIMITATION ---");
+      console.log("Node:", node);
+      console.log("httpCode:", http);
+      console.log("message:", msg);
+      console.log(
+        "Using placeholder HUBSPOT_TEST_DEAL_ID=99999999999; set a real HubSpot object id for full end-to-end validation.",
+      );
+      process.exit(0);
+    }
     console.log("\n--- FAILURE ---");
     console.log("Node:", node);
     console.log("httpCode:", http);

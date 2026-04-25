@@ -1,0 +1,1170 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:37:12.503Z",
+  "id": "GFqQPFOpAypxG51Q",
+  "name": "System 11 — Referral & Reactivation Engine",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "project-complete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8ddcff7d-90ac-491b-ac15-77ccf75e7a4a",
+      "name": "Webhook: Project Complete",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -2208,
+        128
+      ],
+      "webhookId": "8a6dec9c-03d8-4a08-adb2-05f73f6022a4"
+    },
+    {
+      "parameters": {
+        "amount": 7,
+        "unit": "days"
+      },
+      "id": "564e573e-292d-4d77-a309-db6e5faa8c2d",
+      "name": "Wait 7 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -1984,
+        128
+      ],
+      "webhookId": "435faab3-aee3-4767-9e68-ee0cc9a89d1a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 600,\n  \"system\": \"Write a referral request email from John at IntraWeb Technologies. Tone: personal, genuine, not templated. Reference the specific project completed. Ask if they know any other business owners who struggle with operations or want to automate. Mention IntraWeb gives a $500 credit for referrals that close. Under 200 words. No em dashes. Return JSON with keys: subject (string) and html_body (string with HTML formatting).\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Client name: {{$json.body.client_name}}\\nCompany: {{$json.body.company_name}}\\nProject summary: {{$json.body.project_summary}}\\n\\nWrite the referral request email and return as JSON with subject and html_body keys.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "ac3904fe-021d-46bb-80c4-cbeaf613f5fb",
+      "name": "Claude: Generate Referral Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1760,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawContent = $input.first().json.content[0].text;\nlet parsed;\ntry {\n  parsed = JSON.parse(rawContent);\n} catch (e) {\n  const match = rawContent.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(match[0]);\n}\nconst body = $('Webhook: Project Complete').first().json.body;\nreturn [{\n  json: {\n    subject: parsed.subject,\n    html_body: parsed.html_body,\n    client_name: body.client_name,\n    company_name: body.company_name,\n    email: body.email,\n    phone: body.phone,\n    deal_id: body.deal_id,\n    project_summary: body.project_summary\n  }\n}];"
+      },
+      "id": "d199a689-29e5-44e4-97bc-c7281021fdc5",
+      "name": "Parse Referral Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1536,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{$json.email}}\"],\n  \"subject\": \"{{$json.subject}}\",\n  \"html\": \"{{$json.html_body}}\"\n}",
+        "options": {}
+      },
+      "id": "660d9a1c-3323-41af-83ec-369f00fe1c44",
+      "name": "Resend: Send Referral Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1328,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Referral request email sent to {{$json.client_name}} at {{$json.company_name}} on {{$now.format('MMMM d, yyyy')}}. Subject: {{$json.subject}}\",\n    \"hs_timestamp\": \"{{$now.toISO()}}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\"id\": \"{{$json.deal_id}}\"},\n      \"types\": [{\"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 214}]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "7f0285ae-db9f-4d4c-aeb4-d9f83f04e47e",
+      "name": "HubSpot: Log Referral Email Activity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1104,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "id": "0259ea97-2fe8-4bb1-a059-bc0ffd377faa",
+      "name": "Wait 3 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        128
+      ],
+      "webhookId": "a49fb6b4-f1be-4691-9c0e-a3cd6de0dcee"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"email\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{$('Parse Referral Email Content').first().json.email}}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"email\", \"phone\", \"hs_last_email_date\", \"notes_last_updated\"]\n}",
+        "options": {}
+      },
+      "id": "ed72093b-fb01-468e-b1a2-4a1ac4cae408",
+      "name": "HubSpot: Check Contact Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const contact = $input.first().json;\nconst results = contact.results || [];\nconst referralData = $('Parse Referral Email Content').first().json;\nif (results.length === 0) {\n  return [{\n    json: {\n      replied: false,\n      client_name: referralData.client_name,\n      phone: referralData.phone,\n      email: referralData.email,\n      deal_id: referralData.deal_id\n    }\n  }];\n}\nconst props = results[0].properties;\nconst lastEmailDate = props.hs_last_email_date ? new Date(props.hs_last_email_date) : null;\nconst sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);\nconst replied = lastEmailDate && lastEmailDate > sevenDaysAgo;\nreturn [{\n  json: {\n    replied,\n    client_name: referralData.client_name,\n    phone: referralData.phone,\n    email: referralData.email,\n    deal_id: referralData.deal_id\n  }\n}];"
+      },
+      "id": "a96d83d2-9efd-4609-9724-17923f56c608",
+      "name": "Check If Replied",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "referral-no-reply",
+              "leftValue": "={{$json.replied}}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "34482b24-7df9-463d-9686-6d77956369d6",
+      "name": "If No Reply: Referral",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$env.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$env.TWILIO_PHONE_NUMBER}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$json.client_name}}, just wanted to make sure you got my email about referrals. If you know any business owners who could use what we built for you, happy to give you a $500 credit. — John"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bad6f4e2-660c-4669-9d6d-b5a88440db4a",
+      "name": "Twilio: Referral SMS Follow-up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"System 11A: Referral sequence complete for {{$('Parse Referral Email Content').first().json.client_name}}. SMS follow-up sent on {{$now.format('MMMM d, yyyy')}}.\",\n    \"hs_timestamp\": \"{{$now.toISO()}}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "c83d9f22-2720-49f9-bd1a-9fc570d62e28",
+      "name": "HubSpot: Log Referral SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations%20Log:append",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"range\": \"Automations Log\",\n  \"majorDimension\": \"ROWS\",\n  \"values\": [\n    [\n      \"{{$now.format('yyyy-MM-dd HH:mm:ss')}}\",\n      \"System 11A\",\n      \"Referral Engine\",\n      \"Referral sequence executed for {{$('Parse Referral Email Content').first().json.client_name}} at {{$('Parse Referral Email Content').first().json.company_name}}\",\n      \"Success\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "2957e000-22be-447b-80f5-69d230a30b6d",
+      "name": "Log Referral to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations%20Log:append",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"range\": \"Automations Log\",\n  \"majorDimension\": \"ROWS\",\n  \"values\": [\n    [\n      \"{{$now.format('yyyy-MM-dd HH:mm:ss')}}\",\n      \"System 11A\",\n      \"Referral Engine\",\n      \"Referral email sent to {{$('Parse Referral Email Content').first().json.client_name}} — contact replied, no SMS needed\",\n      \"Success\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "b017fdca-6455-40d4-8dc8-dbdae1825af3",
+      "name": "Log Referral Replied to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 14 * * *"
+            }
+          ]
+        }
+      },
+      "id": "809f164a-5076-4dfb-b5dd-eb609466d562",
+      "name": "Schedule: Daily 9AM EST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2208,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"notes_last_updated\",\n          \"operator\": \"LT\",\n          \"value\": \"{{$now.minus(60, 'days').toMillis()}}\"\n        },\n        {\n          \"propertyName\": \"hs_lead_status\",\n          \"operator\": \"NOT_IN\",\n          \"values\": [\"IN_PROGRESS\", \"OPEN\"]\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"email\", \"phone\", \"company\", \"industry\", \"notes_last_updated\", \"hs_lead_status\"],\n  \"limit\": 50\n}",
+        "options": {}
+      },
+      "id": "c03c87e8-2a8e-41de-a21f-38702df82469",
+      "name": "HubSpot: Search Dormant Contacts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1984,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst contacts = response.results || [];\nreturn contacts.map(contact => ({\n  json: {\n    contact_id: contact.id,\n    firstname: contact.properties.firstname || '',\n    lastname: contact.properties.lastname || '',\n    full_name: `${contact.properties.firstname || ''} ${contact.properties.lastname || ''}`.trim(),\n    email: contact.properties.email || '',\n    phone: contact.properties.phone || '',\n    company: contact.properties.company || '',\n    industry: contact.properties.industry || 'their industry'\n  }\n}));"
+      },
+      "id": "693be411-fab8-4956-ac8d-de4b2b84e238",
+      "name": "Extract Dormant Contacts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1760,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e45cfebd-a296-43f9-bbbb-e52804b8ae73",
+      "name": "Split In Batches: Dormant Contacts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -1536,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 600,\n  \"system\": \"Write re-engagement emails for IntraWeb Technologies from John. The tone is personal, not automated. Reference the contact's company and industry. Mention new automation work done for similar businesses. Use a soft CTA to reconnect, not a hard sell. Under 200 words. No em dashes. Return JSON with keys: subject (string) and html_body (string).\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Contact: {{$json.full_name}}\\nCompany: {{$json.company}}\\nIndustry: {{$json.industry}}\\n\\nWrite the re-engagement email.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "e62a80c0-a1ed-42d9-9022-2414c3208122",
+      "name": "Claude: Generate Re-engagement Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1328,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawContent = $input.first().json.content[0].text;\nlet parsed;\ntry {\n  parsed = JSON.parse(rawContent);\n} catch (e) {\n  const match = rawContent.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(match[0]);\n}\nconst contactData = $('Split In Batches: Dormant Contacts').first().json;\nreturn [{\n  json: {\n    subject: parsed.subject,\n    html_body: parsed.html_body,\n    contact_id: contactData.contact_id,\n    full_name: contactData.full_name,\n    email: contactData.email,\n    phone: contactData.phone,\n    company: contactData.company,\n    industry: contactData.industry\n  }\n}];"
+      },
+      "id": "83552ca7-83ac-47d4-898b-6f1e249017b5",
+      "name": "Parse Reactivation Email Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{$json.email}}\"],\n  \"subject\": \"{{$json.subject}}\",\n  \"html\": \"{{$json.html_body}}\"\n}",
+        "options": {}
+      },
+      "id": "4595d061-350b-4d47-8767-9cb0a338bbd5",
+      "name": "Resend: Send Reactivation Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -880,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Reactivation email sent on {{$now.format('MMMM d, yyyy')}}. Subject: {{$json.subject}}\",\n    \"hs_timestamp\": \"{{$now.toISO()}}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\"id\": \"{{$json.contact_id}}\"},\n      \"types\": [{\"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 9}]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "c0341bba-fef3-4548-8da2-ed298b3b7394",
+      "name": "HubSpot: Log Reactivation Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -656,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 4,
+        "unit": "days"
+      },
+      "id": "9d2d8535-3875-4a24-b52b-c6d55e6eda51",
+      "name": "Wait 4 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        528
+      ],
+      "webhookId": "42fbfd81-3be8-44ee-a394-4191c188256a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"id\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{$('Parse Reactivation Email Content').first().json.contact_id}}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"email\", \"hs_last_email_date\", \"notes_last_updated\"]\n}",
+        "options": {}
+      },
+      "id": "0ad63727-5054-43e9-b037-38fa7b770e30",
+      "name": "HubSpot: Check Reactivation Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -224,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\nconst contactData = $('Parse Reactivation Email Content').first().json;\nif (results.length === 0) {\n  return [{ json: { replied: false, ...contactData } }];\n}\nconst props = results[0].properties;\nconst lastEmailDate = props.hs_last_email_date ? new Date(props.hs_last_email_date) : null;\nconst fourDaysAgo = new Date(Date.now() - 4 * 24 * 60 * 60 * 1000);\nconst replied = lastEmailDate && lastEmailDate > fourDaysAgo;\nreturn [{ json: { replied, ...contactData } }];"
+      },
+      "id": "2d5f1764-d259-4a65-85de-add81df14110",
+      "name": "Check Reactivation Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "reactivation-replied",
+              "leftValue": "={{$json.replied}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f29ce9b4-6caf-4cf0-a34f-f434fbac996a",
+      "name": "If Replied: Reactivation",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        224,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"dealname\": \"{{$json.company}} — Reactivated Lead\",\n    \"dealstage\": \"leadidentified\",\n    \"pipeline\": \"default\",\n    \"closedate\": \"{{$now.plus(30, 'days').toISO()}}\",\n    \"description\": \"Reactivated via System 11B on {{$now.format('MMMM d, yyyy')}}. Contact replied to re-engagement email.\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\"id\": \"{{$json.contact_id}}\"},\n      \"types\": [{\"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 3}]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "96495941-c16c-45f3-865c-5c4a4dd18e2f",
+      "name": "HubSpot: Create Reactivated Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"Reactivated lead: {{$('Check Reactivation Reply').first().json.full_name}} at {{$('Check Reactivation Reply').first().json.company}} replied — new deal created in HubSpot pipeline.\"\n}",
+        "options": {}
+      },
+      "id": "8f976d89-b69d-45f7-a9c0-24706b08c540",
+      "name": "Google Chat: Reactivation Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$env.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$env.TWILIO_PHONE_NUMBER}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$json.full_name}}, this is John from IntraWeb. I sent you an email recently about some new automation work we've been doing. Would love to reconnect when you have a moment. — John"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f6b5c8fc-a7d6-4d0e-a7b8-d8f368e696d7",
+      "name": "Twilio: Reactivation SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations%20Log:append",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"range\": \"Automations Log\",\n  \"majorDimension\": \"ROWS\",\n  \"values\": [\n    [\n      \"{{$now.format('yyyy-MM-dd HH:mm:ss')}}\",\n      \"System 11B\",\n      \"Reactivation Engine\",\n      \"Reactivation sequence complete — {{$('Check Reactivation Reply').first().json.full_name}} at {{$('Check Reactivation Reply').first().json.company}}\",\n      \"Success\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "d8996b3d-815d-41bd-ba3f-e7fa2f04a4da",
+      "name": "Log Reactivation to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        528
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "8ef245a1-0b62-4306-8528-a6f0b78d9738",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2208,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"ERROR — System 11 Referral & Reactivation Engine\\nWorkflow: {{$json.workflow.name}}\\nNode: {{$json.execution.lastNodeExecuted}}\\nError: {{$json.error.message}}\\nTime: {{$now.format('yyyy-MM-dd HH:mm:ss')}}\"\n}",
+        "options": {}
+      },
+      "id": "e12b4a44-10e7-45ed-88d4-84ba9eee9e4b",
+      "name": "Google Chat: Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1984,
+        832
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Project Complete": {
+      "main": [
+        [
+          {
+            "node": "Wait 7 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 7 Days": {
+      "main": [
+        [
+          {
+            "node": "Claude: Generate Referral Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Generate Referral Email": {
+      "main": [
+        [
+          {
+            "node": "Parse Referral Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Referral Email Content": {
+      "main": [
+        [
+          {
+            "node": "Resend: Send Referral Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Send Referral Email": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Log Referral Email Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Log Referral Email Activity": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Check Contact Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Check Contact Reply": {
+      "main": [
+        [
+          {
+            "node": "Check If Replied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check If Replied": {
+      "main": [
+        [
+          {
+            "node": "If No Reply: Referral",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If No Reply: Referral": {
+      "main": [
+        [
+          {
+            "node": "Twilio: Referral SMS Follow-up",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Referral Replied to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio: Referral SMS Follow-up": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Log Referral SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Log Referral SMS": {
+      "main": [
+        [
+          {
+            "node": "Log Referral to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule: Daily 9AM EST": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Search Dormant Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Search Dormant Contacts": {
+      "main": [
+        [
+          {
+            "node": "Extract Dormant Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Dormant Contacts": {
+      "main": [
+        [
+          {
+            "node": "Split In Batches: Dormant Contacts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split In Batches: Dormant Contacts": {
+      "main": [
+        [
+          {
+            "node": "Claude: Generate Re-engagement Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Generate Re-engagement Email": {
+      "main": [
+        [
+          {
+            "node": "Parse Reactivation Email Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reactivation Email Content": {
+      "main": [
+        [
+          {
+            "node": "Resend: Send Reactivation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Send Reactivation Email": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Log Reactivation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Log Reactivation Email": {
+      "main": [
+        [
+          {
+            "node": "Wait 4 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 4 Days": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Check Reactivation Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Check Reactivation Reply": {
+      "main": [
+        [
+          {
+            "node": "Check Reactivation Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Reactivation Reply": {
+      "main": [
+        [
+          {
+            "node": "If Replied: Reactivation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Replied: Reactivation": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Create Reactivated Deal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Twilio: Reactivation SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Create Reactivated Deal": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Reactivation Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat: Reactivation Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Reactivation to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio: Reactivation SMS": {
+      "main": [
+        [
+          {
+            "node": "Log Reactivation to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "5686983f-b893-4961-958a-ef61e1d97fc5",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:37:12.506Z",
+      "createdAt": "2026-03-05T05:37:12.506Z",
+      "role": "workflow:owner",
+      "workflowId": "GFqQPFOpAypxG51Q",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

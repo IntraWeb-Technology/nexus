@@ -1,0 +1,647 @@
+{
+  "updatedAt": "2026-04-18T22:45:40.999Z",
+  "createdAt": "2026-03-04T01:42:41.414Z",
+  "id": "4csJpuashudDJ0Ra",
+  "name": "03 — Lead Follow-Up Sequence",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-followup-trigger",
+        "options": {}
+      },
+      "id": "492411b5-badc-46ea-89e3-d6810e124675",
+      "name": "New Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        144
+      ],
+      "webhookId": "wh-03-lead-followup",
+      "notes": "Triggered by HubSpot Workflow when a new contact is created with lifecyclestage=lead. Configure in HubSpot: Workflows → New Contact → Trigger Action → Send Webhook POST to this URL with contact properties."
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// HubSpot webhook sends contact properties\nconst contactId = body.objectId || body.contact_id || body.hs_object_id || '';\nconst firstname = body.properties?.firstname?.value || body.firstname || 'there';\nconst lastname = body.properties?.lastname?.value || body.lastname || '';\nconst phone = body.properties?.phone_e164?.value || body.properties?.phone?.value || body.phone_e164 || body.phone || '';\nconst email = body.properties?.email?.value || body.email || '';\nconst replyStatus = body.properties?.reply_status?.value || body.reply_status || 'no_reply';\nconst sequenceStatus = body.properties?.followup_sequence_status?.value || 'active';\n\n// Don't start sequence if already stopped or if they've already replied\nif (replyStatus === 'replied' || replyStatus === 'booked' || sequenceStatus !== 'active') {\n  return [{ json: { skip: true, reason: 'Already replied or sequence not active', contactId } }];\n}\n\nreturn [{\n  json: {\n    skip: false,\n    contactId,\n    firstname,\n    lastname,\n    fullName: `${firstname} ${lastname}`.trim(),\n    phone,\n    email,\n    replyStatus,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "fb0cb282-98ac-4795-bff8-d56fb760d168",
+      "name": "Extract Contact Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-skip",
+              "leftValue": "={{$json.skip}}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8c36cc1d-ab68-4a9c-b88b-b221501c7b34",
+      "name": "Should Run Sequence?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$json.firstname}}, thanks for reaching out to Apex Comfort! We received your request and will call you within 2 hours. Reply here if you have any questions."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6147d516-c6f5-4a90-9b2c-fa68e330fb02",
+      "name": "Touch 1 — SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"{{$vars.FROM_NAME}} <{{$vars.FROM_EMAIL}}>\",\n  \"to\": [\"{{ $('Extract Contact Data').item.json.email }}\"],\n  \"subject\": \"We got your request — Apex Comfort HVAC\",\n  \"html\": \"<p>Hi {{ $('Extract Contact Data').item.json.firstname }},</p><p>Thanks for reaching out to Apex Comfort! We've received your service request and one of our team members will give you a call within 2 hours.</p><p>In the meantime, if you have any questions or need to reach us sooner, just reply to this email or call us at {{$vars.COMPANY_PHONE}}.</p><p>We appreciate your business!</p><p>— The Apex Comfort Team</p>\"\n}",
+        "options": {}
+      },
+      "id": "ce44e04a-ecf6-448f-8c25-0920d42aa982",
+      "name": "Touch 1 — Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 48
+      },
+      "id": "b1d04510-26cf-4508-be5f-25afc0d4cb90",
+      "name": "Wait 48 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        240,
+        112
+      ],
+      "webhookId": "63964cb7-d014-4999-a115-c3625d3d2e57"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$('Extract Contact Data').item.json.contactId}}?properties=reply_status,followup_sequence_status,phone_e164,firstname",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "179d1696-b305-46ab-8e2a-89eefdcf4fc9",
+      "name": "Check Reply Status (48hr)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-no-reply-48",
+              "leftValue": "={{$json.properties.reply_status.value}}",
+              "rightValue": "no_reply",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond-seq-active-48",
+              "leftValue": "={{$json.properties.followup_sequence_status.value}}",
+              "rightValue": "active",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7ca8c52b-87c7-43da-846b-0ad0aad29d1e",
+      "name": "Still No Reply? (48hr)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.properties.phone_e164.value}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$json.properties.firstname.value}}, still interested in getting an HVAC quote? We have availability this week. Just reply here and we'll get you set up. — Apex Comfort"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c9e8a96a-d956-418e-b4ee-9c64fae56483",
+      "name": "Touch 2 — SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 48
+      },
+      "id": "7c7d6732-c645-4d0a-98a0-aa1320cd4979",
+      "name": "Wait Another 48 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        112
+      ],
+      "webhookId": "8b39f3a2-7f7c-44fa-b23e-ae6aba6017d3"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$('Extract Contact Data').item.json.contactId}}?properties=reply_status,followup_sequence_status,phone_e164,firstname,email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "1aacbb3d-2634-4459-95a6-b0a027f72eee",
+      "name": "Check Reply Status (96hr)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-no-reply-96",
+              "leftValue": "={{$json.properties.reply_status.value}}",
+              "rightValue": "no_reply",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6951ee57-b20c-4b6d-9692-57e6f3b0ab26",
+      "name": "Still No Reply? (96hr)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"{{$vars.FROM_NAME}} <{{$vars.FROM_EMAIL}}>\",\n  \"to\": [\"{{ $json.properties.email.value }}\"],\n  \"subject\": \"Still thinking about your HVAC service? — Apex Comfort\",\n  \"html\": \"<p>Hi {{ $json.properties.firstname.value }},</p><p>We reached out a couple of times but haven't heard back. We completely understand — life gets busy.</p><p>If you're still thinking about getting your HVAC system serviced, we'd love to help. We're currently booking appointments this week and next.</p><p>Just hit reply or give us a call at {{$vars.COMPANY_PHONE}} — no pressure, no obligation.</p><p>Either way, hope you have a great week!</p><p>— The Apex Comfort Team</p><p><small>If you'd prefer not to hear from us, just reply 'STOP' and we'll remove you from our list.</small></p>\"\n}",
+        "options": {}
+      },
+      "id": "e29eb960-28f8-4fa1-b13e-3814fdab9823",
+      "name": "Touch 3 — Final Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$('Extract Contact Data').item.json.contactId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"properties\": {\n    \"followup_sequence_status\": \"completed\"\n  }\n}",
+        "options": {}
+      },
+      "id": "ed06a16a-8a93-4ae1-b155-41998157efed",
+      "name": "Mark Sequence Complete",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{new Date().toISOString()}}",
+            "Workflow Name": "03-Lead-Followup-Sequence",
+            "Event Type": "FOLLOWUP_SEQUENCE_COMPLETED",
+            "Contact Name": "={{$('Extract Contact Data').item.json.fullName}}",
+            "Phone": "={{$('Extract Contact Data').item.json.phone}}",
+            "Email": "={{$('Extract Contact Data').item.json.email}}",
+            "Deal ID": "",
+            "Contact ID": "={{$('Extract Contact Data').item.json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "All 3 touches sent. No response.",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "1f08e36a-0ec0-4617-8e57-23b98faf6e1a",
+      "name": "Log Sequence Complete",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        2400,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "29f53b9e-9e81-47e6-801b-4847d7c2668e",
+      "name": "Sequence Skipped",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        352
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "591efe5d-f546-4d40-8f14-a46a21907f98",
+      "name": "Stop — Replied at 48hr",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        208
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ff18cb15-d963-44d1-a34a-8cb8fd0b04d9",
+      "name": "Stop — Replied at 96hr",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1920,
+        208
+      ]
+    }
+  ],
+  "connections": {
+    "New Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Contact Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Contact Data": {
+      "main": [
+        [
+          {
+            "node": "Should Run Sequence?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Run Sequence?": {
+      "main": [
+        [
+          {
+            "node": "Touch 1 — SMS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Touch 1 — Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sequence Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Touch 1 — SMS": {
+      "main": [
+        [
+          {
+            "node": "Wait 48 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 48 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Reply Status (48hr)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Reply Status (48hr)": {
+      "main": [
+        [
+          {
+            "node": "Still No Reply? (48hr)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still No Reply? (48hr)": {
+      "main": [
+        [
+          {
+            "node": "Touch 2 — SMS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop — Replied at 48hr",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Touch 2 — SMS": {
+      "main": [
+        [
+          {
+            "node": "Wait Another 48 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Another 48 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Reply Status (96hr)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Reply Status (96hr)": {
+      "main": [
+        [
+          {
+            "node": "Still No Reply? (96hr)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still No Reply? (96hr)": {
+      "main": [
+        [
+          {
+            "node": "Touch 3 — Final Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop — Replied at 96hr",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Touch 3 — Final Email": {
+      "main": [
+        [
+          {
+            "node": "Mark Sequence Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Sequence Complete": {
+      "main": [
+        [
+          {
+            "node": "Log Sequence Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "e668081c-33fe-47a3-a12a-c7e5d0e9243f",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:42:41.423Z",
+      "createdAt": "2026-03-04T01:42:41.423Z",
+      "role": "workflow:owner",
+      "workflowId": "4csJpuashudDJ0Ra",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:34.370Z",
+      "createdAt": "2026-03-04T01:54:34.370Z",
+      "id": "6DOAorHv7f45HDuG",
+      "name": "sms"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:41.848Z",
+      "createdAt": "2026-03-04T01:54:41.848Z",
+      "id": "7EKVflTcA1YNQ6g8",
+      "name": "email"
+    },
+    {
+      "updatedAt": "2026-03-04T01:55:13.209Z",
+      "createdAt": "2026-03-04T01:55:13.209Z",
+      "id": "A0H6AGn4zekaL2Mz",
+      "name": "nurture"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:24.790Z",
+      "createdAt": "2026-03-04T01:54:24.790Z",
+      "id": "STjOTeAlFg1YGt2S",
+      "name": "follow-up"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    }
+  ],
+  "activeVersion": null
+}

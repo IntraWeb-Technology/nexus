@@ -8,17 +8,26 @@
 import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
+import { resolveSupabaseScriptEnv } from './lib/supabase-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+let url: string
+let key: string
+try {
+  const env = resolveSupabaseScriptEnv()
+  url = env.url
+  key = env.serviceRoleKey
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error))
+  process.exit(1)
+}
 const secret = process.env.WEBHOOK_SECRET
 
 async function main() {
   if (!url || !key || !secret) {
-    console.error('Missing NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or WEBHOOK_SECRET in .env.local')
+    console.error('Missing WEBHOOK_SECRET in .env.local')
     process.exit(1)
   }
 

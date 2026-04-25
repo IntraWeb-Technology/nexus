@@ -1,0 +1,618 @@
+{
+  "updatedAt": "2026-04-18T22:45:41.103Z",
+  "createdAt": "2026-03-04T01:47:59.566Z",
+  "id": "FE8NFqxHMrxNlbGu",
+  "name": "05 — Quote Follow-Up Automation",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deal-stage-change",
+        "options": {}
+      },
+      "id": "9340cd30-c4e1-42d2-b3cd-1c98839de581",
+      "name": "Deal Stage Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1920,
+        208
+      ],
+      "webhookId": "wh-05-deal-stage",
+      "notes": "Configure HubSpot Workflow: When deal stage changes to 'Quote Sent', send POST to this webhook URL with deal and contact data."
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// HubSpot sends deal properties via workflow webhook\nconst dealId = body.objectId || body.deal_id || body.hs_object_id || '';\nconst dealStage = body.properties?.dealstage?.value || body.dealstage || '';\nconst dealName = body.properties?.dealname?.value || body.dealname || '';\nconst amount = body.properties?.amount?.value || body.amount || '';\nconst invoiceNumber = body.properties?.invoice_number?.value || body.invoice_number || '';\n\n// Contact may be embedded or we need to fetch it\nconst contactId = body.associations?.contacts?.results?.[0]?.id || \n                   body.contact_id || '';\nconst contactName = body.contact_name || body.properties?.contact_firstname?.value || '';\nconst contactEmail = body.contact_email || '';\nlet contactPhone = body.contact_phone || body.properties?.contact_phone?.value || '';\n\nif (contactPhone && !contactPhone.startsWith('+')) {\n  contactPhone = '+1' + contactPhone.replace(/\\D/g, '');\n}\n\n// Only process Quote Sent stage\nif (!dealStage.includes('quote')) {\n  return [{ json: { skip: true, reason: 'Not a Quote Sent trigger', dealId, dealStage } }];\n}\n\nreturn [{\n  json: {\n    skip: false,\n    dealId,\n    dealStage,\n    dealName,\n    amount,\n    invoiceNumber,\n    contactId,\n    contactName,\n    contactEmail,\n    contactPhone,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "160c4067-4a54-47c9-bf62-4408d4a3958f",
+      "name": "Parse Deal Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1680,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-skip-05",
+              "leftValue": "={{$json.skip}}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c0e9b280-d3fb-40e9-96a0-71b8590a797c",
+      "name": "Is Quote Sent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.contactId}}?properties=firstname,lastname,phone_e164,email,phone",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "f981e28a-b90e-40d7-829b-1e66491e7c80",
+      "name": "Get Contact Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1200,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const contact = $input.first().json;\nconst dealData = $('Parse Deal Data').item.json;\n\nconst firstname = contact.properties?.firstname?.value || dealData.contactName || 'there';\nconst phone = contact.properties?.phone_e164?.value || contact.properties?.phone?.value || dealData.contactPhone;\nconst email = contact.properties?.email?.value || dealData.contactEmail;\n\nreturn [{\n  json: {\n    ...dealData,\n    firstname,\n    phone,\n    email\n  }\n}];"
+      },
+      "id": "65d2e2d9-de20-465a-9210-32a07f3ac9af",
+      "name": "Merge Contact + Deal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 48
+      },
+      "id": "16c4e5f3-813f-4f02-9dad-e402e69f3fd3",
+      "name": "Wait 48 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        112
+      ],
+      "webhookId": "eebe7f31-1420-47c1-9c03-143eafa01a62"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Deal Data').item.json.dealId}}?properties=dealstage,dealname,amount",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "ee5142d9-0754-4c4e-9d13-0d4e49ab118a",
+      "name": "Check Deal Stage (48hr)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-still-quote",
+              "leftValue": "={{$json.properties.dealstage.value}}",
+              "rightValue": "={{$vars.HUBSPOT_STAGE_QUOTE_SENT}}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "78dbda6a-a192-4a5a-93c2-79152e7bc002",
+      "name": "Still Quote Sent? (48hr)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$('Merge Contact + Deal').item.json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$('Merge Contact + Deal').item.json.firstname}}, just checking in on the quote we sent over for your HVAC service. Any questions? We're happy to walk through it. — Apex Comfort ({{$vars.COMPANY_PHONE}})"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bd59d4da-b20e-4470-a4c6-52e8bd442cc1",
+      "name": "48hr — SMS Follow-Up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 48
+      },
+      "id": "7b9aabd9-052a-4f00-9789-a961c167d44f",
+      "name": "Wait Another 48 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        240,
+        112
+      ],
+      "webhookId": "4265462d-7671-4ece-9578-3303fb58a5a7"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Deal Data').item.json.dealId}}?properties=dealstage,dealname,amount",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "a5e65800-e6da-48fd-b9ae-5aaecaf22c29",
+      "name": "Check Deal Stage (96hr)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-still-quote-96",
+              "leftValue": "={{$json.properties.dealstage.value}}",
+              "rightValue": "={{$vars.HUBSPOT_STAGE_QUOTE_SENT}}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "647f5c19-a795-45af-a6b1-cf188a3b12bc",
+      "name": "Still Quote Sent? (96hr)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        720,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"{{$vars.FROM_NAME}} <{{$vars.FROM_EMAIL}}>\",\n  \"to\": [\"{{ $('Merge Contact + Deal').item.json.email }}\"],\n  \"subject\": \"Your Apex Comfort quote — still available this week\",\n  \"html\": \"<p>Hi {{ $('Merge Contact + Deal').item.json.firstname }},</p><p>We sent you a quote a few days ago for your HVAC service and wanted to follow up one more time.</p><p>Our pricing is valid through this week, and we have scheduling availability if you're ready to move forward.</p><p><strong>Your quote summary:</strong><br>Service: {{ $('Merge Contact + Deal').item.json.dealName }}<br>Amount: ${{ $('Merge Contact + Deal').item.json.amount }}</p><p>Just hit reply or call us at {{$vars.COMPANY_PHONE}} — we'd love to get you on the schedule.</p><p>— The Apex Comfort Team</p>\"\n}",
+        "options": {}
+      },
+      "id": "e1efaec9-49e5-4860-b532-207c0aaf6af1",
+      "name": "96hr — Email Follow-Up",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Deal Data').item.json.dealId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"dealstage\": \"{{$vars.HUBSPOT_STAGE_STALE}}\",\n    \"stale_date\": \"{{new Date().toISOString()}}\",\n    \"quote_followup_status\": \"completed\"\n  }\n}",
+        "options": {}
+      },
+      "id": "bdd8262c-f2b2-497d-88a5-ce21c137e02a",
+      "name": "Move Deal to Stale",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{new Date().toISOString()}}",
+            "Workflow Name": "05-Quote-Followup",
+            "Event Type": "DEAL_MOVED_TO_STALE",
+            "Contact Name": "={{$('Merge Contact + Deal').item.json.firstname}}",
+            "Phone": "={{$('Merge Contact + Deal').item.json.phone}}",
+            "Email": "={{$('Merge Contact + Deal').item.json.email}}",
+            "Deal ID": "={{$('Parse Deal Data').item.json.dealId}}",
+            "Contact ID": "={{$('Parse Deal Data').item.json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "No response to quote after 96hr — moved to Stale",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "Stale",
+            "Amount": "={{$('Merge Contact + Deal').item.json.amount}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "70e065d5-461b-44a4-a12b-c965c5f44dd1",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1440,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "133d52e2-6267-4505-ae46-39cb9e0fc2a4",
+      "name": "Stop — Deal Progressed",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c496b70f-9280-499c-93c8-0514be669bd0",
+      "name": "Stop — Deal Progressed at 96hr",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        208
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "160bc931-5153-4943-ae4c-f5ab3f96177e",
+      "name": "Not Quote Sent Stage",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Deal Stage Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Deal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Deal Data": {
+      "main": [
+        [
+          {
+            "node": "Is Quote Sent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Quote Sent?": {
+      "main": [
+        [
+          {
+            "node": "Get Contact Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Quote Sent Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contact Details": {
+      "main": [
+        [
+          {
+            "node": "Merge Contact + Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Contact + Deal": {
+      "main": [
+        [
+          {
+            "node": "Wait 48 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 48 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage (48hr)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage (48hr)": {
+      "main": [
+        [
+          {
+            "node": "Still Quote Sent? (48hr)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still Quote Sent? (48hr)": {
+      "main": [
+        [
+          {
+            "node": "48hr — SMS Follow-Up",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop — Deal Progressed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "48hr — SMS Follow-Up": {
+      "main": [
+        [
+          {
+            "node": "Wait Another 48 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Another 48 Hours": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage (96hr)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage (96hr)": {
+      "main": [
+        [
+          {
+            "node": "Still Quote Sent? (96hr)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still Quote Sent? (96hr)": {
+      "main": [
+        [
+          {
+            "node": "96hr — Email Follow-Up",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop — Deal Progressed at 96hr",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "96hr — Email Follow-Up": {
+      "main": [
+        [
+          {
+            "node": "Move Deal to Stale",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move Deal to Stale": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "20acfbf9-48e8-4fd8-92d9-d5ba7ef44d43",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:47:59.570Z",
+      "createdAt": "2026-03-04T01:47:59.570Z",
+      "role": "workflow:owner",
+      "workflowId": "FE8NFqxHMrxNlbGu",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:34.370Z",
+      "createdAt": "2026-03-04T01:54:34.370Z",
+      "id": "6DOAorHv7f45HDuG",
+      "name": "sms"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:41.848Z",
+      "createdAt": "2026-03-04T01:54:41.848Z",
+      "id": "7EKVflTcA1YNQ6g8",
+      "name": "email"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:24.790Z",
+      "createdAt": "2026-03-04T01:54:24.790Z",
+      "id": "STjOTeAlFg1YGt2S",
+      "name": "follow-up"
+    },
+    {
+      "updatedAt": "2026-02-23T02:02:09.362Z",
+      "createdAt": "2026-02-23T02:02:09.362Z",
+      "id": "iECTEsObWBG9nWUm",
+      "name": "sales"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    }
+  ],
+  "activeVersion": null
+}

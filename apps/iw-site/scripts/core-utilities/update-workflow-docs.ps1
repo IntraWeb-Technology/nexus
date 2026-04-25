@@ -13,7 +13,7 @@ param(
     [Parameter(Mandatory=$true)]
     [string]$IssueTitle,
     
-    [string]$WorkflowFile = "prompts/workflows/multi-agent-e2e-workflow.md",
+    [string]$WorkflowFile = "prompts/multi-agent-e2e-workflow.md",
     [switch]$Remove,
     [switch]$DryRun
 )

@@ -1,0 +1,528 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T02:35:36.991Z",
+  "id": "1CRmKWLc66mj6Xxc",
+  "name": "System 12a — Command Center (Master)",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "google-chat-command",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f4bab56c-7222-4727-9249-d4b83eede394",
+      "name": "Webhook: Google Chat Command",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        208
+      ],
+      "webhookId": "6b0073ec-0dd6-498d-bc76-463678a024ba"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst rawText = body?.message?.text || body?.text || '';\nconst user = body?.message?.sender?.displayName || body?.user?.displayName || 'Unknown User';\nconst userId = body?.message?.sender?.email || body?.user?.email || '';\nconst normalized = rawText.toLowerCase().trim().replace(/\\s+/g, ' ');\nreturn [{\n  json: {\n    raw_text: rawText,\n    normalized_text: normalized,\n    user_name: user,\n    user_id: userId,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "1948ca30-4fba-4d52-a787-b06391b427f5",
+      "name": "Code: Normalize Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 200,\n  \"system\": \"You are a command parser for the IntraWeb Command Center. Parse the user's message and return JSON identifying which command it is and any parameters. Commands: leads_this_week, pipeline_status, overdue_invoices, client_health, post_approved (param: row_number as integer), send_followup (param: contact_name as string), whats_due, revenue_this_month, regenerate_manual, unknown. Return only valid JSON: {\\\"command\\\": string, \\\"params\\\": object}. No other text.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.normalized_text}}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "5f18c947-4548-4855-8a61-5dbd5e2271f3",
+      "name": "Claude: Parse Command",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -688,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.content[0].text;\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  try {\n    parsed = JSON.parse(match[0]);\n  } catch (e2) {\n    parsed = { command: 'unknown', params: {} };\n  }\n}\nconst upstream = $('Code: Normalize Command').first().json;\nreturn [{\n  json: {\n    command: parsed.command || 'unknown',\n    params: parsed.params || {},\n    raw_text: upstream.raw_text,\n    user_name: upstream.user_name,\n    user_id: upstream.user_id,\n    timestamp: upstream.timestamp\n  }\n}];"
+      },
+      "id": "6e424b6c-41f9-4257-a39b-b9cd41ad5888",
+      "name": "Code: Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "leads_this_week",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "pipeline_status",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "overdue_invoices",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "client_health",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "whats_due",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  },
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "revenue_this_month",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "or"
+              },
+              "renameOutput": true,
+              "outputKey": "reporting"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "send_followup",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "followup"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "post_approved",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "actions"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "regenerate_manual",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "actions"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "unknown",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "actions"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "1922633f-18d0-48ab-abdf-7c0e5808705a",
+      "name": "Switch: Route Command",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -240,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2d7de745-3cb0-4779-813b-ddaffea15f11",
+      "name": "Execute: Reporting",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "fda8a56a-3371-4ec9-a422-1e50ba5fa940",
+      "name": "Execute: Followup",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ad90da44-ca81-4b25-b583-0c537f7087cb",
+      "name": "Execute: Actions",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        0,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations%20Log:append",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"range\": \"Automations Log\",\n  \"majorDimension\": \"ROWS\",\n  \"values\": [\n    [\n      \"{{$now.format('yyyy-MM-dd HH:mm:ss')}}\",\n      \"System 12\",\n      \"Command Center\",\n      \"Command executed: {{$('Code: Parse Claude Response').first().json.command}} by {{$('Code: Normalize Command').first().json.user_name}}\",\n      \"Success\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "0ae31dbf-3429-4c06-a21a-ae9fd303d512",
+      "name": "Log Command to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        208
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "3d07b552-0c36-4a40-8597-fd889cdc3352",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"ERROR — System 12 Command Center\\nNode: {{$json.execution.lastNodeExecuted}}\\nError: {{$json.error.message}}\\nTime: {{$now.format('yyyy-MM-dd HH:mm:ss')}}\"\n}",
+        "options": {}
+      },
+      "id": "babbf41d-32f3-4fa7-b6e8-b828d144e894",
+      "name": "Google Chat: Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        512
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Google Chat Command": {
+      "main": [
+        [
+          {
+            "node": "Code: Normalize Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Normalize Command": {
+      "main": [
+        [
+          {
+            "node": "Claude: Parse Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Parse Command": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Switch: Route Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Route Command": {
+      "main": [
+        [
+          {
+            "node": "Execute: Reporting",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute: Followup",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute: Actions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute: Actions",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute: Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Reporting": {
+      "main": [
+        [
+          {
+            "node": "Log Command to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Followup": {
+      "main": [
+        [
+          {
+            "node": "Log Command to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Actions": {
+      "main": [
+        [
+          {
+            "node": "Log Command to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "c38568b3-5ef7-42df-9da3-5b736ff5cb0c",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T02:35:36.995Z",
+      "createdAt": "2026-03-06T02:35:36.995Z",
+      "role": "workflow:owner",
+      "workflowId": "1CRmKWLc66mj6Xxc",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

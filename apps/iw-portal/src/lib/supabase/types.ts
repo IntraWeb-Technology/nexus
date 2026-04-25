@@ -9,6 +9,8 @@ export type ProjectStatus =
 export type MilestoneStatus = 'done' | 'active' | 'pending'
 export type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'void'
 export type SenderType = 'staff' | 'client'
+export type StaffRole = 'admin' | 'ops' | 'support' | 'viewer'
+export type ClientMemberRole = 'owner' | 'billing' | 'approver' | 'viewer'
 export type NotificationType =
   | 'action_required'
   | 'message'
@@ -156,6 +158,103 @@ export interface NotificationPreferences {
   invoice_reminders: boolean
   document_uploads: boolean
   created_at: string
+}
+
+export interface StaffUser {
+  id: string
+  clerk_user_id: string
+  email: string
+  display_name: string | null
+  role: StaffRole
+  is_active: boolean
+  last_seen_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface StaffAuditLogRow {
+  id: string
+  actor_staff_id: string | null
+  action: string
+  resource_type: string
+  resource_id: string | null
+  metadata: Record<string, unknown>
+  ip: string | null
+  created_at: string
+}
+
+export interface ClientMemberRow {
+  id: string
+  client_id: string
+  clerk_user_id: string
+  email: string
+  display_name: string | null
+  role: ClientMemberRole
+  is_active: boolean
+  invited_by_staff_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProjectMemberRow {
+  id: string
+  project_id: string
+  clerk_user_id: string
+  role: ClientMemberRole
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface InternalNoteRow {
+  id: string
+  client_id?: string
+  project_id?: string
+  body: string
+  created_by_staff_id: string | null
+  created_at: string
+}
+
+export interface IntegrationEventRow {
+  id: string
+  provider: 'clerk' | 'hubspot' | 'stripe' | 'n8n' | 'system'
+  external_event_id: string | null
+  event_type: string
+  status: 'received' | 'processing' | 'processed' | 'failed' | 'replayed' | 'ignored'
+  payload: Record<string, unknown>
+  payload_hash: string | null
+  attempts: number
+  next_retry_at: string | null
+  last_error: string | null
+  processed_at: string | null
+  replayed_at: string | null
+  replayed_by_staff_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DataHealthCheckRow {
+  id: string
+  check_key: string
+  severity: 'info' | 'warning' | 'critical'
+  resource_type: string
+  resource_id: string | null
+  message: string
+  metadata: Record<string, unknown>
+  resolved_at: string | null
+  created_at: string
+}
+
+export interface FeatureFlagRow {
+  id: string
+  environment: string
+  flag_key: string
+  enabled: boolean
+  metadata: Record<string, unknown>
+  created_by_staff_id: string | null
+  updated_by_staff_id: string | null
+  created_at: string
+  updated_at: string
 }
 
 /** Operational store (Supabase `public.os_*`) — n8n + internal APIs; not client RLS tables. */

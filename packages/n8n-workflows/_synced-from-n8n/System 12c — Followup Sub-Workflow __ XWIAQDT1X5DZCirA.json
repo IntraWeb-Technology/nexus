@@ -1,0 +1,369 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T02:09:16.367Z",
+  "id": "XWIAQDT1X5DZCirA",
+  "name": "System 12c — Followup Sub-Workflow",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e0f6f909-3753-44ca-9a68-12b4d457300e",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"firstname\",\n          \"operator\": \"CONTAINS_TOKEN\",\n          \"value\": \"{{$('Code: Parse Claude Response').first().json.params.contact_name}}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"email\", \"phone\", \"company\"],\n  \"limit\": 5\n}",
+        "options": {}
+      },
+      "id": "93dcc45c-dff0-4017-bd78-edc280994de7",
+      "name": "HubSpot: Search Contact by Name",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $input.first().json.results || [];\nif (results.length === 0) {\n  throw new Error('No contact found with that name.');\n}\nconst c = results[0];\nconst p = c.properties;\nreturn [{\n  json: {\n    contact_id: c.id,\n    full_name: `${p.firstname || ''} ${p.lastname || ''}`.trim(),\n    email: p.email,\n    phone: p.phone,\n    company: p.company\n  }\n}];"
+      },
+      "id": "2a9aed89-57f9-4986-8a3c-565c5aa1bfd7",
+      "name": "Code: Extract Contact Details",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 500,\n  \"system\": \"Write a brief, genuine follow-up email from John at IntraWeb Technologies. Tone: friendly, not pushy. Under 150 words. No em dashes. Return JSON with: subject (string) and html_body (string).\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a follow-up email to {{$json.full_name}} at {{$json.company}}.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "edd7566e-9bc8-40bd-8ec7-5acf07dc1af7",
+      "name": "Claude: Generate Followup Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.content[0].text;\nlet parsed;\ntry { parsed = JSON.parse(raw); } catch(e) { const m = raw.match(/\\{[\\s\\S]*\\}/); parsed = JSON.parse(m[0]); }\nconst contact = $('Code: Extract Contact Details').first().json;\nreturn [{\n  json: {\n    subject: parsed.subject,\n    html_body: parsed.html_body,\n    contact_id: contact.contact_id,\n    full_name: contact.full_name,\n    email: contact.email,\n    phone: contact.phone,\n    company: contact.company\n  }\n}];"
+      },
+      "id": "09a58190-6ecb-4721-85f7-1ee0fb5147d5",
+      "name": "Code: Parse Followup Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{$json.email}}\"],\n  \"subject\": \"{{$json.subject}}\",\n  \"html\": \"{{$json.html_body}}\"\n}",
+        "options": {}
+      },
+      "id": "cfe5050e-2881-45a3-a966-2e1f64668516",
+      "name": "Resend: Send Followup Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$env.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$env.TWILIO_PHONE_NUMBER}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$json.full_name}}, just sent you an email — John from IntraWeb. Let me know if you have a few minutes to connect."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "40a75179-24c9-4784-b0ea-b13a85d4f994",
+      "name": "Twilio: Send Followup SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Command Center follow-up: email and SMS sent to {{$json.full_name}} on {{$now.format('MMMM d, yyyy')}}.\",\n    \"hs_timestamp\": \"{{$now.toISO()}}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\"id\": \"{{$json.contact_id}}\"},\n      \"types\": [{\"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 9}]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "e859ee32-1c84-4d25-8cc9-95ec2bd9b066",
+      "name": "HubSpot: Log Followup Activity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"Follow-up sent to {{$('Code: Parse Followup Email').first().json.full_name}} — email and SMS delivered.\"}",
+        "options": {}
+      },
+      "id": "b692842d-bc88-40ae-a536-5a8add35576f",
+      "name": "Google Chat: Followup Confirm",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Search Contact by Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Search Contact by Name": {
+      "main": [
+        [
+          {
+            "node": "Code: Extract Contact Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Extract Contact Details": {
+      "main": [
+        [
+          {
+            "node": "Claude: Generate Followup Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Generate Followup Email": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse Followup Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Parse Followup Email": {
+      "main": [
+        [
+          {
+            "node": "Resend: Send Followup Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Send Followup Email": {
+      "main": [
+        [
+          {
+            "node": "Twilio: Send Followup SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio: Send Followup SMS": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Log Followup Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Log Followup Activity": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Followup Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "c9ac7f9e-869e-46d4-9b0d-050186b0c48b",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T02:09:16.377Z",
+      "createdAt": "2026-03-06T02:09:16.377Z",
+      "role": "workflow:owner",
+      "workflowId": "XWIAQDT1X5DZCirA",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

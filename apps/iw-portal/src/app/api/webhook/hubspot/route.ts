@@ -1,7 +1,10 @@
 import { mapDealStageToPortal } from '@/lib/hubspot/stageMap'
+import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
 import { NextResponse } from 'next/server'
+
+export const maxDuration = 60
 
 type HubSpotEvent = {
   eventId?: number
@@ -22,6 +25,13 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
+
+  await recordIntegrationEvent({
+    provider: 'hubspot',
+    eventType: Array.isArray(raw) ? 'batch' : String((raw as { action?: unknown })?.action ?? 'normalized'),
+    status: 'received',
+    payload: raw,
+  })
 
   try {
     const supabase = createServiceSupabase()
@@ -62,6 +72,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true })
   } catch (e) {
+    await recordIntegrationEvent({
+      provider: 'hubspot',
+      eventType: Array.isArray(raw) ? 'batch' : String((raw as { action?: unknown })?.action ?? 'normalized'),
+      status: 'failed',
+      payload: raw,
+      lastError: e instanceof Error ? e.message : 'HubSpot webhook failed',
+    })
     console.error('[webhook/hubspot]', e)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

@@ -1,0 +1,256 @@
+{
+  "updatedAt": "2026-04-18T22:43:47.000Z",
+  "createdAt": "2026-04-11T00:36:16.723Z",
+  "id": "zgCBXgLudRdIjD46",
+  "name": "SYS 01.5 - Client Intake Brief Real-Time",
+  "description": "Fires on HubSpot contact.creation. Checks for website intake data, fetches all intake fields, builds a structured markdown brief, and saves to E:\\IntraWeb-Technologies\\04_Clients\\Client Briefs.",
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "id": "035c724c-158c-4f33-a35c-237ec24ec17d",
+      "name": "HubSpot New Contact",
+      "type": "n8n-nodes-base.hubspotTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "eventsUi": {
+          "eventValues": [
+            {
+              "name": "contact.creation"
+            }
+          ]
+        }
+      },
+      "webhookId": "4b72b0ed-189f-44a1-9d33-bc01986a7168",
+      "credentials": {
+        "hubspotDeveloperApi": {
+          "id": "GqT0NoNc7c9eAodv",
+          "name": "HubSpot Developer account"
+        }
+      }
+    },
+    {
+      "id": "f78fcb1b-ec88-40fb-8eda-2e404e95b1d4",
+      "name": "Has Intake Data",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.properties.website_intake_goals }}",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              },
+              "rightValue": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "76d22227-9015-4318-8f02-f87cfac083c4",
+      "name": "Get Full Contact",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        200
+      ],
+      "parameters": {
+        "resource": "contact",
+        "operation": "get",
+        "contactId": "={{ $json.vid }}",
+        "additionalFields": {
+          "propertiesCollection": {
+            "propertiesValues": {
+              "properties": [
+                "firstname",
+                "lastname",
+                "email",
+                "company",
+                "phone",
+                "website",
+                "hs_lead_status",
+                "createdate",
+                "website_intake_goals",
+                "website_intake_industry",
+                "website_intake_timeline",
+                "website_intake_pages",
+                "website_intake_competitors",
+                "website_intake_design_notes"
+              ],
+              "propertyMode": "valueOnly"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "8c805190-8eb5-41dd-a56e-445aea0dae46",
+      "name": "Build Brief",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        200
+      ],
+      "parameters": {
+        "jsCode": "const p = items[0].json.properties; const get = (k) => p[k]?.value || 'N/A'; const first = get('firstname').trim(); const last = get('lastname').trim(); const name = (first + ' ' + last).trim(); const company = get('company') === 'UNKNOWN' ? 'N/A' : get('company'); const slug = (company !== 'N/A' ? company : name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); const dateStr = get('createdate') !== 'N/A' ? new Date(get('createdate')).toLocaleDateString('en-US') : 'N/A'; const goals = get('website_intake_goals'); const industry = get('website_intake_industry'); const timeline = get('website_intake_timeline'); const pages = get('website_intake_pages'); const competitors = get('website_intake_competitors'); const designNotes = get('website_intake_design_notes'); const pageCount = pages !== 'N/A' ? pages.split(',').length : 0; const goalLower = goals.toLowerCase(); let tier = 'Growth'; let tierReason = 'Mid-range page count and goals suggest Growth tier.'; if (pageCount <= 4 || goalLower.includes('simple')) { tier = 'Starter'; tierReason = 'Limited pages and straightforward goals fit the Starter tier.'; } else if (pageCount > 8 || goalLower.includes('automat') || goalLower.includes('integrat')) { tierReason = 'Multiple pages with automation or integration goals align with Growth tier.'; } const gaps = []; if (get('phone') === 'N/A') gaps.push('No phone number on file'); if (get('website') === 'N/A') gaps.push('No existing website URL provided'); if (competitors === 'N/A') gaps.push('No competitor or inspiration sites listed'); if (designNotes === 'N/A') gaps.push('No design direction notes'); if (timeline.toLowerCase().includes('flexible')) gaps.push('Timeline is flexible - confirm hard deadlines on discovery call'); if (company === 'N/A') gaps.push('Company name unknown - confirm on call'); const gapBlock = gaps.length > 0 ? gaps.map(g => '- ' + g).join('\\n') : '- No critical gaps identified'; const brief = '# Client Intake Brief\\n**Name:** ' + name + '\\n**Company:** ' + company + '\\n**Email:** ' + get('email') + '\\n**Phone:** ' + get('phone') + '\\n**Lead Status:** ' + get('hs_lead_status') + '\\n**Submitted:** ' + dateStr + '\\n\\n---\\n\\n## What They Are Building\\n' + name + ' is looking to build a website for ' + company + ' in the ' + industry + ' space. Their primary goals include ' + goals.toLowerCase() + '. Timeline is ' + timeline.toLowerCase() + '.\\n\\n---\\n\\n## Intake Details\\n- **Industry:** ' + industry + '\\n- **Goals:** ' + goals + '\\n- **Timeline:** ' + timeline + '\\n- **Pages Requested:** ' + pages + '\\n- **Competitors / Inspiration:** ' + competitors + '\\n- **Design Notes:** ' + designNotes + '\\n\\n---\\n\\n## Red Flags / Gaps\\n' + gapBlock + '\\n\\n---\\n\\n## Recommended IW Tier\\n**' + tier + '** - ' + tierReason + '\\n'; return [{ json: { brief, slug, name, fileName: slug + '-intake-brief.md' } }];"
+      }
+    },
+    {
+      "id": "007624f9-42fe-4d48-82e9-5420cc0cbaec",
+      "name": "Convert to MD File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        200
+      ],
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "brief",
+        "binaryPropertyName": "data",
+        "options": {
+          "fileName": "={{ $json.fileName }}",
+          "mimeType": "text/markdown",
+          "encoding": "utf8"
+        }
+      }
+    },
+    {
+      "id": "34121e0e-e2bf-45e8-af3f-5096b5644508",
+      "name": "Save to Client Briefs",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        200
+      ],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=E:\\\\IntraWeb-Technologies\\\\04_Clients\\\\Client Briefs\\\\{{ $('Build Brief').item.json.fileName }}",
+        "dataPropertyName": "data"
+      }
+    },
+    {
+      "id": "fedac791-4bff-4c45-b817-11c25826b735",
+      "name": "Skip No Intake",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        720,
+        440
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "HubSpot New Contact": {
+      "main": [
+        [
+          {
+            "node": "Has Intake Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Intake Data": {
+      "main": [
+        [
+          {
+            "node": "Get Full Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Skip No Intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Contact": {
+      "main": [
+        [
+          {
+            "node": "Build Brief",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Brief": {
+      "main": [
+        [
+          {
+            "node": "Convert to MD File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to MD File": {
+      "main": [
+        [
+          {
+            "node": "Save to Client Briefs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true
+  },
+  "pinData": null,
+  "versionId": "b0272c53-e228-4382-8a76-f643f10312e2",
+  "activeVersionId": null,
+  "versionCounter": 2,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-11T00:36:16.725Z",
+      "createdAt": "2026-04-11T00:36:16.725Z",
+      "role": "workflow:owner",
+      "workflowId": "zgCBXgLudRdIjD46",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

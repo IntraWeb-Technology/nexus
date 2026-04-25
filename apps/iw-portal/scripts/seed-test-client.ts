@@ -17,6 +17,7 @@ import { invoicesForPlan } from '../src/lib/invoice-templates'
 import { milestonesForPlan } from '../src/lib/milestones-templates'
 import { exitIfPortalSchemaMissing } from './lib/supabase-schema-check'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
+import { resolveSupabaseScriptEnv } from './lib/supabase-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()
@@ -36,10 +37,14 @@ const HUBSPOT_DEAL_SECONDARY_NOTE = '999888777102'
 
 const PROJECT_SLUG = 'test-hubspot-growth'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const service = process.env.SUPABASE_SERVICE_ROLE_KEY
-if (!supabaseUrl || !service) {
-  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+let supabaseUrl: string
+let service: string
+try {
+  const env = resolveSupabaseScriptEnv()
+  supabaseUrl = env.url
+  service = env.serviceRoleKey
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error))
   process.exit(1)
 }
 

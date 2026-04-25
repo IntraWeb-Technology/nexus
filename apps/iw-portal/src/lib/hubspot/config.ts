@@ -26,6 +26,24 @@ export function getHubSpotPrivateAppToken(): string | null {
   )
 }
 
+/** Marketing portal (Hub ID) — `HUBSPOT_PORTAL_ID` preferred; `NEXT_PUBLIC_HUBSPOT_ID` for shared Vercel / legacy. */
+export function getHubSpotPortalId(): string | null {
+  return firstNonEmpty(
+    process.env.HUBSPOT_PORTAL_ID,
+    process.env.NEXT_PUBLIC_HUBSPOT_ID,
+  )
+}
+
+/**
+ * Change order form — `HUBSPOT_CHANGE_ORDER_FORM_GUID` preferred; `HUBSPOT_FORM_GUID` matches older Vercel name.
+ */
+export function getHubSpotChangeOrderFormGuid(): string | null {
+  return firstNonEmpty(
+    process.env.HUBSPOT_CHANGE_ORDER_FORM_GUID,
+    process.env.HUBSPOT_FORM_GUID,
+  )
+}
+
 export function isHubSpotConfigured(): boolean {
   return getHubSpotPrivateAppToken() != null
 }

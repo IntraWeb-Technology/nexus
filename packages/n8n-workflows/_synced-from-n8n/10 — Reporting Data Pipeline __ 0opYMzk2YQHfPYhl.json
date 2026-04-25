@@ -1,0 +1,268 @@
+{
+  "updatedAt": "2026-04-18T22:45:41.444Z",
+  "createdAt": "2026-03-04T01:51:00.802Z",
+  "id": "0opYMzk2YQHfPYhl",
+  "name": "10 — Reporting Data Pipeline",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "11b2dc04-92c5-4013-ab57-e32be2153cf8",
+      "name": "Run Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"pipeline\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{$vars.HUBSPOT_PIPELINE_ID}}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"dealname\", \"dealstage\", \"amount\", \"createdate\", \"closedate\", \"hs_object_id\", \"intake_source\", \"job_type\"],\n  \"limit\": 200,\n  \"sorts\": [{\"propertyName\": \"createdate\", \"direction\": \"DESCENDING\"}]\n}",
+        "options": {}
+      },
+      "id": "70b1dd07-09a8-4e32-bb3a-c74e8bb52aa4",
+      "name": "Get All Pipeline Deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"createdate\",\n          \"operator\": \"GTE\",\n          \"value\": \"{{ new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"createdate\", \"lifecyclestage\", \"lead_source_detail\", \"reply_status\"],\n  \"limit\": 200,\n  \"sorts\": [{\"propertyName\": \"createdate\", \"direction\": \"DESCENDING\"}]\n}",
+        "options": {}
+      },
+      "id": "adcb2d15-0932-4eb9-9c5e-b1977153b814",
+      "name": "Get Contacts This Month",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate pipeline metrics from HubSpot data\nconst dealsResult = $('Get All Pipeline Deals').item.json;\nconst contactsResult = $('Get Contacts This Month').item.json;\n\nconst deals = dealsResult.results || [];\nconst contacts = contactsResult.results || [];\n\nconst now = new Date();\nconst monthStart = new Date(now.getFullYear(), now.getMonth(), 1);\n\n// Deal stage mappings\nconst PAID_STAGE = $vars.HUBSPOT_STAGE_PAID || 'paid';\nconst QUOTE_STAGE = $vars.HUBSPOT_STAGE_QUOTE_SENT || 'quote_sent';\nconst SCHEDULED_STAGE = $vars.HUBSPOT_STAGE_SCHEDULED || 'scheduled';\nconst COMPLETE_STAGE = $vars.HUBSPOT_STAGE_JOB_COMPLETE || 'job_complete';\nconst INVOICE_STAGE = $vars.HUBSPOT_STAGE_INVOICE_SENT || 'invoice_sent';\nconst STALE_STAGE = $vars.HUBSPOT_STAGE_STALE || 'stale';\n\n// Filter to this month's deals\nconst monthDeals = deals.filter(d => {\n  const created = new Date(d.properties?.createdate?.value || 0);\n  return created >= monthStart;\n});\n\n// Count by stage\nconst countByStage = (stageId) => monthDeals.filter(d => d.properties?.dealstage?.value === stageId).length;\nconst amountByStage = (stageId) => monthDeals\n  .filter(d => d.properties?.dealstage?.value === stageId)\n  .reduce((sum, d) => sum + parseFloat(d.properties?.amount?.value || 0), 0);\n\n// Pipeline metrics\nconst leadsThisMonth = contacts.length;\nconst quotesThisMonth = countByStage(QUOTE_STAGE) + countByStage(SCHEDULED_STAGE) + countByStage(COMPLETE_STAGE) + countByStage(INVOICE_STAGE) + countByStage(PAID_STAGE);\nconst jobsBooked = countByStage(SCHEDULED_STAGE) + countByStage(COMPLETE_STAGE) + countByStage(INVOICE_STAGE) + countByStage(PAID_STAGE);\nconst jobsCompleted = countByStage(COMPLETE_STAGE) + countByStage(INVOICE_STAGE) + countByStage(PAID_STAGE);\nconst paidThisMonth = countByStage(PAID_STAGE);\nconst revenueCollected = amountByStage(PAID_STAGE);\nconst revenuePipeline = deals\n  .filter(d => ![PAID_STAGE, STALE_STAGE].includes(d.properties?.dealstage?.value))\n  .reduce((sum, d) => sum + parseFloat(d.properties?.amount?.value || 0), 0);\n\n// Overdue invoices (Invoice Sent stage)\nconst overdueInvoices = deals.filter(d => d.properties?.dealstage?.value === INVOICE_STAGE);\nconst overdueCount = overdueInvoices.length;\nconst overdueTotal = overdueInvoices.reduce((sum, d) => sum + parseFloat(d.properties?.amount?.value || 0), 0);\n\n// Conversion rate\nconst conversionRate = quotesThisMonth > 0 ? ((jobsBooked / quotesThisMonth) * 100).toFixed(1) + '%' : '0%';\n\nconst timestamp = now.toISOString();\nconst monthLabel = now.toLocaleString('en-US', { month: 'long', year: 'numeric' });\n\nreturn [{\n  json: {\n    timestamp,\n    monthLabel,\n    leadsThisMonth,\n    quotesThisMonth,\n    jobsBooked,\n    jobsCompleted,\n    paidThisMonth,\n    conversionRate,\n    revenueCollected: revenueCollected.toFixed(2),\n    revenuePipeline: revenuePipeline.toFixed(2),\n    overdueCount,\n    overdueTotal: overdueTotal.toFixed(2),\n    dealsByStage: {\n      quote_sent: countByStage(QUOTE_STAGE),\n      scheduled: countByStage(SCHEDULED_STAGE),\n      job_complete: jobsCompleted,\n      invoice_sent: countByStage(INVOICE_STAGE),\n      paid: paidThisMonth,\n      stale: countByStage(STALE_STAGE)\n    }\n  }\n}];"
+      },
+      "id": "3425c2a9-7dfa-40fe-8116-89dfda7b0568",
+      "name": "Aggregate Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Leads Dashboard",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Month": "={{$json.monthLabel}}",
+            "Leads Received": "={{$json.leadsThisMonth}}",
+            "Quotes Sent": "={{$json.quotesThisMonth}}",
+            "Jobs Booked": "={{$json.jobsBooked}}",
+            "Conversion Rate (Quote→Book)": "={{$json.conversionRate}}",
+            "Jobs Completed": "={{$json.jobsCompleted}}",
+            "Revenue in Pipeline": "={{$json.revenuePipeline}}",
+            "Overdue Invoices Count": "={{$json.overdueCount}}",
+            "Overdue Invoices Total": "={{$json.overdueTotal}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "edb8aac3-3a83-4bfc-8d76-c78f858b19e0",
+      "name": "Update Dashboard Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$json.timestamp}}",
+            "Workflow Name": "10-Reporting-Pipeline",
+            "Event Type": "METRICS_SYNC",
+            "Contact Name": "",
+            "Phone": "",
+            "Email": "",
+            "Deal ID": "",
+            "Contact ID": "",
+            "Status": "SUCCESS",
+            "Notes": "=Month: {{$json.monthLabel}} | Leads: {{$json.leadsThisMonth}} | Quotes: {{$json.quotesThisMonth}} | Booked: {{$json.jobsBooked}} | Revenue Pipeline: ${{$json.revenuePipeline}}",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "",
+            "Amount": "={{$json.revenuePipeline}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "91b4c71a-7fc8-43b8-be3d-d9c15b327676",
+      "name": "Log Sync to Event Log",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        480,
+        208
+      ]
+    }
+  ],
+  "connections": {
+    "Run Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Get All Pipeline Deals",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Contacts This Month",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Pipeline Deals": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Metrics": {
+      "main": [
+        [
+          {
+            "node": "Update Dashboard Sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Log Sync to Event Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "cc7585f2-7c6f-4258-a2cd-e55b772b4d43",
+  "activeVersionId": null,
+  "versionCounter": 7,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:51:00.808Z",
+      "createdAt": "2026-03-04T01:51:00.808Z",
+      "role": "workflow:owner",
+      "workflowId": "0opYMzk2YQHfPYhl",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:57:58.789Z",
+      "createdAt": "2026-03-04T01:57:58.789Z",
+      "id": "Ahd1OBacPZdtcTPI",
+      "name": "system"
+    },
+    {
+      "updatedAt": "2026-03-04T01:56:05.817Z",
+      "createdAt": "2026-03-04T01:56:05.817Z",
+      "id": "BfAfH0Utij8NnCS4",
+      "name": "reporting"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    },
+    {
+      "updatedAt": "2026-03-04T01:56:15.184Z",
+      "createdAt": "2026-03-04T01:56:15.184Z",
+      "id": "vf8IvpcV9xEfObBd",
+      "name": "analytics"
+    }
+  ],
+  "activeVersion": null
+}

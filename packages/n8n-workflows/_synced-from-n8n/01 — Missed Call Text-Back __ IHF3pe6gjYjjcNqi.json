@@ -1,0 +1,452 @@
+{
+  "updatedAt": "2026-04-18T22:45:40.901Z",
+  "createdAt": "2026-03-04T01:41:40.138Z",
+  "id": "IHF3pe6gjYjjcNqi",
+  "name": "01 — Missed Call Text-Back",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "missed-call-textback",
+        "options": {}
+      },
+      "id": "b447b216-3d68-43ad-8538-42935111da1f",
+      "name": "Twilio Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        208
+      ],
+      "webhookId": "wh-01-missed-call"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Twilio status callback payload\nconst body = $input.first().json.body || $input.first().json;\n\n// Twilio sends form-encoded data, n8n parses it into json\nconst callStatus = body.CallStatus || '';\nconst callerPhone = body.From || body.Caller || '';\nconst calledPhone = body.To || body.Called || '';\nconst callSid = body.CallSid || '';\nconst direction = body.Direction || 'inbound';\n\n// Only process missed/no-answer/busy/failed calls\nconst missedStatuses = ['no-answer', 'busy', 'failed', 'canceled'];\nconst isMissed = missedStatuses.includes(callStatus.toLowerCase());\n\n// Normalize phone to E.164 if it isn't already\nlet phone = callerPhone.trim();\nif (phone && !phone.startsWith('+')) {\n  phone = '+1' + phone.replace(/\\D/g, '');\n}\n\n// Validate — skip anonymous/blocked calls\nconst isValidPhone = phone && phone.length >= 10 && !phone.includes('anonymous') && !phone.includes('blocked');\n\nreturn [{\n  json: {\n    isMissed,\n    callStatus,\n    callerPhone: phone,\n    calledPhone,\n    callSid,\n    direction,\n    isValidPhone,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "a85cfd76-d237-4b1e-b932-23f64ce6c7f8",
+      "name": "Parse Twilio Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-missed-1",
+              "leftValue": "={{$json.isMissed}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            },
+            {
+              "id": "cond-missed-2",
+              "leftValue": "={{$json.isValidPhone}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2c75445d-91b8-4009-9be1-bee1f71e871d",
+      "name": "Is Missed Call?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"phone_e164\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.callerPhone }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"phone\", \"phone_e164\", \"email\", \"hs_object_id\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "12cdb044-6862-43c6-acfb-864954b4aed8",
+      "name": "Search HubSpot Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-contact-exists",
+              "leftValue": "={{$json.total}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6080f5ba-c520-4cae-99ba-8ce60fa604ed",
+      "name": "Contact Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"phone\": \"{{ $('Parse Twilio Payload').item.json.callerPhone }}\",\n    \"phone_e164\": \"{{ $('Parse Twilio Payload').item.json.callerPhone }}\",\n    \"firstname\": \"Unknown\",\n    \"lastname\": \"Caller\",\n    \"lifecyclestage\": \"lead\",\n    \"hs_lead_status\": \"NEW\",\n    \"lead_source_detail\": \"missed_call\",\n    \"reply_status\": \"no_reply\"\n  }\n}",
+        "options": {}
+      },
+      "id": "1fb08118-2070-4a2d-ac07-abfa0310b0e3",
+      "name": "Create HubSpot Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.results[0].id}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_lead_status\": \"NEW\",\n    \"lead_source_detail\": \"missed_call\"\n  }\n}",
+        "options": {}
+      },
+      "id": "4bd1bccf-5afa-4bb9-84c2-e00fee298dc5",
+      "name": "Update Existing Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge contact ID from either create or update branch\nconst item = $input.first().json;\nconst contactId = item.id || (item.results && item.results[0] ? item.results[0].id : null);\nconst callerPhone = $('Parse Twilio Payload').item.json.callerPhone;\nconst companyPhone = $vars.COMPANY_PHONE || $vars.TWILIO_FROM;\n\nreturn [{\n  json: {\n    contactId,\n    callerPhone,\n    companyPhone,\n    smsBody: `Hey, we just missed your call! What can we help with? Reply here or call us back at ${companyPhone}. — Apex Comfort`,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "947470f4-315c-41dc-a56c-9209635f506e",
+      "name": "Prepare SMS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.callerPhone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$json.companyPhone}}"
+            },
+            {
+              "name": "Body",
+              "value": "={{$json.smsBody}}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "id": "fdd301ad-b8da-454b-9b1d-38e3f55986f9",
+      "name": "Send Text-Back SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$('Prepare SMS').item.json.timestamp}}",
+            "Workflow Name": "01-Missed-Call-Textback",
+            "Event Type": "MISSED_CALL_SMS_SENT",
+            "Contact Name": "Unknown Caller",
+            "Phone": "={{$('Prepare SMS').item.json.callerPhone}}",
+            "Email": "",
+            "Deal ID": "",
+            "Contact ID": "={{$('Prepare SMS').item.json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "Text-back SMS sent within seconds of missed call",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "32abf662-7300-42ef-8dac-34a9804a37ef",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        720,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "104364f4-dfa6-4881-853d-c496c3955c85",
+      "name": "Not a Missed Call",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Twilio Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Twilio Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Twilio Payload": {
+      "main": [
+        [
+          {
+            "node": "Is Missed Call?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Missed Call?": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not a Missed Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "Contact Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contact Exists?": {
+      "main": [
+        [
+          {
+            "node": "Update Existing Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "Prepare SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Existing Contact": {
+      "main": [
+        [
+          {
+            "node": "Prepare SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare SMS": {
+      "main": [
+        [
+          {
+            "node": "Send Text-Back SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Text-Back SMS": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "37de9a51-4e45-4e66-9332-89ab589e597c",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:41:40.147Z",
+      "createdAt": "2026-03-04T01:41:40.147Z",
+      "role": "workflow:owner",
+      "workflowId": "IHF3pe6gjYjjcNqi",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:34.370Z",
+      "createdAt": "2026-03-04T01:54:34.370Z",
+      "id": "6DOAorHv7f45HDuG",
+      "name": "sms"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:04.202Z",
+      "createdAt": "2026-03-04T01:54:04.202Z",
+      "id": "CSctV9xpsnyrhuZN",
+      "name": "inbound"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:54.771Z",
+      "createdAt": "2026-03-04T01:54:54.771Z",
+      "id": "YzUdigv2Y0lrPLBM",
+      "name": "lead-gen"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    }
+  ],
+  "activeVersion": null
+}

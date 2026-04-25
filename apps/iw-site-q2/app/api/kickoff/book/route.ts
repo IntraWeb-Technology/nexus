@@ -116,10 +116,14 @@ export async function POST(req: NextRequest) {
   const kickoffWebhook = process.env.N8N_KICKOFF_BOOKED_WEBHOOK_URL?.trim();
   if (kickoffWebhook) {
     const webhookHeaders: Record<string, string> = { "Content-Type": "application/json" };
-    const webhookSecret = process.env.N8N_WEBHOOK_SECRET?.trim();
+    const webhookSecret =
+      process.env.MARKETING_N8N_WEBHOOK_SECRET?.trim() ||
+      process.env.N8N_WEBHOOK_SECRET?.trim();
     if (webhookSecret) {
       const headerName =
-        process.env.N8N_WEBHOOK_SECRET_HEADER?.trim() || "X-Intraweb-Website-Intake-Secret";
+        process.env.MARKETING_N8N_WEBHOOK_SECRET_HEADER?.trim() ||
+        process.env.N8N_WEBHOOK_SECRET_HEADER?.trim() ||
+        "X-Intraweb-Website-Intake-Secret";
       webhookHeaders[headerName] = webhookSecret;
     }
     const payload = {

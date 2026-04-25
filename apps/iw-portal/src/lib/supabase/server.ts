@@ -51,6 +51,7 @@ async function createServerSupabaseForUserImpl(): Promise<SupabaseClient | null>
 }
 
 export const createServerSupabaseForUser = cache(createServerSupabaseForUserImpl)
+export const createRlsSupabaseForUser = cache(createServerSupabaseWithClerkJwt)
 
 async function createServerSupabaseWithClerkJwt(): Promise<SupabaseClient | null> {
   const { url, anon } = getUrlKey()
