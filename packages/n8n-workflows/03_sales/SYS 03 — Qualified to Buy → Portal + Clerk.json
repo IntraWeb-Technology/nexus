@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-25T15:18:47.468Z",
+  "updatedAt": "2026-04-25T18:43:10.224Z",
   "createdAt": "2026-04-13T23:33:39.748Z",
   "id": "jERY0wN0aZ5kpOAR",
   "name": "SYS 03 — Qualified to Buy → Portal + Clerk",
@@ -8,19 +8,14 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "content": "## Qualified → Portal + Clerk\n\n**Trigger:** `POST /webhook/hubspot-deal-qualified-portal` (from **SYS 00** after dealstage matches qualified union).\n\n**Env (n8n):** `WEBHOOK_SECRET`, `CLERK_SECRET_KEY`, `PORTAL_WEBHOOK_URL` (full URL to `…/api/webhook/n8n` if CONFIG `owner.portalN8nWebhookUrl` is empty), `PORTAL_SIGNUP_REDIRECT_URL` (if CONFIG `owner.portalSignUpUrl` is empty).\n\n**CONFIG:** `hubspot.dealStageIds.qualifiedToBuy` (comma IDs) + built-in `qualifiedtobuy`; union with `leadQualified`. `owner.portalN8nWebhookUrl`, `owner.portalSignUpUrl`.\n\n**HubSpot:** Deal must have an associated contact and `contact_email` on deal properties for v1.",
-        "height": 420,
-        "width": 520,
-        "color": 5
-      },
+      "parameters": {},
       "id": "note-qualified",
       "name": "Note — About",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1.3,
       "position": [
-        60,
-        60
+        64,
+        64
       ]
     },
     {
@@ -35,8 +30,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        280,
-        300
+        288,
+        224
       ],
       "webhookId": "a7c3e9b1-2d4f-4a8e-9c1b-qualified-portal"
     },
@@ -58,8 +53,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        500,
-        300
+        512,
+        224
       ]
     },
     {
@@ -71,13 +66,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        720,
-        300
+        736,
+        224
       ]
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.dealId }}?associations=contacts&properties=dealname,tier,contact_email,contact_firstname,contact_lastname,contact_phone,amount,closedate,company",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
@@ -88,8 +82,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        940,
-        300
+        960,
+        224
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -100,7 +94,6 @@
     },
     {
       "parameters": {
-        "method": "GET",
         "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Fetch Deal From HubSpot').first().json.associations?.contacts?.results?.[0]?.id }}?properties=email,firstname,lastname,phone",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "hubspotAppToken",
@@ -111,8 +104,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1160,
-        300
+        1184,
+        224
       ],
       "credentials": {
         "hubspotAppToken": {
@@ -130,8 +123,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1380,
-        300
+        1408,
+        224
       ]
     },
     {
@@ -161,8 +154,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1380,
-        300
+        1632,
+        224
       ]
     },
     {
@@ -174,8 +167,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1600,
-        300
+        1856,
+        224
       ]
     },
     {
@@ -184,7 +177,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -206,8 +200,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1820,
-        300
+        2080,
+        224
       ]
     },
     {
@@ -229,8 +223,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2040,
-        180
+        2304,
+        296
       ]
     },
     {
@@ -239,7 +233,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -261,8 +256,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        2260,
-        180
+        2528,
+        296
       ]
     },
     {
@@ -292,8 +287,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2480,
-        260
+        2752,
+        344
       ]
     },
     {
@@ -305,8 +300,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2700,
-        120
+        2752,
+        128
       ]
     },
     {
@@ -318,8 +313,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2700,
-        300
+        2976,
+        344
       ]
     }
   ],
@@ -474,15 +469,15 @@
   "settings": {
     "executionOrder": "v1",
     "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "binaryMode": "separate"
   },
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
-  "activeVersionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
-  "versionCounter": 90,
+  "versionId": "c86a6e15-137f-4ebe-91f1-9f220ee9ea47",
+  "activeVersionId": "c86a6e15-137f-4ebe-91f1-9f220ee9ea47",
+  "versionCounter": 155,
   "triggerCount": 1,
   "shared": [
     {
@@ -505,25 +500,20 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-25T15:18:47.502Z",
-    "createdAt": "2026-04-25T15:18:47.502Z",
-    "versionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
+    "updatedAt": "2026-04-25T18:43:10.225Z",
+    "createdAt": "2026-04-25T18:43:10.225Z",
+    "versionId": "c86a6e15-137f-4ebe-91f1-9f220ee9ea47",
     "workflowId": "jERY0wN0aZ5kpOAR",
     "nodes": [
       {
-        "parameters": {
-          "content": "## Qualified → Portal + Clerk\n\n**Trigger:** `POST /webhook/hubspot-deal-qualified-portal` (from **SYS 00** after dealstage matches qualified union).\n\n**Env (n8n):** `WEBHOOK_SECRET`, `CLERK_SECRET_KEY`, `PORTAL_WEBHOOK_URL` (full URL to `…/api/webhook/n8n` if CONFIG `owner.portalN8nWebhookUrl` is empty), `PORTAL_SIGNUP_REDIRECT_URL` (if CONFIG `owner.portalSignUpUrl` is empty).\n\n**CONFIG:** `hubspot.dealStageIds.qualifiedToBuy` (comma IDs) + built-in `qualifiedtobuy`; union with `leadQualified`. `owner.portalN8nWebhookUrl`, `owner.portalSignUpUrl`.\n\n**HubSpot:** Deal must have an associated contact and `contact_email` on deal properties for v1.",
-          "height": 420,
-          "width": 520,
-          "color": 5
-        },
+        "parameters": {},
         "id": "note-qualified",
         "name": "Note — About",
         "type": "n8n-nodes-base.stickyNote",
         "typeVersion": 1.3,
         "position": [
-          60,
-          60
+          64,
+          64
         ]
       },
       {
@@ -538,8 +528,8 @@
         "type": "n8n-nodes-base.webhook",
         "typeVersion": 2,
         "position": [
-          280,
-          300
+          288,
+          224
         ],
         "webhookId": "a7c3e9b1-2d4f-4a8e-9c1b-qualified-portal"
       },
@@ -561,8 +551,8 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          500,
-          300
+          512,
+          224
         ]
       },
       {
@@ -574,13 +564,12 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          720,
-          300
+          736,
+          224
         ]
       },
       {
         "parameters": {
-          "method": "GET",
           "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.dealId }}?associations=contacts&properties=dealname,tier,contact_email,contact_firstname,contact_lastname,contact_phone,amount,closedate,company",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "hubspotAppToken",
@@ -591,8 +580,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          940,
-          300
+          960,
+          224
         ],
         "credentials": {
           "hubspotAppToken": {
@@ -603,7 +592,6 @@
       },
       {
         "parameters": {
-          "method": "GET",
           "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Fetch Deal From HubSpot').first().json.associations?.contacts?.results?.[0]?.id }}?properties=email,firstname,lastname,phone",
           "authentication": "predefinedCredentialType",
           "nodeCredentialType": "hubspotAppToken",
@@ -614,8 +602,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1160,
-          300
+          1184,
+          224
         ],
         "credentials": {
           "hubspotAppToken": {
@@ -633,8 +621,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1380,
-          300
+          1408,
+          224
         ]
       },
       {
@@ -664,8 +652,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          1380,
-          300
+          1632,
+          224
         ]
       },
       {
@@ -677,8 +665,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1600,
-          300
+          1856,
+          224
         ]
       },
       {
@@ -687,7 +675,8 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "strict",
+              "version": 1
             },
             "conditions": [
               {
@@ -709,8 +698,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          1820,
-          300
+          2080,
+          224
         ]
       },
       {
@@ -732,8 +721,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2040,
-          180
+          2304,
+          296
         ]
       },
       {
@@ -742,7 +731,8 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "strict",
+              "version": 1
             },
             "conditions": [
               {
@@ -764,8 +754,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          2260,
-          180
+          2528,
+          296
         ]
       },
       {
@@ -777,7 +767,7 @@
             "parameters": [
               {
                 "name": "Authorization",
-                "value": "={{ 'Bearer ' + $json.clerkSecret }}"
+                "value": "={{ 'Bearer ' + $('After portal response').first().json.clerkSecret }}"
               },
               {
                 "name": "Content-Type",
@@ -795,8 +785,8 @@
         "type": "n8n-nodes-base.httpRequest",
         "typeVersion": 4.2,
         "position": [
-          2480,
-          260
+          2752,
+          344
         ]
       },
       {
@@ -808,8 +798,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2700,
-          120
+          2752,
+          128
         ]
       },
       {
@@ -821,8 +811,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2700,
-          300
+          2976,
+          344
         ]
       }
     ],
@@ -980,18 +970,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-25T15:18:47.885Z",
-        "id": 3137,
+        "createdAt": "2026-04-25T18:43:10.281Z",
+        "id": 3206,
         "workflowId": "jERY0wN0aZ5kpOAR",
-        "versionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
+        "versionId": "c86a6e15-137f-4ebe-91f1-9f220ee9ea47",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-25T15:18:47.869Z",
-        "id": 3136,
+        "createdAt": "2026-04-25T18:43:10.265Z",
+        "id": 3205,
         "workflowId": "jERY0wN0aZ5kpOAR",
-        "versionId": "5802cf58-654c-4fbe-8bd9-6237adc104e1",
+        "versionId": "c86a6e15-137f-4ebe-91f1-9f220ee9ea47",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }

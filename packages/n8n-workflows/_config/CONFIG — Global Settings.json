@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-21T03:09:11.312Z",
+  "updatedAt": "2026-04-25T16:52:23.353Z",
   "createdAt": "2026-03-08T22:38:04.864Z",
   "id": "1eTTVoSFSlSPvZV4",
   "name": "CONFIG — Global Settings",
@@ -71,7 +71,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1088,
+        1184,
         1040
       ]
     }
@@ -122,9 +122,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "03072e56-a3cd-47ab-aa3a-12a2f92e6250",
-  "activeVersionId": "09f16d5b-2a5a-4062-9afb-4633e34cb1b8",
-  "versionCounter": 382,
+  "versionId": "f4a54656-14d3-4a94-aed8-6a12d895653a",
+  "activeVersionId": "2d6c94cb-8afc-45ec-863a-195679c94d97",
+  "versionCounter": 411,
   "triggerCount": 0,
   "shared": [
     {
@@ -147,9 +147,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-20T16:24:52.000Z",
-    "createdAt": "2026-04-20T16:24:43.262Z",
-    "versionId": "09f16d5b-2a5a-4062-9afb-4633e34cb1b8",
+    "updatedAt": "2026-04-25T16:36:15.778Z",
+    "createdAt": "2026-04-25T16:36:15.778Z",
+    "versionId": "2d6c94cb-8afc-45ec-863a-195679c94d97",
     "workflowId": "1eTTVoSFSlSPvZV4",
     "nodes": [
       {
@@ -183,7 +183,7 @@
         "type": "n8n-nodes-base.executeWorkflowTrigger",
         "typeVersion": 1.1,
         "position": [
-          864,
+          816,
           1040
         ]
       },
@@ -203,7 +203,7 @@
         "type": "n8n-nodes-base.dataTable",
         "typeVersion": 1.1,
         "position": [
-          976,
+          960,
           1040
         ]
       },
@@ -257,16 +257,24 @@
       }
     },
     "authors": "John Schibelli",
-    "name": "Version 09f16d5b",
-    "description": "",
-    "autosaved": true,
+    "name": null,
+    "description": null,
+    "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-20T16:24:52.181Z",
-        "id": 3105,
+        "createdAt": "2026-04-25T16:36:29.798Z",
+        "id": 3184,
         "workflowId": "1eTTVoSFSlSPvZV4",
-        "versionId": "09f16d5b-2a5a-4062-9afb-4633e34cb1b8",
+        "versionId": "2d6c94cb-8afc-45ec-863a-195679c94d97",
         "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-25T16:36:20.469Z",
+        "id": 3182,
+        "workflowId": "1eTTVoSFSlSPvZV4",
+        "versionId": "2d6c94cb-8afc-45ec-863a-195679c94d97",
+        "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
     ]
