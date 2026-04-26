@@ -86,6 +86,16 @@ function humanizeLabel(input: string | null | undefined): string | null {
     .join(' ')
 }
 
+function firstNonEmptyWithSource(
+  values: Array<{ value: string | null | undefined; source: string }>,
+): { value: string | null; source: string | null } {
+  for (const entry of values) {
+    const next = entry.value?.trim()
+    if (next) return { value: next, source: entry.source }
+  }
+  return { value: null, source: null }
+}
+
 export default async function DashboardPage() {
   const bundle = await getPortalBundle()
   const supabase = await createServerSupabaseForUser()
@@ -146,13 +156,14 @@ export default async function DashboardPage() {
     hubspotDeal?.properties?.dealname,
     dealSheetRes.data?.deal_name,
   )
-  const projectTier = firstNonEmpty(
-    hubspotDeal?.properties?.tier,
-    hubspotDeal?.properties?.deal_tier,
-    hubspotDeal?.properties?.project_tier,
-    hubspotDeal?.properties?.service_tier,
-    dealSheetRes.data?.tier,
-  )
+  const projectTierChoice = firstNonEmptyWithSource([
+    { value: hubspotDeal?.properties?.tier, source: 'hubspot:tier' },
+    { value: hubspotDeal?.properties?.deal_tier, source: 'hubspot:deal_tier' },
+    { value: hubspotDeal?.properties?.project_tier, source: 'hubspot:project_tier' },
+    { value: hubspotDeal?.properties?.service_tier, source: 'hubspot:service_tier' },
+    { value: dealSheetRes.data?.tier, source: 'postgres:os_deals_sheet.tier' },
+  ])
+  const projectTier = projectTierChoice.value
 
   /** Same merged view as Billing — includes CRM-backed invoices, not only portal DB rows. */
   const billingRows = mergeBillingRows(supabaseInvoices, hubspotInvoices)
@@ -179,6 +190,12 @@ export default async function DashboardPage() {
   const tierLabel = projectTier?.trim() || null
   const projectDisplayName = tierLabel ? `${projectLabel} - ${tierLabel}` : projectLabel
   const planDisplay = humanizeLabel(tierLabel) ?? humanizeLabel(bundle.project.plan)
+  const planSource = tierLabel
+    ? projectTierChoice.source
+    : bundle.project.plan?.trim()
+      ? 'postgres:projects.plan'
+      : 'none'
+  const buildSha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'local'
 
   return (
     <div className="iw-animate-slide-up space-y-8 md:space-y-12">
@@ -359,6 +376,9 @@ export default async function DashboardPage() {
               </dd>
             </div>
           </dl>
+          <p className="mt-3 text-[11px] text-[var(--iw-text-3)]">
+            Debug: build {buildSha} | plan source {planSource}
+          </p>
         </Card>
       </div>
 
