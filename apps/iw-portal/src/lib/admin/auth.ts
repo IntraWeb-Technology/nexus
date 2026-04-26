@@ -4,6 +4,8 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
 export type StaffProfile = StaffUser
+type UserScopedSupabase = NonNullable<Awaited<ReturnType<typeof createServerSupabaseForUser>>>
+type StaffLookupClient = ReturnType<typeof createServiceSupabase> | UserScopedSupabase
 
 export function canMutateStaff(role: StaffRole): boolean {
   return role === 'admin' || role === 'ops' || role === 'support'
@@ -62,7 +64,7 @@ export async function getStaffProfile(): Promise<StaffProfile | null> {
     return staff
   }
 
-  const findByEmail = async (source: ReturnType<typeof createServiceSupabase> | Awaited<ReturnType<typeof createServerSupabaseForUser>>) => {
+  const findByEmail = async (source: StaffLookupClient) => {
     const { data, error } = await source
       .from('staff_users')
       .select('*')
