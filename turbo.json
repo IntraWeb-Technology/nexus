@@ -27,8 +27,10 @@
       "outputs": [".next/**", "!.next/cache/**"],
       "env": [
         "ANALYZE",
+        "CLERK_WEBHOOK_SECRET",
         "DEBUG_PROMPTS",
         "GOOGLE_APPLICATION_CREDENTIALS_JSON",
+        "HUBSPOT_PORTAL_ID",
         "KICKOFF_BOOKING_JWT_SECRET",
         "N8N_CONTACT_WEBHOOK_URL",
         "NEON_PROJECT_ID",
@@ -68,9 +70,14 @@
         "RECAPTCHA_SECRET_KEY",
         "RECAPTCHA_SKIP_IN_DEV",
         "STACK_SECRET_SERVER_KEY",
+        "STAFF_EMAIL",
+        "STRIPE_WEBHOOK_SECRET",
+        "SUPABASE_ANON_KEY",
         "SUPABASE_ACCESS_TOKEN",
         "SUPABASE_JWT_SECRET",
         "SUPABASE_PUBLISHABLE_KEY",
+        "SUPABASE_SECRET_KEY",
+        "SUPABASE_URL",
         "WEBSITE_INTAKE_BYPASS_RECAPTCHA_SECRET"
       ]
     },
