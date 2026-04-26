@@ -77,6 +77,8 @@ return [{
         hubspot_deal_id: String(b.deal_id),
         plan: ['starter', 'growth', 'custom'].includes(b.plan) ? b.plan : 'starter',
         start_date: new Date().toISOString().slice(0, 10),
+        /* Omit template list-price invoices; follow with add_invoice using HubSpot amounts. */
+        seed_template_invoices: false,
       },
     },
   },

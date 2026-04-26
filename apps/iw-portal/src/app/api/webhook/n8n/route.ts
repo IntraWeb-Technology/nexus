@@ -6,6 +6,7 @@ import {
   type MergeProvisionedClientsResult,
 } from '@/lib/data/link-hubspot-provisioned-clerk'
 import { insertProvisionedEngagementContent } from '@/lib/data/provision-client-engagement'
+import { applyAddInvoice } from '@/lib/n8n/apply-add-invoice'
 import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webhooks'
 import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { progressFromMilestones } from '@/lib/progress'
@@ -142,29 +143,26 @@ export async function POST(request: Request) {
         }
         const proj = await resolveProjectForInvoice(supabase, d)
         if (!proj) return NextResponse.json({ error: 'project not found' }, { status: 404 })
-        await supabase.from('invoices').insert({
-          project_id: proj.id,
-          invoice_number: d.data.invoice_number,
-          description: d.data.description,
-          amount_cents: d.data.amount_cents,
-          status: d.data.status,
-          sku: d.data.sku ?? null,
-          due_date: d.data.due_date ?? null,
-        })
-        await supabase.from('notifications').insert({
-          project_id: proj.id,
-          type: 'invoice',
-          title: 'New invoice',
-          body: d.data.description,
-          read: false,
-        })
+        const outcome = await applyAddInvoice(supabase, proj.id, d.data)
+        if (!outcome.ok) {
+          return NextResponse.json({ error: outcome.error.message }, { status: 500 })
+        }
+        if (outcome.result === 'inserted') {
+          await supabase.from('notifications').insert({
+            project_id: proj.id,
+            type: 'invoice',
+            title: 'New invoice',
+            body: d.data.description,
+            read: false,
+          })
+        }
         await supabase.from('activity_log').insert({
           project_id: proj.id,
           type: 'payment',
-          label: 'Invoice issued',
+          label: outcome.result === 'inserted' ? 'Invoice issued' : 'Invoice updated (sync)',
           detail: d.data.invoice_number,
         })
-        return NextResponse.json({ ok: true })
+        return NextResponse.json({ ok: true, result: outcome.result })
       }
       case 'log_activity': {
         const d = payload as Extract<N8nInboundPayload, { action: 'log_activity' }>
@@ -436,6 +434,7 @@ export async function POST(request: Request) {
             clientId,
             plan: data.plan,
             engagementPhase,
+            seedTemplateInvoices: data.seed_template_invoices !== false,
           })
         } catch (e) {
           console.error('[webhook/n8n] provision_client engagement content', e)

@@ -206,12 +206,15 @@ After a deal is qualified in HubSpot, an n8n workflow can create the portal clie
     "hubspot_deal_id": "67890",
     "plan": "growth",
     "start_date": "2026-04-01",
-    "engagement_phase": "qualified"
+    "engagement_phase": "qualified",
+    "seed_template_invoices": false
   }
 }
 ```
 
 Use your real `project_slug` pattern and IDs from HubSpot properties.
+
+**`data.seed_template_invoices`:** when **`false`**, the portal does **not** insert `invoicesForPlan` rows (static list prices). Create payable rows with **`add_invoice`**, with `amount_cents` derived from the HubSpot deal/line items (after discounts). When **omitted** or **`true`**, the legacy template invoice seeds are still inserted (same as before this flag existed).
 
 Optional **`data.engagement_phase`:** `"qualified"`** selects the **pre-contract** milestone template (shorter “qualification” track). Any other value or omission uses the standard delivery milestones for `data.plan`.
 
@@ -234,7 +237,7 @@ SYS 00 then forwards to **`POST {n8nBaseUrl}/webhook/hubspot-deal-qualified-port
 
 **Clerk checklist:** invitations use **`POST https://api.clerk.com/v1/invitations`** with the **same email** as `provision_client`. The workflow **lists users by email** first and skips creating an invitation if a user already exists; if the portal returns **`idempotent: true`** for the deal, it skips Clerk as well.
 
-**Invoices at this stage (v1):** rely on **`provision_client`** template invoice seeds (`invoicesForPlan`); add or replace lines later via **`add_invoice`** when HubSpot has definitive amounts.
+**Invoices:** checked-in **SYS 03** sends **`seed_template_invoices: false`**, then POSTs **`add_invoice`** in the “After portal response” Code node using the deal’s HubSpot **`amount`** (full discounted deal value in one pending row). Split deposits/balance with **additional** `add_invoice` calls in n8n (or replace that step) using line-item math from HubSpot. For legacy list-price template seeds, set **`seed_template_invoices: true`** or omit the field.
 
 **Idempotency (deal continuity)** — If `data.hubspot_deal_id` is already stored on a `projects` row, the portal responds with `200` and `{ client_id, project_id, idempotent: true }` instead of inserting again. HubSpot/n8n retries therefore keep a single Supabase client + project tied to that deal.
 
@@ -269,7 +272,9 @@ Either `hubspot_contact_id` or `email` (matching the provisioned `clients.email`
 
 ### HubSpot → n8n → `add_invoice` (portal billing)
 
-Billing reads **Supabase** only. When you create or update an invoice in HubSpot, n8n should POST to the portal so a row appears under **Billing**.
+**On-demand sync (no n8n required):** When a signed-in user opens **Billing** or the **Dashboard**, the portal loads HubSpot CRM invoices via the API, **upserts** matching rows into Supabase (service role) with `hubspot_invoice_id` set, then reads `invoices` with the user client so Stripe and reconciliation use the same rows even if n8n did not fire.
+
+**n8n (optional, earlier sync):** When you create or update an invoice in HubSpot, a workflow can still POST to the portal so a row exists **before** the client next loads the app.
 
 **Prerequisites**
 
@@ -294,12 +299,15 @@ Billing reads **Supabase** only. When you create or update an invoice in HubSpot
     "description": "Website build — deposit",
     "amount_cents": 1500000,
     "status": "pending",
-    "due_date": "2026-05-01"
+    "due_date": "2026-05-01",
+    "hubspot_invoice_id": "98765432109"
   }
 }
 ```
 
 `amount_cents` is an integer (e.g. `$1,500.00` → `150000`). `status` is one of: `paid`, `pending`, `overdue`, `void`.
+
+**`hubspot_invoice_id` (optional):** HubSpot CRM `invoices` object id. When n8n sends the **same** id on a later sync, the portal **updates** the existing Supabase row (amount, number, status, description, `project_id`) instead of inserting again. This keeps **Supabase as the billing source of truth** while **deduplicating** the merged client view: rows with a matching `hubspot_invoice_id` are not double-listed with HubSpot-fetched invoices in `mergeBillingRows`. **Omit** for portal-only invoices with no HubSpot invoice record.
 
 **Example body (by portal slug)**
 
@@ -342,10 +350,10 @@ Billing reads **Supabase** only. When you create or update an invoice in HubSpot
 curl -sS -X POST "https://<your-portal-host>/api/webhook/n8n" \
   -H "Content-Type: application/json" \
   -H "x-intrawebtech-secret: <WEBHOOK_SECRET>" \
-  -d '{"action":"add_invoice","hubspot_deal_id":"<DEAL_ID>","data":{"invoice_number":"TEST-1","description":"Test","amount_cents":5000,"status":"pending"}}'
+  -d '{"action":"add_invoice","hubspot_deal_id":"<DEAL_ID>","data":{"invoice_number":"TEST-1","description":"Test","amount_cents":5000,"status":"pending","hubspot_invoice_id":"<HS_INVOICE_OBJECT_ID>"}}'
 ```
 
-Expect `{"ok":true}`. The client should see the invoice on `/billing` after refresh.
+Expect `{"ok":true,"result":"inserted"}` or `{"ok":true,"result":"updated"}` when the same `hubspot_invoice_id` is sent again. The client should see the invoice on `/billing` after refresh.
 
 ### Example: post-payment branch (Stripe)
 

@@ -3,7 +3,7 @@ import { milestonesForEngagementPhase, type EngagementPhase } from '@/lib/milest
 import type { Plan } from '@/lib/supabase/types'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-/** Milestones, catalog invoices, and notification prefs (if missing) after a `projects` row exists. */
+/** Milestones, optional catalog invoice seeds, and notification prefs (if missing) after a `projects` row exists. */
 export async function insertProvisionedEngagementContent(
   supabase: SupabaseClient,
   opts: {
@@ -11,6 +11,11 @@ export async function insertProvisionedEngagementContent(
     clientId: string
     plan: Plan
     engagementPhase: EngagementPhase
+    /**
+     * When `false`, skips `invoicesForPlan` rows — use n8n `add_invoice` with amounts from HubSpot
+     * (e.g. discounted line items) instead of static list prices. Default `true` (omit) keeps legacy behavior.
+     */
+    seedTemplateInvoices?: boolean
   },
 ): Promise<void> {
   const seeds = milestonesForEngagementPhase(opts.engagementPhase, opts.plan)
@@ -27,20 +32,22 @@ export async function insertProvisionedEngagementContent(
   const { error: mErr } = await supabase.from('milestones').insert(milestoneRows)
   if (mErr) throw mErr
 
-  const invSeeds = invoicesForPlan(opts.plan)
-  const { error: invErr } = await supabase.from('invoices').insert(
-    invSeeds.map((inv) => ({
-      project_id: opts.projectId,
-      invoice_number: inv.invoice_number,
-      description: inv.description,
-      amount_cents: inv.amount_cents,
-      status: inv.status,
-      sku: inv.sku,
-      due_date: null,
-      paid_at: inv.status === 'paid' ? new Date().toISOString() : null,
-    })),
-  )
-  if (invErr) throw invErr
+  if (opts.seedTemplateInvoices !== false) {
+    const invSeeds = invoicesForPlan(opts.plan)
+    const { error: invErr } = await supabase.from('invoices').insert(
+      invSeeds.map((inv) => ({
+        project_id: opts.projectId,
+        invoice_number: inv.invoice_number,
+        description: inv.description,
+        amount_cents: inv.amount_cents,
+        status: inv.status,
+        sku: inv.sku,
+        due_date: null,
+        paid_at: inv.status === 'paid' ? new Date().toISOString() : null,
+      })),
+    )
+    if (invErr) throw invErr
+  }
 
   const { data: pref } = await supabase
     .from('notification_preferences')

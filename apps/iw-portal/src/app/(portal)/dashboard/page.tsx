@@ -5,6 +5,7 @@ import { PlanSummary } from '@/components/portal/PlanSummary'
 import { ProgressBar } from '@/components/portal/ProgressBar'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { syncHubspotCrmInvoicesToProject } from '@/lib/billing/sync-hubspot-crm-to-supabase'
 import { billingTotals, mergeBillingRows } from '@/lib/billing/types'
 import { getPortalBundle } from '@/lib/data/portal'
 import { isHubSpotConfigured } from '@/lib/hubspot/config'
@@ -103,7 +104,19 @@ export default async function DashboardPage() {
   const pid = bundle.project.id
   const multiProject = bundle.projects.length > 1
 
-  const [msRes, invRes, notRes, activityRes, messageRes, automationRes, hubspotInvoices, dealLineItems, dealSheetRes, hubspotDeal] = await Promise.all([
+  const hubspotCrmInvoices =
+    isHubSpotConfigured() && (bundle.project.hubspot_deal_id || bundle.client.hubspot_contact_id)
+      ? await fetchHubSpotBillingInvoices({
+          hubspotDealId: bundle.project.hubspot_deal_id,
+          hubspotContactId: bundle.client.hubspot_contact_id,
+        })
+      : []
+
+  if (hubspotCrmInvoices.length > 0) {
+    await syncHubspotCrmInvoicesToProject(pid, hubspotCrmInvoices)
+  }
+
+  const [msRes, invRes, notRes, activityRes, messageRes, automationRes, dealLineItems, dealSheetRes, hubspotDeal] = await Promise.all([
     supabase.from('milestones').select('*').eq('project_id', pid).order('sort_order', { ascending: true }),
     supabase.from('invoices').select('*').eq('project_id', pid),
     supabase.from('notifications').select('*').eq('project_id', pid).order('created_at', { ascending: false }),
@@ -124,12 +137,6 @@ export default async function DashboardPage() {
           .order('logged_at', { ascending: false })
           .limit(4)
       : Promise.resolve({ data: [] }),
-    isHubSpotConfigured()
-      ? fetchHubSpotBillingInvoices({
-          hubspotDealId: bundle.project.hubspot_deal_id,
-          hubspotContactId: bundle.client.hubspot_contact_id,
-        })
-      : Promise.resolve([]),
     isHubSpotConfigured() ? fetchHubSpotDealLineItems(bundle.project.hubspot_deal_id) : Promise.resolve([]),
     bundle.project.hubspot_deal_id
       ? supabase
@@ -166,7 +173,7 @@ export default async function DashboardPage() {
   const projectTier = projectTierChoice.value
 
   /** Same merged view as Billing — includes CRM-backed invoices, not only portal DB rows. */
-  const billingRows = mergeBillingRows(supabaseInvoices, hubspotInvoices)
+  const billingRows = mergeBillingRows(supabaseInvoices, hubspotCrmInvoices)
   const { paid: paidCents, balance: balanceDue } = billingTotals(billingRows)
   const invoiceCount = billingRows.length
   const lineItemTotalCents = dealLineItems.reduce((sum, item) => sum + item.totalAmountCents, 0)
@@ -190,12 +197,6 @@ export default async function DashboardPage() {
   const tierLabel = projectTier?.trim() || null
   const projectDisplayName = tierLabel ? `${projectLabel} - ${tierLabel}` : projectLabel
   const planDisplay = humanizeLabel(tierLabel) ?? humanizeLabel(bundle.project.plan)
-  const planSource = tierLabel
-    ? projectTierChoice.source
-    : bundle.project.plan?.trim()
-      ? 'postgres:projects.plan'
-      : 'none'
-  const buildSha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'local'
 
   return (
     <div className="iw-animate-slide-up space-y-8 md:space-y-12">
@@ -376,9 +377,6 @@ export default async function DashboardPage() {
               </dd>
             </div>
           </dl>
-          <p className="mt-3 text-[11px] text-[var(--iw-text-3)]">
-            Debug: build {buildSha} | plan source {planSource}
-          </p>
         </Card>
       </div>
 

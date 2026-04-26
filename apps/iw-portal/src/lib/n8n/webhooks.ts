@@ -54,6 +54,12 @@ export type AddInvoiceData = {
   status: 'paid' | 'pending' | 'overdue' | 'void'
   sku?: string
   due_date?: string
+  /**
+   * HubSpot CRM `invoices` object id (string). When set, `add_invoice` **updates** the existing Supabase
+   * row for that id instead of inserting, keeping one portal row in sync and deduplicating the merged
+   * billing list with HubSpot-fetched invoices (`mergeBillingRows` in `src/lib/billing/types.ts`).
+   */
+  hubspot_invoice_id?: string
 }
 
 /** Use `project_slug` **or** `hubspot_deal_id` (matches `projects.hubspot_deal_id`) to resolve the project. */
@@ -84,6 +90,12 @@ export type ProvisionClientData = {
   clerk_user_id?: string
   /** When `qualified`, seeds pre-contract milestones instead of the full delivery template. */
   engagement_phase?: EngagementPhase
+  /**
+   * When `false`, the portal does not insert `invoicesForPlan` template rows. Use n8n `add_invoice` with
+   * `amount_cents` from HubSpot (deal/line items, including discounts). When omitted or `true`, template
+   * invoice seeds are inserted (legacy list-style amounts).
+   */
+  seed_template_invoices?: boolean
 }
 
 /**

@@ -6,7 +6,6 @@ import {
   mergeBillingRows,
   type HubSpotBillingInvoice,
 } from '@/lib/billing/types'
-import { fetchHubSpotBillingInvoices } from '@/lib/hubspot/invoices'
 import type { Invoice } from '@/lib/supabase/types'
 
 function money(cents: number) {
@@ -15,25 +14,20 @@ function money(cents: number) {
 
 export async function BillingWithHubSpot({
   supabaseInvoices,
-  hubspotDealId,
-  hubspotContactId,
+  hubspotCrmInvoices,
   paidQuery,
   canceledQuery,
 }: {
   supabaseInvoices: Invoice[]
-  hubspotDealId: string | null
-  hubspotContactId: string | null
+  /** CRM invoice rows (page already fetched + synced to Supabase). */
+  hubspotCrmInvoices: HubSpotBillingInvoice[]
   paidQuery: boolean
   canceledQuery: boolean
 }) {
-  const hubspotInvoices = await fetchHubSpotBillingInvoices({
-    hubspotDealId,
-    hubspotContactId,
-  })
   return (
     <BillingBody
       supabaseInvoices={supabaseInvoices}
-      hubspotInvoices={hubspotInvoices}
+      hubspotInvoices={hubspotCrmInvoices}
       paidQuery={paidQuery}
       canceledQuery={canceledQuery}
     />
