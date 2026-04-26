@@ -1,5 +1,6 @@
 import type { ChangeOrderStatus, NotificationType, Plan } from '@/lib/supabase/types'
 import type { EngagementPhase } from '@/lib/milestones-templates'
+import type { ProposalLifecycleEventType } from '@/lib/proposals/lifecycle'
 
 export type N8nInboundAction =
   | 'update_milestone'
@@ -61,7 +62,7 @@ export type AddInvoiceInboundPayload =
   | { action: 'add_invoice'; hubspot_deal_id: string; data: AddInvoiceData }
 
 export type LogActivityData = {
-  type: 'milestone' | 'payment' | 'message' | 'document' | 'task' | 'login' | 'system'
+  type: 'milestone' | 'payment' | 'message' | 'document' | 'task' | 'login' | 'system' | 'proposal'
   label: string
   detail?: string
 }
@@ -205,4 +206,28 @@ export interface ChangeOrderRequestedPayload {
   pdf_signed_url: string | null
   /** Plain-text summary for HubSpot deal notes / Slack. */
   summary: string
+}
+
+export interface ProposalLifecyclePayload {
+  event_id: string
+  event_type: ProposalLifecycleEventType | 'generated'
+  proposal_id: string
+  project_id: string
+  project_slug: string
+  client_name: string
+  client_email: string
+  actor_clerk_user_id: string | null
+  actor_name: string
+  hubspot_deal_id: string | null
+  hubspot_contact_id: string | null
+  occurred_at: string
+  decision_version: number
+  metadata: {
+    status: string
+    proposal_status_detail: string | null
+    queue_type: 'proposal'
+    drive_link: string | null
+    deal_value: string | null
+    note: string | null
+  }
 }

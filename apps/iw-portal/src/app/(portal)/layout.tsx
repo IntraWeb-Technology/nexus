@@ -53,13 +53,6 @@ export default async function PortalLayout({ children }: { children: ReactNode }
     )
   }
 
-  const planLabel =
-    bundle.project.plan === 'growth'
-      ? 'Growth'
-      : bundle.project.plan === 'starter'
-        ? 'Starter'
-        : 'Custom'
-
   return (
     <ProjectProvider value={bundle}>
       {/* Skip-to-content: visually hidden until keyboard-focused (WCAG 2.4.1) */}
@@ -71,7 +64,6 @@ export default async function PortalLayout({ children }: { children: ReactNode }
         <Sidebar
           projects={bundle.projects}
           activeSlug={bundle.project.slug}
-          planLabel={planLabel}
           unreadMessages={bundle.unreadMessages}
           unreadNotifications={bundle.unreadNotifications}
         />
@@ -79,8 +71,6 @@ export default async function PortalLayout({ children }: { children: ReactNode }
           clientName={bundle.client.name}
           projects={bundle.projects}
           activeSlug={bundle.project.slug}
-          activeHubspotDealId={bundle.project.hubspot_deal_id}
-          activeHubspotContactId={bundle.client.hubspot_contact_id}
           unreadNotifications={bundle.unreadNotifications}
         />
         {/*

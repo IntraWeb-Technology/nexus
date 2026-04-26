@@ -4,7 +4,6 @@ import { Inter, JetBrains_Mono } from 'next/font/google'
 import ClerkProviderFromRequest from '@/components/auth/ClerkProviderFromRequest'
 import { ThemeProvider } from '@/contexts/theme-context'
 import { clerkAfterSignOutUrl, clerkProviderSatelliteProps, clerkSatelliteConfigured } from '@/lib/clerk-satellite'
-import { portalThemeBootScript } from '@/lib/theme-storage'
 import './globals.css'
 
 const inter = Inter({
@@ -47,10 +46,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetBrainsMono.variable} min-h-screen antialiased`}>
-        <script
-          // Runs before paint; keeps `data-theme` aligned with localStorage (issue #2).
-          dangerouslySetInnerHTML={{ __html: portalThemeBootScript() }}
-        />
         <ThemeProvider>{clerkInner}</ThemeProvider>
       </body>
     </html>

@@ -70,7 +70,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const deal = $('Deal Proposal Stage Webhook').first().json;\r\nconst config = $('Get Config').first().json;\r\n\r\n/** n8n may receive flat HubSpot shape, { body }, or router envelope { webhookBody }. */\r\nconst unwrapPayload = (root) => {\r\n  if (!root || typeof root !== 'object') return root;\r\n  if (root.webhookBody && typeof root.webhookBody === 'object') return root.webhookBody;\r\n  if (root.payload && typeof root.payload === 'object') return root.payload;\r\n  return root;\r\n};\r\n\r\nconst inner = unwrapPayload(deal);\r\nconst body =\r\n  inner.body && typeof inner.body === 'object' && !Array.isArray(inner.body) ? inner.body : inner;\r\nconst props =\r\n  body.properties && typeof body.properties === 'object' && !Array.isArray(body.properties)\r\n    ? body.properties\r\n    : body;\r\n\r\n/** HubSpot router envelope may include merged contact props (preferred for client-facing fields). */\r\nconst merged =\r\n  (deal.source && typeof deal.source === 'object' && deal.source.contactsMerged) ||\r\n  (typeof deal.contactsMerged === 'object' && deal.contactsMerged) ||\r\n  {};\r\n\r\nconst valueFrom = (...values) => {\r\n  for (const value of values) {\r\n    if (value !== undefined && value !== null && String(value).trim()) {\r\n      return String(value).trim();\r\n    }\r\n  }\r\n  return '';\r\n};\r\n\r\nconst money = (value) => {\r\n  if (value === undefined || value === null || value === '') return 0;\r\n  const normalized = Number(String(value).replace(/[^0-9.-]/g, ''));\r\n  return Number.isFinite(normalized) ? normalized : 0;\r\n};\r\n\r\nconst titleCase = (value) => (value ? value.charAt(0).toUpperCase() + value.slice(1) : '');\r\n\r\n/** PDF / UI: avoid em/en dashes in names and labels. */\r\nconst cleanDashes = (value) =>\r\n  String(value ?? '')\r\n    .replace(/\\u2014/g, '-')\r\n    .replace(/\\u2013/g, '-')\r\n    .replace(/\\u2212/g, '-')\r\n    .replace(/—/g, '-');\r\n\r\n/** Parse line items from payload: arrays on body/properties, JSON string, or HubSpot hs_line_items JSON. */\r\nconst parseLineItemsRaw = () => {\r\n  const candidates = [\r\n    body.lineItems,\r\n    body.line_items,\r\n    props.lineItems,\r\n    props.line_items,\r\n    props.hs_line_items,\r\n  ];\r\n  for (const c of candidates) {\r\n    if (Array.isArray(c) && c.length) return c;\r\n    if (typeof c === 'string' && c.trim().startsWith('[')) {\r\n      try {\r\n        const parsed = JSON.parse(c);\r\n        if (Array.isArray(parsed) && parsed.length) return parsed;\r\n      } catch (e) {\r\n        /* ignore */\r\n      }\r\n    }\r\n  }\r\n  return [];\r\n};\r\n\r\nconst normalizeLineItems = (raw) => {\r\n  return raw\r\n    .map((x, i) => {\r\n      if (!x || typeof x !== 'object') return null;\r\n      const qty = Math.max(1, Number(x.quantity ?? x.qty ?? x.hs_quantity ?? 1) || 1);\r\n      const unit = money(x.unitPrice ?? x.price ?? x.rate ?? x.hs_price ?? x.hs_unit_price);\r\n      const lineTotal = money(x.amount ?? x.line_amount ?? x.total ?? x.line_total ?? x.hs_line_item_amount);\r\n      const name = valueFrom(x.name, x.productName, x.title, x.hs_sku, `Line item ${i + 1}`);\r\n      const sku = valueFrom(x.hs_sku, x.sku, '');\r\n      const description = valueFrom(x.description, x.details, x.notes, '');\r\n      let amount = lineTotal;\r\n      if (!amount && unit) amount = unit * qty;\r\n      if (!amount) amount = 0;\r\n      return {\r\n        name,\r\n        sku,\r\n        description,\r\n        quantity: qty,\r\n        unitPrice: unit || (qty ? amount / qty : amount),\r\n        amount,\r\n      };\r\n    })\r\n    .filter(Boolean);\r\n};\r\n\r\nconst rawLineItems = parseLineItemsRaw();\r\nconst lineItems = normalizeLineItems(rawLineItems);\r\nconst lineItemsSubtotal = lineItems.reduce((s, li) => s + (Number(li.amount) || 0), 0);\r\n\r\nconst addressParts = [\r\n  valueFrom(props.address, props.street, props.street_address, props.company_address),\r\n  valueFrom(props.city, props.company_city),\r\n  valueFrom(props.state, props.state_region, props.company_state),\r\n  valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\r\n  valueFrom(props.country, props.company_country),\r\n].filter(Boolean);\r\n\r\nconst tierKey = valueFrom(props.tier).toLowerCase() || 'starter';\r\nconst tierInfo = (config.tiers && (config.tiers[tierKey] || config.tiers.starter)) || {\r\n  name: titleCase(tierKey) || 'Starter',\r\n  monthlyPrice: 0,\r\n  setupFee: 0,\r\n};\r\n\r\nconst rawPainSources = [\r\n  valueFrom(props.deal_pain_points),\r\n  valueFrom(props.painPoints),\r\n  valueFrom(props.pain_point_summary),\r\n].filter(Boolean);\r\n\r\nconst uniquePainSources = [...new Set(rawPainSources)];\r\nconst painPoints = uniquePainSources.join('\\n\\n');\r\nconst contactFirstName = valueFrom(props.contact_firstname, props.firstName, props.firstname);\r\nconst contactLastName = valueFrom(props.contact_lastname, props.lastName, props.lastname);\r\nconst contactName = cleanDashes([contactFirstName, contactLastName].filter(Boolean).join(' '));\r\n\r\nconst companyName = valueFrom(\r\n  props.company,\r\n  props.company_name,\r\n  props.business_name,\r\n  props.dealname,\r\n  props.name,\r\n);\r\n\r\nconst companyDisplay = (() => {\r\n  const c = String(companyName || '').trim();\r\n  if (c && c.toUpperCase() !== 'UNKNOWN') return cleanDashes(c);\r\n  const m = valueFrom(merged.company, merged.business_name, merged.company_name);\r\n  if (m && String(m).trim().toUpperCase() !== 'UNKNOWN') return cleanDashes(m);\r\n  const dn = valueFrom(props.dealname, props.name);\r\n  if (dn) {\r\n    const short = dn.split(/\\s*[–\\u2013\\u2014-]\\s*/)[0].trim();\r\n    return cleanDashes(short || dn);\r\n  }\r\n  return '';\r\n})();\r\n\r\nconst industryDisplay = cleanDashes(\r\n  valueFrom(props.industry, merged.industry, merged.website_intake_industry),\r\n);\r\n\r\nconst contactEmailDisplay = cleanDashes(\r\n  valueFrom(merged.email, merged.contact_email, props.contact_email, props.email),\r\n);\r\n\r\nconst tierMonthly = money(tierInfo.monthlyPrice);\r\nconst upfrontDue = money(tierInfo.setupFee);\r\nconst explicitDealAmount = money(props.amount);\r\nconst explicitDiscount = money(\r\n  valueFrom(\r\n    props.hs_total_discount,\r\n    props.total_discount,\r\n    props.deal_discount,\r\n    props.discount_amount,\r\n    props.hs_discount,\r\n  ),\r\n);\r\nlet impliedDiscount = 0;\r\nif (\r\n  explicitDiscount <= 0 &&\r\n  lineItemsSubtotal > 0 &&\r\n  explicitDealAmount > 0 &&\r\n  lineItemsSubtotal > explicitDealAmount + 0.005\r\n) {\r\n  impliedDiscount = lineItemsSubtotal - explicitDealAmount;\r\n}\r\nconst totalDiscount = explicitDiscount > 0 ? explicitDiscount : impliedDiscount;\r\n\r\nconst tierAmount =\r\n  explicitDealAmount > 0\r\n    ? explicitDealAmount\r\n    : lineItemsSubtotal > 0\r\n      ? lineItemsSubtotal\r\n      : upfrontDue;\r\nconst dealAmountForDisplay = explicitDealAmount > 0 ? explicitDealAmount : tierAmount;\r\nconst remainingTierBalance = Math.max(tierAmount - upfrontDue, 0);\r\nconst launchBalance = remainingTierBalance + tierMonthly;\r\n\r\nconst productList = lineItems.map((i) => ({\r\n  sku: i.sku || '',\r\n  name: i.name || '',\r\n  price: i.unitPrice ?? (i.quantity ? i.amount / i.quantity : i.amount),\r\n}));\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      clientName: cleanDashes(\r\n        valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),\r\n      ),\r\n      company: companyName,\r\n      companyDisplay,\r\n      industry: valueFrom(props.industry),\r\n      industryDisplay,\r\n      painPoints,\r\n      painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),\r\n      rawPainPoints: valueFrom(props.deal_pain_points, painPoints),\r\n      dealValue: tierAmount,\r\n      amountLabel: valueFrom(props.amount),\r\n      tierAmount,\r\n      dealAmount: dealAmountForDisplay,\r\n      lineItemsSubtotal,\r\n      totalDiscount,\r\n      tier: tierKey,\r\n      tierLabel: tierInfo.name || titleCase(tierKey) || 'Starter',\r\n      tierMonthly,\r\n      monthlyCost: tierMonthly,\r\n      upfrontDue,\r\n      remainingTierBalance,\r\n      launchBalance,\r\n      finalDueAtPreLaunch: launchBalance,\r\n      dealId: valueFrom(body.id, inner.id, deal.dealId, deal.id, body.dealId),\r\n      contactEmail: valueFrom(\r\n        deal.proposalEmailOverride,\r\n        props.contact_email,\r\n        props.email,\r\n        merged.email,\r\n        merged.contact_email,\r\n      ),\r\n      contactEmailDisplay,\r\n      contactPhone: valueFrom(props.contact_phone, props.phone, props.mobilephone),\r\n      contactFirstName,\r\n      contactName: contactName || contactFirstName,\r\n      address: addressParts.join(', '),\r\n      city: valueFrom(props.city, props.company_city),\r\n      state: valueFrom(props.state, props.state_region, props.company_state),\r\n      postalCode: valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\r\n      country: valueFrom(props.country, props.company_country),\r\n      website: valueFrom(\r\n        props.website,\r\n        props.domain,\r\n        props.company_domain,\r\n        merged.website,\r\n        merged.company_website,\r\n        merged.hs_website,\r\n      ),\r\n      driveFolderId: valueFrom(props.client_drive_folder_id),\r\n      lineItems,\r\n      lineItemsTotal: lineItemsSubtotal,\r\n      productList,\r\n      config,\r\n    },\r\n  },\r\n];\r\n"
+        "jsCode": "const deal = $('Deal Proposal Stage Webhook').first().json;\r\nconst config = $('Get Config').first().json;\r\n\r\n/** n8n may receive flat HubSpot shape, { body }, or router envelope { webhookBody }. */\r\nconst unwrapPayload = (root) => {\r\n  if (!root || typeof root !== 'object') return root;\r\n  if (root.webhookBody && typeof root.webhookBody === 'object') return root.webhookBody;\r\n  if (root.payload && typeof root.payload === 'object') return root.payload;\r\n  return root;\r\n};\r\n\r\nconst inner = unwrapPayload(deal);\r\nconst body =\r\n  inner.body && typeof inner.body === 'object' && !Array.isArray(inner.body) ? inner.body : inner;\r\nconst props =\r\n  body.properties && typeof body.properties === 'object' && !Array.isArray(body.properties)\r\n    ? body.properties\r\n    : body;\r\n\r\n/** HubSpot router envelope may include merged contact props (preferred for client-facing fields). */\r\nconst merged =\r\n  (deal.source && typeof deal.source === 'object' && deal.source.contactsMerged) ||\r\n  (typeof deal.contactsMerged === 'object' && deal.contactsMerged) ||\r\n  {};\r\n\r\nconst associatedContact = (() => {\r\n  try {\r\n    const c = $('Fetch Primary Contact').first().json;\r\n    return (c && typeof c.properties === 'object' && c.properties) || (c && typeof c === 'object' ? c : {});\r\n  } catch {\r\n    return {};\r\n  }\r\n})();\r\n\r\nconst valueFrom = (...values) => {\r\n  for (const value of values) {\r\n    if (value !== undefined && value !== null && String(value).trim()) {\r\n      return String(value).trim();\r\n    }\r\n  }\r\n  return '';\r\n};\r\n\r\nconst money = (value) => {\r\n  if (value === undefined || value === null || value === '') return 0;\r\n  const normalized = Number(String(value).replace(/[^0-9.-]/g, ''));\r\n  return Number.isFinite(normalized) ? normalized : 0;\r\n};\r\n\r\nconst titleCase = (value) => (value ? value.charAt(0).toUpperCase() + value.slice(1) : '');\r\n\r\n/** PDF / UI: avoid em/en dashes in names and labels. */\r\nconst cleanDashes = (value) =>\r\n  String(value ?? '')\r\n    .replace(/\\u2014/g, '-')\r\n    .replace(/\\u2013/g, '-')\r\n    .replace(/\\u2212/g, '-')\r\n    .replace(/—/g, '-');\r\n\r\n/** Parse line items from payload: arrays on body/properties, JSON string, or HubSpot hs_line_items JSON. */\r\nconst parseLineItemsRaw = () => {\r\n  const candidates = [\r\n    body.lineItems,\r\n    body.line_items,\r\n    props.lineItems,\r\n    props.line_items,\r\n    props.hs_line_items,\r\n  ];\r\n  for (const c of candidates) {\r\n    if (Array.isArray(c) && c.length) return c;\r\n    if (typeof c === 'string' && c.trim().startsWith('[')) {\r\n      try {\r\n        const parsed = JSON.parse(c);\r\n        if (Array.isArray(parsed) && parsed.length) return parsed;\r\n      } catch (e) {\r\n        /* ignore */\r\n      }\r\n    }\r\n  }\r\n  return [];\r\n};\r\n\r\nconst normalizeLineItems = (raw) => {\r\n  return raw\r\n    .map((x, i) => {\r\n      if (!x || typeof x !== 'object') return null;\r\n      const qty = Math.max(1, Number(x.quantity ?? x.qty ?? x.hs_quantity ?? 1) || 1);\r\n      const unit = money(x.unitPrice ?? x.price ?? x.rate ?? x.hs_price ?? x.hs_unit_price);\r\n      const lineTotal = money(x.amount ?? x.line_amount ?? x.total ?? x.line_total ?? x.hs_line_item_amount);\r\n      const name = valueFrom(x.name, x.productName, x.title, x.hs_sku, `Line item ${i + 1}`);\r\n      const sku = valueFrom(x.hs_sku, x.sku, '');\r\n      const description = valueFrom(x.description, x.details, x.notes, '');\r\n      let amount = lineTotal;\r\n      if (!amount && unit) amount = unit * qty;\r\n      if (!amount) amount = 0;\r\n      return {\r\n        name,\r\n        sku,\r\n        description,\r\n        quantity: qty,\r\n        unitPrice: unit || (qty ? amount / qty : amount),\r\n        amount,\r\n      };\r\n    })\r\n    .filter(Boolean);\r\n};\r\n\r\nconst rawLineItems = parseLineItemsRaw();\r\nconst lineItems = normalizeLineItems(rawLineItems);\r\nconst lineItemsSubtotal = lineItems.reduce((s, li) => s + (Number(li.amount) || 0), 0);\r\n\r\nconst addressParts = [\r\n  valueFrom(props.address, props.street, props.street_address, props.company_address),\r\n  valueFrom(props.city, props.company_city),\r\n  valueFrom(props.state, props.state_region, props.company_state),\r\n  valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\r\n  valueFrom(props.country, props.company_country),\r\n].filter(Boolean);\r\n\r\nconst tierKey = valueFrom(props.tier).toLowerCase() || 'starter';\r\nconst tierInfo = (config.tiers && (config.tiers[tierKey] || config.tiers.starter)) || {\r\n  name: titleCase(tierKey) || 'Starter',\r\n  monthlyPrice: 0,\r\n  setupFee: 0,\r\n};\r\n\r\nconst rawPainSources = [\r\n  valueFrom(props.deal_pain_points),\r\n  valueFrom(props.painPoints),\r\n  valueFrom(props.pain_point_summary),\r\n].filter(Boolean);\r\n\r\nconst uniquePainSources = [...new Set(rawPainSources)];\r\nconst painPoints = uniquePainSources.join('\\n\\n');\r\nconst contactFirstName = valueFrom(associatedContact.firstname, props.contact_firstname, props.firstName, props.firstname);\r\nconst contactLastName = valueFrom(associatedContact.lastname, props.contact_lastname, props.lastName, props.lastname);\r\nconst contactName = cleanDashes([contactFirstName, contactLastName].filter(Boolean).join(' '));\r\n\r\nconst companyName = valueFrom(\r\n  props.company,\r\n  props.company_name,\r\n  props.business_name,\r\n  props.dealname,\r\n  props.name,\r\n);\r\n\r\nconst companyDisplay = (() => {\r\n  const c = String(companyName || '').trim();\r\n  if (c && c.toUpperCase() !== 'UNKNOWN') return cleanDashes(c);\r\n  const m = valueFrom(merged.company, merged.business_name, merged.company_name);\r\n  if (m && String(m).trim().toUpperCase() !== 'UNKNOWN') return cleanDashes(m);\r\n  const dn = valueFrom(props.dealname, props.name);\r\n  if (dn) {\r\n    const short = dn.split(/\\s*[–\\u2013\\u2014-]\\s*/)[0].trim();\r\n    return cleanDashes(short || dn);\r\n  }\r\n  return '';\r\n})();\r\n\r\nconst industryDisplay = cleanDashes(\r\n  valueFrom(props.industry, merged.industry, merged.website_intake_industry),\r\n);\r\n\r\nconst contactEmailDisplay = cleanDashes(\r\n  valueFrom(associatedContact.email, props.contact_email, props.email, merged.email, merged.contact_email),\r\n);\r\n\r\nconst tierMonthly = money(tierInfo.monthlyPrice);\r\nconst upfrontDue = money(tierInfo.setupFee);\r\nconst explicitDealAmount = money(props.amount);\r\nconst explicitDiscount = money(\r\n  valueFrom(\r\n    props.hs_total_discount,\r\n    props.total_discount,\r\n    props.deal_discount,\r\n    props.discount_amount,\r\n    props.hs_discount,\r\n  ),\r\n);\r\nlet impliedDiscount = 0;\r\nif (\r\n  explicitDiscount <= 0 &&\r\n  lineItemsSubtotal > 0 &&\r\n  explicitDealAmount > 0 &&\r\n  lineItemsSubtotal > explicitDealAmount + 0.005\r\n) {\r\n  impliedDiscount = lineItemsSubtotal - explicitDealAmount;\r\n}\r\nconst totalDiscount = explicitDiscount > 0 ? explicitDiscount : impliedDiscount;\r\n\r\nconst tierAmount =\r\n  explicitDealAmount > 0\r\n    ? explicitDealAmount\r\n    : lineItemsSubtotal > 0\r\n      ? lineItemsSubtotal\r\n      : upfrontDue;\r\nconst dealAmountForDisplay = explicitDealAmount > 0 ? explicitDealAmount : tierAmount;\r\nconst remainingTierBalance = Math.max(tierAmount - upfrontDue, 0);\r\nconst launchBalance = remainingTierBalance + tierMonthly;\r\n\r\nconst productList = lineItems.map((i) => ({\r\n  sku: i.sku || '',\r\n  name: i.name || '',\r\n  price: i.unitPrice ?? (i.quantity ? i.amount / i.quantity : i.amount),\r\n}));\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      clientName: cleanDashes(\r\n        valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),\r\n      ),\r\n      company: companyName,\r\n      companyDisplay,\r\n      industry: valueFrom(props.industry),\r\n      industryDisplay,\r\n      painPoints,\r\n      painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),\r\n      rawPainPoints: valueFrom(props.deal_pain_points, painPoints),\r\n      dealValue: tierAmount,\r\n      amountLabel: valueFrom(props.amount),\r\n      tierAmount,\r\n      dealAmount: dealAmountForDisplay,\r\n      lineItemsSubtotal,\r\n      totalDiscount,\r\n      tier: tierKey,\r\n      tierLabel: tierInfo.name || titleCase(tierKey) || 'Starter',\r\n      tierMonthly,\r\n      monthlyCost: tierMonthly,\r\n      upfrontDue,\r\n      remainingTierBalance,\r\n      launchBalance,\r\n      finalDueAtPreLaunch: launchBalance,\r\n      dealId: valueFrom(body.id, inner.id, deal.dealId, deal.id, body.dealId),\r\n      contactEmail: valueFrom(\n        associatedContact.email,\n        props.contact_email,\n        props.email,\n        merged.email,\n        merged.contact_email,\n      ),\r\n      contactEmailDisplay,\r\n      contactPhone: valueFrom(associatedContact.phone, associatedContact.mobilephone, props.contact_phone, props.phone, props.mobilephone),\r\n      contactFirstName,\r\n      contactName: contactName || contactFirstName,\r\n      address: addressParts.join(', '),\r\n      city: valueFrom(props.city, props.company_city),\r\n      state: valueFrom(props.state, props.state_region, props.company_state),\r\n      postalCode: valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\r\n      country: valueFrom(props.country, props.company_country),\r\n      website: valueFrom(\r\n        props.website,\r\n        props.domain,\r\n        props.company_domain,\r\n        merged.website,\r\n        merged.company_website,\r\n        merged.hs_website,\r\n      ),\r\n      driveFolderId: valueFrom(props.client_drive_folder_id),\r\n      lineItems,\r\n      lineItemsTotal: lineItemsSubtotal,\r\n      productList,\r\n      config,\r\n    },\r\n  },\r\n];\r\n"
       },
       "id": "sys05-extract",
       "name": "Extract Deal Data",
@@ -201,7 +201,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pdf = $('Call PDF Service').first();\nconst folder = $('Create folder').first();\nconst fileName = $('Prep PDF Input').first().json.fileName || 'document.pdf';\nif (!folder?.json?.id) throw new Error('Create folder: missing id — check Drive node output.');\nconst raw = pdf.binary || {};\nconst keys = Object.keys(raw);\nif (!keys.length) throw new Error('Call PDF Service: no binary — keep Call PDF \u2192 this node; Create folder must not sit between them.');\nconst dataKey = raw.data ? 'data' : keys[0];\nreturn [{ json: { fileName, _clientFolderId: folder.json.id }, binary: { data: raw[dataKey] } }];"
+        "jsCode": "const pdf = $('Call PDF Service').first();\nconst folder = $('Create folder').first();\nconst fileName = $('Prep PDF Input').first().json.fileName || 'document.pdf';\nif (!folder?.json?.id) throw new Error('Create folder: missing id — check Drive node output.');\nconst raw = pdf.binary || {};\nconst keys = Object.keys(raw);\nif (!keys.length) throw new Error('Call PDF Service: no binary — keep Call PDF → this node; Create folder must not sit between them.');\nconst dataKey = raw.data ? 'data' : keys[0];\nreturn [{ json: { fileName, _clientFolderId: folder.json.id }, binary: { data: raw[dataKey] } }];"
       },
       "id": "sys05-pdf-ensure",
       "name": "Ensure PDF Item",
@@ -296,7 +296,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst wh = $('Deal Proposal Stage Webhook').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\nconst to = String(\n  d.contactEmail ||\n  d.contactEmailDisplay ||\n  wh.proposalEmailOverride ||\n  d.config?.owner?.fromEmail ||\n  d.config?.owner?.email ||\n  '',\n).trim();\nif (!to) throw new Error('No recipient email: set HubSpot contact_email (or deal proposalEmailOverride) before send.');\n\n/** Resend: [{ filename, content }] with content = base64 (see SW: Send Email via Resend). */\nconst pdfNode = $('Call PDF Service').first();\nconst rawBin = pdfNode.binary || {};\nconst binKeys = Object.keys(rawBin);\nif (!binKeys.length) throw new Error('Call PDF Service: no PDF binary — cannot attach to email.');\nconst dataKey = rawBin.data ? 'data' : binKeys[0];\nconst bin = rawBin[dataKey];\nconst raw = bin?.data;\nconst b64 =\n  typeof raw === 'string'\n    ? raw\n    : Buffer.isBuffer(raw)\n      ? raw.toString('base64')\n      : Array.isArray(raw)\n        ? Buffer.from(raw).toString('base64')\n        : null;\nif (!b64) throw new Error('Call PDF Service: could not read PDF bytes for attachment.');\nconst fileName = String(\n  $('Prep PDF Input').first().json.fileName || bin.fileName || 'proposal.pdf',\n).replace(/[\\\\/]/g, '-');\nconst attachments = [{ filename: fileName, content: b64 }];\n\nreturn [{\n  json: {\n    to,\n    subject: `Your IntraWeb proposal is ready — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your proposal is attached. I've outlined exactly what we'll build, the timeline, and the investment.</p>${driveLink ? `<p>You can also <a href=\"${driveLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">view it in Google Drive here</a>.</p>` : ''}<p>Take a look and let me know if you have any questions. When you're ready to move forward, reply to this email and I'll send the contract for e-signature.</p><p>— John<br/>${d.config?.owner?.companyName || 'IntraWeb'}</p>`,\n    workflowName: 'SYS 03 — Proposal and Contract Delivery',\n    attachments,\n  }\n}];"
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\nconst to = String(\n  d.contactEmail ||\n  d.contactEmailDisplay ||\n  '',\n).trim();\nif (!to) throw new Error('No contact email found for proposal send. Set HubSpot contact_email or the associated contact email before sending.');\n\n/** Resend: [{ filename, content }] with content = base64 (see SW: Send Email via Resend). */\nconst pdfBase64 = String($('Extract PDF Base64').first().json.pdfBase64 || '').trim();\nif (!pdfBase64 || pdfBase64 === 'filesystem-v2') {\n  throw new Error('Extract PDF Base64: missing/invalid base64 content for attachment.');\n}\nconst fileName = String(\n  $('Prep PDF Input').first().json.fileName || 'proposal.pdf',\n).replace(/[\\/]/g, '-');\nconst attachments = [{ filename: fileName, content: pdfBase64 }];\n\nreturn [{\n  json: {\n    to,\n    subject: `Your IntraWeb proposal is ready — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your proposal is attached. I've outlined exactly what we'll build, the timeline, and the investment.</p>${driveLink ? `<p>You can also <a href=\"${driveLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">view it in Google Drive here</a>.</p>` : ''}<p>Take a look and let me know if you have any questions. When you're ready to move forward, reply to this email and I'll send the contract for e-signature.</p><p>— John<br/>${d.config?.owner?.companyName || 'IntraWeb'}</p>`,\n    workflowName: 'SYS 03 — Proposal and Contract Delivery',\n    attachments,\n  }\n}];"
       },
       "id": "sys05-send-prep",
       "name": "Prep Send Email",
@@ -536,6 +536,116 @@
           "name": "Google Drive account 2"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ (() => { const root = $('Deal Proposal Stage Webhook').first().json; const inner = root.webhookBody || root.payload || root.body || root; const body = inner.body && typeof inner.body === 'object' ? inner.body : inner; const id = body.id || inner.id || root.dealId || root.id || body.dealId; return 'https://api.hubapi.com/crm/v3/objects/deals/' + encodeURIComponent(String(id || '')) + '?properties=dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company,hs_line_items,hs_total_discount&associations=contacts'; })() }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "id": "sys05-fetch-deal-associations",
+      "name": "Fetch Deal With Associations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2448,
+        -720
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const deal = $('Fetch Deal With Associations').first().json;\nconst contacts = deal.associations?.contacts?.results || [];\nconst contactId = contacts.map((c) => c.id).find(Boolean) || '';\nreturn [{ json: { contactId, hasContact: Boolean(contactId) } }];"
+      },
+      "id": "sys05-pick-associated-contact",
+      "name": "Pick Associated Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        -720
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "has-associated-contact",
+              "leftValue": "={{ $json.contactId }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "sys05-has-associated-contact",
+      "name": "Has Associated Contact?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2896,
+        -720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ 'https://api.hubapi.com/crm/v3/objects/contacts/' + encodeURIComponent(String($json.contactId)) + '?properties=email,firstname,lastname,phone,mobilephone,company,industry' }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "options": {}
+      },
+      "id": "sys05-fetch-primary-contact",
+      "name": "Fetch Primary Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3120,
+        -720
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "binaryToPropery",
+        "binaryPropertyName": "data",
+        "destinationKey": "pdfBase64",
+        "options": {
+          "keepSource": "both"
+        }
+      },
+      "id": "sys05-extract-pdf-base64",
+      "name": "Extract PDF Base64",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        4096,
+        -528
+      ]
     }
   ],
   "connections": {
@@ -554,7 +664,7 @@
       "main": [
         [
           {
-            "node": "Extract Deal Data",
+            "node": "Fetch Deal With Associations",
             "type": "main",
             "index": 0
           }
@@ -632,6 +742,11 @@
         [
           {
             "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract PDF Base64",
             "type": "main",
             "index": 0
           }
@@ -793,6 +908,57 @@
         [
           {
             "node": "Prep Claude Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Deal With Associations": {
+      "main": [
+        [
+          {
+            "node": "Pick Associated Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pick Associated Contact": {
+      "main": [
+        [
+          {
+            "node": "Has Associated Contact?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Associated Contact?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Primary Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Deal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Primary Contact": {
+      "main": [
+        [
+          {
+            "node": "Extract Deal Data",
             "type": "main",
             "index": 0
           }
@@ -1027,7 +1193,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const deal = $('Deal Proposal Stage Webhook').first().json;\r\nconst config = $('Get Config').first().json;\r\n\r\n/** n8n may receive flat HubSpot shape, { body }, or router envelope { webhookBody }. */\r\nconst unwrapPayload = (root) => {\r\n  if (!root || typeof root !== 'object') return root;\r\n  if (root.webhookBody && typeof root.webhookBody === 'object') return root.webhookBody;\r\n  if (root.payload && typeof root.payload === 'object') return root.payload;\r\n  return root;\r\n};\r\n\r\nconst inner = unwrapPayload(deal);\r\nconst body =\r\n  inner.body && typeof inner.body === 'object' && !Array.isArray(inner.body) ? inner.body : inner;\r\nconst props =\r\n  body.properties && typeof body.properties === 'object' && !Array.isArray(body.properties)\r\n    ? body.properties\r\n    : body;\r\n\r\n/** HubSpot router envelope may include merged contact props (preferred for client-facing fields). */\r\nconst merged =\r\n  (deal.source && typeof deal.source === 'object' && deal.source.contactsMerged) ||\r\n  (typeof deal.contactsMerged === 'object' && deal.contactsMerged) ||\r\n  {};\r\n\r\nconst valueFrom = (...values) => {\r\n  for (const value of values) {\r\n    if (value !== undefined && value !== null && String(value).trim()) {\r\n      return String(value).trim();\r\n    }\r\n  }\r\n  return '';\r\n};\r\n\r\nconst money = (value) => {\r\n  if (value === undefined || value === null || value === '') return 0;\r\n  const normalized = Number(String(value).replace(/[^0-9.-]/g, ''));\r\n  return Number.isFinite(normalized) ? normalized : 0;\r\n};\r\n\r\nconst titleCase = (value) => (value ? value.charAt(0).toUpperCase() + value.slice(1) : '');\r\n\r\n/** PDF / UI: avoid em/en dashes in names and labels. */\r\nconst cleanDashes = (value) =>\r\n  String(value ?? '')\r\n    .replace(/\\u2014/g, '-')\r\n    .replace(/\\u2013/g, '-')\r\n    .replace(/\\u2212/g, '-')\r\n    .replace(/—/g, '-');\r\n\r\n/** Parse line items from payload: arrays on body/properties, JSON string, or HubSpot hs_line_items JSON. */\r\nconst parseLineItemsRaw = () => {\r\n  const candidates = [\r\n    body.lineItems,\r\n    body.line_items,\r\n    props.lineItems,\r\n    props.line_items,\r\n    props.hs_line_items,\r\n  ];\r\n  for (const c of candidates) {\r\n    if (Array.isArray(c) && c.length) return c;\r\n    if (typeof c === 'string' && c.trim().startsWith('[')) {\r\n      try {\r\n        const parsed = JSON.parse(c);\r\n        if (Array.isArray(parsed) && parsed.length) return parsed;\r\n      } catch (e) {\r\n        /* ignore */\r\n      }\r\n    }\r\n  }\r\n  return [];\r\n};\r\n\r\nconst normalizeLineItems = (raw) => {\r\n  return raw\r\n    .map((x, i) => {\r\n      if (!x || typeof x !== 'object') return null;\r\n      const qty = Math.max(1, Number(x.quantity ?? x.qty ?? x.hs_quantity ?? 1) || 1);\r\n      const unit = money(x.unitPrice ?? x.price ?? x.rate ?? x.hs_price ?? x.hs_unit_price);\r\n      const lineTotal = money(x.amount ?? x.line_amount ?? x.total ?? x.line_total ?? x.hs_line_item_amount);\r\n      const name = valueFrom(x.name, x.productName, x.title, x.hs_sku, `Line item ${i + 1}`);\r\n      const sku = valueFrom(x.hs_sku, x.sku, '');\r\n      const description = valueFrom(x.description, x.details, x.notes, '');\r\n      let amount = lineTotal;\r\n      if (!amount && unit) amount = unit * qty;\r\n      if (!amount) amount = 0;\r\n      return {\r\n        name,\r\n        sku,\r\n        description,\r\n        quantity: qty,\r\n        unitPrice: unit || (qty ? amount / qty : amount),\r\n        amount,\r\n      };\r\n    })\r\n    .filter(Boolean);\r\n};\r\n\r\nconst rawLineItems = parseLineItemsRaw();\r\nconst lineItems = normalizeLineItems(rawLineItems);\r\nconst lineItemsSubtotal = lineItems.reduce((s, li) => s + (Number(li.amount) || 0), 0);\r\n\r\nconst addressParts = [\r\n  valueFrom(props.address, props.street, props.street_address, props.company_address),\r\n  valueFrom(props.city, props.company_city),\r\n  valueFrom(props.state, props.state_region, props.company_state),\r\n  valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\r\n  valueFrom(props.country, props.company_country),\r\n].filter(Boolean);\r\n\r\nconst tierKey = valueFrom(props.tier).toLowerCase() || 'starter';\r\nconst tierInfo = (config.tiers && (config.tiers[tierKey] || config.tiers.starter)) || {\r\n  name: titleCase(tierKey) || 'Starter',\r\n  monthlyPrice: 0,\r\n  setupFee: 0,\r\n};\r\n\r\nconst rawPainSources = [\r\n  valueFrom(props.deal_pain_points),\r\n  valueFrom(props.painPoints),\r\n  valueFrom(props.pain_point_summary),\r\n].filter(Boolean);\r\n\r\nconst uniquePainSources = [...new Set(rawPainSources)];\r\nconst painPoints = uniquePainSources.join('\\n\\n');\r\nconst contactFirstName = valueFrom(props.contact_firstname, props.firstName, props.firstname);\r\nconst contactLastName = valueFrom(props.contact_lastname, props.lastName, props.lastname);\r\nconst contactName = cleanDashes([contactFirstName, contactLastName].filter(Boolean).join(' '));\r\n\r\nconst companyName = valueFrom(\r\n  props.company,\r\n  props.company_name,\r\n  props.business_name,\r\n  props.dealname,\r\n  props.name,\r\n);\r\n\r\nconst companyDisplay = (() => {\r\n  const c = String(companyName || '').trim();\r\n  if (c && c.toUpperCase() !== 'UNKNOWN') return cleanDashes(c);\r\n  const m = valueFrom(merged.company, merged.business_name, merged.company_name);\r\n  if (m && String(m).trim().toUpperCase() !== 'UNKNOWN') return cleanDashes(m);\r\n  const dn = valueFrom(props.dealname, props.name);\r\n  if (dn) {\r\n    const short = dn.split(/\\s*[–\\u2013\\u2014-]\\s*/)[0].trim();\r\n    return cleanDashes(short || dn);\r\n  }\r\n  return '';\r\n})();\r\n\r\nconst industryDisplay = cleanDashes(\r\n  valueFrom(props.industry, merged.industry, merged.website_intake_industry),\r\n);\r\n\r\nconst contactEmailDisplay = cleanDashes(\r\n  valueFrom(merged.email, merged.contact_email, props.contact_email, props.email),\r\n);\r\n\r\nconst tierMonthly = money(tierInfo.monthlyPrice);\r\nconst upfrontDue = money(tierInfo.setupFee);\r\nconst explicitDealAmount = money(props.amount);\r\nconst explicitDiscount = money(\r\n  valueFrom(\r\n    props.hs_total_discount,\r\n    props.total_discount,\r\n    props.deal_discount,\r\n    props.discount_amount,\r\n    props.hs_discount,\r\n  ),\r\n);\r\nlet impliedDiscount = 0;\r\nif (\r\n  explicitDiscount <= 0 &&\r\n  lineItemsSubtotal > 0 &&\r\n  explicitDealAmount > 0 &&\r\n  lineItemsSubtotal > explicitDealAmount + 0.005\r\n) {\r\n  impliedDiscount = lineItemsSubtotal - explicitDealAmount;\r\n}\r\nconst totalDiscount = explicitDiscount > 0 ? explicitDiscount : impliedDiscount;\r\n\r\nconst tierAmount =\r\n  explicitDealAmount > 0\r\n    ? explicitDealAmount\r\n    : lineItemsSubtotal > 0\r\n      ? lineItemsSubtotal\r\n      : upfrontDue;\r\nconst dealAmountForDisplay = explicitDealAmount > 0 ? explicitDealAmount : tierAmount;\r\nconst remainingTierBalance = Math.max(tierAmount - upfrontDue, 0);\r\nconst launchBalance = remainingTierBalance + tierMonthly;\r\n\r\nconst productList = lineItems.map((i) => ({\r\n  sku: i.sku || '',\r\n  name: i.name || '',\r\n  price: i.unitPrice ?? (i.quantity ? i.amount / i.quantity : i.amount),\r\n}));\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      clientName: cleanDashes(\r\n        valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),\r\n      ),\r\n      company: companyName,\r\n      companyDisplay,\r\n      industry: valueFrom(props.industry),\r\n      industryDisplay,\r\n      painPoints,\r\n      painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),\r\n      rawPainPoints: valueFrom(props.deal_pain_points, painPoints),\r\n      dealValue: tierAmount,\r\n      amountLabel: valueFrom(props.amount),\r\n      tierAmount,\r\n      dealAmount: dealAmountForDisplay,\r\n      lineItemsSubtotal,\r\n      totalDiscount,\r\n      tier: tierKey,\r\n      tierLabel: tierInfo.name || titleCase(tierKey) || 'Starter',\r\n      tierMonthly,\r\n      monthlyCost: tierMonthly,\r\n      upfrontDue,\r\n      remainingTierBalance,\r\n      launchBalance,\r\n      finalDueAtPreLaunch: launchBalance,\r\n      dealId: valueFrom(body.id, inner.id, deal.dealId, deal.id, body.dealId),\r\n      contactEmail: valueFrom(\r\n        deal.proposalEmailOverride,\r\n        props.contact_email,\r\n        props.email,\r\n        merged.email,\r\n        merged.contact_email,\r\n      ),\r\n      contactEmailDisplay,\r\n      contactPhone: valueFrom(props.contact_phone, props.phone, props.mobilephone),\r\n      contactFirstName,\r\n      contactName: contactName || contactFirstName,\r\n      address: addressParts.join(', '),\r\n      city: valueFrom(props.city, props.company_city),\r\n      state: valueFrom(props.state, props.state_region, props.company_state),\r\n      postalCode: valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\r\n      country: valueFrom(props.country, props.company_country),\r\n      website: valueFrom(\r\n        props.website,\r\n        props.domain,\r\n        props.company_domain,\r\n        merged.website,\r\n        merged.company_website,\r\n        merged.hs_website,\r\n      ),\r\n      driveFolderId: valueFrom(props.client_drive_folder_id),\r\n      lineItems,\r\n      lineItemsTotal: lineItemsSubtotal,\r\n      productList,\r\n      config,\r\n    },\r\n  },\r\n];\r\n"
+          "jsCode": "const deal = $('Deal Proposal Stage Webhook').first().json;\r\nconst config = $('Get Config').first().json;\r\n\r\n/** n8n may receive flat HubSpot shape, { body }, or router envelope { webhookBody }. */\r\nconst unwrapPayload = (root) => {\r\n  if (!root || typeof root !== 'object') return root;\r\n  if (root.webhookBody && typeof root.webhookBody === 'object') return root.webhookBody;\r\n  if (root.payload && typeof root.payload === 'object') return root.payload;\r\n  return root;\r\n};\r\n\r\nconst inner = unwrapPayload(deal);\r\nconst body =\r\n  inner.body && typeof inner.body === 'object' && !Array.isArray(inner.body) ? inner.body : inner;\r\nconst props =\r\n  body.properties && typeof body.properties === 'object' && !Array.isArray(body.properties)\r\n    ? body.properties\r\n    : body;\r\n\r\n/** HubSpot router envelope may include merged contact props (preferred for client-facing fields). */\r\nconst merged =\r\n  (deal.source && typeof deal.source === 'object' && deal.source.contactsMerged) ||\r\n  (typeof deal.contactsMerged === 'object' && deal.contactsMerged) ||\r\n  {};\r\n\r\nconst associatedContact = (() => {\r\n  try {\r\n    const c = $('Fetch Primary Contact').first().json;\r\n    return (c && typeof c.properties === 'object' && c.properties) || (c && typeof c === 'object' ? c : {});\r\n  } catch {\r\n    return {};\r\n  }\r\n})();\r\n\r\nconst valueFrom = (...values) => {\r\n  for (const value of values) {\r\n    if (value !== undefined && value !== null && String(value).trim()) {\r\n      return String(value).trim();\r\n    }\r\n  }\r\n  return '';\r\n};\r\n\r\nconst money = (value) => {\r\n  if (value === undefined || value === null || value === '') return 0;\r\n  const normalized = Number(String(value).replace(/[^0-9.-]/g, ''));\r\n  return Number.isFinite(normalized) ? normalized : 0;\r\n};\r\n\r\nconst titleCase = (value) => (value ? value.charAt(0).toUpperCase() + value.slice(1) : '');\r\n\r\n/** PDF / UI: avoid em/en dashes in names and labels. */\r\nconst cleanDashes = (value) =>\r\n  String(value ?? '')\r\n    .replace(/\\u2014/g, '-')\r\n    .replace(/\\u2013/g, '-')\r\n    .replace(/\\u2212/g, '-')\r\n    .replace(/—/g, '-');\r\n\r\n/** Parse line items from payload: arrays on body/properties, JSON string, or HubSpot hs_line_items JSON. */\r\nconst parseLineItemsRaw = () => {\r\n  const candidates = [\r\n    body.lineItems,\r\n    body.line_items,\r\n    props.lineItems,\r\n    props.line_items,\r\n    props.hs_line_items,\r\n  ];\r\n  for (const c of candidates) {\r\n    if (Array.isArray(c) && c.length) return c;\r\n    if (typeof c === 'string' && c.trim().startsWith('[')) {\r\n      try {\r\n        const parsed = JSON.parse(c);\r\n        if (Array.isArray(parsed) && parsed.length) return parsed;\r\n      } catch (e) {\r\n        /* ignore */\r\n      }\r\n    }\r\n  }\r\n  return [];\r\n};\r\n\r\nconst normalizeLineItems = (raw) => {\r\n  return raw\r\n    .map((x, i) => {\r\n      if (!x || typeof x !== 'object') return null;\r\n      const qty = Math.max(1, Number(x.quantity ?? x.qty ?? x.hs_quantity ?? 1) || 1);\r\n      const unit = money(x.unitPrice ?? x.price ?? x.rate ?? x.hs_price ?? x.hs_unit_price);\r\n      const lineTotal = money(x.amount ?? x.line_amount ?? x.total ?? x.line_total ?? x.hs_line_item_amount);\r\n      const name = valueFrom(x.name, x.productName, x.title, x.hs_sku, `Line item ${i + 1}`);\r\n      const sku = valueFrom(x.hs_sku, x.sku, '');\r\n      const description = valueFrom(x.description, x.details, x.notes, '');\r\n      let amount = lineTotal;\r\n      if (!amount && unit) amount = unit * qty;\r\n      if (!amount) amount = 0;\r\n      return {\r\n        name,\r\n        sku,\r\n        description,\r\n        quantity: qty,\r\n        unitPrice: unit || (qty ? amount / qty : amount),\r\n        amount,\r\n      };\r\n    })\r\n    .filter(Boolean);\r\n};\r\n\r\nconst rawLineItems = parseLineItemsRaw();\r\nconst lineItems = normalizeLineItems(rawLineItems);\r\nconst lineItemsSubtotal = lineItems.reduce((s, li) => s + (Number(li.amount) || 0), 0);\r\n\r\nconst addressParts = [\r\n  valueFrom(props.address, props.street, props.street_address, props.company_address),\r\n  valueFrom(props.city, props.company_city),\r\n  valueFrom(props.state, props.state_region, props.company_state),\r\n  valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\r\n  valueFrom(props.country, props.company_country),\r\n].filter(Boolean);\r\n\r\nconst tierKey = valueFrom(props.tier).toLowerCase() || 'starter';\r\nconst tierInfo = (config.tiers && (config.tiers[tierKey] || config.tiers.starter)) || {\r\n  name: titleCase(tierKey) || 'Starter',\r\n  monthlyPrice: 0,\r\n  setupFee: 0,\r\n};\r\n\r\nconst rawPainSources = [\r\n  valueFrom(props.deal_pain_points),\r\n  valueFrom(props.painPoints),\r\n  valueFrom(props.pain_point_summary),\r\n].filter(Boolean);\r\n\r\nconst uniquePainSources = [...new Set(rawPainSources)];\r\nconst painPoints = uniquePainSources.join('\\n\\n');\r\nconst contactFirstName = valueFrom(associatedContact.firstname, props.contact_firstname, props.firstName, props.firstname);\r\nconst contactLastName = valueFrom(associatedContact.lastname, props.contact_lastname, props.lastName, props.lastname);\r\nconst contactName = cleanDashes([contactFirstName, contactLastName].filter(Boolean).join(' '));\r\n\r\nconst companyName = valueFrom(\r\n  props.company,\r\n  props.company_name,\r\n  props.business_name,\r\n  props.dealname,\r\n  props.name,\r\n);\r\n\r\nconst companyDisplay = (() => {\r\n  const c = String(companyName || '').trim();\r\n  if (c && c.toUpperCase() !== 'UNKNOWN') return cleanDashes(c);\r\n  const m = valueFrom(merged.company, merged.business_name, merged.company_name);\r\n  if (m && String(m).trim().toUpperCase() !== 'UNKNOWN') return cleanDashes(m);\r\n  const dn = valueFrom(props.dealname, props.name);\r\n  if (dn) {\r\n    const short = dn.split(/\\s*[–\\u2013\\u2014-]\\s*/)[0].trim();\r\n    return cleanDashes(short || dn);\r\n  }\r\n  return '';\r\n})();\r\n\r\nconst industryDisplay = cleanDashes(\r\n  valueFrom(props.industry, merged.industry, merged.website_intake_industry),\r\n);\r\n\r\nconst contactEmailDisplay = cleanDashes(\r\n  valueFrom(associatedContact.email, props.contact_email, props.email, merged.email, merged.contact_email),\r\n);\r\n\r\nconst tierMonthly = money(tierInfo.monthlyPrice);\r\nconst upfrontDue = money(tierInfo.setupFee);\r\nconst explicitDealAmount = money(props.amount);\r\nconst explicitDiscount = money(\r\n  valueFrom(\r\n    props.hs_total_discount,\r\n    props.total_discount,\r\n    props.deal_discount,\r\n    props.discount_amount,\r\n    props.hs_discount,\r\n  ),\r\n);\r\nlet impliedDiscount = 0;\r\nif (\r\n  explicitDiscount <= 0 &&\r\n  lineItemsSubtotal > 0 &&\r\n  explicitDealAmount > 0 &&\r\n  lineItemsSubtotal > explicitDealAmount + 0.005\r\n) {\r\n  impliedDiscount = lineItemsSubtotal - explicitDealAmount;\r\n}\r\nconst totalDiscount = explicitDiscount > 0 ? explicitDiscount : impliedDiscount;\r\n\r\nconst tierAmount =\r\n  explicitDealAmount > 0\r\n    ? explicitDealAmount\r\n    : lineItemsSubtotal > 0\r\n      ? lineItemsSubtotal\r\n      : upfrontDue;\r\nconst dealAmountForDisplay = explicitDealAmount > 0 ? explicitDealAmount : tierAmount;\r\nconst remainingTierBalance = Math.max(tierAmount - upfrontDue, 0);\r\nconst launchBalance = remainingTierBalance + tierMonthly;\r\n\r\nconst productList = lineItems.map((i) => ({\r\n  sku: i.sku || '',\r\n  name: i.name || '',\r\n  price: i.unitPrice ?? (i.quantity ? i.amount / i.quantity : i.amount),\r\n}));\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      clientName: cleanDashes(\r\n        valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),\r\n      ),\r\n      company: companyName,\r\n      companyDisplay,\r\n      industry: valueFrom(props.industry),\r\n      industryDisplay,\r\n      painPoints,\r\n      painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),\r\n      rawPainPoints: valueFrom(props.deal_pain_points, painPoints),\r\n      dealValue: tierAmount,\r\n      amountLabel: valueFrom(props.amount),\r\n      tierAmount,\r\n      dealAmount: dealAmountForDisplay,\r\n      lineItemsSubtotal,\r\n      totalDiscount,\r\n      tier: tierKey,\r\n      tierLabel: tierInfo.name || titleCase(tierKey) || 'Starter',\r\n      tierMonthly,\r\n      monthlyCost: tierMonthly,\r\n      upfrontDue,\r\n      remainingTierBalance,\r\n      launchBalance,\r\n      finalDueAtPreLaunch: launchBalance,\r\n      dealId: valueFrom(body.id, inner.id, deal.dealId, deal.id, body.dealId),\r\n      contactEmail: valueFrom(\n        associatedContact.email,\n        props.contact_email,\n        props.email,\n        merged.email,\n        merged.contact_email,\n      ),\r\n      contactEmailDisplay,\r\n      contactPhone: valueFrom(associatedContact.phone, associatedContact.mobilephone, props.contact_phone, props.phone, props.mobilephone),\r\n      contactFirstName,\r\n      contactName: contactName || contactFirstName,\r\n      address: addressParts.join(', '),\r\n      city: valueFrom(props.city, props.company_city),\r\n      state: valueFrom(props.state, props.state_region, props.company_state),\r\n      postalCode: valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\r\n      country: valueFrom(props.country, props.company_country),\r\n      website: valueFrom(\r\n        props.website,\r\n        props.domain,\r\n        props.company_domain,\r\n        merged.website,\r\n        merged.company_website,\r\n        merged.hs_website,\r\n      ),\r\n      driveFolderId: valueFrom(props.client_drive_folder_id),\r\n      lineItems,\r\n      lineItemsTotal: lineItemsSubtotal,\r\n      productList,\r\n      config,\r\n    },\r\n  },\r\n];\r\n"
         },
         "id": "sys05-extract",
         "name": "Extract Deal Data",
@@ -1158,7 +1324,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const pdf = $('Call PDF Service').first();\nconst folder = $('Create folder').first();\nconst fileName = $('Prep PDF Input').first().json.fileName || 'document.pdf';\nif (!folder?.json?.id) throw new Error('Create folder: missing id — check Drive node output.');\nconst raw = pdf.binary || {};\nconst keys = Object.keys(raw);\nif (!keys.length) throw new Error('Call PDF Service: no binary — keep Call PDF \u2192 this node; Create folder must not sit between them.');\nconst dataKey = raw.data ? 'data' : keys[0];\nreturn [{ json: { fileName, _clientFolderId: folder.json.id }, binary: { data: raw[dataKey] } }];"
+          "jsCode": "const pdf = $('Call PDF Service').first();\nconst folder = $('Create folder').first();\nconst fileName = $('Prep PDF Input').first().json.fileName || 'document.pdf';\nif (!folder?.json?.id) throw new Error('Create folder: missing id — check Drive node output.');\nconst raw = pdf.binary || {};\nconst keys = Object.keys(raw);\nif (!keys.length) throw new Error('Call PDF Service: no binary — keep Call PDF → this node; Create folder must not sit between them.');\nconst dataKey = raw.data ? 'data' : keys[0];\nreturn [{ json: { fileName, _clientFolderId: folder.json.id }, binary: { data: raw[dataKey] } }];"
         },
         "id": "sys05-pdf-ensure",
         "name": "Ensure PDF Item",
@@ -1253,7 +1419,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $('Extract Deal Data').first().json;\nconst wh = $('Deal Proposal Stage Webhook').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\nconst to = String(\n  d.contactEmail ||\n  d.contactEmailDisplay ||\n  wh.proposalEmailOverride ||\n  d.config?.owner?.fromEmail ||\n  d.config?.owner?.email ||\n  '',\n).trim();\nif (!to) throw new Error('No recipient email: set HubSpot contact_email (or deal proposalEmailOverride) before send.');\n\n/** Resend: [{ filename, content }] with content = base64 (see SW: Send Email via Resend). */\nconst pdfNode = $('Call PDF Service').first();\nconst rawBin = pdfNode.binary || {};\nconst binKeys = Object.keys(rawBin);\nif (!binKeys.length) throw new Error('Call PDF Service: no PDF binary — cannot attach to email.');\nconst dataKey = rawBin.data ? 'data' : binKeys[0];\nconst bin = rawBin[dataKey];\nconst raw = bin?.data;\nconst b64 =\n  typeof raw === 'string'\n    ? raw\n    : Buffer.isBuffer(raw)\n      ? raw.toString('base64')\n      : Array.isArray(raw)\n        ? Buffer.from(raw).toString('base64')\n        : null;\nif (!b64) throw new Error('Call PDF Service: could not read PDF bytes for attachment.');\nconst fileName = String(\n  $('Prep PDF Input').first().json.fileName || bin.fileName || 'proposal.pdf',\n).replace(/[\\\\/]/g, '-');\nconst attachments = [{ filename: fileName, content: b64 }];\n\nreturn [{\n  json: {\n    to,\n    subject: `Your IntraWeb proposal is ready — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your proposal is attached. I've outlined exactly what we'll build, the timeline, and the investment.</p>${driveLink ? `<p>You can also <a href=\"${driveLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">view it in Google Drive here</a>.</p>` : ''}<p>Take a look and let me know if you have any questions. When you're ready to move forward, reply to this email and I'll send the contract for e-signature.</p><p>— John<br/>${d.config?.owner?.companyName || 'IntraWeb'}</p>`,\n    workflowName: 'SYS 03 — Proposal and Contract Delivery',\n    attachments,\n  }\n}];"
+          "jsCode": "const d = $('Extract Deal Data').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\nconst to = String(\n  d.contactEmail ||\n  d.contactEmailDisplay ||\n  '',\n).trim();\nif (!to) throw new Error('No contact email found for proposal send. Set HubSpot contact_email or the associated contact email before sending.');\n\n/** Resend: [{ filename, content }] with content = base64 (see SW: Send Email via Resend). */\nconst pdfBase64 = String($('Extract PDF Base64').first().json.pdfBase64 || '').trim();\nif (!pdfBase64 || pdfBase64 === 'filesystem-v2') {\n  throw new Error('Extract PDF Base64: missing/invalid base64 content for attachment.');\n}\nconst fileName = String(\n  $('Prep PDF Input').first().json.fileName || 'proposal.pdf',\n).replace(/[\\/]/g, '-');\nconst attachments = [{ filename: fileName, content: pdfBase64 }];\n\nreturn [{\n  json: {\n    to,\n    subject: `Your IntraWeb proposal is ready — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your proposal is attached. I've outlined exactly what we'll build, the timeline, and the investment.</p>${driveLink ? `<p>You can also <a href=\"${driveLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">view it in Google Drive here</a>.</p>` : ''}<p>Take a look and let me know if you have any questions. When you're ready to move forward, reply to this email and I'll send the contract for e-signature.</p><p>— John<br/>${d.config?.owner?.companyName || 'IntraWeb'}</p>`,\n    workflowName: 'SYS 03 — Proposal and Contract Delivery',\n    attachments,\n  }\n}];"
         },
         "id": "sys05-send-prep",
         "name": "Prep Send Email",
@@ -1459,6 +1625,116 @@
             "name": "HubSpot App Token account"
           }
         }
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "={{ (() => { const root = $('Deal Proposal Stage Webhook').first().json; const inner = root.webhookBody || root.payload || root.body || root; const body = inner.body && typeof inner.body === 'object' ? inner.body : inner; const id = body.id || inner.id || root.dealId || root.id || body.dealId; return 'https://api.hubapi.com/crm/v3/objects/deals/' + encodeURIComponent(String(id || '')) + '?properties=dealname,dealstage,amount,closedate,tier,contact_email,contact_firstname,contact_lastname,contact_phone,industry,deal_pain_points,client_drive_folder_id,monthly_retainer,client_health_score,company,hs_line_items,hs_total_discount&associations=contacts'; })() }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "options": {}
+        },
+        "id": "sys05-fetch-deal-associations",
+        "name": "Fetch Deal With Associations",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2448,
+          -720
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "const deal = $('Fetch Deal With Associations').first().json;\nconst contacts = deal.associations?.contacts?.results || [];\nconst contactId = contacts.map((c) => c.id).find(Boolean) || '';\nreturn [{ json: { contactId, hasContact: Boolean(contactId) } }];"
+        },
+        "id": "sys05-pick-associated-contact",
+        "name": "Pick Associated Contact",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2672,
+          -720
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": false,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "has-associated-contact",
+                "leftValue": "={{ $json.contactId }}",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "sys05-has-associated-contact",
+        "name": "Has Associated Contact?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.3,
+        "position": [
+          2896,
+          -720
+        ]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "={{ 'https://api.hubapi.com/crm/v3/objects/contacts/' + encodeURIComponent(String($json.contactId)) + '?properties=email,firstname,lastname,phone,mobilephone,company,industry' }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "options": {}
+        },
+        "id": "sys05-fetch-primary-contact",
+        "name": "Fetch Primary Contact",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3120,
+          -720
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "binaryToPropery",
+          "binaryPropertyName": "data",
+          "destinationKey": "pdfBase64",
+          "options": {
+            "keepSource": "both"
+          }
+        },
+        "id": "sys05-extract-pdf-base64",
+        "name": "Extract PDF Base64",
+        "type": "n8n-nodes-base.extractFromFile",
+        "typeVersion": 1.1,
+        "position": [
+          4096,
+          -528
+        ]
       }
     ],
     "connections": {
@@ -1477,7 +1753,7 @@
         "main": [
           [
             {
-              "node": "Extract Deal Data",
+              "node": "Fetch Deal With Associations",
               "type": "main",
               "index": 0
             }
@@ -1555,6 +1831,11 @@
           [
             {
               "node": "Upload to Drive",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Extract PDF Base64",
               "type": "main",
               "index": 0
             }
@@ -1716,6 +1997,57 @@
           [
             {
               "node": "Prep Log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Deal With Associations": {
+        "main": [
+          [
+            {
+              "node": "Pick Associated Contact",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pick Associated Contact": {
+        "main": [
+          [
+            {
+              "node": "Has Associated Contact?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Associated Contact?": {
+        "main": [
+          [
+            {
+              "node": "Fetch Primary Contact",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Extract Deal Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Primary Contact": {
+        "main": [
+          [
+            {
+              "node": "Extract Deal Data",
               "type": "main",
               "index": 0
             }

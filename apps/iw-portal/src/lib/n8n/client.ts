@@ -5,6 +5,7 @@ import type {
   InvoicePaidPayload,
   LoginEventPayload,
   MilestoneApprovedPayload,
+  ProposalLifecyclePayload,
   StaffAlertPayload,
   StripeCatalogCheckoutPayload,
 } from '@/lib/n8n/webhooks'
@@ -49,6 +50,11 @@ async function postWebhook(url: string, body: unknown, retries = 0): Promise<voi
 
 function fireAndForget(url: string, body: unknown) {
   postWebhook(url, body).catch((e) => console.error('[n8n]', url, e))
+}
+
+export function proposalLifecycleWebhooksEnabled(): boolean {
+  const raw = process.env.PORTAL_PROPOSAL_LIFECYCLE_WEBHOOKS_ENABLED?.trim().toLowerCase()
+  return !(raw === '0' || raw === 'false' || raw === 'no')
 }
 
 async function dispatchCritical(eventName: string, path: string, body: unknown): Promise<void> {
@@ -109,5 +115,22 @@ export function triggerChangeOrderRequested(payload: ChangeOrderRequestedPayload
     fireAndForget(`${baseUrl()}/webhook/portal-change-order`, payload)
   } catch (e) {
     console.error('[n8n] triggerChangeOrderRequested', e)
+  }
+}
+
+export function triggerProposalLifecycle(payload: ProposalLifecyclePayload): void {
+  if (!proposalLifecycleWebhooksEnabled()) {
+    console.info('[n8n] proposal lifecycle webhook suppressed', {
+      event_id: payload.event_id,
+      event_type: payload.event_type,
+      proposal_id: payload.proposal_id,
+    })
+    return
+  }
+
+  try {
+    fireAndForget(`${baseUrl()}/webhook/portal-proposal-lifecycle`, payload)
+  } catch (e) {
+    console.error('[n8n] triggerProposalLifecycle', e)
   }
 }

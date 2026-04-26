@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { NavItem } from '@/components/layout/NavItem'
 import { portalNavGroups } from '@/components/layout/portal-nav'
 import { ProjectSwitcher } from '@/components/portal/ProjectSwitcher'
-import { Badge } from '@/components/ui/Badge'
 import { IwLogo } from '@/components/layout/IwLogo'
 import type { Project } from '@/lib/supabase/types'
 import type { ReactNode } from 'react'
@@ -131,13 +130,11 @@ const iconByHref: Record<string, ReactNode> = {
 export function Sidebar({
   projects,
   activeSlug,
-  planLabel,
   unreadMessages,
   unreadNotifications,
 }: {
   projects: Project[]
   activeSlug: string
-  planLabel: string
   unreadMessages: number
   unreadNotifications: number
 }) {
@@ -148,12 +145,8 @@ export function Sidebar({
         <IwLogo height={26} />
       </div>
       <div className="border-b border-[var(--hairline)] p-4">
-        <p className="iw-mono text-sm font-medium text-[var(--iw-text)]">{activeSlug}</p>
         <div className="mt-2">
           <ProjectSwitcher projects={projects} activeSlug={activeSlug} />
-        </div>
-        <div className="mt-2">
-          <Badge variant="teal">{planLabel}</Badge>
         </div>
       </div>
       <nav className="flex-1 space-y-6 overflow-y-auto p-3 text-sm">

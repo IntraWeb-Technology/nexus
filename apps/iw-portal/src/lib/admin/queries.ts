@@ -1,8 +1,9 @@
-import { createRlsSupabaseForUser } from '@/lib/supabase/server'
+import { createRlsSupabaseForUser, createServiceSupabase } from '@/lib/supabase/server'
 import type {
   ChangeOrderRow,
   Client,
   ClientMemberRow,
+  ActivityLogRow,
   DataHealthCheckRow,
   Document,
   FeatureFlagRow,
@@ -41,6 +42,34 @@ async function countRowsByEq(table: string, column: string, value: string): Prom
 
 export async function getAdminOverview() {
   const supabase = await adminSupabase()
+  const loadProposalDecisions = async (): Promise<OsContractsQueueRow[]> => {
+    const fetchFrom = async (client: Awaited<ReturnType<typeof adminSupabase>> | ReturnType<typeof createServiceSupabase>) => {
+      const { data, error } = await client
+        .from('os_contracts_queue')
+        .select('*')
+        .eq('queue_type', 'proposal')
+        .or('status.ilike.Approved,status.ilike.Rejected')
+        .order('updated_at', { ascending: false })
+        .limit(6)
+      return { data, error }
+    }
+
+    const viaRls = await fetchFrom(supabase)
+    if (!viaRls.error && (viaRls.data?.length ?? 0) > 0) {
+      return viaRls.data as OsContractsQueueRow[]
+    }
+
+    try {
+      const service = createServiceSupabase()
+      const viaService = await fetchFrom(service)
+      if (!viaService.error) return (viaService.data ?? []) as OsContractsQueueRow[]
+    } catch {
+      // Service key may be unavailable in some environments; return RLS result below.
+    }
+
+    return (viaRls.data ?? []) as OsContractsQueueRow[]
+  }
+
   const today = new Date().toISOString()
   const [
     clients,
@@ -50,6 +79,7 @@ export async function getAdminOverview() {
     recentMessages,
     failedIntegrations,
     automationEvents,
+    proposalDecisions,
   ] = await Promise.all([
     countRows('clients'),
     countRows('projects'),
@@ -72,6 +102,7 @@ export async function getAdminOverview() {
       .select('*')
       .order('logged_at', { ascending: false })
       .limit(6),
+    loadProposalDecisions(),
   ])
 
   return {
@@ -86,6 +117,7 @@ export async function getAdminOverview() {
     recentMessages: (recentMessages.data ?? []) as Message[],
     failedIntegrations: (failedIntegrations.data ?? []) as IntegrationEventRow[],
     automationEvents: (automationEvents.data ?? []) as OsAutomationLogRow[],
+    proposalDecisions,
   }
 }
 
@@ -221,16 +253,29 @@ export async function getBillingReconciliation() {
 
 export async function getOsCommandCenter() {
   const supabase = await adminSupabase()
-  const [automation, deals, queue, revenue] = await Promise.all([
+  const [automation, deals, queue, proposalActivity, revenue] = await Promise.all([
     supabase.from('os_automation_log').select('*').order('logged_at', { ascending: false }).limit(50),
     supabase.from('os_deals_sheet').select('*').order('updated_at', { ascending: false }).limit(50),
     supabase.from('os_contracts_queue').select('*').order('updated_at', { ascending: false }).limit(50),
+    supabase
+      .from('activity_log')
+      .select('*, projects(slug, hubspot_deal_id, clients(name, email))')
+      .eq('type', 'proposal')
+      .order('created_at', { ascending: false })
+      .limit(50),
     supabase.from('os_revenue_monthly').select('*').order('month_key', { ascending: false }).limit(12),
   ])
   return {
     automation: (automation.data ?? []) as OsAutomationLogRow[],
     deals: (deals.data ?? []) as OsDealsSheetRow[],
     queue: (queue.data ?? []) as OsContractsQueueRow[],
+    proposalActivity: (proposalActivity.data ?? []) as Array<
+      ActivityLogRow & {
+        projects?: Pick<Project, 'slug' | 'hubspot_deal_id'> & {
+          clients?: Pick<Client, 'name' | 'email'>
+        }
+      }
+    >,
     revenue: revenue.data ?? [],
   }
 }

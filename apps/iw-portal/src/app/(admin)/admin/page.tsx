@@ -87,6 +87,44 @@ export default async function AdminOverviewPage() {
           )}
         </section>
       </div>
+
+      <section className="iw-card mt-4">
+        <div className="iw-card-head">
+          <h2 className="iw-card-title">Recent proposal decisions</h2>
+          <Link className="iw-chip" href="/admin/os">
+            Open OS data
+          </Link>
+        </div>
+        {overview.proposalDecisions.length ? (
+          <ul className="space-y-3">
+            {overview.proposalDecisions.map((decision) => (
+              <li key={decision.id} className="border-t border-[var(--hairline)] pt-3 first:border-0 first:pt-0">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-medium text-[var(--iw-text)]">
+                    {decision.client_name || decision.company || 'Unknown client'}
+                    {decision.hubspot_deal_id ? (
+                      <span className="iw-mono text-xs text-[var(--iw-text-3)]"> · deal {decision.hubspot_deal_id}</span>
+                    ) : null}
+                  </p>
+                  <span className={decision.status.toLowerCase() === 'approved'
+                    ? 'iw-chip iw-chip-green'
+                    : decision.status.toLowerCase() === 'rejected'
+                      ? 'iw-chip iw-chip-orange'
+                      : 'iw-chip'}>
+                    {decision.status}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-[var(--iw-text-3)]">{formatDate(decision.updated_at)}</p>
+                <p className="mt-1 text-sm text-[var(--iw-text-2)]">
+                  {decision.proposal_status_detail || 'No decision detail recorded.'}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState>No approved or rejected proposals have been captured yet.</EmptyState>
+        )}
+      </section>
     </div>
   )
 }

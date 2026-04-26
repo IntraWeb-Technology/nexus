@@ -5,9 +5,23 @@ import {
 } from '@/lib/data/link-hubspot-provisioned-clerk'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import type { Plan } from '@/lib/supabase/types'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js'
 
 const DEFAULT_PLAN: Plan = 'starter'
+
+function formatPostgrestError(error: PostgrestError | null) {
+  if (!error) return null
+  return {
+    code: error.code ?? null,
+    message: error.message ?? null,
+    details: error.details ?? null,
+    hint: error.hint ?? null,
+  }
+}
+
+function isUniqueViolation(error: PostgrestError | null): boolean {
+  return error?.code === '23505'
+}
 
 export function isPortalAutoProvisionEnabled(): boolean {
   const v = process.env.PORTAL_AUTO_PROVISION_SIGNUPS?.trim().toLowerCase()
@@ -179,7 +193,20 @@ export async function provisionSelfSignupCustomer(
     .single()
 
   if (cErr || !client) {
-    console.error('[provision-self-signup] client insert', cErr)
+    if (isUniqueViolation(cErr)) {
+      const { data: duplicate } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('clerk_user_id', userId)
+        .maybeSingle()
+      if (duplicate) return 'exists'
+    }
+
+    console.error('[provision-self-signup] client insert failed', {
+      userId,
+      email,
+      error: formatPostgrestError(cErr),
+    })
     return 'error'
   }
 
@@ -199,7 +226,12 @@ export async function provisionSelfSignupCustomer(
     .single()
 
   if (pErr || !project) {
-    console.error('[provision-self-signup] project insert', pErr)
+    console.error('[provision-self-signup] project insert failed', {
+      userId,
+      clientId: client.id,
+      slug,
+      error: formatPostgrestError(pErr),
+    })
     await supabase.from('clients').delete().eq('id', client.id)
     return 'error'
   }
@@ -214,7 +246,11 @@ export async function provisionSelfSignupCustomer(
     document_uploads: false,
   })
   if (prefErr) {
-    console.error('[provision-self-signup] notification_preferences', prefErr)
+    console.error('[provision-self-signup] notification_preferences insert failed', {
+      userId,
+      clientId: client.id,
+      error: formatPostgrestError(prefErr),
+    })
     await supabase.from('clients').delete().eq('id', client.id)
     return 'error'
   }
