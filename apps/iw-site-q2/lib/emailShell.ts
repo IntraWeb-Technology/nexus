@@ -27,13 +27,13 @@ function siteBase(): string {
 function logoUrlLight(): string {
   const fromEnv = process.env.EMAIL_LOGO_URL?.trim()
   if (fromEnv) return fromEnv
-  return `${siteBase()}/branding/intraweb-logo-light.png`
+  return `${siteBase()}/IW-logo-q2.png`
 }
 
 function logoUrlDark(): string {
   const fromEnv = process.env.EMAIL_LOGO_DARK_URL?.trim()
   if (fromEnv) return fromEnv
-  return `${siteBase()}/branding/intraweb-logo-black-inverted.png`
+  return `${siteBase()}/IW-logo-q2.png`
 }
 
 /** Wraps a body fragment for staff notifications (IntraWeb header + footer). */
@@ -41,7 +41,7 @@ export function wrapIntraWebStaffEmailHtml(innerBodyHtml: string): string {
   const company = 'IntraWeb Technologies LLC'
   let logo = logoUrlLight()
   if (!logo || (logo.includes('intraweb-logo-black') && !logo.includes('inverted'))) {
-    logo = `${siteBase()}/branding/intraweb-logo-light.png`
+    logo = `${siteBase()}/IW-logo-q2.png`
   }
   const logoDark = logoUrlDark()
   const imgStyle =

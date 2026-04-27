@@ -120,13 +120,16 @@ return [
 Tone: neutral, factual, and professional. Prefer plain statements over promotion. Avoid superlatives, hype, urgency selling, and claims like "eliminates", "from day one", or "fastest".
 
 OUTPUT RULES:
-- First, output a short summary block for internal PDF flow (plain text only inside the delimiters, no HTML tags in this block). Use exactly these lines in order, with no text before the opening delimiter:
+- First, output two plain-text blocks for the PDF shell (no HTML inside either block, no text before the first opening delimiter), in this exact order:
 <<<PAIN_SUMMARY>>>
 Write 4-6 professional, client-facing sentences summarizing ONLY the website intake JSON and related intake notes: business context, stated goals, audience, timeline, budget range or signals, design/content preferences, and requested integrations. Do not invent facts. Do not use em dashes or en dashes (Unicode U+2013/U+2014); use commas or hyphen-minus only. Do not state quoted project dollar amounts in this summary.
 <<<END_PAIN_SUMMARY>>>
-- After that block, return ONLY the inner HTML body content. No DOCTYPE, no <html>, no <head>, no <body> tags.
+<<<INVESTMENT_SUMMARY>>>
+Write 2-4 professional sentences for the "Investment summary" lead-in above the line-item table. Describe the proposed services or package components, how they fit the engagement, and tier (if applicable) at a high level. Do not include any dollar amounts, currency symbols, prices, or the words USD, total, subtotal, or quoted in a pricing sense—dollar amounts appear only in the PDF table from HubSpot. Do not use em dashes or en dashes; use commas or hyphen-minus only.
+<<<END_INVESTMENT_SUMMARY>>>
+- After those blocks, return ONLY the inner HTML body content. No DOCTYPE, no <html>, no <head>, no <body> tags.
 - No markdown. No backticks. No prose outside of HTML tags.
-- The PDF shell already renders header, client snapshot, a short intake or pain summary, investment table, and footer - do NOT repeat those.
+- The PDF shell already renders header, client snapshot, a short intake or pain summary, an investment lead-in paragraph, the line-item table, and footer - do NOT repeat those in the HTML body.
 - Implementation Roadmap MUST be a 2x2 CSS grid (display:grid; grid-template-columns:1fr 1fr; gap:12px) - never a single-column stack.
 - Expected Operational Outcomes MUST be a 3-column CSS grid (grid-template-columns:1fr 1fr 1fr; gap:10px) on wide layouts; if you must wrap, still use grid with two columns minimum - not one card per full row.
 - Next Steps MUST use a 2x2 grid of styled cards (see pattern below) - not a vertical list.

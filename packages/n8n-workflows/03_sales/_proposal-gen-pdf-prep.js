@@ -10,6 +10,7 @@ const ownerName = owner.name || 'John Schibelli';
 const calendarLink = owner.calendarLink || '';
 const bodyContent = (claudeResult.data ? claudeResult.data.text : claudeResult.html || '').trim();
 const painSummaryForShell = String(claudeResult.painSummaryForShell || '').trim();
+const investmentSummaryForShell = String(claudeResult.investmentSummaryForShell || '').trim();
 const clientName = d.clientName || 'Client';
 const proposalDate = new Date().toLocaleDateString('en-US', {
   year: 'numeric',
@@ -134,63 +135,73 @@ const snapshotIndustry = noEmDash(
 const snapshotWebsite = noEmDash(String(d.website || '').trim());
 const snapshotAddress = noEmDash(String(d.address || '').trim());
 
+/** Defensive: lead-in should never echo table amounts if Claude includes them. */
+const investmentLeadInPlain = (() => {
+  let t = noEmDash(investmentSummaryForShell);
+  t = t.replace(/\$\s*[\d,]+(?:\.\d{1,2})?\b/g, '').replace(/\b(?:USD|usd)\b/g, '');
+  t = t.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  return t;
+})();
+
+const dealTierFallback = String(
+  d.dealTierHubspot || d.hubspotTierRaw || d.tierLabel || d.tier || '',
+).trim();
+
 const lineItemsRowsHtml = (() => {
+  const colSpan2 = 2;
   const rows = [];
   if (lineItems.length) {
-    const investmentSummary = lineItems
-      .map((li) => {
-        const desc = String(li.description || '').trim();
-        return desc ? `${li.name || 'Item'}: ${desc}` : String(li.name || 'Item');
-      })
-      .filter(Boolean)
-      .join('\n');
-    rows.push(
-      `<tr><td><strong>Investment summary</strong>${investmentSummary ? `<div class="muted" style="margin-top: 4px; line-height: 1.45;">${escapeHtml(investmentSummary).replace(/\n/g, '<br/>')}</div>` : ''}</td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf))}</strong></td></tr>`,
-    );
     for (const li of lineItems) {
-      const itemTier = String(li.tier || d.dealTierHubspot || d.hubspotTierRaw || d.tierLabel || '').trim();
-      const detailLines = [
-        itemTier ? `Tier: ${itemTier}` : '',
-        String(li.description || '').trim(),
-      ].filter(Boolean);
-      const itemLabel = [
+      const itemTier = String(
+        li.tier || d.dealTierHubspot || d.hubspotTierRaw || d.tierLabel || '',
+      ).trim();
+      const desc = String(li.description || '').trim();
+      const itemBlock = [
         `<strong>${escapeHtml(li.name || 'Item')}</strong>`,
-        detailLines.length
-          ? `<div class="muted" style="margin-top: 4px; line-height: 1.45;">${escapeHtml(detailLines.join('\n')).replace(/\n/g, '<br/>')}</div>`
+        desc
+          ? `<div class="muted" style="margin-top: 4px; line-height: 1.45;">${escapeHtml(desc).replace(/\n/g, '<br/>')}</div>`
           : '',
       ].join('');
+      const tierCell = itemTier
+        ? escapeHtml(itemTier)
+        : '<span class="muted">&nbsp;</span>';
       rows.push(
-        `<tr><td>${itemLabel}</td><td class="num">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,
+        `<tr><td>${itemBlock}</td><td class="line-table__tier">${tierCell}</td><td class="num">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,
       );
     }
     rows.push(
-      `<tr class="line-table__subtotal"><td>Subtotal (line items)</td><td class="num">${escapeHtml(formatCurrency(lineItemsSubtotal))}</td></tr>`,
+      `<tr class="line-table__subtotal"><td colspan="${colSpan2}">Subtotal (line items)</td><td class="num">${escapeHtml(formatCurrency(lineItemsSubtotal))}</td></tr>`,
     );
     if (discPdf > 0.005) {
       rows.push(
-        `<tr class="line-table__discount"><td>Discounts</td><td class="num">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,
+        `<tr class="line-table__discount"><td colspan="${colSpan2}">Discounts</td><td class="num">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,
       );
     }
     rows.push(
-      `<tr class="line-table__quoted"><td><strong>Quoted total</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf))}</strong></td></tr>`,
+      `<tr class="line-table__quoted"><td colspan="${colSpan2}"><strong>Quoted total</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf))}</strong></td></tr>`,
     );
   } else {
-    const tierRowLabel =
-      String(d.dealTierHubspot || d.hubspotTierRaw || d.tierLabel || d.tier || '').trim();
+    const tierLabel = dealTierFallback;
     rows.push(
-      `<tr><td><strong>Investment summary</strong><div class="muted" style="margin-top: 4px; line-height: 1.45;">${escapeHtml(tierRowLabel ? `Deal tier: ${tierRowLabel}` : 'No associated line items were found for this deal.')}</div></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf || d.tierAmount))}</strong></td></tr>`,
+      `<tr><td class="muted">${escapeHtml(tierLabel ? 'Scope reflects deal tier' : 'No line items found')}</td><td class="line-table__tier">${escapeHtml(tierLabel || '—')}</td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf || d.tierAmount))}</strong></td></tr>`,
     );
     if (discPdf > 0.005) {
       rows.push(
-        `<tr class="line-table__discount"><td>Discounts</td><td class="num">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,
+        `<tr class="line-table__discount"><td colspan="${colSpan2}">Discounts</td><td class="num">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,
       );
     }
     rows.push(
-      `<tr class="line-table__quoted"><td><strong>Quoted total</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf || d.tierAmount))}</strong></td></tr>`,
+      `<tr class="line-table__quoted"><td colspan="${colSpan2}"><strong>Quoted total</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf || d.tierAmount))}</strong></td></tr>`,
     );
   }
   return rows.join('');
 })();
+
+const investmentNarrativeHtml = investmentLeadInPlain
+  ? `<p class="investment-narrative">${escapeHtml(investmentLeadInPlain).replace(/\n/g, '<br/>')}</p>`
+  : lineItems.length
+    ? '<p class="investment-narrative muted">The line items below reflect the proposed scope. Amounts and tier come from the deal record in HubSpot.</p>'
+    : '<p class="investment-narrative muted">Quoted amount reflects the deal tier in HubSpot when no line item rows are present on the deal.</p>';
 
 const calendarHtml = calendarLink
   ? `<p class="doc-body__cta"><a class="cta-pill" href="${escapeHtml(calendarLink)}">Book approval call</a></p>`
@@ -236,7 +247,7 @@ const html = `<!DOCTYPE html>
   <title>Proposal - ${escapeHtml(clientName)} - ${escapeHtml(companyName)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <style>
     :root {
       --iw-slate-950: #0d1117;
@@ -270,13 +281,23 @@ const html = `<!DOCTYPE html>
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
+    /**
+     * PDF/headless Chromium: variable DM Sans (opsz axis) often misfits metrics (e.g. thick "l", broken kerning).
+     * Use static weights + disable synthesis and optical size so text matches embedded outlines.
+     */
     html,
     body {
       margin: 0 !important;
       padding: 0 !important;
       background: var(--iw-slate-50);
       color: var(--iw-slate-700);
-      font-family: 'DM Sans', system-ui, sans-serif;
+      font-family: 'DM Sans', 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
+      font-kerning: normal;
+      font-synthesis: none;
+      font-optical-sizing: none;
+      font-variant-ligatures: common-ligatures;
+      text-rendering: auto;
+      letter-spacing: normal;
     }
     .iw-page {
       width: 100%;
@@ -465,8 +486,25 @@ const html = `<!DOCTYPE html>
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
+    .line-table thead th:nth-child(2) {
+      text-align: center;
+    }
     .line-table thead th:last-child {
       text-align: right;
+    }
+    .line-table td.line-table__tier {
+      text-align: center;
+      font-weight: 600;
+      color: var(--iw-slate-700);
+    }
+    .investment-narrative {
+      font-size: 10pt;
+      line-height: 1.65;
+      color: var(--iw-slate-800);
+      margin: 0 0 16px;
+    }
+    .investment-narrative.muted {
+      color: var(--iw-slate-500);
     }
     .line-table tbody tr:nth-child(odd) {
       background: var(--iw-off-white);
@@ -497,7 +535,7 @@ const html = `<!DOCTYPE html>
     }
     .line-table tbody tr.line-table__quoted td {
       background: var(--iw-slate-50);
-      font-weight: 800;
+      font-weight: 700;
       font-size: 10.5pt;
       border-bottom: 1px solid var(--iw-slate-200);
     }
@@ -512,7 +550,7 @@ const html = `<!DOCTYPE html>
       background: var(--iw-teal-ghost);
       border-bottom: none;
       color: var(--iw-teal-dim);
-      font-weight: 800;
+      font-weight: 700;
       font-size: 11pt;
     }
     .line-table .muted {
@@ -545,6 +583,13 @@ const html = `<!DOCTYPE html>
       font-size: 10pt;
       line-height: 1.65;
       max-height: none;
+    }
+    .body-text,
+    .pain-shell,
+    .investment-narrative {
+      font-kerning: normal;
+      letter-spacing: normal;
+      font-synthesis: none;
     }
     .body-text {
       font-size: 10pt;
@@ -803,13 +848,14 @@ const html = `<!DOCTYPE html>
 
       <section>
         <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>Investment summary</h2>
+        ${investmentNarrativeHtml}
         <table class="line-table">
-          <thead><tr><th>Item</th><th>Amount</th></tr></thead>
+          <thead><tr><th>Item</th><th>Tier</th><th>Amount</th></tr></thead>
           <tbody>
             ${lineItemsRowsHtml}
-            <tr class="line-table__schedule"><td colspan="2">Payment timing (estimate; final cadence on invoice)</td></tr>
-            <tr><td>Upfront due (40% of quoted total)</td><td class="num">${escapeHtml(upfrontDueText)}</td></tr>
-            <tr class="line-table__total"><td>Remaining balance</td><td class="num">${escapeHtml(remainingBalanceText)}</td></tr>
+            <tr class="line-table__schedule"><td colspan="3">Payment timing (estimate; final cadence on invoice)</td></tr>
+            <tr><td colspan="2">Upfront due (40% of quoted total)</td><td class="num">${escapeHtml(upfrontDueText)}</td></tr>
+            <tr class="line-table__total"><td colspan="2">Remaining balance</td><td class="num">${escapeHtml(remainingBalanceText)}</td></tr>
           </tbody>
         </table>
         <p class="fine-print">Payment split shown as 40% upfront and 60% remaining from quoted total. Final amounts on invoice.</p>

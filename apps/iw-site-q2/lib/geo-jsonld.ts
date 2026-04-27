@@ -11,7 +11,7 @@ export const organizationJsonLd = {
   name: "IntraWeb Technologies",
   legalName: "IntraWeb Technologies LLC",
   url: SITE_URL,
-  logo: `${SITE_URL}/logo.png`,
+  logo: `${SITE_URL}/IW-logo-q2.png`,
   description:
     "AI-first product and automation studio for small and mid-sized businesses. We build workflow automation, AI integrations, and web systems that replace manual operational work.",
   foundingDate: "2020",

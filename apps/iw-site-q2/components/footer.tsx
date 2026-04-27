@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { companyLegalName, contactEmail } from "@/lib/site";
-import { IntraWebSymbol } from "@/components/intraweb-symbol";
-import { IntraWebWordmark } from "@/components/intraweb-wordmark";
+import { IntraWebLogo } from "@/components/intraweb-logo";
 import { StatusDot } from "@/components/primitives";
 import { Ic } from "@/components/icons";
 
@@ -66,8 +65,7 @@ export function Footer() {
         <div className="footer-grid">
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <IntraWebSymbol size={24} />
-              <IntraWebWordmark size="compact" />
+              <IntraWebLogo height={28} />
             </div>
             <p style={{ fontSize: 14, color: "var(--iw-fg-2)", maxWidth: 340, lineHeight: 1.55 }}>
               AI systems and automation infrastructure for SMBs that want to operate smarter. Based in New Jersey,

@@ -12,7 +12,7 @@ export function Footer() {
         <div className="flex flex-col items-center space-y-6">
           {/* Logo and Tagline */}
           <div className="text-center">
-            <Image src="/intraweb-logo-white.png" alt="IntraWeb Technologies Logo" width={128} height={48} className="mx-auto mb-2 w-32 h-auto" loading="lazy" />
+            <Image src="/IW-logo-q2.png" alt="IntraWeb." width={200} height={48} className="mx-auto mb-2 h-10 w-auto max-w-[200px]" loading="lazy" />
             <p className="text-sm font-medium">Implementation for AI-enabled operations</p>
           </div>
 
@@ -99,7 +99,7 @@ export function Footer() {
           <div className="flex flex-wrap justify-between">
             {/* Column 1 */}
             <div className="w-full md:w-1/4 mb-6 md:mb-0">
-              <Image src="/intraweb-logo-white.png" alt="IntraWeb Technologies Logo" width={128} height={48} className="mb-2 w-32 h-auto" loading="lazy" />
+              <Image src="/IW-logo-q2.png" alt="IntraWeb." width={200} height={48} className="mb-2 h-10 w-auto max-w-[200px]" loading="lazy" />
               <p className="text-sm">Implementation for AI-enabled operations</p>
               <p className="text-xs">We help SMBs turn AI tool adoption into actual operational savings.</p>
             </div>

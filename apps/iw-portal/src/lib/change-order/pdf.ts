@@ -1,6 +1,13 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import type { ChangeOrderPayloadInput } from '@/lib/change-order/schema'
 import { changeOrderLegalCopy } from '@/lib/change-order/changeOrderCopy'
 import PDFDocument from 'pdfkit'
+
+function logoPath(): string | null {
+  const p = path.join(process.cwd(), 'public', 'IW-logo-q2.png')
+  return fs.existsSync(p) ? p : null
+}
 
 function collectBuffer(doc: InstanceType<typeof PDFDocument>): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -25,6 +32,12 @@ export async function renderChangeOrderPdf(params: {
     info: { Title: `Scope change request ${params.coNumber}` },
   })
   const done = collectBuffer(doc)
+
+  const logo = logoPath()
+  if (logo) {
+    doc.image(logo, { width: 160 })
+    doc.moveDown(0.75)
+  }
 
   doc.fontSize(18).text('Scope change request', { underline: true })
   doc.moveDown(0.5)

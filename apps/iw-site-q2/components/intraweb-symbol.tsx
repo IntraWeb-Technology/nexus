@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-/** Teal + orange “IW” mark from `/intraweb-symbol.png` (transparent background). */
+/** Teal + orange “IW” mark from `/IW-symbol-q2.png` (transparent background). */
 export function IntraWebSymbol({
   size = 28,
   className,
@@ -13,7 +13,7 @@ export function IntraWebSymbol({
 }) {
   return (
     <Image
-      src="/intraweb-symbol.png"
+      src="/IW-symbol-q2.png"
       alt=""
       width={size}
       height={size}

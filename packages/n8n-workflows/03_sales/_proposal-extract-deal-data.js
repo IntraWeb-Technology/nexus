@@ -21,9 +21,49 @@ const associatedContact = (() => {
 })();
 
 const associatedLineItems = (() => {
+  const hubSpotObject = (o) =>
+    o &&
+    typeof o === 'object' &&
+    o.id != null &&
+    o.properties &&
+    typeof o.properties === 'object';
+
+  const collectFromJson = (out) => {
+    if (!out || typeof out !== 'object') return [];
+    // n8n HTTP or proxies may nest the parsed HubSpot object
+    if (!hubSpotObject(out)) {
+      const nested = [out.body, out.data, out.json].find(hubSpotObject);
+      if (nested) return collectFromJson(nested);
+    }
+    if (Array.isArray(out.results) && out.results.length) return out.results;
+    if (hubSpotObject(out)) return [out];
+    if (Array.isArray(out)) return out;
+    return [];
+  };
   try {
-    const out = $('Fetch Associated Line Items').first().json;
-    const rows = Array.isArray(out?.results) ? out.results : Array.isArray(out) ? out : [];
+    const rows = [];
+    const seen = new Set();
+    const addAll = (arr) => {
+      for (const x of arr) {
+        if (!x || typeof x !== 'object' || (x.error && !x.id)) continue;
+        const id = x && (x.id ?? x.properties?.hs_object_id);
+        const key = id != null ? String(id) : JSON.stringify(x);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        rows.push(x);
+      }
+    };
+    const httpItems = $('Fetch Associated Line Items').all();
+    if (httpItems.length) {
+      for (const it of httpItems) {
+        const j = it.json;
+        if (!j || typeof j !== 'object') continue;
+        addAll(collectFromJson(j));
+      }
+    } else {
+      const first = $('Fetch Associated Line Items').first();
+      if (first?.json) addAll(collectFromJson(first.json));
+    }
     return rows;
   } catch {
     return [];
@@ -228,8 +268,55 @@ const normalizeLineItems = (raw) => {
       );
       const sku = valueFrom(x.hs_sku, x.sku, p.hs_sku, p.sku, '');
       const description = valueFrom(x.description, x.details, x.notes, p.description, '');
+      const productId = valueFrom(x.hs_product_id, p.hs_product_id, '');
+      const productType = cleanDashes(valueFrom(x.hs_product_type, p.hs_product_type, ''));
+      const recordId = valueFrom(x.hs_object_id, p.hs_object_id, '');
+      const billingFrequency = cleanDashes(
+        valueFrom(
+          x.recurringbillingfrequency,
+          x.billing_frequency,
+          p.recurringbillingfrequency,
+          p.billing_frequency,
+          '',
+        ),
+      );
+      const recurringPeriod = cleanDashes(
+        valueFrom(x.hs_recurring_billing_period, p.hs_recurring_billing_period, ''),
+      );
+      const discount = valueFrom(
+        x.hs_discount_percentage,
+        x.discount_percentage,
+        x.hs_discount_amount,
+        x.discount_amount,
+        p.hs_discount_percentage,
+        p.discount_percentage,
+        p.hs_discount_amount,
+        p.discount_amount,
+        '',
+      );
+      const rawMetadata = valueFrom(x.metadata, x.meta_data, p.metadata, p.meta_data, '');
+      const metadata = [
+        rawMetadata ? `Metadata: ${rawMetadata}` : '',
+        sku ? `SKU: ${sku}` : '',
+        productType ? `Product type: ${productType}` : '',
+        productId ? `Product ID: ${productId}` : '',
+        recordId ? `Line item ID: ${recordId}` : '',
+        billingFrequency ? `Billing frequency: ${billingFrequency}` : '',
+        recurringPeriod ? `Billing period: ${recurringPeriod}` : '',
+        discount ? `Discount: ${discount}` : '',
+      ].filter(Boolean);
       const tier = cleanDashes(
-        valueFrom(x.tier, x.packageTier, x.package_tier, p.tier, p.package_tier, p.hs_tier),
+        valueFrom(
+          x.tier,
+          x.packageTier,
+          x.package_tier,
+          x.product_tier,
+          x.hs_tier,
+          p.tier,
+          p.package_tier,
+          p.product_tier,
+          p.hs_tier,
+        ),
       );
       let amount = lineTotal;
       if (!amount && unit) amount = unit * qty;
@@ -242,6 +329,7 @@ const normalizeLineItems = (raw) => {
         unitPrice: unit || (qty ? amount / qty : amount),
         amount,
         tier,
+        metadata,
       };
     })
     .filter(Boolean);
@@ -533,7 +621,16 @@ return [
       remainingTierBalance,
       launchBalance,
       finalDueAtPreLaunch: launchBalance,
-      dealId: valueFrom(body.id, inner.id, fetchedDeal?.id, deal.dealId, deal.id, body.dealId),
+      dealId: valueFrom(
+        fetchedDeal?.id,
+        fetchedDeal?.properties?.hs_object_id,
+        body.dealId,
+        inner.dealId,
+        deal.dealId,
+        body.id,
+        inner.id,
+        deal.id,
+      ),
       contactEmail: valueFrom(
         associatedContact.email,
         props.contact_email,

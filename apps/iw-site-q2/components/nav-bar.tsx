@@ -5,8 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { accountsUrl, navLinks } from "@/lib/site";
-import { IntraWebSymbol } from "@/components/intraweb-symbol";
-import { IntraWebWordmark } from "@/components/intraweb-wordmark";
+import { IntraWebLogo } from "@/components/intraweb-logo";
 import { Btn, StatusDot } from "@/components/primitives";
 import { Ic } from "@/components/icons";
 
@@ -152,8 +151,7 @@ export function NavBar() {
         <div className="container nav-shell">
           <div className="nav-shell__left">
             <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }} aria-label="IntraWeb — home">
-              <IntraWebSymbol size={28} priority />
-              <IntraWebWordmark size="nav" />
+              <IntraWebLogo height={32} priority />
             </Link>
 
             <div className="nav-desktop-only nav-shell__links">

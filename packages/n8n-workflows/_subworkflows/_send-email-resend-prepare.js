@@ -99,10 +99,9 @@ function escapeHtml(s) {
 
 function wrapEmail(innerHtml) {
   const owner = config.owner || {}
-  // Served from apps/iw-site/public/branding/ (deploy iw-site so URLs return 200).
-  const DEFAULT_LOGO = 'https://www.intrawebtech.com/branding/intraweb-logo-light.png'
-  const DEFAULT_LOGO_DARK =
-    'https://www.intrawebtech.com/branding/intraweb-logo-black-inverted.png'
+  // Served from apps/iw-site-q2/public (www.intrawebtech.com root).
+  const DEFAULT_LOGO = 'https://www.intrawebtech.com/IW-logo-q2.png'
+  const DEFAULT_LOGO_DARK = 'https://www.intrawebtech.com/IW-logo-q2.png'
   let logoUrl = String(config.branding?.logoUrl || '').trim()
   if (!logoUrl || (logoUrl.includes('intraweb-logo-black') && !logoUrl.includes('inverted'))) {
     logoUrl = DEFAULT_LOGO

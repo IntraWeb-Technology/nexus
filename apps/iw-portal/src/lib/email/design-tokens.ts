@@ -20,11 +20,11 @@ export const IW_EMAIL = {
 
 /** Public logo used in HTML img src; override with EMAIL_LOGO_URL / NEXT_PUBLIC_EMAIL_LOGO_URL. */
 export const DEFAULT_EMAIL_LOGO_URL =
-  'https://www.intrawebtech.com/branding/intraweb-logo-light.png'
+  'https://www.intrawebtech.com/IW-logo-q2.png'
 
-/** Dark-mode / inverted logo for prefers-color-scheme (same host as light logo). */
+/** Dark-mode logo for prefers-color-scheme (same asset until a dedicated dark lockup exists). */
 export const DEFAULT_EMAIL_LOGO_DARK_URL =
-  'https://www.intrawebtech.com/branding/intraweb-logo-black-inverted.png'
+  'https://www.intrawebtech.com/IW-logo-q2.png'
 
 export function emailLogoUrl(): string {
   return (
@@ -75,6 +75,11 @@ export function wrapIntraWebEmailHtml(
     logoUrl.includes('intrawebtech.com') &&
     logoUrl.includes('/intraweb-logo-light.png') &&
     !logoUrl.includes('/branding/')
+  ) {
+    logoUrl = DEFAULT_EMAIL_LOGO_URL
+  } else if (
+    logoUrl.includes('intrawebtech.com') &&
+    logoUrl.includes('/branding/intraweb-logo-light.png')
   ) {
     logoUrl = DEFAULT_EMAIL_LOGO_URL
   }
