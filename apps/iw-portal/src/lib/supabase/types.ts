@@ -51,6 +51,8 @@ export interface Project {
   start_date: string | null
   estimated_launch: string | null
   hubspot_deal_id: string | null
+  /** HubSpot deal property (HUBSPOT_DEAL_PORTAL_PLAN_PROPERTY); filters maintenance package plan_slugs. */
+  portal_plan_slug?: string | null
   created_at: string
 }
 

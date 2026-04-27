@@ -21,6 +21,7 @@
     "hubspot:ensure-subscription-deal-properties": "tsx scripts/hubspot/ensure-subscription-deal-properties.ts",
     "hubspot:ensure-co-form": "tsx scripts/hubspot/ensure-change-order-form.ts",
     "hubspot:update-co-form": "tsx scripts/hubspot/update-change-order-form.ts",
+    "stripe:setup-maintenance-products": "tsx scripts/setup-maintenance-products.ts",
     "test": "tsx --test src/lib/webhooks/provision-client-idempotency.test.ts",
     "verify:stack": "tsx scripts/verify-stack-alignment.ts",
     "vercel:align-env": "tsx scripts/vercel-align-env.ts",

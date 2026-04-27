@@ -123,6 +123,11 @@ export type ProvisionClientData = {
    * invoice seeds are inserted (legacy list-style amounts).
    */
   seed_template_invoices?: boolean
+  /**
+   * Closed-set slug for maintenance package eligibility (matches STRIPE_MAINTENANCE_PACKAGES plan_slugs).
+   * Also synced from HubSpot via webhook (HUBSPOT_DEAL_PORTAL_PLAN_PROPERTY).
+   */
+  portal_plan_slug?: string | null
 }
 
 /**

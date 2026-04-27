@@ -2,16 +2,14 @@ import { PortalDataUnavailable } from '@/components/portal/PortalDataUnavailable
 import { syncHubspotCrmInvoicesToProject } from '@/lib/billing/sync-hubspot-crm-to-supabase'
 import {
   billingRowsToUiInvoices,
+  buildBillingTimelineModel,
   computeBillingMetrics,
 } from '@/lib/billing/billing-ui-serialize'
 import { getPortalBundle } from '@/lib/data/portal'
 import { isHubSpotConfigured } from '@/lib/hubspot/config'
 import { fetchHubSpotBillingInvoices } from '@/lib/hubspot/invoices'
 import { fetchDefaultCardSummary } from '@/lib/stripe/default-payment-method'
-import {
-  getMaintenancePackagesFromEnv,
-  maintenancePackagesForPortal,
-} from '@/lib/stripe/maintenance-packages'
+import { resolvePortalMaintenanceSubscriptionFromStripe } from '@/lib/stripe/portal-maintenance-subscription'
 import { getStripe } from '@/lib/stripe/server'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { Invoice, SubscriptionRow } from '@/lib/supabase/types'
@@ -21,6 +19,7 @@ import { BillingHeader } from './_components/billing-header'
 import { BillingQueryAlerts } from './_components/billing-query-alerts'
 import { BillingStats } from './_components/billing-stats'
 import { InvoicesSection } from './_components/invoices-section'
+import { MaintenanceSection } from './_components/maintenance-section'
 import { PaymentMethodCard } from './_components/payment-method-card'
 
 type BillingPageProps = {
@@ -35,8 +34,6 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const paidQuery = q.paid === '1'
   const canceledQuery = q.canceled === '1'
   const subscribedQuery = q.subscribed === '1'
-
-  const maintenancePackages = maintenancePackagesForPortal(getMaintenancePackagesFromEnv())
 
   const hubspotCrmInvoices =
     isHubSpotConfigured() && (bundle.project.hubspot_deal_id || bundle.client.hubspot_contact_id)
@@ -62,21 +59,56 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     .eq('project_id', bundle.project.id)
     .order('updated_at', { ascending: false })
     .limit(1)
-  const latestSubscription = ((subData ?? [])[0] ?? null) as SubscriptionRow | null
+  let latestSubscription = ((subData ?? [])[0] ?? null) as SubscriptionRow | null
+  const stripeCustomerId = bundle.client.stripe_customer_id?.trim()
+  let stripe: ReturnType<typeof getStripe> | null = null
+  try {
+    stripe = getStripe()
+  } catch {
+    stripe = null
+  }
+  if (stripe) {
+    const stripeResolved = await resolvePortalMaintenanceSubscriptionFromStripe(stripe, {
+      projectId: bundle.project.id,
+      projectHubspotDealId: bundle.project.hubspot_deal_id,
+      clientId: bundle.client.id,
+      clientEmail: bundle.client.email,
+      clientStripeCustomerId: stripeCustomerId,
+    })
+    if (stripeResolved) {
+      latestSubscription = stripeResolved
+    } else if (!latestSubscription && stripeCustomerId) {
+      const { data: customerSubData } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('stripe_customer_id', stripeCustomerId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+      latestSubscription = ((customerSubData ?? [])[0] ?? null) as SubscriptionRow | null
+    }
+  } else if (!latestSubscription && stripeCustomerId) {
+    const { data: customerSubData } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('stripe_customer_id', stripeCustomerId)
+      .order('updated_at', { ascending: false })
+      .limit(1)
+    latestSubscription = ((customerSubData ?? [])[0] ?? null) as SubscriptionRow | null
+  }
 
   // Supabase is the single source of truth for dashboard rendering.
   // HubSpot is used only as an upstream sync source.
   const uiInvoices = billingRowsToUiInvoices(
     supabaseInvoices.map((invoice) => ({ source: 'supabase' as const, invoice })),
   )
+  const timeline = buildBillingTimelineModel(uiInvoices, latestSubscription)
   const metrics = computeBillingMetrics(uiInvoices)
   const currency = (uiInvoices[0]?.currency ?? 'usd').toLowerCase()
 
   let paymentMethod: Awaited<ReturnType<typeof fetchDefaultCardSummary>> = null
-  const stripeCustomerId = bundle.client.stripe_customer_id?.trim()
   if (stripeCustomerId) {
     try {
-      const stripe = getStripe()
+      if (!stripe) stripe = getStripe()
       paymentMethod = await fetchDefaultCardSummary(stripe, stripeCustomerId)
     } catch {
       paymentMethod = null
@@ -117,12 +149,16 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       {uiInvoices.length > 0 ? <BillingStats metrics={metrics} currency={currency} /> : null}
 
       <PaymentMethodCard paymentMethod={paymentMethod} hasStripeCustomer={Boolean(stripeCustomerId)} />
+      <MaintenanceSection
+        dealId={bundle.project.hubspot_deal_id}
+        portalPlanSlug={bundle.project.portal_plan_slug}
+        summary={timeline.maintenanceSummary}
+      />
 
       <InvoicesSection
         invoices={uiInvoices}
         projectSlug={bundle.project.slug}
         subscription={latestSubscription}
-        maintenancePackages={maintenancePackages}
       />
 
       <BillingDetailsCard {...billingDetails} />

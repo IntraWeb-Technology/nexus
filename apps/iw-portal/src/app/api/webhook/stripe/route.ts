@@ -164,11 +164,13 @@ async function resolveProjectForStripeCustomer(
   stripeCustomerId: string | null,
 ): Promise<StripeResolvedProject | null> {
   if (!stripeCustomerId) return null
-  const { data: client } = await supabase
+  const { data: clients } = await supabase
     .from('clients')
-    .select('id')
+    .select('id, created_at')
     .eq('stripe_customer_id', stripeCustomerId)
-    .maybeSingle()
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const client = clients?.[0] ?? null
   if (!client?.id) return null
 
   const { data: project } = await supabase

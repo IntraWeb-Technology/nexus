@@ -1,11 +1,5 @@
 const d = $('Extract Deal Data').first().json;
 
-const intakePainPoints =
-  [d.rawPainPoints, d.painPointSummary, d.painPoints]
-    .map((x) => String(x ?? '').trim())
-    .filter(Boolean)
-    .join('\n\n') || '(None provided)';
-
 const fmtMoney = (n) => {
   const x = Number(n);
   if (!Number.isFinite(x)) return '$0';
@@ -16,8 +10,15 @@ const lineItems = Array.isArray(d.lineItems) ? d.lineItems : [];
 const lineItemsSubtotalCalc =
   Number(d.lineItemsSubtotal) || lineItems.reduce((s, li) => s + (Number(li.amount) || 0), 0);
 const discClaude = Math.max(0, Number(d.totalDiscount) || 0);
-const quotedFromLines =
-  lineItemsSubtotalCalc > 0 ? Math.max(0, lineItemsSubtotalCalc - discClaude) : Number(d.dealAmount) || 0;
+const quotedForPrompt =
+  lineItemsSubtotalCalc > 0
+    ? Math.max(0, lineItemsSubtotalCalc - discClaude)
+    : (Number(d.dealAmount) || 0) > 0
+      ? Number(d.dealAmount)
+      : Number(d.tierAmount) || 0;
+const upfront40 = Math.round(quotedForPrompt * 0.4 * 100) / 100;
+const remainderAfterUpfront = Math.max(0, quotedForPrompt - upfront40);
+
 const isRecLine = (name) => {
   const n = String(name || '').toLowerCase();
   return /\bretainer\b/.test(n) || /\bmaintenance\b/.test(n) || /\bmonthly\b/.test(n);
@@ -25,11 +26,6 @@ const isRecLine = (name) => {
 const monthlyFromLines = lineItems
   .filter((li) => isRecLine(li.name))
   .reduce((s, li) => s + (Number(li.amount) || 0), 0);
-const upfrontForShell =
-  lineItemsSubtotalCalc > 0 ? Math.round(lineItemsSubtotalCalc * 0.33 * 100) / 100 : Number(d.upfrontDue) || 0;
-const launchEst =
-  Math.max(0, quotedFromLines - upfrontForShell) +
-  (monthlyFromLines > 0 ? monthlyFromLines : Number(d.tierMonthly) || 0);
 
 const lineItemsBlock = lineItems.length
   ? lineItems
@@ -39,11 +35,11 @@ const lineItemsBlock = lineItems.length
           (li.description ? `     Notes: ${li.description}\n` : ''),
       )
       .join('')
-  : '(No line items in payload - scope from tier and pain points only.)';
+  : '(No line items in payload - scope from tier and website intake only.)';
 
 const lineItemsRules = lineItems.length
-  ? 'When LINE ITEMS are present: treat each line item as a distinct sellable component (e.g. website vs automation). Include at least one scope block that maps to each line item by name, in addition to tying work to pain points. Min 2, max 4 blocks total.'
-  : 'one scope block per major pain point. Min 2, max 4 blocks.';
+  ? 'When LINE ITEMS are present: treat each line item as a distinct sellable component (e.g. website vs automation). Include at least one scope block that maps to each line item by name, in addition to tying work to website intake. Min 2, max 4 blocks total.'
+  : 'one scope block per major intake theme. Min 2, max 4 blocks.';
 
 const nz = (v, fallback = 'Not provided') => {
   const s = String(v ?? '').trim();
@@ -54,8 +50,27 @@ const lineItemNames = lineItems.length
   ? lineItems.map((li) => (li.name || 'Item').trim()).filter(Boolean).join(', ')
   : 'none';
 
+const recurringNote =
+  monthlyFromLines > 0.005
+    ? `Recurring amounts appear only as line items: ${fmtMoney(monthlyFromLines)} (do not add template tier monthly).`
+    : 'Monthly retainer is not included in the quoted project total unless it appears as a line item (often separate).';
+
+const dealTierExact = nz(d.dealTierHubspot || d.hubspotTierRaw || d.tierLabel, 'Not set');
+
+const mandatoryScopeTitles =
+  lineItems.length > 0
+    ? lineItems
+        .map(
+          (li, i) =>
+            `${i + 1}. The scope block H3 / deliverable title MUST be exactly: ${JSON.stringify(li.name || 'Item')} (${fmtMoney(li.amount)})`,
+        )
+        .join('\n')
+    : 'No line items on this deal. Build Detailed Scope only from WEBSITE INTAKE (pages, features, goals). Minimum 2 scope blocks. Do not invent SKUs or products not implied by intake.';
+
 const commercialContext = [
   `Deal ID: ${nz(d.dealId)}`,
+  `Deal tier: use the deal property "tier" verbatim in Executive Summary paragraph 1 when set: ${nz(d.dealTierHubspot, '(not set)')}`,
+  `Deal tier display (tier, or label fallback): ${dealTierExact}`,
   `Client / deal name: ${nz(d.clientName)}`,
   `Company: ${nz(d.companyDisplay || d.company)}`,
   `Industry: ${nz(d.industryDisplay || d.industry)}`,
@@ -63,28 +78,51 @@ const commercialContext = [
   `Contact email: ${nz(d.contactEmailDisplay || d.contactEmail)}`,
   `Contact phone: ${d.contactPhone ? String(d.contactPhone).trim() : 'Not provided'}`,
   '',
-  'COMMERCIAL (aligned with proposal PDF shell - use only these numbers; do not invent totals):',
-  `- HubSpot deal amount property (reference only; PDF quoted total follows line items when present): ${fmtMoney(d.dealAmount)}`,
+  'DELIVERABLES (line items from the deal; scope section MUST mirror these titles exactly when present):',
+  mandatoryScopeTitles,
+  '',
+  'INVESTMENT (must match the PDF investment summary; use these dollar amounts only):',
+  `- Deal amount (reference when no line items): ${fmtMoney(d.dealAmount)}`,
   `- Line item count: ${lineItems.length} (${lineItemNames})`,
   `- Line items subtotal: ${fmtMoney(lineItemsSubtotalCalc)}`,
-  `- PDF quoted total (subtotal minus deal-level discount when applicable): ${fmtMoney(quotedFromLines)}`,
+  `- Quoted total (after discounts when line items exist, else deal or tier amount): ${fmtMoney(quotedForPrompt)}`,
   `- Total discount (deal-level, if any): ${fmtMoney(d.totalDiscount)}`,
-  `- Tier label: ${nz(d.tierLabel)}`,
-  `- Monthly recurring (retainer/maintenance from line items, else tier template): ${fmtMoney(monthlyFromLines > 0 ? monthlyFromLines : Number(d.tierMonthly) || 0)}`,
-  `- Upfront (33% of line-item subtotal when line items exist, else tier upfront): ${fmtMoney(upfrontForShell)}`,
-  `- Launch balance estimate (matches PDF shell): ${fmtMoney(launchEst)}`,
+  `- Deal tier: ${dealTierExact}`,
+  `- Upfront due (40% of quoted total): ${fmtMoney(upfront40)}`,
+  `- Remaining balance after upfront: ${fmtMoney(remainderAfterUpfront)}`,
+  `- ${recurringNote}`,
 ].join('\n');
+
+const stripJsonTail = (text) => {
+  let s = String(text || '');
+  const idx = s.search(/\nWebsite intake \(JSON\):/i);
+  if (idx !== -1) s = s.slice(0, idx);
+  const idx2 = s.search(/\nWebsite intake \(structured fields\):/i);
+  if (idx2 !== -1) s = s.slice(0, idx2);
+  return s.trim();
+};
+
+const whatYouToldUsSource =
+  String(d.websiteIntakeJsonText || '').trim() ||
+  String(d.intakeForWhatWeHeard || '').trim() ||
+  stripJsonTail(String(d.rawPainPoints || '').trim()) ||
+  stripJsonTail(String(d.painPoints || '').trim()) ||
+  '(None provided)';
+
+const fullContextNotes = stripJsonTail(
+  String(d.websiteIntakeJsonText || d.rawPainPoints || d.painPoints || whatYouToldUsSource || '').slice(0, 14000),
+);
 
 return [
   {
     json: {
-      systemPrompt: `You are writing a polished consulting proposal body for IntraWeb Technologies LLC.
-We are the implementation partner - not a generic advisor. Tone: direct, credible, senior, specific.
+      systemPrompt: `You are writing a consulting proposal body for IntraWeb Technologies LLC.
+Tone: neutral, factual, and professional. Prefer plain statements over promotion. Avoid superlatives, hype, urgency selling, and claims like "eliminates", "from day one", or "fastest".
 
 OUTPUT RULES:
-- First, output a pain-point summary block for the PDF cover page (plain text only inside the delimiters, no HTML tags in this block). Use exactly these lines in order, with no text before the opening delimiter:
+- First, output a short summary block for internal PDF flow (plain text only inside the delimiters, no HTML tags in this block). Use exactly these lines in order, with no text before the opening delimiter:
 <<<PAIN_SUMMARY>>>
-Write 4-6 short sentences summarizing what the client is trying to fix, their goals, timeline, budget signals, and products or outcomes they named. Be specific to the DATA and PAIN POINTS. Do not invent facts. Do not use em dashes or en dashes (Unicode U+2013/U+2014); use commas or hyphen-minus only.
+Write 4-6 professional, client-facing sentences summarizing ONLY the website intake JSON and related intake notes: business context, stated goals, audience, timeline, budget range or signals, design/content preferences, and requested integrations. Do not invent facts. Do not use em dashes or en dashes (Unicode U+2013/U+2014); use commas or hyphen-minus only. Do not state quoted project dollar amounts in this summary.
 <<<END_PAIN_SUMMARY>>>
 - After that block, return ONLY the inner HTML body content. No DOCTYPE, no <html>, no <head>, no <body> tags.
 - No markdown. No backticks. No prose outside of HTML tags.
@@ -95,6 +133,7 @@ Write 4-6 short sentences summarizing what the client is trying to fix, their go
 - For every inline style color, border-color, and background, use ONLY CSS variables from this set (never raw hex): var(--iw-slate-950) through var(--iw-slate-50), var(--iw-teal), var(--iw-teal-light), var(--iw-teal-dim), var(--iw-teal-ghost), var(--iw-orange), var(--iw-orange-dim), var(--iw-orange-ghost), var(--iw-white), var(--iw-off-white). Example: color: var(--iw-slate-700);
 - Prefer semantic <ul>/<li> for bullet lists inside scope blocks when listing deliverables or milestones.
 - On every card, scope block, phase block, outcome card, and each direct child of a CSS grid wrapper, include both break-inside: avoid and page-break-inside: avoid in the inline style (Chromium PDF print follows break-inside more reliably).
+- ALWAYS keep the stable class names exactly as shown in the design-system patterns below ("pain-card", "scope-card", "roadmap-card", "outcome-card", "why-block", "next-step-card") on each card wrapper - the print stylesheet protects elements by class and the inline style is defense-in-depth only.
 
 DESIGN SYSTEM - use these patterns (colors via variables only):
 
@@ -105,13 +144,13 @@ DESIGN SYSTEM - use these patterns (colors via variables only):
 <p style="font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6; margin-bottom: 10px;">Text here.</p>
 
 ━━ PAIN POINT CARD (use in "What You Told Us") ━━
-<div style="border: 0.5px solid var(--iw-slate-100); margin-bottom: 8px; break-inside: avoid; page-break-inside: avoid;">
-  <div style="background: var(--iw-slate-50); padding: 8px 14px; border-bottom: 0.5px solid var(--iw-slate-100); font-size: 9pt; font-weight: 700; font-style: italic; color: var(--iw-slate-800);">[Pain Point Label]</div>
-  <div style="padding: 10px 14px; font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6;">[2-3 sentences: operational impact and what we are solving]</div>
+<div class="pain-card" style="border: 0.5px solid var(--iw-slate-100); margin-bottom: 8px; break-inside: avoid; page-break-inside: avoid;">
+  <div style="background: var(--iw-slate-50); padding: 8px 14px; border-bottom: 0.5px solid var(--iw-slate-100); font-size: 9pt; font-weight: 700; font-style: italic; color: var(--iw-slate-800);">[Short label taken from intake, e.g. Goals, Audience, Content]</div>
+  <div style="padding: 10px 14px; font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6;">[2-3 neutral sentences paraphrasing what they wrote in website intake, not generic consulting themes]</div>
 </div>
 
 ━━ SCOPE BLOCK (one per major deliverable, in "Detailed Scope of Work") ━━
-<div style="margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid;">
+<div class="scope-card" style="margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid;">
   <div style="background: var(--iw-slate-950); padding: 10px 14px;">
     <div style="font-size: 9.5pt; font-weight: 700; color: var(--iw-white);">[Deliverable Name]</div>
     <div style="font-size: 8.5pt; color: var(--iw-teal-light); margin-top: 3px; font-style: italic;">You said: [verbatim or close paraphrase of pain point, no em or en dashes]</div>
@@ -132,7 +171,7 @@ DESIGN SYSTEM - use these patterns (colors via variables only):
 ━━ ROADMAP GRID (2x2, in "Implementation Roadmap") ━━
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px;">
   [Repeat 4 times:]
-  <div style="border: 0.5px solid var(--iw-slate-100); break-inside: avoid; page-break-inside: avoid;">
+  <div class="roadmap-card" style="border: 0.5px solid var(--iw-slate-100); break-inside: avoid; page-break-inside: avoid;">
     <div style="background: var(--iw-slate-950); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;">
       <div style="font-size: 9pt; font-weight: 700; color: var(--iw-white);">[Phase Name]</div>
       <div style="font-size: 8pt; font-weight: 700; color: var(--iw-teal-light);">Weeks [X-Y]</div>
@@ -149,26 +188,26 @@ DESIGN SYSTEM - use these patterns (colors via variables only):
 ━━ OUTCOMES GRID (3-column cards, in "Expected Operational Outcomes") ━━
 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 4px;">
   [Repeat 5-6 times:]
-  <div style="border: 0.5px solid var(--iw-slate-100); border-top: 2px solid var(--iw-teal); padding: 12px 14px; break-inside: avoid; page-break-inside: avoid;">
+  <div class="outcome-card" style="border: 0.5px solid var(--iw-slate-100); border-top: 2px solid var(--iw-teal); padding: 12px 14px; break-inside: avoid; page-break-inside: avoid;">
     <div style="font-size: 9.5pt; font-weight: 700; color: var(--iw-slate-800); margin-bottom: 5px;">[Outcome Title]</div>
     <div style="font-size: 9pt; color: var(--iw-slate-500); line-height: 1.5;">[1-2 sentences, measurable, industry-specific; no em or en dashes]</div>
   </div>
 </div>
 
 ━━ WHY INTRAWEB BLOCK (title must stay with the teal panel; avoid orphan headings across pages) ━━
-<div style="break-inside: avoid-page; page-break-inside: avoid;">
+<div class="why-block" style="break-inside: avoid-page; page-break-inside: avoid;">
   <div style="font-size: 10pt; font-weight: 700; color: var(--iw-teal-dim); text-transform: uppercase; letter-spacing: 0.05em; margin: 22px 0 10px;">Why IntraWeb</div>
   <div style="background: var(--iw-teal-ghost); border: 0.5px solid var(--iw-slate-100); padding: 20px 24px; margin-bottom: 4px; break-inside: avoid; page-break-inside: avoid;">
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
     <div>
-      <p style="font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6; margin-bottom: 10px;">[Paragraph 1: specific to their industry and pain points. No generic claims. No em or en dashes.]</p>
-      <p style="font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6;">[Paragraph 2: execution focus, delivery speed, real results from day one. No em or en dashes.]</p>
+      <p style="font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6; margin-bottom: 10px;">[Paragraph 1: calm, neutral fit to their industry and intake. No slogans. No em or en dashes.]</p>
+      <p style="font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6;">[Paragraph 2: matter-of-fact delivery and communication norms. No speed brags. No em or en dashes.]</p>
     </div>
     <div>
       [Repeat 3 times:]
       <div style="background: var(--iw-white); border: 0.5px solid var(--iw-slate-100); padding: 10px 14px; margin-bottom: 8px;">
-        <div style="font-size: 9pt; font-weight: 700; color: var(--iw-slate-800); margin-bottom: 3px;">[Differentiator Title]</div>
-        <div style="font-size: 8.5pt; color: var(--iw-slate-500);">[One sentence]</div>
+        <div style="font-size: 9pt; font-weight: 700; color: var(--iw-slate-800); margin-bottom: 3px;">[Neutral differentiator title: avoid "fast", "fastest", "instant". Examples: Integrated delivery, Phased rollout, Single-team ownership]</div>
+        <div style="font-size: 8.5pt; color: var(--iw-slate-500);">[One factual sentence, no hype]</div>
       </div>
     </div>
   </div>
@@ -178,7 +217,7 @@ DESIGN SYSTEM - use these patterns (colors via variables only):
 ━━ NEXT STEPS (2x2 card grid - required layout) ━━
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 8px;">
   [Repeat 4 times, each cell is a card:]
-  <div style="border: 0.5px solid var(--iw-slate-100); border-radius: 12px; padding: 16px 16px 14px; background: var(--iw-off-white); break-inside: avoid; page-break-inside: avoid; min-height: 100px;">
+  <div class="next-step-card" style="border: 0.5px solid var(--iw-slate-100); border-radius: 12px; padding: 16px 16px 14px; background: var(--iw-off-white); break-inside: avoid; page-break-inside: avoid; min-height: 100px;">
     <div style="display: flex; align-items: flex-start; gap: 12px;">
       <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--iw-teal); color: var(--iw-white); font-size: 10pt; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,194,168,0.35);">[N]</div>
       <div style="flex: 1; min-width: 0;">
@@ -190,27 +229,28 @@ DESIGN SYSTEM - use these patterns (colors via variables only):
 </div>
 
 CONTENT RULES:
-1. Every section must directly reference the client's industry and pain points - no generic filler.
+1. Ground sections in the client's industry and WEBSITE INTAKE; avoid generic consulting filler.
 2. Never use em dash (U+2014) or en dash (U+2013) in any visible copy; use commas, colons, or hyphen-minus (-) instead.
-3. "What You Told Us": one pain point card per distinct pain point from the payload.
-4. "Detailed Scope of Work": ${lineItemsRules}
-5. "Implementation Roadmap": 4 phase cards: Foundation, Core Build, Integration, Launch and Optimization.
-6. "Expected Outcomes": 5-6 cards. Measurable. Specific to their industry. No vague claims.
-7. "Why IntraWeb": left column prose references their exact situation. Right column 3 differentiator pills. Keep the section title immediately above the teal panel in one print block.
-8. "Next Steps": 4 steps. Step 1 = kickoff call within 48 hrs. Step 4 = system live in 8 weeks.
-9. Do not fabricate facts not in the payload. If a detail is missing, write around it naturally.`,
+3. "Executive Summary": exactly 2 paragraphs. Paragraph 1 MUST state the deal tier using deal property "tier" from DATA when it is set (same spelling and casing as DATA). If "tier" is not set, use "Deal tier display" from DATA. Paragraph 2 describes what we are delivering using line item names from DATA and website intake only. Neutral tone. No dollar amounts.
+4. "What You Told Us": cards MUST be grounded ONLY in WEBSITE INTAKE TO CLIENT (and the website-intake portions of FULL DEAL NOTES). Every card must map to concrete intake content (goals, pages, features, budget, audience, design, etc.). Forbidden: generic consulting themes not written in intake. Minimum 2 cards, maximum 6.
+5. "Detailed Scope of Work": ${lineItemsRules} When MANDATORY SCOPE TITLES lists numbered items, you MUST output one scope-card per item with that EXACT title string. Under "We will:", bullets must relate to that line item and intake, not unrelated platforms.
+6. "Implementation Roadmap": 4 phase cards (Foundation, Core Build, Integration, Launch and Optimization). Each phase's bullets may ONLY reference (i) line item names from DATA, (ii) pages/features/goals explicitly named in WEBSITE INTAKE or FULL DEAL NOTES. Do not invent tools, vendors, or integrations not mentioned.
+7. "Expected Outcomes": 5-6 cards. Measurable where intake allows; otherwise restrained, neutral statements.
+8. "Why IntraWeb": left column ties calmly to their situation. Right column: three neutral pills; do NOT use "Fast Implementation" or similar speed-first titles. Prefer "Phased delivery", "Integrated build", or "Structured communication".
+9. "Next Steps": 4 steps. Step 1 = kickoff call within 48 hrs. Step 4 = system live in 8 weeks.
+10. Do not fabricate facts. Any dollar figure in body copy must match INVESTMENT in DATA (quoted total, 40% upfront, remainder only). Never cite template tier monthly unless it appears as a line item.`,
 
-      userPrompt: `Generate output for this client. All client facts and commercial figures MUST come from the DATA block below - never substitute placeholder client names or generic dollar amounts.
+      userPrompt: `Generate output for this client. Narrative truth sources are ONLY: (A) website intake in the sections below, and (B) deal tier in DATA. Client facts must match DATA. Dollar amounts must match INVESTMENT in DATA only.
 
-First, output the <<<PAIN_SUMMARY>>> ... <<<END_PAIN_SUMMARY>>> block exactly as specified in OUTPUT RULES (plain text inside the delimiters, then nothing until the HTML begins).
+First, output the <<<PAIN_SUMMARY>>> ... <<<END_PAIN_SUMMARY>>> block exactly as specified in OUTPUT RULES, then output the inner HTML body (no other text before HTML).
 
 Then output the inner HTML body sections in order using the design system components above:
-1. Executive Summary: 2 prose paragraphs. Reference their specific operational challenges. If LINE ITEMS exist, summarize the bundle (e.g. website + automation) without inventing numbers not in the payload.
-2. What You Told Us: one pain point card per pain point.
-3. Detailed Scope of Work: when LINE ITEMS exist, align scope blocks with each line item by name and tie to pain points; otherwise one block per major pain point. "You said / We will" pattern. Use lists where appropriate.
-4. Implementation Roadmap: 2x2 grid, 4 phase cards, Weeks 1-2 through 7-8.
-5. Expected Operational Outcomes: 3-column grid, 5-6 outcome cards. Measurable and industry-specific.
-6. Why IntraWeb: split block: left prose (2 paragraphs, industry-specific), right 3 differentiator pills. Follow the WHY INTRAWEB BLOCK pattern so the heading stays with the panel.
+1. Executive Summary: per CONTENT RULES (verbatim deal tier string first).
+2. What You Told Us: per CONTENT RULES; ground every card in WEBSITE INTAKE or FULL DEAL NOTES text.
+3. Detailed Scope of Work: follow MANDATORY SCOPE TITLES exactly when line items exist; "You said / We will" pattern tied to intake quotes.
+4. Implementation Roadmap: per rule 6; no invented stack or timeline promises beyond week ranges given.
+5. Expected Operational Outcomes: 3-column grid, 5-6 outcome cards. Neutral, intake-grounded.
+6. Why IntraWeb: split block per CONTENT RULES (no speed-bravado titles).
 7. Next Steps: 2x2 grid, 4 numbered steps with teal circle numbers.
 
 DATA (dynamic - this run only):
@@ -219,9 +259,14 @@ ${commercialContext}
 LINE ITEMS (quoted components - scope and narrative must reflect each when present):
 ${lineItemsBlock}
 
-PAIN POINTS - address every one explicitly (split into distinct cards when multiple themes appear):
+WEBSITE INTAKE TO CLIENT (primary source for <<<PAIN_SUMMARY>>> intake sentences and for "What You Told Us" cards):
 """
-${intakePainPoints}
+${whatYouToldUsSource}
+"""
+
+FULL DEAL NOTES (deal_pain_points and related; use for grounding scope, roadmap, and cards when intake above is short):
+"""
+${fullContextNotes}
 """`,
 
       maxTokens: 8000,

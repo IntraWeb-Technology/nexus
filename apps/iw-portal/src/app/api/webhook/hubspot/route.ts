@@ -1,3 +1,5 @@
+import { hubspotDealPortalPlanPropertyName } from '@/lib/hubspot/portal-plan-slug'
+import { syncPortalPlanSlugFromHubSpotDeal } from '@/lib/hubspot/sync-portal-plan-slug'
 import { mapDealStageToPortal } from '@/lib/hubspot/stageMap'
 import {
   mergeHubSpotWebhookIntoCrmMirror,
@@ -58,6 +60,17 @@ export async function POST(request: Request) {
           })
         }
       }
+
+      const planProp = hubspotDealPortalPlanPropertyName()
+      if (
+        typeof o.propertyName === 'string' &&
+        o.propertyName.toLowerCase() === planProp.toLowerCase()
+      ) {
+        const dealId = o.dealId ?? o.objectId
+        if (dealId != null) {
+          await syncPortalPlanSlugFromHubSpotDeal(supabase, String(dealId), o.propertyValue as string | undefined)
+        }
+      }
       return NextResponse.json({ ok: true })
     }
 
@@ -82,6 +95,16 @@ export async function POST(request: Request) {
       }
       if (ev.subscriptionType === 'deal.propertyChange' && ev.propertyName === 'dealstage') {
         await handleDealStageChange(supabase, ev)
+      }
+
+      const planProp = hubspotDealPortalPlanPropertyName()
+      if (
+        ev.subscriptionType === 'deal.propertyChange' &&
+        typeof ev.propertyName === 'string' &&
+        ev.propertyName.toLowerCase() === planProp.toLowerCase() &&
+        ev.objectId != null
+      ) {
+        await syncPortalPlanSlugFromHubSpotDeal(supabase, String(ev.objectId), ev.propertyValue)
       }
     }
 

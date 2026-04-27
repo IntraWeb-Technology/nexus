@@ -1,6 +1,5 @@
 'use client'
 
-import { BillingPortalButton } from '@/components/portal/BillingPortalButton'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import {
@@ -10,10 +9,8 @@ import {
 } from '@/lib/billing/billing-ui-serialize'
 import { buildInvoicesCsv, downloadCsvText } from '@/lib/billing/csv'
 import { formatCurrency, formatInvoiceDate, formatRelativeDate } from '@/lib/billing/format'
-import type { MaintenancePackagePublic } from '@/lib/stripe/maintenance-packages'
 import type { SubscriptionRow } from '@/lib/supabase/types'
 import { useMemo, useState } from 'react'
-import { MaintenancePackageCards } from './maintenance-package-cards'
 import { InvoicesTable } from './invoices-table'
 
 type TabId = 'all' | 'open' | 'paid' | 'drafts'
@@ -37,27 +34,16 @@ function timelineStatusText(card: BillingTimelineCard): string {
   return 'Upcoming'
 }
 
-function subscriptionIsActive(status: SubscriptionRow['status'] | null | undefined): boolean {
-  return status === 'active' || status === 'trialing'
-}
-
 export function InvoicesSection({
   invoices,
   projectSlug,
   subscription,
-  maintenancePackages = [],
 }: {
   invoices: BillingUiInvoice[]
   projectSlug: string
   subscription: SubscriptionRow | null
-  maintenancePackages?: MaintenancePackagePublic[]
 }) {
   const [tab, setTab] = useState<TabId>('all')
-  const [historyOpen, setHistoryOpen] = useState(false)
-  const [checkoutStartingId, setCheckoutStartingId] = useState<string | null>(null)
-  const [checkoutError, setCheckoutError] = useState<string | null>(null)
-
-  const hasActiveMaintenance = subscriptionIsActive(subscription?.status)
 
   const counts = useMemo(() => {
     const open = invoices.filter((r) => r.status === 'pending' || r.status === 'overdue').length
@@ -75,29 +61,6 @@ export function InvoicesSection({
     { id: 'paid', label: 'Paid', count: counts.paid },
     { id: 'drafts', label: 'Drafts', count: counts.drafts },
   ]
-
-  async function startMaintenanceCheckout(packageId: string) {
-    setCheckoutError(null)
-    setCheckoutStartingId(packageId)
-    try {
-      const res = await fetch('/api/billing/create-maintenance-checkout', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ package_id: packageId }),
-      })
-      const data = (await res.json()) as { url?: string; error?: string }
-      if (!res.ok) {
-        setCheckoutError(data.error || 'Could not start checkout')
-        return
-      }
-      if (data.url) window.location.assign(data.url)
-      else setCheckoutError('No checkout URL returned')
-    } catch {
-      setCheckoutError('Network error, try again')
-    } finally {
-      setCheckoutStartingId(null)
-    }
-  }
 
   return (
     <section id="invoice-history" className="space-y-4">
@@ -147,71 +110,6 @@ export function InvoicesSection({
         </div>
       </div>
 
-      <div className="space-y-2 rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-surface-elevated)] p-4 shadow-[var(--iw-shadow-1)]">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-[var(--iw-text-primary)]">Monthly Maintenance</h3>
-            <p className="mt-0.5 text-xs text-[var(--iw-text-muted)]">Recurring support and optimization billing.</p>
-          </div>
-          <Badge variant={timeline.maintenanceSummary.openCount > 0 ? 'amber' : 'green'}>
-            {timeline.maintenanceSummary.openCount > 0
-              ? 'Due'
-              : timeline.maintenanceSummary.subscriptionStatus
-                ? timeline.maintenanceSummary.subscriptionStatus.replace(/_/g, ' ')
-                : 'Current'}
-          </Badge>
-        </div>
-        <div className="grid grid-cols-2 gap-2 text-xs text-[var(--iw-text-secondary)]">
-          <p>
-            <span className="text-[var(--iw-text-muted)]">Latest:</span>{' '}
-            {timeline.maintenanceSummary.latest?.invoiceNumber ?? '—'}
-          </p>
-          <p className="text-right font-medium text-[var(--iw-text-primary)]">
-            {timeline.maintenanceSummary.latest
-              ? formatCurrency(timeline.maintenanceSummary.latest.amountCents, timeline.maintenanceSummary.latest.currency)
-              : '—'}
-          </p>
-          <p>
-            <span className="text-[var(--iw-text-muted)]">Open invoices:</span> {timeline.maintenanceSummary.openCount}
-          </p>
-          <p className="text-right">
-            <span className="text-[var(--iw-text-muted)]">Open balance:</span>{' '}
-            {formatCurrency(
-              timeline.maintenanceSummary.totalOpenCents,
-              timeline.maintenanceSummary.latest?.currency ?? invoices[0]?.currency ?? 'usd',
-            )}
-          </p>
-        </div>
-        <div className="mt-3 space-y-2 border-t border-[var(--iw-border)] pt-3">
-          {hasActiveMaintenance ? (
-            <BillingPortalButton
-              label="Manage subscription & payment method"
-              buttonVariant="outline"
-              className="w-full sm:w-auto"
-            />
-          ) : maintenancePackages.length > 0 ? (
-            <MaintenancePackageCards
-              packages={maintenancePackages}
-              checkoutStartingId={checkoutStartingId}
-              onSubscribe={startMaintenanceCheckout}
-              error={checkoutError}
-            />
-          ) : (
-            <p className="text-xs text-[var(--iw-text-muted)]">
-              No maintenance plans are listed in the portal yet. If your project includes a retainer, your team can enable
-              plans in configuration — or ask your IntraWeb contact to send you a subscription link.
-            </p>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setHistoryOpen((v) => !v)}
-          className="mt-1 inline-flex items-center rounded-[var(--iw-radius-control)] border border-[var(--iw-border)] bg-[var(--iw-surface)] px-3 py-1.5 text-xs font-medium text-[#14b8a6] transition-colors hover:border-[#14b8a6]/40"
-        >
-          {historyOpen ? 'Hide history' : 'View history'}
-        </button>
-      </div>
-
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-semibold tracking-tight text-[var(--iw-text-primary)]">Invoice History</h2>
         <Button
@@ -254,20 +152,14 @@ export function InvoicesSection({
           )
         })}
       </div>
-      {historyOpen ? (
-        filtered.length === 0 ? (
-          <p className="rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-surface-elevated)] px-4 py-8 text-center text-sm text-[var(--iw-text-secondary)]">
-            {tab === 'all'
-              ? 'No matching invoices in this view.'
-              : `No ${tab === 'drafts' ? 'draft' : tab} invoices in this view.`}
-          </p>
-        ) : (
-          <InvoicesTable rows={filtered} projectSlug={projectSlug} />
-        )
-      ) : (
-        <p className="rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-surface-elevated)] px-4 py-5 text-sm text-[var(--iw-text-secondary)]">
-          History is collapsed for mobile readability. Use <span className="font-medium text-[var(--iw-text-primary)]">View history</span> in the maintenance card to expand detailed rows.
+      {filtered.length === 0 ? (
+        <p className="rounded-[var(--iw-radius-card)] border border-[var(--iw-border)] bg-[var(--iw-surface-elevated)] px-4 py-8 text-center text-sm text-[var(--iw-text-secondary)]">
+          {tab === 'all'
+            ? 'No matching invoices in this view.'
+            : `No ${tab === 'drafts' ? 'draft' : tab} invoices in this view.`}
         </p>
+      ) : (
+        <InvoicesTable rows={filtered} projectSlug={projectSlug} />
       )}
     </section>
   )

@@ -7,6 +7,7 @@ import {
 } from '@/lib/data/link-hubspot-provisioned-clerk'
 import { insertProvisionedEngagementContent } from '@/lib/data/provision-client-engagement'
 import { applyAddInvoice } from '@/lib/n8n/apply-add-invoice'
+import { normalizeMaintenancePlanSlug } from '@/lib/stripe/maintenance-packages'
 import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webhooks'
 import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { progressFromMilestones } from '@/lib/progress'
@@ -421,6 +422,7 @@ export async function POST(request: Request) {
             start_date: data.start_date,
             estimated_launch: null,
             hubspot_deal_id: data.hubspot_deal_id,
+            portal_plan_slug: normalizeMaintenancePlanSlug(data.portal_plan_slug ?? null),
           })
           .select('id')
           .single()

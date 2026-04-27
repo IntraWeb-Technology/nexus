@@ -1,7 +1,12 @@
 import { billingAppOrigin } from '@/lib/billing/app-origin'
 import { pickActiveProjectForPortal } from '@/lib/data/portal'
 import { ensureStripeCustomerForPortalClient } from '@/lib/stripe/ensure-stripe-customer'
-import { findMaintenancePackageById, getMaintenancePackagesFromEnv } from '@/lib/stripe/maintenance-packages'
+import {
+  findMaintenancePackageById,
+  getMaintenancePackagesFromEnv,
+  maintenancePackageEligibleForPlanSlug,
+  normalizeMaintenancePlanSlug,
+} from '@/lib/stripe/maintenance-packages'
 import { getStripe } from '@/lib/stripe/server'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { Client, Project } from '@/lib/supabase/types'
@@ -23,12 +28,6 @@ export async function POST(request: Request) {
   }
   if (!packageId || typeof packageId !== 'string') {
     return NextResponse.json({ error: 'package_id required' }, { status: 400 })
-  }
-
-  const packages = getMaintenancePackagesFromEnv()
-  const pkg = findMaintenancePackageById(packages, packageId)
-  if (!pkg) {
-    return NextResponse.json({ error: 'Unknown or unavailable maintenance package' }, { status: 400 })
   }
 
   const { userId } = await auth()
@@ -61,6 +60,17 @@ export async function POST(request: Request) {
   const cookieStore = await cookies()
   const preferredSlug = cookieStore.get(PROJECT_COOKIE)?.value
   const project = pickActiveProjectForPortal(projectRows as Project[], preferredSlug)
+
+  const packages = getMaintenancePackagesFromEnv()
+  const pkg = findMaintenancePackageById(packages, packageId)
+  if (!pkg) {
+    return NextResponse.json({ error: 'Unknown or unavailable maintenance package' }, { status: 400 })
+  }
+
+  const planSlug = normalizeMaintenancePlanSlug(project.portal_plan_slug ?? null)
+  if (!maintenancePackageEligibleForPlanSlug(pkg, planSlug)) {
+    return NextResponse.json({ error: 'Unknown or unavailable maintenance package' }, { status: 400 })
+  }
 
   const { data: activeSub } = await supabase
     .from('subscriptions')

@@ -49,18 +49,17 @@ export function MaintenancePackageCards({
   checkoutStartingId,
   onSubscribe,
   error,
+  leadText = "Choose a plan. You're entitled to what's listed on each card; billing runs monthly in Stripe and you can update payment details anytime.",
 }: {
   packages: MaintenancePackagePublic[]
   checkoutStartingId: string | null
   onSubscribe: (packageId: string) => void
   error: string | null
+  leadText?: string
 }) {
   return (
     <div>
-      <p className="mb-3 text-xs text-[var(--iw-text-muted)]">
-        Choose a plan. You&apos;re entitled to what&apos;s listed on each card; billing runs monthly in Stripe and you
-        can update payment details anytime.
-      </p>
+      <p className="mb-3 text-xs text-[var(--iw-text-muted)]">{leadText}</p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {packages.map((pkg) => (
           <div

@@ -60,6 +60,17 @@ const logoHtml = (() => {
   return `<div class="doc-header__wordmark" aria-hidden="true">IntraWeb</div>`;
 })();
 
+const stripIntakeJsonTails = (text) => {
+  let s = String(text || '');
+  for (const re of [
+    /\nWebsite intake \(JSON\):[\s\S]*$/i,
+    /\nWebsite intake \(structured fields\):[\s\S]*$/i,
+  ]) {
+    s = s.replace(re, '');
+  }
+  return s.trim();
+};
+
 /** Short themes for PDF - no raw intake dump, JSON, or PII. */
 const summarizeIntakeForPdf = () => {
   const summary = String(d.painPointSummary || '').trim();
@@ -87,9 +98,6 @@ const summarizeIntakeForPdf = () => {
   return noEmDash(raw || 'No intake themes were captured for this opportunity.');
 };
 
-const intakeThemesText = summarizeIntakeForPdf();
-const intakeThemesHtml = `<p class="quote quote--themes">${escapeHtml(intakeThemesText).replace(/\n/g, '<br/>')}</p>`;
-
 const contactDisplay = d.contactName || d.contactFirstName || '';
 const lineItems = Array.isArray(d.lineItems) ? d.lineItems : [];
 const lineItemsSubtotal =
@@ -107,27 +115,10 @@ const finalQuotedPdf =
       ? dealAmtPdf
       : tierAmtPdf;
 
-const isRecurringLineItem = (name) => {
-  const n = String(name || '').toLowerCase();
-  return /\bretainer\b/.test(n) || /\bmaintenance\b/.test(n) || /\bmonthly\b/.test(n);
-};
-
-const monthlyFromLineItems = lineItems
-  .filter((li) => isRecurringLineItem(li.name))
-  .reduce((s, li) => s + (Number(li.amount) || 0), 0);
-
-const displayMonthlyRecurring =
-  monthlyFromLineItems > 0 ? monthlyFromLineItems : Number(d.tierMonthly) || 0;
-
-const upfrontPdf =
-  lineItemsSubtotal > 0 ? Math.round(lineItemsSubtotal * 0.33 * 100) / 100 : Number(d.upfrontDue) || 0;
-
-const afterUpfront = Math.max(0, finalQuotedPdf - upfrontPdf);
-const launchBalancePdf = afterUpfront + displayMonthlyRecurring;
-
-const tierMonthlyText = formatCurrency(displayMonthlyRecurring);
+const upfrontPdf = Math.round(finalQuotedPdf * 0.4 * 100) / 100;
+const remainingBalancePdf = Math.max(0, finalQuotedPdf - upfrontPdf);
 const upfrontDueText = formatCurrency(upfrontPdf);
-const launchBalanceText = formatCurrency(launchBalancePdf);
+const remainingBalanceText = formatCurrency(remainingBalancePdf);
 
 const snapshotCompanyDisplay = noEmDash(String(d.companyDisplay || '').trim());
 const snapshotCompanyCell = snapshotCompanyDisplay || 'Not specified';
@@ -143,17 +134,33 @@ const snapshotIndustry = noEmDash(
 const snapshotWebsite = noEmDash(String(d.website || '').trim());
 const snapshotAddress = noEmDash(String(d.address || '').trim());
 
-const monthlyRowLabel =
-  monthlyFromLineItems > 0
-    ? 'Monthly recurring (retainer / maintenance from line items)'
-    : 'Monthly retainer (tier template)';
-
 const lineItemsRowsHtml = (() => {
   const rows = [];
   if (lineItems.length) {
+    const investmentSummary = lineItems
+      .map((li) => {
+        const desc = String(li.description || '').trim();
+        return desc ? `${li.name || 'Item'}: ${desc}` : String(li.name || 'Item');
+      })
+      .filter(Boolean)
+      .join('\n');
+    rows.push(
+      `<tr><td><strong>Investment summary</strong>${investmentSummary ? `<div class="muted" style="margin-top: 4px; line-height: 1.45;">${escapeHtml(investmentSummary).replace(/\n/g, '<br/>')}</div>` : ''}</td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf))}</strong></td></tr>`,
+    );
     for (const li of lineItems) {
+      const itemTier = String(li.tier || d.dealTierHubspot || d.hubspotTierRaw || d.tierLabel || '').trim();
+      const detailLines = [
+        itemTier ? `Tier: ${itemTier}` : '',
+        String(li.description || '').trim(),
+      ].filter(Boolean);
+      const itemLabel = [
+        `<strong>${escapeHtml(li.name || 'Item')}</strong>`,
+        detailLines.length
+          ? `<div class="muted" style="margin-top: 4px; line-height: 1.45;">${escapeHtml(detailLines.join('\n')).replace(/\n/g, '<br/>')}</div>`
+          : '',
+      ].join('');
       rows.push(
-        `<tr><td>${escapeHtml(li.name || 'Item')}</td><td class="num">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,
+        `<tr><td>${itemLabel}</td><td class="num">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,
       );
     }
     rows.push(
@@ -168,8 +175,10 @@ const lineItemsRowsHtml = (() => {
       `<tr class="line-table__quoted"><td><strong>Quoted total</strong></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf))}</strong></td></tr>`,
     );
   } else {
+    const tierRowLabel =
+      String(d.dealTierHubspot || d.hubspotTierRaw || d.tierLabel || d.tier || '').trim();
     rows.push(
-      `<tr><td>Tier / package (${escapeHtml(d.tierLabel || d.tier || '')})</td><td class="num">${escapeHtml(formatCurrency(d.tierAmount))}</td></tr>`,
+      `<tr><td><strong>Investment summary</strong><div class="muted" style="margin-top: 4px; line-height: 1.45;">${escapeHtml(tierRowLabel ? `Deal tier: ${tierRowLabel}` : 'No associated line items were found for this deal.')}</div></td><td class="num"><strong>${escapeHtml(formatCurrency(finalQuotedPdf || d.tierAmount))}</strong></td></tr>`,
     );
     if (discPdf > 0.005) {
       rows.push(
@@ -204,23 +213,19 @@ const bodyInner = (() => {
     .join('');
 })();
 
-const painShellPlain = noEmDash(
-  painSummaryForShell.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-);
-const usePainShell = painShellPlain.replace(/\s+/g, ' ').length > 48;
-const painShellSection = usePainShell
-  ? `<section class="doc-section doc-section--pain-shell">
+/** "What we heard" is Claude's professional summary of the website intake, not the raw JSON object. */
+const whatWeHeardBase =
+  painSummaryForShell ||
+  summarizeIntakeForPdf() ||
+  stripIntakeJsonTails(String(d.rawPainPoints || d.painPoints || '')).trim();
+const whatWeHeardPlain = noEmDash(whatWeHeardBase);
+const whatWeHeardBody =
+  whatWeHeardPlain.replace(/\s+/g, ' ').length >= 3
+    ? whatWeHeardPlain
+    : 'No website intake text was found on this deal. Add website intake details and re-run.';
+const whatWeHeardSection = `<section class="doc-section doc-section--pain-shell">
         <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>What we heard</h2>
-        <p class="body-text pain-shell">${escapeHtml(painShellPlain).replace(/\n/g, '<br/>')}</p>
-      </section>`
-  : '';
-const intakeThemesSection = usePainShell
-  ? ''
-  : `<section class="doc-section doc-section--intake-themes">
-        <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>Themes from intake</h2>
-        <div class="callout callout--orange">
-          ${intakeThemesHtml}
-        </div>
+        <p class="body-text pain-shell">${escapeHtml(whatWeHeardBody).replace(/\n/g, '<br/>')}</p>
       </section>`;
 
 const html = `<!DOCTYPE html>
@@ -258,7 +263,7 @@ const html = `<!DOCTYPE html>
     }
     @page {
       size: 8.5in 11in;
-      margin: 0;
+      margin: 0 !important;
     }
     * {
       box-sizing: border-box;
@@ -267,8 +272,8 @@ const html = `<!DOCTYPE html>
     }
     html,
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0 !important;
+      padding: 0 !important;
       background: var(--iw-slate-50);
       color: var(--iw-slate-700);
       font-family: 'DM Sans', system-ui, sans-serif;
@@ -278,6 +283,7 @@ const html = `<!DOCTYPE html>
       max-width: none;
       min-height: 10in;
       margin: 0;
+      padding: 0;
       background: var(--iw-slate-50);
       color: var(--iw-slate-700);
     }
@@ -297,6 +303,7 @@ const html = `<!DOCTYPE html>
       background: var(--iw-slate-950);
       border-bottom: 3px solid var(--iw-teal);
       color: var(--iw-white);
+      margin-top: 0;
     }
     .doc-header__logo {
       height: 36px;
@@ -645,6 +652,12 @@ const html = `<!DOCTYPE html>
       line-height: 1.5;
       margin-top: 8px;
     }
+    .proposal-body p,
+    .proposal-body li,
+    .body-text {
+      orphans: 3;
+      widows: 3;
+    }
     @media print {
       html,
       body {
@@ -671,6 +684,10 @@ const html = `<!DOCTYPE html>
         break-inside: avoid-page;
         page-break-inside: avoid;
       }
+      .line-table {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
       .line-table thead {
         display: table-header-group;
       }
@@ -678,16 +695,56 @@ const html = `<!DOCTYPE html>
         break-inside: avoid-page;
         page-break-inside: avoid;
       }
+      .line-table tr.line-table__schedule,
+      .line-table tr.line-table__schedule + tr,
+      .line-table tr.line-table__schedule + tr + tr,
+      .line-table tr.line-table__total {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .line-table tr.line-table__schedule {
+        break-before: avoid;
+        page-break-before: avoid;
+      }
+      .line-table tr.line-table__total {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
       .proposal-body h2,
       .doc-prose-h2 {
         break-after: avoid-page;
         page-break-after: avoid;
         break-inside: avoid;
       }
+      .proposal-body .scope-card,
+      .proposal-body .roadmap-card,
+      .proposal-body .outcome-card,
+      .proposal-body .next-step-card,
+      .proposal-body .pain-card,
+      .proposal-body .why-block,
+      .proposal-body .section-card,
+      .callout,
+      .callout--orange,
+      .callout--slate,
+      .doc-section--pain-shell,
+      .doc-section--intake-themes {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
       .proposal-body div[style*="display:grid"] > div,
       .proposal-body div[style*="display: grid"] > div {
         break-inside: avoid-page;
         page-break-inside: avoid;
+      }
+      .proposal-body hr.divider,
+      .proposal-body hr.divider + p,
+      .proposal-body hr.divider + p + .doc-body__cta {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .proposal-body hr.divider {
+        break-before: avoid;
+        page-break-before: avoid;
       }
     }
   </style>
@@ -742,8 +799,7 @@ const html = `<!DOCTYPE html>
         </div>
       </section>
 
-      ${painShellSection}
-      ${intakeThemesSection}
+      ${whatWeHeardSection}
 
       <section>
         <h2 class="doc-section__title"><span class="doc-section__accent" aria-hidden="true"></span>Investment summary</h2>
@@ -752,12 +808,11 @@ const html = `<!DOCTYPE html>
           <tbody>
             ${lineItemsRowsHtml}
             <tr class="line-table__schedule"><td colspan="2">Payment timing (estimate; final cadence on invoice)</td></tr>
-            <tr><td>${escapeHtml(monthlyRowLabel)}</td><td class="num">${escapeHtml(tierMonthlyText)}</td></tr>
-            <tr><td>${escapeHtml(lineItemsSubtotal > 0 ? 'Upfront due (33% of line-item subtotal)' : 'Upfront due')}</td><td class="num">${escapeHtml(upfrontDueText)}</td></tr>
-            <tr class="line-table__total"><td>Launch balance (estimate)</td><td class="num">${escapeHtml(launchBalanceText)}</td></tr>
+            <tr><td>Upfront due (40% of quoted total)</td><td class="num">${escapeHtml(upfrontDueText)}</td></tr>
+            <tr class="line-table__total"><td>Remaining balance</td><td class="num">${escapeHtml(remainingBalanceText)}</td></tr>
           </tbody>
         </table>
-        <p class="fine-print">Launch balance estimate = quoted total minus upfront plus first month of recurring (retainer/maintenance from line items when present, otherwise tier monthly). Final amounts on invoice.</p>
+        <p class="fine-print">Payment split shown as 40% upfront and 60% remaining from quoted total. Final amounts on invoice.</p>
       </section>
 
       <section class="proposal-body">
