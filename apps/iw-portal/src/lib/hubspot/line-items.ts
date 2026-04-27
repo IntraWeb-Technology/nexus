@@ -59,20 +59,31 @@ function pagingAfter(data: unknown): string | undefined {
   return typeof after === 'string' && after.length > 0 ? after : undefined
 }
 
-async function fetchDealLineItemIds(dealId: string): Promise<string[]> {
+/**
+ * Line items associated with a deal or HubSpot CRM invoice (for descriptions and amounts).
+ */
+export async function fetchLineItemIdsForObject(
+  objectType: 'deals' | 'invoices',
+  objectId: string,
+): Promise<string[]> {
   const t = token()
-  if (!t) return []
-  const encoded = encodeURIComponent(dealId)
+  if (!t || !objectId.trim()) return []
+  const encoded = encodeURIComponent(objectId)
+  const segment = objectType === 'deals' ? 'deals' : 'invoices'
 
   const builders = [
     (after: string | undefined) => {
-      const url = new URL(`${HUBSPOT_API}/crm/v4/objects/deals/${encoded}/associations/line_items`)
+      const url = new URL(
+        `${HUBSPOT_API}/crm/v4/objects/${segment}/${encoded}/associations/line_items`,
+      )
       url.searchParams.set('limit', '500')
       if (after) url.searchParams.set('after', after)
       return url.toString()
     },
     (after: string | undefined) => {
-      const url = new URL(`${HUBSPOT_API}/crm/v3/objects/deals/${encoded}/associations/line_items`)
+      const url = new URL(
+        `${HUBSPOT_API}/crm/v3/objects/${segment}/${encoded}/associations/line_items`,
+      )
       url.searchParams.set('limit', '100')
       if (after) url.searchParams.set('after', after)
       return url.toString()
@@ -96,6 +107,55 @@ async function fetchDealLineItemIds(dealId: string): Promise<string[]> {
   }
 
   return []
+}
+
+async function fetchDealLineItemIds(dealId: string): Promise<string[]> {
+  return fetchLineItemIdsForObject('deals', dealId)
+}
+
+export type HubSpotLineItemText = {
+  id: string
+  name: string
+  description: string | null
+}
+
+/** Batch-read line item `name` + `description` for invoice/deal copy in the portal. */
+export async function batchReadLineItemTextRows(ids: string[]): Promise<HubSpotLineItemText[]> {
+  const t = token()
+  if (!t || ids.length === 0) return []
+
+  const rows: HubSpotLineItemText[] = []
+  const chunkSize = 100
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize)
+    const res = await fetch(`${HUBSPOT_API}/crm/v3/objects/line_items/batch/read`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${t}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: chunk.map((id) => ({ id })),
+        properties: [...LINE_ITEM_PROPERTIES],
+      }),
+      cache: 'no-store',
+    })
+    if (!res.ok) continue
+    const data = (await res.json()) as {
+      results?: Array<{ id: string; properties?: Record<string, string | null | undefined> }>
+    }
+    for (const item of data.results ?? []) {
+      const p = item.properties ?? {}
+      const name = (p.name && String(p.name).trim()) || ''
+      const desc = p.description != null && String(p.description).trim() ? String(p.description).trim() : null
+      rows.push({
+        id: String(item.id),
+        name,
+        description: desc,
+      })
+    }
+  }
+  return rows
 }
 
 async function batchReadLineItems(ids: string[]): Promise<HubSpotDealLineItem[]> {

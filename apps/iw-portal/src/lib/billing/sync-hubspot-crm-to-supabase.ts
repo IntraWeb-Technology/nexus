@@ -11,6 +11,15 @@ function crmRowToAddInvoiceData(row: HubSpotBillingInvoice): AddInvoiceData {
     status: row.status,
     due_date: row.due_date ? row.due_date.slice(0, 10) : undefined,
     hubspot_invoice_id: row.hubspotId,
+    ...(row.currency ? { currency: row.currency } : {}),
+    ...(row.billing_phase ? { billing_phase: row.billing_phase } : {}),
+    ...(row.billing_kind ? { billing_kind: row.billing_kind } : {}),
+    ...(row.milestone_order ? { milestone_order: row.milestone_order } : {}),
+    ...(row.external_source ? { external_source: row.external_source } : {}),
+    ...(row.external_object_id ? { external_object_id: row.external_object_id } : {}),
+    ...(row.service_period_start ? { service_period_start: row.service_period_start } : {}),
+    ...(row.service_period_end ? { service_period_end: row.service_period_end } : {}),
+    ...(row.maintenance_group_key ? { maintenance_group_key: row.maintenance_group_key } : {}),
   }
 }
 
@@ -22,13 +31,11 @@ function crmRowToAddInvoiceData(row: HubSpotBillingInvoice): AddInvoiceData {
 export async function syncHubspotCrmInvoicesToProject(
   projectId: string,
   crmInvoices: HubSpotBillingInvoice[],
-): Promise<{ processed: number; errors: number }> {
-  if (crmInvoices.length === 0) {
-    return { processed: 0, errors: 0 }
-  }
+): Promise<{ processed: number; errors: number; removed: number }> {
   const supabase = createServiceSupabase()
   let processed = 0
   let errors = 0
+  let removed = 0
   for (const row of crmInvoices) {
     const payload = crmRowToAddInvoiceData(row)
     const outcome = await applyAddInvoice(supabase, projectId, payload)
@@ -44,5 +51,40 @@ export async function syncHubspotCrmInvoicesToProject(
       )
     }
   }
-  return { processed, errors }
+
+  // Reconcile HubSpot deletions for this project:
+  // if an invoice used to be mirrored from HubSpot but no longer appears in the
+  // latest HubSpot fetch, remove its Supabase mirror row.
+  //
+  // Safety guard: only run deletion reconciliation when HubSpot returned at least
+  // one invoice this cycle. This avoids deleting everything on transient fetch
+  // failures that might return an empty list.
+  if (crmInvoices.length > 0) {
+    const currentHubspotIds = new Set(crmInvoices.map((i) => i.hubspotId))
+    const { data: mirroredRows, error: mirroredErr } = await supabase
+      .from('invoices')
+      .select('id, hubspot_invoice_id')
+      .eq('project_id', projectId)
+      .not('hubspot_invoice_id', 'is', null)
+
+    if (mirroredErr) {
+      errors += 1
+      console.error('[syncHubspotCrmInvoicesToProject/reconcile/list]', projectId, mirroredErr.message)
+    } else {
+      const staleIds = (mirroredRows ?? [])
+        .filter((r) => r.hubspot_invoice_id && !currentHubspotIds.has(String(r.hubspot_invoice_id)))
+        .map((r) => r.id)
+      if (staleIds.length > 0) {
+        const { error: delErr } = await supabase.from('invoices').delete().in('id', staleIds)
+        if (delErr) {
+          errors += 1
+          console.error('[syncHubspotCrmInvoicesToProject/reconcile/delete]', projectId, delErr.message)
+        } else {
+          removed = staleIds.length
+        }
+      }
+    }
+  }
+
+  return { processed, errors, removed }
 }

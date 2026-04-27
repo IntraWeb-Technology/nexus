@@ -60,6 +60,12 @@
   --iw-text: var(--text);
   --iw-text-2: var(--text-2);
   --iw-text-3: var(--text-3);
+  /* Aliases for billing / marketing tokens (maps to existing palette) */
+  --iw-surface: var(--surface);
+  --iw-surface-elevated: var(--iw-slate-3);
+  --iw-text-primary: var(--iw-text);
+  --iw-text-secondary: var(--iw-text-2);
+  --iw-text-muted: var(--iw-text-3);
 
   --iw-border: var(--hairline-2);
   --iw-border-2: var(--hairline-3);
@@ -130,6 +136,11 @@
   --iw-text: var(--text);
   --iw-text-2: var(--text-2);
   --iw-text-3: var(--text-3);
+  --iw-surface: var(--surface);
+  --iw-surface-elevated: var(--iw-slate-3);
+  --iw-text-primary: var(--iw-text);
+  --iw-text-secondary: var(--iw-text-2);
+  --iw-text-muted: var(--iw-text-3);
 
   --iw-border: var(--hairline);
   --iw-border-2: var(--hairline-2);

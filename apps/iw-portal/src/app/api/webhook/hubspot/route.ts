@@ -1,4 +1,8 @@
 import { mapDealStageToPortal } from '@/lib/hubspot/stageMap'
+import {
+  mergeHubSpotWebhookIntoCrmMirror,
+  mergeNormalizedHubSpotPayloadIntoCrmMirror,
+} from '@/lib/integrations/hubspot-crm-mirror'
 import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
@@ -39,6 +43,8 @@ export async function POST(request: Request) {
     if (raw && typeof raw === 'object' && !Array.isArray(raw) && 'action' in raw) {
       const o = raw as Record<string, unknown>
       const action = String(o.action ?? '')
+      await mergeNormalizedHubSpotPayloadIntoCrmMirror(supabase, o)
+
       if (action === 'deal_property_change' || action === 'hubspot_deal_stage') {
         const objectId = o.objectId ?? o.dealId
         const propertyValue = o.propertyValue ?? o.stage ?? o.dealstage
@@ -61,6 +67,15 @@ export async function POST(request: Request) {
     }
 
     for (const ev of events) {
+      const evRecord = ev as unknown as Record<string, unknown>
+      await mergeHubSpotWebhookIntoCrmMirror(supabase, {
+        subscriptionType: ev.subscriptionType,
+        objectId: ev.objectId,
+        propertyName: ev.propertyName,
+        propertyValue: ev.propertyValue,
+        raw: evRecord,
+      })
+
       if (ev.subscriptionType === 'contact.creation') {
         console.log('[hubspot] contact.creation', ev)
         continue

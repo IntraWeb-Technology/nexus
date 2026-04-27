@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-type Variant = 'primary' | 'ghost'
+type Variant = 'primary' | 'ghost' | 'outline'
 
 function SpinnerIcon() {
   return (
@@ -40,6 +40,8 @@ export function Button({
       'bg-[var(--accent)] text-white border border-[var(--accent)] shadow-[var(--iw-shadow-1)] hover:bg-[var(--accent-bright)] hover:border-[var(--accent-bright)] hover:shadow-[var(--iw-shadow-2)]',
     ghost:
       'bg-[var(--surface)] text-[var(--accent-bright)] border border-[var(--hairline-2)] hover:bg-[var(--surface-2)] hover:shadow-[var(--iw-shadow-1)]',
+    outline:
+      'bg-transparent text-[var(--iw-text-primary)] border border-[var(--iw-border)] hover:bg-[var(--iw-surface)] hover:border-[var(--iw-border-2)]',
   }
   return (
     <button

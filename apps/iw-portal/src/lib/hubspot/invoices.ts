@@ -1,6 +1,11 @@
 import type { HubSpotBillingInvoice } from '@/lib/billing/types'
 import type { HubSpotCrmObject } from '@/lib/hubspot/client'
 import { isHubSpotConfigured, requireHubSpotToken } from '@/lib/hubspot/config'
+import {
+  batchReadLineItemTextRows,
+  fetchLineItemIdsForObject,
+  type HubSpotLineItemText,
+} from '@/lib/hubspot/line-items'
 import type { InvoiceStatus } from '@/lib/supabase/types'
 
 const HUBSPOT_API = 'https://api.hubapi.com'
@@ -20,6 +25,11 @@ const INVOICE_READ_PROPERTIES = [
   'hs_subtotal',
   'hs_amount_billed',
   'hs_createdate',
+  'iw_billing_phase',
+  'iw_billing_kind',
+  'iw_service_period_start',
+  'iw_service_period_end',
+  'iw_maintenance_group_key',
 ] as const
 
 function token(): string | null {
@@ -67,7 +77,75 @@ function parseIsoDate(raw: string | null | undefined, fallback: string): string 
   return new Date(t).toISOString()
 }
 
-function mapInvoiceObject(o: HubSpotCrmObject): HubSpotBillingInvoice | null {
+function descriptionFromLineItems(items: HubSpotLineItemText[]): string | null {
+  if (items.length === 0) return null
+  const parts = items
+    .map((i) => {
+      const n = (i.name || '').trim()
+      const d = (i.description || '').trim()
+      if (n && d && d !== n) return `${n}: ${d}`
+      return n || d || ''
+    })
+    .filter(Boolean)
+  if (parts.length === 0) return null
+  return parts.join(' · ')
+}
+
+function parseBillingPhase(raw: string | null | undefined): HubSpotBillingInvoice['billing_phase'] {
+  const t = (raw || '').trim().toLowerCase()
+  if (!t) return null
+  // HubSpot dropdown labels often store human text, not internal option values.
+  const compact = t.replace(/[\s\-+]/g, '_').replace(/_+/g, '_')
+  if (compact === 'deposit' || t.includes('deposit')) return 'deposit'
+  if (
+    compact === 'build_qa' ||
+    compact === 'buildqa' ||
+    (t.includes('build') && t.includes('qa'))
+  ) {
+    return 'build_qa'
+  }
+  if (compact === 'handoff' || compact === 'hand_off' || t.includes('handoff') || t.includes('hand off')) {
+    return 'handoff'
+  }
+  if (compact === 'maintenance' || t.includes('maintenance') || t.includes('retainer')) return 'maintenance'
+  return null
+}
+
+function parseBillingKind(
+  raw: string | null | undefined,
+  phase: HubSpotBillingInvoice['billing_phase'],
+): HubSpotBillingInvoice['billing_kind'] {
+  const t = (raw || '').trim().toLowerCase()
+  if (t.includes('recurring')) return 'recurring_maintenance'
+  if (t.includes('project') && t.includes('milestone')) return 'project_milestone'
+  if (t === 'recurring_maintenance' || t === 'project_milestone') {
+    return t as HubSpotBillingInvoice['billing_kind']
+  }
+  if (phase === 'maintenance') return 'recurring_maintenance'
+  return 'project_milestone'
+}
+
+function deriveBillingPhaseFromText(raw: string | null | undefined): HubSpotBillingInvoice['billing_phase'] {
+  const t = (raw || '').toLowerCase()
+  if (!t) return null
+  if (t.includes('deposit')) return 'deposit'
+  if (t.includes('build') && t.includes('qa')) return 'build_qa'
+  if (t.includes('handoff') || t.includes('hand off')) return 'handoff'
+  if (t.includes('maintenance') || t.includes('retainer')) return 'maintenance'
+  return null
+}
+
+function parseIsoDateOnly(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const t = Date.parse(raw)
+  if (Number.isNaN(t)) return null
+  return new Date(t).toISOString().slice(0, 10)
+}
+
+function mapInvoiceObject(
+  o: HubSpotCrmObject,
+  lineItems?: HubSpotLineItemText[] | null,
+): HubSpotBillingInvoice | null {
   const p = o.properties ?? {}
   const status = mapHsStatus(p.hs_invoice_status)
   const amount_cents = pickAmountCents(p, status)
@@ -84,10 +162,25 @@ function mapInvoiceObject(o: HubSpotCrmObject): HubSpotBillingInvoice | null {
     (p.hs_number && String(p.hs_number)) ||
     `HS-${o.id}`
 
+  const fromLines = lineItems?.length ? descriptionFromLineItems(lineItems) : null
   const description =
     (p.hs_title && String(p.hs_title).trim()) ||
     (p.hs_comments && String(p.hs_comments).trim()) ||
+    (fromLines && fromLines) ||
     'Invoice'
+  const explicitPhase = parseBillingPhase(p.iw_billing_phase)
+  const inferredPhase = deriveBillingPhaseFromText(
+    `${p.hs_title || ''} ${p.hs_comments || ''} ${fromLines || ''}`.trim(),
+  )
+  const billingPhase = explicitPhase ?? inferredPhase
+  const billingKind = parseBillingKind(p.iw_billing_kind, billingPhase)
+  const milestoneOrder =
+    billingPhase === 'deposit' ? 1 : billingPhase === 'build_qa' ? 2 : billingPhase === 'handoff' ? 3 : null
+  const servicePeriodStart = parseIsoDateOnly(p.iw_service_period_start)
+  const servicePeriodEnd = parseIsoDateOnly(p.iw_service_period_end)
+  const maintenanceGroupKey = p.iw_maintenance_group_key ? String(p.iw_maintenance_group_key).trim() : null
+
+  const cur = p.hs_currency ? String(p.hs_currency).toLowerCase().replace(/[^a-z]/g, '').slice(0, 3) : ''
 
   return {
     hubspotId: String(o.id),
@@ -98,6 +191,15 @@ function mapInvoiceObject(o: HubSpotCrmObject): HubSpotBillingInvoice | null {
     created_at: created,
     due_date,
     payUrl: p.hs_invoice_link ? String(p.hs_invoice_link) : null,
+    ...(cur ? { currency: cur } : {}),
+    billing_phase: billingPhase,
+    billing_kind: billingKind,
+    milestone_order: milestoneOrder,
+    external_source: 'hubspot',
+    external_object_id: String(o.id),
+    service_period_start: servicePeriodStart,
+    service_period_end: servicePeriodEnd,
+    maintenance_group_key: maintenanceGroupKey,
   }
 }
 
@@ -249,6 +351,35 @@ async function batchReadInvoices(ids: string[]): Promise<HubSpotCrmObject[]> {
   return out
 }
 
+async function lineItemTextsByInvoiceId(invoiceIds: string[]): Promise<Map<string, HubSpotLineItemText[]>> {
+  const out = new Map<string, HubSpotLineItemText[]>()
+  if (invoiceIds.length === 0) return out
+
+  const lineIdsPerInvoice = new Map<string, string[]>()
+  await Promise.all(
+    invoiceIds.map(async (id) => {
+      const lineIds = await fetchLineItemIdsForObject('invoices', id)
+      if (lineIds.length > 0) lineIdsPerInvoice.set(id, lineIds)
+    }),
+  )
+
+  const allLineIds = [...new Set([...lineIdsPerInvoice.values()].flat())]
+  if (allLineIds.length === 0) return out
+
+  const texts = await batchReadLineItemTextRows(allLineIds)
+  const byLineId = new Map(texts.map((t) => [t.id, t]))
+
+  for (const [invId, lineIds] of lineIdsPerInvoice) {
+    const list: HubSpotLineItemText[] = []
+    for (const lid of lineIds) {
+      const row = byLineId.get(lid)
+      if (row) list.push(row)
+    }
+    if (list.length > 0) out.set(invId, list)
+  }
+  return out
+}
+
 /**
  * Loads HubSpot CRM invoices associated with the project deal and/or client contact.
  * Requires `HUBSPOT_PRIVATE_APP_TOKEN` with invoices + associations read scopes.
@@ -276,10 +407,18 @@ export async function fetchHubSpotBillingInvoices(opts: {
   if (unique.length === 0) return []
 
   const objects = await batchReadInvoices(unique)
+  const lineTexts = await lineItemTextsByInvoiceId(objects.map((o) => String(o.id)))
   const rows: HubSpotBillingInvoice[] = []
   for (const o of objects) {
-    const row = mapInvoiceObject(o)
-    if (row) rows.push(row)
+    const row = mapInvoiceObject(o, lineTexts.get(String(o.id)))
+    if (!row) continue
+    if (!row.billing_phase) {
+      console.warn('[hubspot/invoices] missing billing phase mapping', {
+        hubspotInvoiceId: row.hubspotId,
+        invoiceNumber: row.invoice_number,
+      })
+    }
+    rows.push(row)
   }
   return rows
 }

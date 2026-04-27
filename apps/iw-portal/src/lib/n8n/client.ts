@@ -8,6 +8,7 @@ import type {
   ProposalLifecyclePayload,
   StaffAlertPayload,
   StripeCatalogCheckoutPayload,
+  StripeSubscriptionSyncPayload,
 } from '@/lib/n8n/webhooks'
 
 function baseUrl(): string {
@@ -92,6 +93,11 @@ export async function triggerInvoicePaid(payload: InvoicePaidPayload): Promise<v
 /** Catalog Payment Link (or subscription link) checkout → n8n → HubSpot. */
 export async function triggerStripeCatalogCheckout(payload: StripeCatalogCheckoutPayload): Promise<void> {
   await dispatchCritical('triggerStripeCatalogCheckout', '/webhook/portal-stripe-catalog-payment', payload)
+}
+
+/** Stripe subscription lifecycle mirror to HubSpot Deal properties via n8n. */
+export async function triggerStripeSubscriptionSync(payload: StripeSubscriptionSyncPayload): Promise<void> {
+  await dispatchCritical('triggerStripeSubscriptionSync', '/webhook/portal-stripe-subscription-sync', payload)
 }
 
 export function triggerDocumentSigned(payload: DocumentSignedPayload): void {

@@ -54,6 +54,8 @@ async function main() {
         description: 'Automated n8n add_invoice test (hubspot_deal_id)',
         amount_cents: 5000,
         status: 'pending',
+        hubspot_invoice_id: `n8n-e2e-${Date.now()}`,
+        currency: 'usd',
       },
     }
     console.log('Target: hubspot_deal_id → project slug', byDeal.slug)

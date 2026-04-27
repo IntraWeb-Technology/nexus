@@ -1,4 +1,11 @@
-import type { ChangeOrderStatus, NotificationType, Plan } from '@/lib/supabase/types'
+import type {
+  BillingKind,
+  BillingPhase,
+  ChangeOrderStatus,
+  ExternalInvoiceSource,
+  NotificationType,
+  Plan,
+} from '@/lib/supabase/types'
 import type { EngagementPhase } from '@/lib/milestones-templates'
 import type { ProposalLifecycleEventType } from '@/lib/proposals/lifecycle'
 
@@ -60,6 +67,26 @@ export type AddInvoiceData = {
    * billing list with HubSpot-fetched invoices (`mergeBillingRows` in `src/lib/billing/types.ts`).
    */
   hubspot_invoice_id?: string
+  /** ISO 8601 or parseable date-time when the invoice was marked paid (e.g. HubSpot payment date). */
+  paid_at?: string
+  /** Three-letter ISO currency code (lowercase in DB), e.g. `usd`. */
+  currency?: string
+  /** Canonical billing timeline phase for UI grouping. */
+  billing_phase?: BillingPhase
+  /** Explicit billing kind so recurring rows do not mix with milestone rows. */
+  billing_kind?: BillingKind
+  /** Fixed ordering for phase timeline cards (1..3). */
+  milestone_order?: 1 | 2 | 3
+  /** External source for idempotent upserts by external object id. */
+  external_source?: ExternalInvoiceSource
+  /** Source object id (HubSpot invoice id, Stripe invoice id, etc.). */
+  external_object_id?: string
+  /** Recurring service period start date (YYYY-MM-DD). */
+  service_period_start?: string
+  /** Recurring service period end date (YYYY-MM-DD). */
+  service_period_end?: string
+  /** Optional recurring group key, e.g. monthly maintenance series id. */
+  maintenance_group_key?: string
 }
 
 /** Use `project_slug` **or** `hubspot_deal_id` (matches `projects.hubspot_deal_id`) to resolve the project. */
@@ -188,6 +215,32 @@ export interface StripeCatalogCheckoutPayload {
   /** Full Stripe session metadata (sku, type, hubspot_deal_id, project_slug, …). */
   metadata: Record<string, string>
   discounts?: StripeCatalogDiscountSummary | null
+}
+
+/** Stripe subscription lifecycle mirror payload (Stripe -> Supabase -> HubSpot Deal). */
+export interface StripeSubscriptionSyncPayload {
+  event: 'stripe_subscription_sync'
+  stripe_event_id: string
+  stripe_subscription_id: string
+  stripe_customer_id: string | null
+  status:
+    | 'active'
+    | 'trialing'
+    | 'past_due'
+    | 'canceled'
+    | 'unpaid'
+    | 'incomplete'
+    | 'incomplete_expired'
+  cancel_at_period_end: boolean
+  current_period_start: string | null
+  current_period_end: string | null
+  latest_invoice_id: string | null
+  currency: string | null
+  amount_cents: number | null
+  price_id: string | null
+  product_id: string | null
+  project_slug: string | null
+  hubspot_deal_id: string | null
 }
 
 export interface DocumentSignedPayload {

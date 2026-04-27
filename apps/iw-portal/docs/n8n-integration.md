@@ -300,14 +300,60 @@ Either `hubspot_contact_id` or `email` (matching the provisioned `clients.email`
     "amount_cents": 1500000,
     "status": "pending",
     "due_date": "2026-05-01",
-    "hubspot_invoice_id": "98765432109"
+    "hubspot_invoice_id": "98765432109",
+    "currency": "usd"
   }
 }
 ```
 
 `amount_cents` is an integer (e.g. `$1,500.00` → `150000`). `status` is one of: `paid`, `pending`, `overdue`, `void`.
 
+Optional fields on `data` (supported by [`applyAddInvoice`](../src/lib/n8n/apply-add-invoice.ts)):
+
+| Field | Type | Purpose |
+|--------|------|---------|
+| `currency` | string | Three-letter code (stored lowercase), e.g. `usd`. |
+| `paid_at` | ISO 8601 string | When the invoice was paid outside Stripe (HubSpot). Only written when `status` is `paid` and the value parses as a date. Example pair: `"status": "paid", "paid_at": "2026-04-20T15:00:00.000Z"`. |
+
 **`hubspot_invoice_id` (optional):** HubSpot CRM `invoices` object id. When n8n sends the **same** id on a later sync, the portal **updates** the existing Supabase row (amount, number, status, description, `project_id`) instead of inserting again. This keeps **Supabase as the billing source of truth** while **deduplicating** the merged client view: rows with a matching `hubspot_invoice_id` are not double-listed with HubSpot-fetched invoices in `mergeBillingRows`. **Omit** for portal-only invoices with no HubSpot invoice record.
+
+**Always send `hubspot_invoice_id` when the row comes from HubSpot CRM** so n8n retries and status changes update the same Supabase row instead of inserting duplicates (until the next Billing page CRM sync dedupes).
+
+### HubSpot CRM invoice → `data` field matrix
+
+Use this when building the JSON in a HubSpot workflow, n8n **Set** node, or Code node before calling the portal. Property names follow HubSpot CRM invoices (see [`mapInvoiceObject`](../src/lib/hubspot/invoices.ts) for how the portal reads the same object from the API).
+
+| HubSpot property (typical) | `add_invoice` `data` field | Supabase column | Notes |
+|-----------------------------|----------------------------|-------------------|--------|
+| Object `id` | `hubspot_invoice_id` | `hubspot_invoice_id` | **Strongly recommended** for upserts. |
+| `hs_invoice_number` or `hs_number` | `invoice_number` | `invoice_number` | |
+| `hs_title`, `hs_comments` (or your composed line-item text) | `description` | `description` | Shown in billing table, invoice detail, PDF. |
+| Balance / total (you choose rule; see portal `pickAmountCents`) | `amount_cents` | `amount_cents` | Integer cents. |
+| `hs_invoice_status` (mapped) | `status` | `status` | Map HubSpot to portal: `paid` → `paid`, `voided` → `void`, `open` / `draft` → `pending`, else `pending` or `overdue` if past due. |
+| `hs_due_date` | `due_date` | `due_date` | `YYYY-MM-DD` preferred. |
+| `hs_currency` | `currency` | `currency` | Optional. |
+| Payment / close date | `paid_at` | `paid_at` | Optional; use when `status` is `paid` and Stripe did not set it. |
+| Deal association | Top-level `hubspot_deal_id` on the request (not inside `data`) | `project_id` (resolved) | Must match `projects.hubspot_deal_id`. |
+
+### SYS 03 workflow: `portal-add-invoice` (repo export)
+
+The synced workflow [`packages/n8n-workflows/_synced-from-n8n/SYS 03 — Portal — HubSpot invoice → add_invoice __ isYyC3wLTBiGPhJS.json`](../../packages/n8n-workflows/_synced-from-n8n/SYS%2003%20%E2%80%94%20Portal%20%E2%80%94%20HubSpot%20invoice%20%E2%86%92%20add_invoice%20__%20isYyC3wLTBiGPhJS.json) exposes webhook path **`portal-add-invoice`**. Its **Build add_invoice payload** Code node normalizes inbound JSON for operators:
+
+- Copies **`hubspot_invoice_id`** from `hubspot_invoice_id`, `hs_invoice_id`, or `invoice_id`.
+- **`due_date`**: accepts `due_date` or `hs_due_date`, normalizes ISO timestamps to `YYYY-MM-DD`.
+- **`description`**: uses `description`, else `hs_title`, `hs_comments`, `name`, `subject`, else the literal `Invoice`.
+- Forwards optional **`currency`** and **`paid_at`** into `data` when present.
+
+Point your **upstream** HubSpot automation at this n8n webhook URL (or chain HubSpot → n8n Set fields → this workflow) so the POST body includes at least `hubspot_deal_id` **or** `project_slug`, plus invoice fields aligned with the table above.
+
+### Upstream mapping checklist (HubSpot → n8n → portal)
+
+1. **Deal** — Include `hubspot_deal_id` (string) on the webhook payload unless you use `project_slug` instead.
+2. **Invoice id** — Include the HubSpot CRM invoice object id as `hubspot_invoice_id` (or alias `hs_invoice_id` / `invoice_id` for SYS 03).
+3. **Amount** — Compute `amount_cents` as integer cents (never floats).
+4. **Status** — Map HubSpot `hs_invoice_status` to one of `paid`, `pending`, `overdue`, `void`.
+5. **Description** — Prefer a human-readable string (title + line items); avoid empty strings so the portal billing UI is not blank.
+6. **Paid HubSpot invoices** — Set `status: "paid"` and optional `paid_at` ISO so Supabase matches reality when Stripe is not in the loop.
 
 **Example body (by portal slug)**
 
@@ -342,7 +388,7 @@ Either `hubspot_contact_id` or `email` (matching the provisioned `clients.email`
      - `x-intrawebtech-secret: {{ $env.WEBHOOK_SECRET }}` (or n8n credential)  
    - **Body:** JSON from step 2.
 
-4. **Idempotency** — If HubSpot retries, you may create duplicate portal invoices. Optionally branch on HubSpot invoice ID in n8n (store last-synced IDs) or add app logic later.
+4. **Idempotency** — Send `hubspot_invoice_id` on every sync so [`applyAddInvoice`](../src/lib/n8n/apply-add-invoice.ts) updates the same row. Without it, HubSpot retries can insert duplicate Supabase rows until the next CRM merge on the Billing page.
 
 **Quick test (curl)**
 

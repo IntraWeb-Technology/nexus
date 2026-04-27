@@ -11,19 +11,17 @@ export const maxDuration = 60
 const MIN_AMOUNT_CENTS = 50
 
 export async function POST(request: Request) {
-  let invoiceId: string | undefined
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  let projectId: string | undefined
   try {
-    const body = (await request.json()) as { invoice_id?: string }
-    invoiceId = body.invoice_id
+    const body = (await request.json()) as { project_id?: string }
+    projectId = typeof body.project_id === 'string' ? body.project_id : undefined
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
-  if (!invoiceId || typeof invoiceId !== 'string') {
-    return NextResponse.json({ error: 'invoice_id required' }, { status: 400 })
-  }
-
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!projectId) return NextResponse.json({ error: 'project_id required' }, { status: 400 })
 
   let stripe: ReturnType<typeof getStripe>
   try {
@@ -46,54 +44,66 @@ export async function POST(request: Request) {
   const { data: project, error: pErr } = await supabase
     .from('projects')
     .select('*')
+    .eq('id', projectId)
     .eq('client_id', client.id)
-    .order('created_at', { ascending: true })
-    .limit(1)
     .maybeSingle()
   if (pErr || !project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
-  const { data: inv, error: iErr } = await supabase
+  const { data: openRows, error: iErr } = await supabase
     .from('invoices')
     .select('*')
-    .eq('id', invoiceId)
     .eq('project_id', project.id)
-    .maybeSingle()
-  if (iErr || !inv) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
+    .in('status', ['pending', 'overdue'])
+    .order('due_date', { ascending: true, nullsFirst: false })
+  if (iErr) return NextResponse.json({ error: 'Could not load invoices' }, { status: 500 })
 
-  const invoice = inv as Invoice
-  if (invoice.status !== 'pending' && invoice.status !== 'overdue') {
-    return NextResponse.json({ error: 'Invoice is not payable' }, { status: 400 })
+  const open = (openRows ?? []) as Invoice[]
+  if (open.length === 0) {
+    return NextResponse.json({ error: 'No open invoices payable in Stripe' }, { status: 400 })
   }
-  if (invoice.amount_cents < MIN_AMOUNT_CENTS) {
+
+  const total = open.reduce((s, inv) => s + inv.amount_cents, 0)
+  if (total < MIN_AMOUNT_CENTS) {
     return NextResponse.json({ error: 'Amount below Stripe minimum' }, { status: 400 })
   }
 
-  const currency = (invoice.currency ?? 'usd').toLowerCase()
+  const MAX = 40
+  if (open.length > MAX) {
+    return NextResponse.json(
+      { error: `Too many open invoices (${open.length}). Pay up to ${MAX} at a time, or pay individually.` },
+      { status: 400 },
+    )
+  }
+
+  const primaryProjectId = project.id
+  const currency = (open[0]!.currency ?? 'usd').toLowerCase()
   const base = billingAppOrigin()
+
+  const metadata: Record<string, string> = {
+    bulk_checkout: 'true',
+    invoice_count: String(open.length),
+    project_id: primaryProjectId,
+    client_id: client.id,
+    project_slug: project.slug ?? '',
+  }
+  open.forEach((inv, i) => {
+    metadata[`inv_${i}`] = inv.id
+  })
 
   const sessionParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
     mode: 'payment',
-    line_items: [
-      {
-        price_data: {
-          currency,
-          product_data: {
-            name: `Invoice ${invoice.invoice_number}`,
-            description: invoice.description.slice(0, 500),
-          },
-          unit_amount: invoice.amount_cents,
+    line_items: open.map((inv) => ({
+      price_data: {
+        currency,
+        product_data: {
+          name: `Invoice ${inv.invoice_number}`,
+          description: inv.description.slice(0, 450),
         },
-        quantity: 1,
+        unit_amount: inv.amount_cents,
       },
-    ],
-    metadata: {
-      invoice_id: invoice.id,
-      project_id: project.id,
-      client_id: client.id,
-      invoice_number: invoice.invoice_number,
-      project_slug: project.slug,
-      hubspot_deal_id: project.hubspot_deal_id ?? '',
-    },
+      quantity: 1,
+    })),
+    metadata,
     success_url: `${base}/billing?paid=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${base}/billing?canceled=1`,
   }
@@ -108,11 +118,5 @@ export async function POST(request: Request) {
   sessionParams.customer = stripeCustomerId
 
   const session = await stripe.checkout.sessions.create(sessionParams)
-
-  await supabase
-    .from('invoices')
-    .update({ stripe_checkout_session_id: session.id })
-    .eq('id', invoice.id)
-
   return NextResponse.json({ url: session.url })
 }

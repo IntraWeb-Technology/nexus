@@ -8,6 +8,17 @@ export type ProjectStatus =
   | 'paused'
 export type MilestoneStatus = 'done' | 'active' | 'pending'
 export type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'void'
+export type BillingPhase = 'deposit' | 'build_qa' | 'handoff' | 'maintenance'
+export type BillingKind = 'project_milestone' | 'recurring_maintenance'
+export type ExternalInvoiceSource = 'hubspot' | 'stripe' | 'manual'
+export type SubscriptionStatus =
+  | 'active'
+  | 'trialing'
+  | 'past_due'
+  | 'canceled'
+  | 'unpaid'
+  | 'incomplete'
+  | 'incomplete_expired'
 export type SenderType = 'staff' | 'client'
 export type StaffRole = 'admin' | 'ops' | 'support' | 'viewer'
 export type ClientMemberRole = 'owner' | 'billing' | 'approver' | 'viewer'
@@ -129,6 +140,41 @@ export interface Invoice {
   currency?: string
   /** When set, matches HubSpot CRM invoice id — used to dedupe merged billing view. */
   hubspot_invoice_id?: string | null
+  /** Canonical billing timeline phase semantics. */
+  billing_phase?: BillingPhase | null
+  /** Project milestone vs recurring maintenance. */
+  billing_kind?: BillingKind
+  /** Fixed timeline ordering for milestone cards (1..3). */
+  milestone_order?: 1 | 2 | 3 | null
+  /** External integration source for upsert idempotency. */
+  external_source?: ExternalInvoiceSource | null
+  /** Source object id (HubSpot invoice id, Stripe invoice id, etc.). */
+  external_object_id?: string | null
+  /** Recurring service period boundaries (maintenance history). */
+  service_period_start?: string | null
+  service_period_end?: string | null
+  /** Optional grouping key for recurring maintenance series. */
+  maintenance_group_key?: string | null
+}
+
+export interface SubscriptionRow {
+  id: string
+  project_id: string
+  client_id: string
+  stripe_subscription_id: string
+  stripe_customer_id: string | null
+  status: SubscriptionStatus
+  price_id: string | null
+  product_id: string | null
+  currency: string | null
+  current_period_start: string | null
+  current_period_end: string | null
+  cancel_at_period_end: boolean
+  canceled_at: string | null
+  latest_stripe_invoice_id: string | null
+  last_synced_at: string
+  created_at: string
+  updated_at: string
 }
 
 export interface ActivityLogRow {
@@ -341,4 +387,15 @@ export interface OsPreCallIntakeRow {
   email: string
   payload: Record<string, unknown>
   submitted_at: string
+}
+
+/** HubSpot → Supabase mirror (`hubspot_crm_entities`); updated from `/api/webhook/hubspot` only. */
+export interface HubSpotCrmEntityRow {
+  object_type: 'contact' | 'deal' | 'company'
+  hubspot_id: string
+  properties: Record<string, unknown>
+  last_event: Record<string, unknown>
+  last_subscription_type: string | null
+  created_at: string
+  updated_at: string
 }
