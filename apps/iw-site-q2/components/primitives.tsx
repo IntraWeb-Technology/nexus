@@ -184,7 +184,7 @@ export function Counter({
   const [n, setN] = useState(reduce ? to : 0);
   useEffect(() => {
     if (reduce) {
-      setN(to);
+      queueMicrotask(() => setN(to));
       return;
     }
     if (!inView) return;

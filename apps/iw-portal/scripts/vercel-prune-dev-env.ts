@@ -11,7 +11,7 @@
  */
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
-import { resolveMonorepoRoot, iwPortalEnvLocalPath } from './lib/repo-root'
+import { resolveMonorepoRoot } from './lib/repo-root'
 import { PORTAL_ENV_KEYS } from './vercel-kv-list'
 
 const root = resolveMonorepoRoot(import.meta.url)

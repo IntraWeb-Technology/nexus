@@ -73,7 +73,7 @@ export function LegalPageLayout({
       }
       items.push({ id: el.id, text: (el.textContent || "").replace(/\s+/g, " ").trim() });
     });
-    setHeadings(items);
+    queueMicrotask(() => setHeadings(items));
   }, [showToc]);
 
   const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {

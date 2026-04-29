@@ -50,7 +50,6 @@ async function main() {
     console.error(error instanceof Error ? error.message : String(error))
     process.exit(1)
   }
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
   const pgUrl = process.env.POSTGRES_URL_NON_POOLING ?? process.env.POSTGRES_URL
   const hubToken = process.env.HUBSPOT_PRIVATE_APP_TOKEN
   const clerkSecret = process.env.CLERK_SECRET_KEY

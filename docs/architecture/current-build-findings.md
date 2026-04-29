@@ -1,35 +1,60 @@
 # Current build findings
 
-Recorded during architecture hardening validation (Phase 6). **These issues were not introduced by the docs/scaffolding PR** unless noted.
+Recorded during architecture hardening validation and **Phase 2 quality gates** (lint / `check-types` / build).
 
-## `pnpm lint` — **FAIL** (pre-existing)
+## `pnpm lint` — **PASS**
 
-`@repo/iw-site-q2` ESLint exits with errors:
+Previously **`@repo/iw-site-q2`** failed ESLint with:
 
-- `react-hooks/set-state-in-effect` in `components/legal-page-layout.tsx`, `components/nav-bar.tsx`, `components/primitives.tsx`
-- `@typescript-eslint/no-explicit-any` in `components/shared/website-intake-form.tsx`, `lib/gtag.ts`
-- Warnings: unused vars in `app/api/website-intake/route.ts`, `components/website-intake/KickoffScheduler.tsx`, `postcss.config.mjs`
+- **`react-hooks/set-state-in-effect`**: synchronous `setState` inside `useEffect` in `components/legal-page-layout.tsx` (TOC headings), `components/nav-bar.tsx` (close menu on route change), and `components/primitives.tsx` (`Counter` when reduced motion).
+- **`@typescript-eslint/no-explicit-any`**: `components/shared/website-intake-form.tsx` (`trigger` / `setStep` / error message casts), `lib/gtag.ts`.
+- **Unused / style**: `app/api/website-intake/route.ts` (unused `action`, unused destructured omit vars), `components/website-intake/KickoffScheduler.tsx` (unused `submittedData`), `postcss.config.mjs` (anonymous default export).
 
-**Next step (suggested PR):** Fix or selectively disable rules after reviewing React 19 / Next 16 guidance; `@repo/iw-portal` lint passes.
+**Fixes applied (smallest safe):**
+
+- Deferred DOM-derived updates and menu close with `queueMicrotask(() => …)` so effects do not synchronously call `setState` (same user-visible behavior).
+- Replaced `any` in the intake form with `FieldPath<WebsiteIntakeFormValues>` for `trigger`, a typed `setStep` cast for `back()`, and `errors.*?.message` for multi-select field errors.
+- Typed `window.gtag` in `lib/gtag.ts` with narrow overloads and a typed `event()` payload.
+- Dropped unused `action`; built n8n payload with `{ ...parsed.data }` plus `delete` for `recaptchaToken` and `dealStage` (no unused bindings).
+- Named default export in `postcss.config.mjs`.
+- Kickoff: alias `submittedData` → `_submittedData` with JSDoc + `void _submittedData` so the public prop stays in the API without tripping unused-vars.
+
+**`@repo/iw-portal`** (surfaced once `iw-site-q2` was green / cache invalidated):
+
+- `scripts/update-payment-links.js`: one-line **`eslint-disable-next-line`** for `@typescript-eslint/no-require-imports` (plain `node` CJS script).
+- `scripts/vercel-prune-dev-env.ts`: removed unused `iwPortalEnvLocalPath` import.
+- `scripts/verify-stack-alignment.ts`: removed dead `anon` env read.
 
 ## `pnpm check-types` — **PASS**
 
-Includes new packages `@repo/env`, `@repo/ops`, `@repo/integrations` and existing `@repo/n8n-workflows` no-op.
+Root script runs `turbo run check-types`. **`@repo/iw-portal`** and **`@repo/iw-site-q2`** now define:
 
-## `pnpm build` — **PASS** (after local cache hygiene)
+```json
+"check-types": "tsc --noEmit"
+```
 
-**First run note:** `next build` for `@repo/iw-portal` failed with a type error referencing missing `src/app/api/notifications/mark-all-read/route.js` from generated `.next/dev/types/validator.ts`. The route does not exist in source (stale `.next` artifact). **Removing `apps/iw-portal/.next` and rebuilding** resolved the failure.
+so both Next apps participate in the same gate as `@repo/env`, `@repo/integrations`, and `@repo/ops`. `@repo/n8n-workflows` remains a no-op `check-types`.
 
-CI and other developers should use clean builds when routes are removed, or ensure `.next` is not committed (it is normally gitignored).
+## `pnpm build` — **PASS**
 
-## Filtered app build — **PASS**
+Full monorepo `turbo run build` succeeds for the current tree.
 
-`pnpm exec turbo run build --filter=@repo/iw-portal --filter=@repo/iw-site-q2` succeeds after the cache clean above.
+**Stale `.next` note (unchanged):** If `next build` fails on a type error pointing at a **missing** route under `.next/dev/types/validator.ts`, delete `apps/<app>/.next` and rebuild. Do not commit `.next`.
 
-## Tooling change (this PR)
+## Filtered app build
 
-[turbo.json](../../turbo.json) `build` outputs now include `dist/**` so TypeScript library packages emit outputs recognized by Turborepo (removes “no output files” warnings for `@repo/env`, `@repo/ops`, `@repo/integrations`).
+`pnpm exec turbo run build --filter=@repo/iw-portal --filter=@repo/iw-site-q2` should match root `build` for those packages.
+
+## Tooling
+
+[turbo.json](../../turbo.json) `build` outputs include `dist/**` for TS library packages.
+
+## Remaining technical debt / review
+
+- **`queueMicrotask` + `setState`**: Satisfies the lint rule and preserves behavior; a future pass could refactor to derived state / `useLayoutEffect` + subscriptions where React docs recommend it, if you want stricter alignment with “you might not need an effect.”
+- **`KickoffScheduler` `submittedData`**: Still unused at runtime; consider using it for prefill or drop from the public props if the contract allows.
+- **`update-payment-links.js`**: Still CJS `require`; converting to ESM + `import` would remove the need for the disable comment.
 
 ## Recommended next PR-sized task
 
-Add `check-types` scripts to `@repo/iw-portal` and `@repo/iw-site-q2` (e.g. `tsc --noEmit` with appropriate project references) so `pnpm check-types` matches `next build` typing without a full Next build, and progressively fix `@repo/iw-site-q2` lint errors.
+Add a **CI workflow** (or extend an existing one) that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR, with Node 22 and pnpm cache aligned to the repo.

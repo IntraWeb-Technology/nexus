@@ -41,11 +41,13 @@ export type KickoffSchedulerProps = {
 
 export default function KickoffScheduler({
   bookingSession,
-  submittedData,
+  /** Reserved for future kickoff prefill; callers still pass contact snapshot. */
+  submittedData: _submittedData,
   fallbackCalUrl,
   kickoffTitle,
   onContinue,
 }: KickoffSchedulerProps) {
+  void _submittedData;
   const defaultTz = useMemo(
     () => (typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC"),
     [],

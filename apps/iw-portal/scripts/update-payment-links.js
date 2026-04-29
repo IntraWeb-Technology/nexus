@@ -26,6 +26,7 @@
  * for your account/link type where applicable.
  */
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- run with `node`; CJS require keeps the script copy-paste friendly without a build step
 const Stripe = require('stripe');
 
 // Use the SDK default API version (matches installed stripe major version).
