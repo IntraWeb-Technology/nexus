@@ -11,6 +11,7 @@
  */
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
+import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check'
 import { resolveMonorepoRoot } from './lib/repo-root'
 import { PORTAL_ENV_KEYS } from './vercel-kv-list'
 
@@ -37,6 +38,8 @@ function rmDevelopment(name: string) {
 }
 
 function main() {
+  // No `.env.local` load here; default off. Set IW_PORTAL_ENV_VALIDATE=report|strict to check shell env shape.
+  applyIwPortalEnvValidation('off')
   for (const key of PORTAL_ENV_KEYS) {
     rmDevelopment(key)
   }

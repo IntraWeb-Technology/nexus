@@ -5,10 +5,12 @@
 import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { Client } from 'pg'
+import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
 import { resolveSupabaseScriptEnv } from './lib/supabase-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
+applyIwPortalEnvValidation('strict')
 
 function refFromSupabaseUrl(url: string | undefined): string | null {
   if (!url) return null

@@ -22,11 +22,13 @@
 import { config } from 'dotenv'
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
+import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check'
 import { resolveMonorepoRoot, iwPortalEnvLocalPath } from './lib/repo-root'
 import { PORTAL_ENV_KEYS } from './vercel-kv-list'
 
 const root = resolveMonorepoRoot(import.meta.url)
 config({ path: iwPortalEnvLocalPath(root) })
+applyIwPortalEnvValidation('report', 'vercel:align-env')
 const appDir = path.join(root, 'apps', 'iw-portal')
 
 const PRODUCTION_ONLY =

@@ -60,6 +60,18 @@ Additional keys on **`tasks.build.env`** in `turbo.json` (subset; full list in r
 | `POSTGRES_URL` / `POSTGRES_URL_NON_POOLING` / `POSTGRES_HOST` | Secret | Yes | Scripts/DB | Migrations / verify |
 | `VERCEL_URL` | Public | No | Optional | URL fallback |
 
+### `@repo/env` in portal scripts (non-runtime)
+
+These **tsx scripts** call `validateIwPortalEnv` from `@repo/env` after any `dotenv` load (where applicable). App routes and React code do **not** import `@repo/env` yet.
+
+| Script | Default `IW_PORTAL_ENV_VALIDATE` behavior |
+| --- | --- |
+| `scripts/verify-stack-alignment.ts` | **strict** — invalid portal env shape exits before checks |
+| `scripts/vercel-align-env.ts` | **report** — print issues, still run Vercel sync |
+| `scripts/vercel-prune-dev-env.ts` | **off** — no `.env.local`; opt in with `report` or `strict` |
+
+Override: set `IW_PORTAL_ENV_VALIDATE` to `strict`, `report`, or `0` / `off` / `false`.
+
 ## `apps/iw-site-q2`
 
 | Variable | Public/Secret | Required for build | Required at runtime | Current known usage |

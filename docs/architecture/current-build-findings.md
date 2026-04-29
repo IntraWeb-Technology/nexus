@@ -55,6 +55,21 @@ Full monorepo `turbo run build` succeeds for the current tree.
 - **`KickoffScheduler` `submittedData`**: Still unused at runtime; consider using it for prefill or drop from the public props if the contract allows.
 - **`update-payment-links.js`**: Still CJS `require`; converting to ESM + `import` would remove the need for the disable comment.
 
+## Phase 3 — `@repo/env` in portal scripts only
+
+**Scope:** `apps/iw-portal` tsx tooling imports `@repo/env` for `validateIwPortalEnv`. No Next.js runtime / route / middleware imports.
+
+**Wiring:**
+
+- `scripts/lib/iw-portal-env-check.ts` — shared helper reading `IW_PORTAL_ENV_VALIDATE`
+- `scripts/verify-stack-alignment.ts` — default **strict**
+- `scripts/vercel-align-env.ts` — default **report** (partial `.env.local` must not block sync)
+- `scripts/vercel-prune-dev-env.ts` — default **off** (no env file load; opt-in validate)
+
+`validateIwSiteQ2Env` / `validateN8nEnv` were not added here; these scripts are portal-only and do not load site-q2 or n8n-workflows env contracts.
+
+**Commands (root):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS** (after `pnpm install` and `@repo/env` build).
+
 ## Recommended next PR-sized task
 
 Add a **CI workflow** (or extend an existing one) that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR, with Node 22 and pnpm cache aligned to the repo.
