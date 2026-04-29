@@ -12,6 +12,7 @@ import { isHubSpotConfigured } from '@/lib/hubspot/config'
 import { fetchDeal } from '@/lib/hubspot/client'
 import { fetchHubSpotBillingInvoices } from '@/lib/hubspot/invoices'
 import { fetchHubSpotDealLineItems } from '@/lib/hubspot/line-items'
+import { filterPortalActivityRows } from '@/lib/activity/filter-client-feed'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { ActivityLogRow, Invoice, Message, Milestone, NotificationRow, OsAutomationLogRow } from '@/lib/supabase/types'
 import Link from 'next/link'
@@ -120,7 +121,7 @@ export default async function DashboardPage() {
     supabase.from('milestones').select('*').eq('project_id', pid).order('sort_order', { ascending: true }),
     supabase.from('invoices').select('*').eq('project_id', pid),
     supabase.from('notifications').select('*').eq('project_id', pid).order('created_at', { ascending: false }),
-    supabase.from('activity_log').select('*').eq('project_id', pid).order('created_at', { ascending: false }).limit(6),
+    supabase.from('activity_log').select('*').eq('project_id', pid).order('created_at', { ascending: false }).limit(40),
     supabase.from('messages').select('*').eq('project_id', pid).order('created_at', { ascending: false }).limit(4),
     bundle.project.hubspot_deal_id || bundle.client.hubspot_contact_id
       ? supabase
@@ -156,7 +157,7 @@ export default async function DashboardPage() {
   const milestones = (msRes.data ?? []) as Milestone[]
   const supabaseInvoices = (invRes.data ?? []) as Invoice[]
   const notifications = (notRes.data ?? []) as NotificationRow[]
-  const activities = (activityRes.data ?? []) as ActivityLogRow[]
+  const activities = filterPortalActivityRows((activityRes.data ?? []) as ActivityLogRow[]).slice(0, 6)
   const messages = (messageRes.data ?? []) as Message[]
   const automations = (automationRes.data ?? []) as OsAutomationLogRow[]
   const projectName = firstNonEmpty(
@@ -300,7 +301,9 @@ export default async function DashboardPage() {
         <Card className="lg:col-span-4">
           <div className="iw-card-head">
             <h2 className="iw-card-title">Recent activity</h2>
-            <Link href="/activity" className="iw-chip">Full log</Link>
+            <Link href="/notifications" className="iw-chip">
+              All updates
+            </Link>
           </div>
           {activities.length ? (
             <ul className="space-y-3">

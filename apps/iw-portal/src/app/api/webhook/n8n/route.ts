@@ -8,9 +8,14 @@ import {
 import { insertProvisionedEngagementContent } from '@/lib/data/provision-client-engagement'
 import { applyAddInvoice } from '@/lib/n8n/apply-add-invoice'
 import { normalizeMaintenancePlanSlug } from '@/lib/stripe/maintenance-packages'
-import type { AddInvoiceInboundPayload, N8nInboundPayload } from '@/lib/n8n/webhooks'
+import { attachProjectDocument } from '@/lib/n8n/attach-project-document'
+import type {
+  AddInvoiceInboundPayload,
+  AttachProjectDocumentInboundPayload,
+  N8nInboundPayload,
+} from '@/lib/n8n/webhooks'
 import { recordIntegrationEvent } from '@/lib/integrations/events'
-import { progressFromMilestones } from '@/lib/progress'
+import { recalculateProjectProgressPct } from '@/lib/progress'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
 import { findProjectByHubSpotDealId } from '@/lib/webhooks/provision-client-idempotency'
@@ -58,7 +63,7 @@ export async function POST(request: Request) {
           .eq('id', d.data.milestone_id)
           .eq('project_id', proj.id)
 
-        await recalcMilestoneProgress(supabase, proj.id)
+        await recalculateProjectProgressPct(supabase, proj.id)
 
         await supabase.from('activity_log').insert({
           project_id: proj.id,
@@ -134,6 +139,55 @@ export async function POST(request: Request) {
           read: false,
         })
         return NextResponse.json({ ok: true })
+      }
+      case 'attach_project_document': {
+        const d = payload as AttachProjectDocumentInboundPayload
+        const hasSlug = 'project_slug' in d && !!d.project_slug
+        const hasDeal = 'hubspot_deal_id' in d && !!d.hubspot_deal_id
+        if (!hasSlug && !hasDeal) {
+          return NextResponse.json({ error: 'project_slug or hubspot_deal_id required' }, { status: 400 })
+        }
+        const projRow = await resolveProjectForAttach(supabase, d)
+        if (!projRow) return NextResponse.json({ error: 'project not found' }, { status: 404 })
+
+        const { data: projectMeta } = await supabase
+          .from('projects')
+          .select('hubspot_deal_id')
+          .eq('id', projRow.id)
+          .maybeSingle()
+        const linkedDeal = projectMeta?.hubspot_deal_id?.trim() ?? ''
+        const payloadDeal = d.data.hubspot_deal_id?.trim() ?? ''
+        if (!payloadDeal || linkedDeal !== payloadDeal) {
+          return NextResponse.json(
+            { error: 'data.hubspot_deal_id must match the portal project Linked HubSpot deal' },
+            { status: 400 },
+          )
+        }
+
+        const outcome = await attachProjectDocument(supabase, projRow.id, payloadDeal, d.data)
+        if (!outcome.ok) {
+          return NextResponse.json({ error: outcome.message }, { status: outcome.status })
+        }
+
+        await supabase.from('notifications').insert({
+          project_id: projRow.id,
+          type: 'document',
+          title: 'New document',
+          body: d.data.name,
+          read: false,
+        })
+        await supabase.from('activity_log').insert({
+          project_id: projRow.id,
+          type: 'document',
+          label: 'Document added',
+          detail: d.data.name,
+        })
+
+        return NextResponse.json({
+          ok: true,
+          document_id: outcome.document_id,
+          storage_path: outcome.storage_path,
+        })
       }
       case 'add_invoice': {
         const d = payload as AddInvoiceInboundPayload
@@ -517,15 +571,17 @@ async function resolveProjectForInvoice(
   return null
 }
 
-async function recalcMilestoneProgress(
+async function resolveProjectForAttach(
   supabase: ReturnType<typeof createServiceSupabase>,
-  projectId: string,
+  d: AttachProjectDocumentInboundPayload,
 ) {
-  const { data: ms } = await supabase.from('milestones').select('status').eq('project_id', projectId)
-  const total = ms?.length ?? 0
-  const done = ms?.filter((m) => m.status === 'done').length ?? 0
-  const pct = progressFromMilestones(done, total)
-  await supabase.from('projects').update({ progress_pct: pct }).eq('id', projectId)
+  if ('project_slug' in d && d.project_slug) {
+    return getProjectBySlug(supabase, d.project_slug)
+  }
+  if ('hubspot_deal_id' in d && d.hubspot_deal_id) {
+    return getProjectByHubspotDealId(supabase, d.hubspot_deal_id)
+  }
+  return null
 }
 
 function changeOrderStatusNotification(

@@ -118,11 +118,12 @@ return [
     json: {
       systemPrompt: `You are writing a consulting proposal body for IntraWeb Technologies LLC.
 Tone: neutral, factual, and professional. Prefer plain statements over promotion. Avoid superlatives, hype, urgency selling, and claims like "eliminates", "from day one", or "fastest".
+Language: boardroom-appropriate only. Never output profanity, vulgar slang, slurs, or insulting labels even when WEBSITE INTAKE uses them. Rephrase the underlying intent in neutral, respectful language (for example contrast with generic flashy wellness-influencer stereotypes instead of repeating coarse wording).
 
 OUTPUT RULES:
 - First, output two plain-text blocks for the PDF shell (no HTML inside either block, no text before the first opening delimiter), in this exact order:
 <<<PAIN_SUMMARY>>>
-Write 4-6 professional, client-facing sentences summarizing ONLY the website intake JSON and related intake notes: business context, stated goals, audience, timeline, budget range or signals, design/content preferences, and requested integrations. Do not invent facts. Do not use em dashes or en dashes (Unicode U+2013/U+2014); use commas or hyphen-minus only. Do not state quoted project dollar amounts in this summary.
+Write 4-6 professional, client-facing sentences summarizing ONLY the website intake JSON and related intake notes: business context, stated goals, audience, timeline, design/content preferences, and requested integrations. Do not invent facts. Do not use em dashes or en dashes (Unicode U+2013/U+2014); use commas or hyphen-minus only. Do not mention the client's budget, budget range, funding preference, or any dollar amounts or thresholds (including phrases like "under $X" or "budget under"); commercial figures belong only in the Investment summary section and line-item table, not in this narrative. Keep vocabulary professional; if intake includes coarse or vulgar wording, summarize the idea without repeating those words.
 <<<END_PAIN_SUMMARY>>>
 <<<INVESTMENT_SUMMARY>>>
 Write 2-4 professional sentences for the "Investment summary" lead-in above the line-item table. Describe the proposed services or package components, how they fit the engagement, and tier (if applicable) at a high level. Do not include any dollar amounts, currency symbols, prices, or the words USD, total, subtotal, or quoted in a pricing sense—dollar amounts appear only in the PDF table from HubSpot. Do not use em dashes or en dashes; use commas or hyphen-minus only.
@@ -149,14 +150,14 @@ DESIGN SYSTEM - use these patterns (colors via variables only):
 ━━ PAIN POINT CARD (use in "What You Told Us") ━━
 <div class="pain-card" style="border: 0.5px solid var(--iw-slate-100); margin-bottom: 8px; break-inside: avoid; page-break-inside: avoid;">
   <div style="background: var(--iw-slate-50); padding: 8px 14px; border-bottom: 0.5px solid var(--iw-slate-100); font-size: 9pt; font-weight: 700; font-style: italic; color: var(--iw-slate-800);">[Short label taken from intake, e.g. Goals, Audience, Content]</div>
-  <div style="padding: 10px 14px; font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6;">[2-3 neutral sentences paraphrasing what they wrote in website intake, not generic consulting themes]</div>
+  <div style="padding: 10px 14px; font-size: 9.5pt; color: var(--iw-slate-800); line-height: 1.6;">[2-3 neutral sentences paraphrasing what they wrote in website intake, not generic consulting themes; sanitize any coarse or vulgar intake wording into professional language]</div>
 </div>
 
 ━━ SCOPE BLOCK (one per major deliverable, in "Detailed Scope of Work") ━━
 <div class="scope-card" style="margin-bottom: 12px; break-inside: avoid; page-break-inside: avoid;">
   <div style="background: var(--iw-slate-950); padding: 10px 14px;">
     <div style="font-size: 9.5pt; font-weight: 700; color: var(--iw-white);">[Deliverable Name]</div>
-    <div style="font-size: 8.5pt; color: var(--iw-teal-light); margin-top: 3px; font-style: italic;">You said: [verbatim or close paraphrase of pain point, no em or en dashes]</div>
+    <div style="font-size: 8.5pt; color: var(--iw-teal-light); margin-top: 3px; font-style: italic;">You said: [close paraphrase of intake in professional language, no em or en dashes; never quote profanity or vulgar slang verbatim]</div>
   </div>
   <div style="border: 0.5px solid var(--iw-slate-100); border-top: none; display: flex;">
     <div style="width: 3px; background: var(--iw-teal); flex-shrink: 0;"></div>
@@ -235,13 +236,15 @@ CONTENT RULES:
 1. Ground sections in the client's industry and WEBSITE INTAKE; avoid generic consulting filler.
 2. Never use em dash (U+2014) or en dash (U+2013) in any visible copy; use commas, colons, or hyphen-minus (-) instead.
 3. "Executive Summary": exactly 2 paragraphs. Paragraph 1 MUST state the deal tier using deal property "tier" from DATA when it is set (same spelling and casing as DATA). If "tier" is not set, use "Deal tier display" from DATA. Paragraph 2 describes what we are delivering using line item names from DATA and website intake only. Neutral tone. No dollar amounts.
-4. "What You Told Us": cards MUST be grounded ONLY in WEBSITE INTAKE TO CLIENT (and the website-intake portions of FULL DEAL NOTES). Every card must map to concrete intake content (goals, pages, features, budget, audience, design, etc.). Forbidden: generic consulting themes not written in intake. Minimum 2 cards, maximum 6.
+4. "What You Told Us": cards MUST be grounded ONLY in WEBSITE INTAKE TO CLIENT (and the website-intake portions of FULL DEAL NOTES). Every card must map to concrete intake content (goals, pages, features, audience, design, etc.). Do not state client budget amounts, ranges, or "under $X" wording on these cards. Forbidden: generic consulting themes not written in intake. Minimum 2 cards, maximum 6.
 5. "Detailed Scope of Work": ${lineItemsRules} When MANDATORY SCOPE TITLES lists numbered items, you MUST output one scope-card per item with that EXACT title string. Under "We will:", bullets must relate to that line item and intake, not unrelated platforms.
-6. "Implementation Roadmap": 4 phase cards (Foundation, Core Build, Integration, Launch and Optimization). Each phase's bullets may ONLY reference (i) line item names from DATA, (ii) pages/features/goals explicitly named in WEBSITE INTAKE or FULL DEAL NOTES. Do not invent tools, vendors, or integrations not mentioned.
+6. "Implementation Roadmap": 4 phase cards (Foundation, Core Build, Integration, Launch and Optimization). Each phase's bullets may ONLY reference (i) line item names from DATA, (ii) pages/features/goals explicitly named in WEBSITE INTAKE or FULL DEAL NOTES. Do not invent tools, vendors, or integrations not mentioned. Never list or imply live chat, AI chatbots, conversational AI, or similar messaging products as milestones or deliverables (IntraWeb does not include those in proposals).
 7. "Expected Outcomes": 5-6 cards. Measurable where intake allows; otherwise restrained, neutral statements.
 8. "Why IntraWeb": left column ties calmly to their situation. Right column: three neutral pills; do NOT use "Fast Implementation" or similar speed-first titles. Prefer "Phased delivery", "Integrated build", or "Structured communication".
 9. "Next Steps": 4 steps. Step 1 = kickoff call within 48 hrs. Step 4 = system live in 8 weeks.
-10. Do not fabricate facts. Any dollar figure in body copy must match INVESTMENT in DATA (quoted total, 40% upfront, remainder only). Never cite template tier monthly unless it appears as a line item.`,
+10. Do not fabricate facts. Any dollar figure in body copy must match INVESTMENT in DATA (quoted total, 40% upfront, remainder only). Never cite template tier monthly unless it appears as a line item.
+11. Chat and messaging (mandatory): Do NOT promise, describe, or list live chat, AI chatbots, conversational AI assistants, chat widgets, or similar messaging products in any section (Detailed Scope bullets, Implementation Roadmap, Expected Outcomes, Executive Summary, Next Steps, or elsewhere). Website intake may list them as interests; omit them entirely from proposed deliverables. For lead capture or engagement, describe only accurate alternatives that match IntraWeb scope (for example contact forms, CRM routing, email automation, booking flows, reviews widgets) without implying chat interfaces.
+12. Professional wording (mandatory): Every section visible to the client must avoid profanity, vulgar slang, slurs, and dismissive insults, including inside "What You Told Us" cards and "You said" lines on scope blocks. If intake expresses dislike of a competitor persona or industry stereotype, restate it calmly (for example they want an authentic, straightforward presence rather than a flashy or gimmicky wellness brand voice). Never echo crude labels from intake.`,
 
       userPrompt: `Generate output for this client. Narrative truth sources are ONLY: (A) website intake in the sections below, and (B) deal tier in DATA. Client facts must match DATA. Dollar amounts must match INVESTMENT in DATA only.
 

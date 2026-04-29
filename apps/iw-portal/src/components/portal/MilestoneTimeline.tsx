@@ -57,7 +57,9 @@ export function MilestoneTimeline({
       />
     )
   }
-  const sorted = [...milestones].sort((a, b) => a.sort_order - b.sort_order)
+  const sorted = [...milestones].sort(
+    (a, b) => a.sort_order - b.sort_order || a.title.localeCompare(b.title),
+  )
   return (
     <ul className="iw-enter-stagger relative space-y-0">
       {sorted.map((m, i) => {

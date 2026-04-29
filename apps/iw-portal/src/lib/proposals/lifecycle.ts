@@ -46,17 +46,13 @@ export function proposalEventLabel(eventType: ProposalLifecycleEventType): strin
   return 'Proposal viewed'
 }
 
+/** Client-facing activity line: deal name and actor only (no internal proposal id). */
 export function proposalEventDetail(input: {
-  proposal: Pick<OsContractsQueueRow, 'id' | 'client_name' | 'company' | 'deal_value'>
+  proposal: Pick<OsContractsQueueRow, 'client_name' | 'company'>
   actorName: string
   note?: string | null
 }): string {
-  const parts = [
-    `proposal:${input.proposal.id}`,
-    proposalDisplayName(input.proposal),
-    input.proposal.deal_value ? `value ${input.proposal.deal_value}` : '',
-    `by ${input.actorName}`,
-    input.note ? `note: ${input.note}` : '',
-  ].filter(Boolean)
-  return parts.join(' · ')
+  const base = `${proposalDisplayName(input.proposal)} · by ${input.actorName}`
+  const n = input.note?.trim()
+  return n ? `${base} · ${n}` : base
 }

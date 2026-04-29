@@ -183,7 +183,54 @@ After a successful call, the client sees the new **status** badge on **Change or
 - `Content-Type: application/json`
 - `x-intrawebtech-secret: <WEBHOOK_SECRET>` — required; validated by `validateIntrawebSecret` in `src/lib/webhooks/secret.ts`
 
-**Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `link_portal_clerk_user`, `add_invoice`, `update_milestone`, `update_change_order`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
+**Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `link_portal_clerk_user`, `add_invoice`, `attach_project_document`, `update_milestone`, `update_change_order`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
+
+### Proposal / contract PDF: `attach_project_document` (portal-first storage)
+
+Deliver generated PDFs to **Supabase Storage** (`client-uploads`), register a **`documents`** row, and link **`os_contracts_queue`** (`pdf_storage_path`, `proposal_document_id`) so clients open the file via **`/api/documents/download`** or **`/api/os-queue/pdf`** instead of relying on Google Drive.
+
+**Rollout:** Keep populating **`drive_link`** from n8n (Google Drive) until you verify Storage end-to-end; the client **Proposal review** card prefers portal PDF when present and falls back to Drive.
+
+**n8n environment**
+
+| Variable | Purpose |
+|----------|---------|
+| `PORTAL_WEBHOOK_URL` | Full URL to `POST /api/webhook/n8n`, e.g. `https://<portal-host>/api/webhook/n8n` (no trailing slash required; nodes may trim it). |
+| `WEBHOOK_SECRET` | Same value as portal `WEBHOOK_SECRET`; sent as header **`x-intrawebtech-secret`**. |
+
+**Contract**
+
+- Top-level **`hubspot_deal_id`** or **`project_slug`** resolves the portal project (same as `add_invoice`).
+- **`data.hubspot_deal_id`** must match **`projects.hubspot_deal_id`** for that project.
+- Supply **`data.base64`** (PDF) **or** **`data.storage_path`** (existing object under `client-uploads` scoped to the project).
+- **`data.queue_type`:** `proposal` | `contract`
+- **`data.name`:** filename ending in `.pdf`
+- Optional **`data.drive_link`:** preserved on **insert** when no queue row exists yet; when the queue row already exists (typical: **SYS 03** runs Postgres upsert first), Drive remains whatever the SQL step wrote.
+
+**Example (HubSpot deal id)**
+
+```json
+{
+  "action": "attach_project_document",
+  "hubspot_deal_id": "320346410735",
+  "data": {
+    "queue_type": "proposal",
+    "hubspot_deal_id": "320346410735",
+    "name": "Proposal-acme.pdf",
+    "base64": "<base64 or data URL>",
+    "drive_link": "https://drive.google.com/file/d/....../view",
+    "client_name": "Jane Doe",
+    "company": "Acme",
+    "tier": "growth",
+    "deal_value": "13125",
+    "contact_email": "jane@example.com"
+  }
+}
+```
+
+**Checked-in workflow:** [`packages/n8n-workflows/03_sales/SYS 03 — Proposal and Contract Delivery.json`](../../../packages/n8n-workflows/03_sales/SYS%2003%20%E2%80%94%20Proposal%20and%20Contract%20Delivery.json) chains **`Ensure PDF Item`** → **`Extract PDF Base64`** → **`Upload to Drive`** (serialized so base64 exists before Drive + Postgres), then **`Add to Proposals Queue`** → **`Build Portal Attach Payload`** → **`POST Portal attach PDF`** → **`Prep Alert`**. Set **`PORTAL_WEBHOOK_URL`** (must include `/api/webhook/n8n`) and **`WEBHOOK_SECRET`** on the n8n host before activating.
+
+**If the portal still only shows Google Drive:** In Supabase, open **`os_contracts_queue`** for that deal — **`pdf_storage_path`** / **`proposal_document_id`** should be non-null after a successful run. If they are null, check the n8n execution for **`POST Portal attach PDF`** (`401` = wrong secret, **`404` project not found** = `projects.hubspot_deal_id` missing or mismatched, **`400`** = body validation). Re-import the workflow JSON after pulling so these nodes match production.
 
 ### Webhook auth model by route
 

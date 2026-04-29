@@ -366,6 +366,10 @@ export interface OsContractsQueueRow {
   contact_email: string | null
   pain_points: string | null
   drive_link: string | null
+  /** Supabase Storage path under bucket client-uploads (project_id prefix). */
+  pdf_storage_path: string | null
+  /** Registered portal documents row for authenticated download. */
+  proposal_document_id: string | null
   status: string
   proposal_status_detail: string | null
   created_at: string

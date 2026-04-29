@@ -45,6 +45,17 @@ export function ProposalReviewCard({ initialProposals }: ProposalReviewCardProps
 
   const latestProposal = useMemo(() => proposals[0] ?? null, [proposals])
 
+  const portalProposalHref = useMemo(() => {
+    if (!latestProposal) return null
+    if (latestProposal.proposal_document_id) {
+      return `/api/documents/download?id=${encodeURIComponent(latestProposal.proposal_document_id)}`
+    }
+    if (latestProposal.pdf_storage_path) {
+      return `/api/os-queue/pdf?id=${encodeURIComponent(latestProposal.id)}`
+    }
+    return null
+  }, [latestProposal])
+
   const submitEvent = useCallback(
     async (proposalId: string, eventType: ProposalLifecycleEventType, noteValue?: string) => {
       setBusyId(`${proposalId}:${eventType}`)
@@ -135,15 +146,25 @@ export function ProposalReviewCard({ initialProposals }: ProposalReviewCardProps
       ) : null}
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        {latestProposal.drive_link ? (
+        {portalProposalHref || latestProposal.drive_link ? (
           <a
-            href={latestProposal.drive_link}
+            href={portalProposalHref ?? latestProposal.drive_link!}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center rounded-[var(--iw-radius-control)] border border-[var(--hairline-2)] bg-[var(--surface)] px-4 py-2 text-sm font-medium text-[var(--accent-bright)] transition-[background-color,border-color,color,box-shadow,transform] duration-300 hover:-translate-y-px hover:bg-[var(--surface-2)] hover:shadow-[var(--iw-shadow-1)]"
             onClick={() => void submitEvent(latestProposal.id, 'viewed')}
           >
             Open proposal
+          </a>
+        ) : null}
+        {portalProposalHref && latestProposal.drive_link ? (
+          <a
+            href={latestProposal.drive_link}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-[var(--iw-radius-control)] border border-[var(--iw-border)] bg-transparent px-4 py-2 text-sm font-medium text-[var(--iw-text-2)] transition-colors hover:text-[var(--iw-teal)]"
+          >
+            Open in Google Drive
           </a>
         ) : null}
         {actionable ? (

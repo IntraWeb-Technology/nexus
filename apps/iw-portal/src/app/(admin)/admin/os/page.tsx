@@ -1,7 +1,13 @@
 import { AdminPageHeader, EmptyState, formatDate } from '@/components/admin/AdminPrimitives'
+import { CopyTextButton } from '@/components/admin/CopyTextButton'
 import { getOsCommandCenter } from '@/lib/admin/queries'
 
+function portalOrigin(): string {
+  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? ''
+}
+
 export default async function AdminOsPage() {
+  const origin = portalOrigin()
   const os = await getOsCommandCenter()
   const proposalDecisions = os.queue
     .filter((row) => row.queue_type === 'proposal')
@@ -20,11 +26,67 @@ export default async function AdminOsPage() {
         </section>
         <section className="iw-card">
           <h2 className="iw-card-title">Contracts / proposals queue</h2>
-          {os.queue.length ? os.queue.map((row) => (
-            <p key={row.id} className="mt-3 border-t border-[var(--hairline)] pt-3 text-sm first:border-0 first:pt-0">
-              <b>{row.client_name || row.company || 'Unknown'}</b> · {row.queue_type} · {row.status}
-            </p>
-          )) : <EmptyState>No contract/proposal queue rows exist.</EmptyState>}
+          <p className="mt-2 text-xs text-[var(--iw-text-3)]">
+            Portal PDF uses Supabase Storage + <span className="iw-mono">documents</span>; Google Drive remains a fallback until rollout is verified.
+          </p>
+          {os.queue.length ? os.queue.map((row) => {
+            const portalPdfUrl = row.proposal_document_id
+              ? `${origin}/api/documents/download?id=${encodeURIComponent(row.proposal_document_id)}`
+              : row.pdf_storage_path
+                ? `${origin}/api/os-queue/pdf?id=${encodeURIComponent(row.id)}`
+                : ''
+            return (
+              <div key={row.id} className="mt-3 border-t border-[var(--hairline)] pt-3 text-sm first:border-0 first:pt-0">
+                <p>
+                  <b>{row.client_name || row.company || 'Unknown'}</b> · {row.queue_type} · {row.status}
+                  {row.hubspot_deal_id ? (
+                    <span className="iw-mono text-xs text-[var(--iw-text-3)]"> · deal {row.hubspot_deal_id}</span>
+                  ) : null}
+                </p>
+                <dl className="mt-2 grid gap-1 text-xs text-[var(--iw-text-2)]">
+                  <div className="flex flex-wrap items-start gap-2">
+                    <dt className="font-medium text-[var(--iw-text-3)]">Portal PDF</dt>
+                    <dd className="min-w-0 flex-1">
+                      {portalPdfUrl ? (
+                        <span className="flex flex-wrap items-center gap-2">
+                          <a href={portalPdfUrl} className="text-[var(--accent-bright)] underline" target="_blank" rel="noreferrer">
+                            Open / download
+                          </a>
+                          <CopyTextButton text={portalPdfUrl} label="Copy URL" />
+                        </span>
+                      ) : (
+                        <span className="text-[var(--iw-text-3)]">Not linked (no document id or storage path)</span>
+                      )}
+                    </dd>
+                  </div>
+                  {row.pdf_storage_path ? (
+                    <div>
+                      <dt className="inline font-medium text-[var(--iw-text-3)]">Storage path · </dt>
+                      <dd className="inline iw-mono break-all text-[var(--iw-text-2)]">{row.pdf_storage_path}</dd>
+                    </div>
+                  ) : null}
+                  {row.proposal_document_id ? (
+                    <div>
+                      <dt className="inline font-medium text-[var(--iw-text-3)]">Document id · </dt>
+                      <dd className="inline iw-mono break-all">{row.proposal_document_id}</dd>
+                    </div>
+                  ) : null}
+                  {row.drive_link ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <dt className="font-medium text-[var(--iw-text-3)]">Google Drive</dt>
+                      <dd>
+                        <a href={row.drive_link} className="text-[var(--iw-text-2)] underline" target="_blank" rel="noreferrer">
+                          Open
+                        </a>
+                      </dd>
+                    </div>
+                  ) : (
+                    <div className="text-[var(--iw-text-3)]">Google Drive: not set</div>
+                  )}
+                </dl>
+              </div>
+            )
+          }) : <EmptyState>No contract/proposal queue rows exist.</EmptyState>}
         </section>
         <section className="iw-card xl:col-span-2">
           <h2 className="iw-card-title">Client proposal decisions</h2>

@@ -20,6 +20,7 @@ export type N8nInboundAction =
   | 'provision_client'
   | 'link_portal_clerk_user'
   | 'update_change_order'
+  | 'attach_project_document'
 
 export interface N8nEnvelope<T extends N8nInboundAction, D> {
   action: T
@@ -46,6 +47,30 @@ export type AddDocumentData = {
   file_url: string
   file_size_kb?: number
   requires_signature?: boolean
+}
+
+/** HubSpot deal id for os_contracts_queue row (must match portal project’s linked deal). */
+export type AttachProjectDocumentData = {
+  queue_type: 'proposal' | 'contract'
+  hubspot_deal_id: string
+  /** Friendly filename for the documents list (PDF). */
+  name: string
+  /** PDF bytes as base64; alternative to storage_path. */
+  base64?: string
+  /** Existing path in client-uploads (project_id/...); use if file was uploaded out-of-band. */
+  storage_path?: string
+  file_size_kb?: number
+  requires_signature?: boolean
+  /** Optional: keep Google Drive link for staff / migration. */
+  drive_link?: string | null
+  /** Used when creating a new os_contracts_queue row. */
+  client_name?: string
+  company?: string
+  industry?: string
+  deal_value?: string
+  tier?: string
+  contact_email?: string
+  pain_points?: string
 }
 
 export type AddNotificationData = {
@@ -153,6 +178,10 @@ export type UpdateChangeOrderData = {
 export type N8nInboundPayloadNoSlug =
   | { action: 'link_portal_clerk_user'; data: LinkPortalClerkUserData }
 
+export type AttachProjectDocumentInboundPayload =
+  | N8nEnvelope<'attach_project_document', AttachProjectDocumentData>
+  | { action: 'attach_project_document'; hubspot_deal_id: string; data: AttachProjectDocumentData }
+
 export type N8nInboundPayload =
   | N8nEnvelope<'update_milestone', UpdateMilestoneData>
   | N8nEnvelope<'update_progress', UpdateProgressData>
@@ -164,6 +193,7 @@ export type N8nInboundPayload =
   | N8nEnvelope<'provision_client', ProvisionClientData>
   | N8nInboundPayloadNoSlug
   | N8nEnvelope<'update_change_order', UpdateChangeOrderData>
+  | AttachProjectDocumentInboundPayload
 
 export interface StaffAlertPayload {
   project_slug: string

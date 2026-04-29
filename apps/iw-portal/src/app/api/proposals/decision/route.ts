@@ -137,7 +137,7 @@ export async function POST(request: Request) {
       .eq('project_id', bundle.project.id)
       .eq('type', 'proposal')
       .eq('label', eventLabel)
-      .ilike('detail', `proposal:${proposal.id}%`)
+      .eq('detail', detail)
       .limit(1)
       .maybeSingle()
 

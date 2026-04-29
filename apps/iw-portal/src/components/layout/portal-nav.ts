@@ -4,7 +4,6 @@ export const portalNavGroups = [
     items: [
       { href: '/dashboard', label: 'Dashboard', shortLabel: 'Home' },
       { href: '/progress', label: 'Project Progress', shortLabel: 'Progress' },
-      { href: '/activity', label: 'Activity Log', shortLabel: 'Activity' },
     ],
   },
   {

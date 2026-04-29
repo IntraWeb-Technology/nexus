@@ -1,5 +1,6 @@
 import { getPortalBundle } from '@/lib/data/portal'
 import { triggerMilestoneApproved } from '@/lib/n8n/client'
+import { recalculateProjectProgressPct } from '@/lib/progress'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
@@ -26,11 +27,24 @@ export async function POST(request: Request) {
 
   const { data: ms, error: msErr } = await supabase
     .from('milestones')
-    .select('id, title, project_id')
+    .select('id, title, project_id, sort_order, status')
     .eq('id', milestoneId)
     .eq('project_id', bundle.project.id)
     .maybeSingle()
   if (msErr || !ms) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  if (ms.status !== 'active') {
+    return NextResponse.json({ error: 'Only the current active milestone can be approved' }, { status: 400 })
+  }
+
+  const { data: existingApproval } = await supabase
+    .from('milestone_approvals')
+    .select('id')
+    .eq('milestone_id', milestoneId)
+    .maybeSingle()
+  if (existingApproval) {
+    return NextResponse.json({ error: 'This phase was already approved' }, { status: 409 })
+  }
 
   const user = await currentUser()
   const approvedByName =
@@ -52,6 +66,28 @@ export async function POST(request: Request) {
     .single()
 
   if (insErr || !approval) return NextResponse.json({ error: 'Could not record approval' }, { status: 500 })
+
+  const completedAt = new Date().toISOString()
+  await supabase
+    .from('milestones')
+    .update({ status: 'done', completed_at: completedAt })
+    .eq('id', ms.id)
+    .eq('project_id', bundle.project.id)
+
+  const { data: nextMs } = await supabase
+    .from('milestones')
+    .select('id')
+    .eq('project_id', bundle.project.id)
+    .gt('sort_order', ms.sort_order)
+    .order('sort_order', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  if (nextMs?.id) {
+    await supabase.from('milestones').update({ status: 'active' }).eq('id', nextMs.id)
+  }
+
+  await recalculateProjectProgressPct(supabase, bundle.project.id)
 
   await supabase.from('activity_log').insert({
     project_id: bundle.project.id,

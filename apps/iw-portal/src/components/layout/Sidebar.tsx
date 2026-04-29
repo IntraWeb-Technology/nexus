@@ -35,14 +35,6 @@ const icons = {
       </svg>
     </Icon>
   ),
-  activity: (
-    <Icon>
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-        <circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.25" />
-        <path d="M7.5 4v3.5L10 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </Icon>
-  ),
   messages: (
     <Icon>
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
@@ -114,7 +106,6 @@ const icons = {
 const iconByHref: Record<string, ReactNode> = {
   '/dashboard': icons.dashboard,
   '/progress': icons.progress,
-  '/activity': icons.activity,
   '/messages': icons.messages,
   '/notifications': icons.notifications,
   '/documents': icons.documents,

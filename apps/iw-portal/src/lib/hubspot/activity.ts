@@ -145,6 +145,16 @@ function isoFromProps(p: Record<string, string | null | undefined>): string {
   return new Date().toISOString()
 }
 
+/** Prefer scheduled start time over logged-at (`hs_timestamp`) for meetings. */
+function isoFromMeetingProps(p: Record<string, string | null | undefined>): string {
+  const start = p.hs_meeting_start_time?.trim()
+  if (start) {
+    const ms = parseHubSpotTimeMs({ ...p, hs_timestamp: start })
+    if (!Number.isNaN(ms)) return new Date(ms).toISOString()
+  }
+  return isoFromProps(p)
+}
+
 const NOTE_PROPS = ['hs_note_body', 'hs_timestamp', 'hs_createdate'] as const
 const TASK_PROPS = ['hs_task_subject', 'hs_task_body', 'hs_timestamp', 'hs_createdate'] as const
 const CALL_PROPS = [
@@ -225,7 +235,7 @@ function mapMeeting(o: HubSpotCrmObject, projectId: string): ActivityFeedItem {
     type: 'hubspot_meeting',
     label: title,
     detail: body,
-    created_at: isoFromProps(p),
+    created_at: isoFromMeetingProps(p),
     source: 'hubspot',
   }
 }

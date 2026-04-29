@@ -9,6 +9,7 @@
  * Run: pnpm exec tsx scripts/upsert-jschibelli-portal.ts
  */
 import { mergeProvisionedClientsByEmailIntoClerkUser } from '../src/lib/data/link-hubspot-provisioned-clerk'
+import { milestonesForPlan } from '../src/lib/milestones-templates'
 import { requireHubSpotToken } from '../src/lib/hubspot/config'
 import { config } from 'dotenv'
 import { createClerkClient } from '@clerk/backend'
@@ -255,38 +256,19 @@ async function main() {
     .eq('project_id', projectId)
 
   if ((count ?? 0) === 0) {
-    await sb.from('milestones').insert([
-      {
+    const seeds = milestonesForPlan('growth')
+    await sb.from('milestones').insert(
+      seeds.map((m, i) => ({
         project_id: projectId,
-        title: 'Discovery & scoping',
-        description: null,
-        status: 'done',
-        phase: 'discovery',
-        completed_at: new Date().toISOString(),
-        estimated_at: null,
-        sort_order: 1,
-      },
-      {
-        project_id: projectId,
-        title: 'Onboarding & setup',
-        description: null,
-        status: 'active',
-        phase: 'onboarding',
-        completed_at: null,
-        estimated_at: null,
-        sort_order: 2,
-      },
-      {
-        project_id: projectId,
-        title: 'Integration build',
-        description: null,
-        status: 'pending',
-        phase: 'build',
-        completed_at: null,
-        estimated_at: null,
-        sort_order: 3,
-      },
-    ])
+        title: m.title,
+        description: null as string | null,
+        status: i === 0 ? ('active' as const) : ('pending' as const),
+        phase: m.phase,
+        completed_at: null as string | null,
+        estimated_at: null as string | null,
+        sort_order: m.sort_order,
+      })),
+    )
   }
 
   console.log('Upsert OK.')
