@@ -11,7 +11,7 @@ Package name: **`@repo/iw-portal`**, path: **`apps/iw-portal`**.
 
 ## Vercel
 
-1. **Root Directory:** `apps/iw-portal` (required for a clean setup). If it is left at the **repository root** (`.`), Vercel shows *“No Next.js version detected”* because the root `package.json` normally has no `next` dependency — the monorepo instead adds a root [`vercel.json`](../../vercel.json) shim plus a root **`next`** devDependency so those deployments can still run `turbo` and pick up `apps/iw-portal/.next`. Prefer setting Root Directory here so this folder’s [`vercel.json`](./vercel.json) stays the only source of install/build commands.
+1. **Root Directory:** **`apps/iw-portal`** (required). Do **not** point the portal project at **`apps/iw-site-q2`** or the repo root — you will see a successful Turbo/`next build` for the portal but deployment will fail looking for `.next` / `routes-manifest.json` under the wrong app path.
 2. Turn on **Include files outside the root directory in the Build Step** (pnpm workspace + root lockfile).
 3. Leave the default install/build override empty if you rely on `vercel.json` in this folder (`cd ../..` then `pnpm install` + `turbo build`).
 

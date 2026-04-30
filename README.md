@@ -2,13 +2,18 @@
 
 Nexus is the IntraWeb Technologies pnpm + Turborepo monorepo for the client portal, marketing site, n8n workflow assets, and shared build configuration.
 
-## Vercel (portal)
+## Vercel (monorepo)
 
-The **nexus-iw-portal** project must not use the monorepo repository root as Vercel’s **Root Directory** unless you rely on the root [`vercel.json`](./vercel.json) shim (see below).
+There is **no** `vercel.json` at the repository root. Each Next app ships its own file so Vercel never mixes build/output paths between apps.
 
-**Recommended:** In Vercel → Project → **Settings → Build & Deployment → Root Directory**, set **`apps/iw-portal`**, enable **Include files outside the root directory in the Build Step**, and use [`apps/iw-portal/vercel.json`](./apps/iw-portal/vercel.json) for install/build (see [`apps/iw-portal/README.md`](./apps/iw-portal/README.md)).
+| App | Vercel **Root Directory** | Config |
+| --- | --- | --- |
+| Client portal | **`apps/iw-portal`** | [`apps/iw-portal/vercel.json`](./apps/iw-portal/vercel.json) |
+| Marketing (`iw-site-q2`) | **`apps/iw-site-q2`** | [`apps/iw-site-q2/vercel.json`](./apps/iw-site-q2/vercel.json) |
 
-**If Root Directory is left at `.` (repo root):** Framework detection uses the root `package.json`, which declares **`next`** only so Vercel recognizes a Next.js workspace. The root [`vercel.json`](./vercel.json) runs `turbo` for `@repo/iw-portal`; Next output is auto-detected by the framework preset. Prefer fixing Root Directory to `apps/iw-portal` so a single `vercel.json` under the app stays canonical.
+For each project, enable **Include files outside the root directory in the Build Step** (pnpm workspace + root lockfile). Details: [`apps/iw-portal/README.md`](./apps/iw-portal/README.md).
+
+**If the portal build succeeds but deploy fails** with `routes-manifest.json` or `.next` under **`apps/iw-site-q2`**, the portal Vercel project’s Root Directory is wrong (often still `apps/iw-site-q2`). Set it to **`apps/iw-portal`** and clear any custom **Output Directory** in project settings.
 
 ## Active Apps
 
