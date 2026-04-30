@@ -8,7 +8,7 @@ The **nexus-iw-portal** project must not use the monorepo repository root as Ver
 
 **Recommended:** In Vercel → Project → **Settings → Build & Deployment → Root Directory**, set **`apps/iw-portal`**, enable **Include files outside the root directory in the Build Step**, and use [`apps/iw-portal/vercel.json`](./apps/iw-portal/vercel.json) for install/build (see [`apps/iw-portal/README.md`](./apps/iw-portal/README.md)).
 
-**If Root Directory is left at `.` (repo root):** Framework detection uses the root `package.json`, which declares **`next`** only so Vercel recognizes a Next.js workspace. The root [`vercel.json`](./vercel.json) runs `turbo` for `@repo/iw-portal` and sets **`outputDirectory`** to `apps/iw-portal/.next`. Prefer fixing Root Directory to `apps/iw-portal` so a single `vercel.json` under the app stays canonical.
+**If Root Directory is left at `.` (repo root):** Framework detection uses the root `package.json`, which declares **`next`** only so Vercel recognizes a Next.js workspace. The root [`vercel.json`](./vercel.json) runs `turbo` for `@repo/iw-portal`; Next output is auto-detected by the framework preset. Prefer fixing Root Directory to `apps/iw-portal` so a single `vercel.json` under the app stays canonical.
 
 ## Active Apps
 
