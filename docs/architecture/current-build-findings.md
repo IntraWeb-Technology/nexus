@@ -22,7 +22,7 @@ Previously **`@repo/iw-site-q2`** failed ESLint with:
 **`@repo/iw-portal`** (surfaced once `iw-site-q2` was green / cache invalidated):
 
 - `scripts/update-payment-links.js`: one-line **`eslint-disable-next-line`** for `@typescript-eslint/no-require-imports` (plain `node` CJS script).
-- `scripts/vercel-prune-dev-env.ts`: removed unused `iwPortalEnvLocalPath` import.
+- `packages/ops/src/vercel-prune-dev-env.ts` (migrated from portal in Phase 5): same logic as before; relative imports use explicit `.js` specifiers for `@repo/ops` `nodenext` (runtime unchanged under `tsx`).
 - `scripts/verify-stack-alignment.ts`: removed dead `anon` env read.
 
 ## `pnpm check-types` — **PASS**
@@ -64,11 +64,26 @@ Full monorepo `turbo run build` succeeds for the current tree.
 - `scripts/lib/iw-portal-env-check.ts` — shared helper reading `IW_PORTAL_ENV_VALIDATE`
 - `scripts/verify-stack-alignment.ts` — default **strict**
 - `scripts/vercel-align-env.ts` — default **report** (partial `.env.local` must not block sync)
-- `scripts/vercel-prune-dev-env.ts` — default **off** (no env file load; opt-in validate)
+- `packages/ops/src/vercel-prune-dev-env.ts` — default **off** (no env file load; opt-in validate)
+- `scripts/test-n8n-add-invoice.ts` — default **report** (webhook smoke test after `dotenv`)
 
-`validateIwSiteQ2Env` / `validateN8nEnv` were not added here; these scripts are portal-only and do not load site-q2 or n8n-workflows env contracts.
+`validateIwSiteQ2Env` / `validateN8nEnv` were not added to these entrypoints; portal scripts use the iw-portal contract only. Use `validateN8nEnv` from `@repo/env` in `packages/n8n-workflows` or other n8n-specific scripts when those are migrated.
 
-**Commands (root):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS** (after `pnpm install` and `@repo/env` build).
+**Commands (root, re-verified 2026-04-29):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS**.
+
+## Phase 5 — `vercel:prune-dev-env` in `@repo/ops`
+
+**Scope:** Move the Vercel development-target prune script out of `apps/iw-portal/scripts` into `packages/ops` without changing behavior, env var names, or CLI usage from the operator’s perspective.
+
+**Implementation:**
+
+- Entry: `packages/ops/src/vercel-prune-dev-env.ts` (same control flow and `npx vercel env rm … development` loop; `cwd` remains `apps/iw-portal`).
+- Supporting copies under `packages/ops/src/` (same source as portal): `lib/iw-portal-env-check.ts`, `lib/repo-root.ts`, `vercel-kv-list.ts` — required so `@repo/ops` typechecks with `rootDir: src` and runs standalone. `apps/iw-portal/scripts/vercel-kv-list.ts` remains the source for `vercel-align-env.ts` until a later consolidation.
+- Portal script: `vercel:prune-dev-env` → `pnpm --filter @repo/ops vercel:prune-dev-env`.
+- **Behavior differences:** None intended. `@repo/env` validation (`applyIwPortalEnvValidation('off')` plus `IW_PORTAL_ENV_VALIDATE` overrides) is unchanged.
+- **Execution notes:** Run from repo root with `pnpm --filter @repo/ops vercel:prune-dev-env` or `pnpm --filter @repo/iw-portal vercel:prune-dev-env`. Still invokes the Vercel CLI per key (slow); requires the same Vercel project link as when run from the app directory.
+
+**Commands (root, re-verified 2026-04-29):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS** after migration.
 
 ## Recommended next PR-sized task
 

@@ -7,11 +7,13 @@
  */
 import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
+import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
 import { resolveSupabaseScriptEnv } from './lib/supabase-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()
+applyIwPortalEnvValidation('report', 'test-n8n-add-invoice')
 
 let url: string
 let key: string

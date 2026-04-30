@@ -26,7 +26,7 @@
     "test": "tsx --test src/lib/webhooks/provision-client-idempotency.test.ts",
     "verify:stack": "tsx scripts/verify-stack-alignment.ts",
     "vercel:align-env": "tsx scripts/vercel-align-env.ts",
-    "vercel:prune-dev-env": "tsx scripts/vercel-prune-dev-env.ts"
+    "vercel:prune-dev-env": "pnpm --filter @repo/ops vercel:prune-dev-env"
   },
   "dependencies": {
     "@clerk/backend": "^3.2.4",

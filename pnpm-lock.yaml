@@ -243,10 +243,17 @@ importers:
   packages/n8n-workflows: {}
 
   packages/ops:
+    dependencies:
+      '@repo/env':
+        specifier: workspace:*
+        version: link:../env
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       typescript:
         specifier: 5.9.2
         version: 5.9.2

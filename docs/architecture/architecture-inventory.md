@@ -56,7 +56,7 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | `test` | `tsx --test src/lib/webhooks/provision-client-idempotency.test.ts` |
 | `verify:stack` | `tsx scripts/verify-stack-alignment.ts` |
 | `vercel:align-env` | `tsx scripts/vercel-align-env.ts` |
-| `vercel:prune-dev-env` | `tsx scripts/vercel-prune-dev-env.ts` |
+| `vercel:prune-dev-env` | `pnpm --filter @repo/ops vercel:prune-dev-env` (from portal: same via `apps/iw-portal` script) |
 
 **Ad-hoc scripts (not in `package.json` scripts):** `scripts/update-payment-links.js`, `scripts/test-n8n-add-invoice.ts`, `scripts/verify-stripe-subscription-sync.ts`, `scripts/vercel-kv-list.ts`, `scripts/cleanup-verify-subscriptions.ts`, `scripts/lib/*`, `scripts/hubspot/change-order-form-fields.ts`.
 
@@ -98,7 +98,7 @@ No runnable scripts (config-only packages).
 | Cal.com | `iw-site-q2` (embed, API for kickoff booking) |
 | reCAPTCHA Enterprise | `iw-site-q2` (contact + website intake) |
 | Anthropic | `iw-site-q2` (contact flow) |
-| Vercel | Hosting assumption for both Next apps; `iw-portal` scripts `vercel-align-env`, `vercel-prune-dev-env` |
+| Vercel | Hosting assumption for both Next apps; `iw-portal` script `vercel-align-env`; prune lives in `@repo/ops` (`vercel:prune-dev-env`) |
 | Google Drive | **Not** directly in app TypeScript SDKs; appears in **n8n workflows** (e.g. Google Drive nodes, `client_drive_folder_id` in sample payloads). |
 
 ## 5. Environment variable inventory

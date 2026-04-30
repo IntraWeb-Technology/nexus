@@ -11,9 +11,9 @@
  */
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
-import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check'
-import { resolveMonorepoRoot } from './lib/repo-root'
-import { PORTAL_ENV_KEYS } from './vercel-kv-list'
+import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check.js'
+import { resolveMonorepoRoot } from './lib/repo-root.js'
+import { PORTAL_ENV_KEYS } from './vercel-kv-list.js'
 
 const root = resolveMonorepoRoot(import.meta.url)
 const appDir = path.join(root, 'apps', 'iw-portal')

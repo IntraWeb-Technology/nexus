@@ -68,7 +68,8 @@ These **tsx scripts** call `validateIwPortalEnv` from `@repo/env` after any `dot
 | --- | --- |
 | `scripts/verify-stack-alignment.ts` | **strict** — invalid portal env shape exits before checks |
 | `scripts/vercel-align-env.ts` | **report** — print issues, still run Vercel sync |
-| `scripts/vercel-prune-dev-env.ts` | **off** — no `.env.local`; opt in with `report` or `strict` |
+| `packages/ops/src/vercel-prune-dev-env.ts` (`pnpm --filter @repo/ops vercel:prune-dev-env` or `pnpm --filter @repo/iw-portal vercel:prune-dev-env`) | **off** — no `.env.local`; opt in with `report` or `strict` |
+| `scripts/test-n8n-add-invoice.ts` | **report** — smoke test; warn on bad shapes, still run |
 
 Override: set `IW_PORTAL_ENV_VALIDATE` to `strict`, `report`, or `0` / `off` / `false`.
 

@@ -1,5 +1,28 @@
 # Deployment runbook
 
+## GitHub Actions CI
+
+Repository: [IntraWeb-Technology/nexus](https://github.com/IntraWeb-Technology/nexus).
+
+Workflow file: `.github/workflows/ci.yml` (job `ci`).
+
+| Item | Value |
+|------|--------|
+| Triggers | `push` and `pull_request` to `main` and `development` |
+| Runner | `ubuntu-latest` |
+| Node.js | 22 |
+| Package manager | pnpm **10.33.0** via **Corepack** (`corepack enable` then `corepack prepare pnpm@10.33.0 --activate`) |
+| Cache | pnpm store restored with `actions/cache`, keyed by OS and hash of root `pnpm-lock.yaml` |
+
+Steps run in order:
+
+1. `pnpm install --frozen-lockfile`
+2. `pnpm lint`
+3. `pnpm check-types`
+4. `pnpm build`
+
+This workflow validates the monorepo only; it does not deploy or call hosting APIs. Deployment steps belong in separate automation if you add them later.
+
 ## Local development
 
 From repo root:

@@ -15,7 +15,7 @@ No scripts have been moved yet. This package exists so future migrations have a 
 | `verify-stack-alignment.ts` | `apps/iw-portal/scripts/verify-stack-alignment.ts` | `@repo/ops` | **Medium** | Read-only checks; popular for onboarding. |
 | `verify-stripe-subscription-sync.ts` | `apps/iw-portal/scripts/verify-stripe-subscription-sync.ts` | `@repo/ops` | **Medium** | Uses n8n + HubSpot overrides. |
 | `vercel-align-env.ts` | `apps/iw-portal/scripts/vercel-align-env.ts` | `@repo/ops` | **High** | Mutates remote Vercel env; strict review. |
-| `vercel-prune-dev-env.ts` | `apps/iw-portal/scripts/vercel-prune-dev-env.ts` | `@repo/ops` | **High** | Destructive to preview env. |
+| `vercel-prune-dev-env.ts` | `packages/ops/src/vercel-prune-dev-env.ts` | `@repo/ops` | **High** | Destructive to preview env. |
 | `vercel-kv-list.ts` | `apps/iw-portal/scripts/vercel-kv-list.ts` | `@repo/ops` | **Low** | Listing utility. |
 | `setup-maintenance-products.ts` | `apps/iw-portal/scripts/setup-maintenance-products.ts` | `@repo/ops` | **High** | Stripe catalog mutations. |
 | `update-payment-links.js` | `apps/iw-portal/scripts/update-payment-links.js` | `@repo/ops` | **High** | Stripe; legacy JS — consider TS port when moving. |
