@@ -13,10 +13,12 @@
     "build": "tsc",
     "check-types": "tsc --noEmit",
     "lint": "node -e \"process.exit(0)\"",
+    "vercel:align-env": "tsx src/vercel-align-env.ts",
     "vercel:prune-dev-env": "tsx src/vercel-prune-dev-env.ts"
   },
   "dependencies": {
-    "@repo/env": "workspace:*"
+    "@repo/env": "workspace:*",
+    "dotenv": "^17.4.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

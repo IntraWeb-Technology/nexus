@@ -63,7 +63,7 @@ Full monorepo `turbo run build` succeeds for the current tree.
 
 - `scripts/lib/iw-portal-env-check.ts` — shared helper reading `IW_PORTAL_ENV_VALIDATE`
 - `scripts/verify-stack-alignment.ts` — default **strict**
-- `scripts/vercel-align-env.ts` — default **report** (partial `.env.local` must not block sync)
+- `packages/ops/src/vercel-align-env.ts` — default **report** (partial `.env.local` must not block sync)
 - `packages/ops/src/vercel-prune-dev-env.ts` — default **off** (no env file load; opt-in validate)
 - `scripts/test-n8n-add-invoice.ts` — default **report** (webhook smoke test after `dotenv`)
 
@@ -78,13 +78,28 @@ Full monorepo `turbo run build` succeeds for the current tree.
 **Implementation:**
 
 - Entry: `packages/ops/src/vercel-prune-dev-env.ts` (same control flow and `npx vercel env rm … development` loop; `cwd` remains `apps/iw-portal`).
-- Supporting copies under `packages/ops/src/` (same source as portal): `lib/iw-portal-env-check.ts`, `lib/repo-root.ts`, `vercel-kv-list.ts` — required so `@repo/ops` typechecks with `rootDir: src` and runs standalone. `apps/iw-portal/scripts/vercel-kv-list.ts` remains the source for `vercel-align-env.ts` until a later consolidation.
+- Supporting copies under `packages/ops/src/` (same source as portal): `lib/iw-portal-env-check.ts`, `lib/repo-root.ts`, `vercel-kv-list.ts` — required so `@repo/ops` typechecks with `rootDir: src` and runs standalone. `apps/iw-portal/scripts/vercel-kv-list.ts` remains a **duplicate** for ad-hoc `tsx` use (inventory); `@repo/ops` Vercel scripts import the ops copy only.
 - Portal script: `vercel:prune-dev-env` → `pnpm --filter @repo/ops vercel:prune-dev-env`.
 - **Behavior differences:** None intended. `@repo/env` validation (`applyIwPortalEnvValidation('off')` plus `IW_PORTAL_ENV_VALIDATE` overrides) is unchanged.
 - **Execution notes:** Run from repo root with `pnpm --filter @repo/ops vercel:prune-dev-env` or `pnpm --filter @repo/iw-portal vercel:prune-dev-env`. Still invokes the Vercel CLI per key (slow); requires the same Vercel project link as when run from the app directory.
 
 **Commands (root, re-verified 2026-04-29):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS** after migration.
 
+## Phase 6 — `vercel:align-env` in `@repo/ops`
+
+**Scope:** Move `vercel-align-env` from `apps/iw-portal/scripts` into `packages/ops` without changing control flow, env var names, Vercel CLI flags, or `@repo/env` validation defaults.
+
+**Implementation:**
+
+- Entry: `packages/ops/src/vercel-align-env.ts` — same loop, `cwd` still `apps/iw-portal`, same `dotenv` → `applyIwPortalEnvValidation('report', 'vercel:align-env')` → production / optional preview branch targets.
+- **Imports:** Reuses existing ops modules with explicit `.js` specifiers: `./lib/iw-portal-env-check.js`, `./lib/repo-root.js`, `./vercel-kv-list.js` (byte-for-byte same helpers as portal; no logic refactor).
+- **Consolidation:** No new helper merges; align-env now shares the same ops-side copies as `vercel-prune-dev-env`. `apps/iw-portal/scripts/vercel-kv-list.ts` is **kept** as a duplicate for ad-hoc listing (see inventory); removing it was out of scope.
+- **Dependencies:** `@repo/ops` declares `dotenv@^17.4.0` (same range as `@repo/iw-portal`) so `pnpm --filter @repo/ops vercel:align-env` resolves `config()` identically when the portal package is not the cwd.
+- Portal: `vercel:align-env` → `pnpm --filter @repo/ops vercel:align-env`.
+- **Behavior:** None intended vs pre-migration portal `tsx` entry (validated by running ops and portal filters against the same `.env.local` / Vercel project).
+
+**Commands (root, re-verified 2026-04-29):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS** after migration.
+
 ## Recommended next PR-sized task
 
-Add a **CI workflow** (or extend an existing one) that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR, with Node 22 and pnpm cache aligned to the repo.
+Migrate a **low-risk read-only** portal script next (for example `verify-stack-alignment.ts` or `vercel-kv-list.ts` with a thin `pnpm` entry on `@repo/ops`), or add a **CI workflow** that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR with Node 22 and pnpm cache aligned to the repo.
