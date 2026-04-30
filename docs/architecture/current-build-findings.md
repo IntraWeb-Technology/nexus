@@ -78,7 +78,7 @@ Full monorepo `turbo run build` succeeds for the current tree.
 **Implementation:**
 
 - Entry: `packages/ops/src/vercel-prune-dev-env.ts` (same control flow and `npx vercel env rm … development` loop; `cwd` remains `apps/iw-portal`).
-- Supporting copies under `packages/ops/src/` (same source as portal): `lib/iw-portal-env-check.ts`, `lib/repo-root.ts`, `vercel-kv-list.ts` — required so `@repo/ops` typechecks with `rootDir: src` and runs standalone. `apps/iw-portal/scripts/vercel-kv-list.ts` remains a **duplicate** for ad-hoc `tsx` use (inventory); `@repo/ops` Vercel scripts import the ops copy only.
+- Supporting copies under `packages/ops/src/` (same source as former portal lib): `lib/iw-portal-env-check.ts`, `lib/repo-root.ts`, `vercel-kv-list.ts` — required so `@repo/ops` typechecks with `rootDir: src` and runs standalone. **Phase 7** removed the duplicate `apps/iw-portal/scripts/vercel-kv-list.ts`; `PORTAL_ENV_KEYS` is canonical in ops only.
 - Portal script: `vercel:prune-dev-env` → `pnpm --filter @repo/ops vercel:prune-dev-env`.
 - **Behavior differences:** None intended. `@repo/env` validation (`applyIwPortalEnvValidation('off')` plus `IW_PORTAL_ENV_VALIDATE` overrides) is unchanged.
 - **Execution notes:** Run from repo root with `pnpm --filter @repo/ops vercel:prune-dev-env` or `pnpm --filter @repo/iw-portal vercel:prune-dev-env`. Still invokes the Vercel CLI per key (slow); requires the same Vercel project link as when run from the app directory.
@@ -93,13 +93,27 @@ Full monorepo `turbo run build` succeeds for the current tree.
 
 - Entry: `packages/ops/src/vercel-align-env.ts` — same loop, `cwd` still `apps/iw-portal`, same `dotenv` → `applyIwPortalEnvValidation('report', 'vercel:align-env')` → production / optional preview branch targets.
 - **Imports:** Reuses existing ops modules with explicit `.js` specifiers: `./lib/iw-portal-env-check.js`, `./lib/repo-root.js`, `./vercel-kv-list.js` (byte-for-byte same helpers as portal; no logic refactor).
-- **Consolidation:** No new helper merges; align-env now shares the same ops-side copies as `vercel-prune-dev-env`. `apps/iw-portal/scripts/vercel-kv-list.ts` is **kept** as a duplicate for ad-hoc listing (see inventory); removing it was out of scope.
+- **Consolidation:** No new helper merges; align-env shares the same ops-side copies as `vercel-prune-dev-env`, including `vercel-kv-list.ts` (see Phase 7 for dedupe).
 - **Dependencies:** `@repo/ops` declares `dotenv@^17.4.0` (same range as `@repo/iw-portal`) so `pnpm --filter @repo/ops vercel:align-env` resolves `config()` identically when the portal package is not the cwd.
 - Portal: `vercel:align-env` → `pnpm --filter @repo/ops vercel:align-env`.
 - **Behavior:** None intended vs pre-migration portal `tsx` entry (validated by running ops and portal filters against the same `.env.local` / Vercel project).
 
 **Commands (root, re-verified 2026-04-29):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS** after migration.
 
+## Phase 7 — `PORTAL_ENV_KEYS` / `vercel-kv-list` single source of truth
+
+**Scope:** Remove duplicate `apps/iw-portal/scripts/vercel-kv-list.ts`; `@repo/ops` owns `PORTAL_ENV_KEYS` with no behavior or key-list changes.
+
+**Parity:** `apps/iw-portal/scripts/vercel-kv-list.ts` and `packages/ops/src/vercel-kv-list.ts` were **identical** (exported `PORTAL_ENV_KEYS` only) before deletion.
+
+**References:** No TypeScript imports referenced the portal path; only docs and ops internals used the list (`vercel-align-env`, `vercel-prune-dev-env` already import `./vercel-kv-list.js`).
+
+**Ops:** Added `vercel:list-env-keys` → `tsx src/vercel-kv-list.ts` in `packages/ops/package.json` (module load smoke; same as prior ad-hoc `tsx` on the portal file).
+
+**Docs:** [architecture-inventory.md](./architecture-inventory.md) updated (`vercel:align-env` command, ad-hoc list, Vercel integration row); [environment-contract.md](./environment-contract.md) and [ops README](../../packages/ops/README.md) note the canonical module and script.
+
+**Commands (root, re-verified 2026-04-29):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS**.
+
 ## Recommended next PR-sized task
 
-Migrate a **low-risk read-only** portal script next (for example `verify-stack-alignment.ts` or `vercel-kv-list.ts` with a thin `pnpm` entry on `@repo/ops`), or add a **CI workflow** that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR with Node 22 and pnpm cache aligned to the repo.
+Migrate **`verify-stack-alignment.ts`** into `@repo/ops` (read-only, reinforces the pattern), or add a **CI workflow** that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR with Node 22 and pnpm cache aligned to the repo.

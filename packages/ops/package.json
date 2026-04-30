@@ -14,6 +14,7 @@
     "check-types": "tsc --noEmit",
     "lint": "node -e \"process.exit(0)\"",
     "vercel:align-env": "tsx src/vercel-align-env.ts",
+    "vercel:list-env-keys": "tsx src/vercel-kv-list.ts",
     "vercel:prune-dev-env": "tsx src/vercel-prune-dev-env.ts"
   },
   "dependencies": {

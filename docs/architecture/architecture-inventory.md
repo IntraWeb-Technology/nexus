@@ -16,6 +16,7 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | Package | Name | Role |
 | --- | --- | --- |
 | `packages/n8n-workflows` | `@repo/n8n-workflows` | Workflow JSON, pull/sync/push scripts |
+| `packages/ops` | `@repo/ops` | Operational scripts (Vercel env, shared portal script helpers) |
 | `packages/eslint-config` | `@repo/eslint-config` | Shared ESLint configs (`base`, `next-js`, `react-internal`) |
 | `packages/typescript-config` | `@repo/typescript-config` | Shared `tsconfig` fragments (`base`, `nextjs`, `react-library`) |
 
@@ -55,10 +56,12 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | `stripe:setup-maintenance-products` | `tsx scripts/setup-maintenance-products.ts` |
 | `test` | `tsx --test src/lib/webhooks/provision-client-idempotency.test.ts` |
 | `verify:stack` | `tsx scripts/verify-stack-alignment.ts` |
-| `vercel:align-env` | `tsx scripts/vercel-align-env.ts` |
+| `vercel:align-env` | `pnpm --filter @repo/ops vercel:align-env` (from portal: `pnpm --filter @repo/iw-portal vercel:align-env`) |
 | `vercel:prune-dev-env` | `pnpm --filter @repo/ops vercel:prune-dev-env` (from portal: same via `apps/iw-portal` script) |
 
-**Ad-hoc scripts (not in `package.json` scripts):** `scripts/update-payment-links.js`, `scripts/test-n8n-add-invoice.ts`, `scripts/verify-stripe-subscription-sync.ts`, `scripts/vercel-kv-list.ts`, `scripts/cleanup-verify-subscriptions.ts`, `scripts/lib/*`, `scripts/hubspot/change-order-form-fields.ts`.
+**Ad-hoc scripts (not in `package.json` scripts):** `scripts/update-payment-links.js`, `scripts/test-n8n-add-invoice.ts`, `scripts/verify-stripe-subscription-sync.ts`, `scripts/cleanup-verify-subscriptions.ts`, `scripts/lib/*`, `scripts/hubspot/change-order-form-fields.ts`.
+
+**`PORTAL_ENV_KEYS` (Vercel env allowlist for portal scripts):** defined only in `packages/ops/src/vercel-kv-list.ts`; run `pnpm --filter @repo/ops vercel:list-env-keys` to load that module under `tsx`.
 
 ### `@repo/iw-site-q2`
 
@@ -98,7 +101,7 @@ No runnable scripts (config-only packages).
 | Cal.com | `iw-site-q2` (embed, API for kickoff booking) |
 | reCAPTCHA Enterprise | `iw-site-q2` (contact + website intake) |
 | Anthropic | `iw-site-q2` (contact flow) |
-| Vercel | Hosting assumption for both Next apps; `iw-portal` script `vercel-align-env`; prune lives in `@repo/ops` (`vercel:prune-dev-env`) |
+| Vercel | Hosting assumption for both Next apps; `vercel:align-env` / `vercel:prune-dev-env` / `vercel:list-env-keys` live in `@repo/ops` (portal `package.json` aliases the Vercel scripts) |
 | Google Drive | **Not** directly in app TypeScript SDKs; appears in **n8n workflows** (e.g. Google Drive nodes, `client_drive_folder_id` in sample payloads). |
 
 ## 5. Environment variable inventory
