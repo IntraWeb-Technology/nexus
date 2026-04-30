@@ -1,13 +1,15 @@
 /**
  * Read-only checks: Supabase URL vs JWT ref vs Postgres host, os_* visibility, HubSpot + Clerk reachability.
- * Run: pnpm exec tsx scripts/verify-stack-alignment.ts (from apps/iw-portal)
+ * Run: pnpm --filter @repo/ops diagnostics:verify-stack (from repo root)
  */
 import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { Client } from 'pg'
-import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check'
-import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
-import { resolveSupabaseScriptEnv } from './lib/supabase-env'
+import { applyIwPortalEnvValidation } from '../env/iw-portal-env-check.js'
+import { resolveSupabaseScriptEnv } from '../env/supabase-script-env.js'
+import { iwPortalEnvLocalPath, resolveMonorepoRoot } from '../repo/repo-root.js'
+
+console.error('[ops:diagnostics] verify-stack-alignment starting')
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 applyIwPortalEnvValidation('strict')
@@ -17,16 +19,19 @@ function refFromSupabaseUrl(url: string | undefined): string | null {
   try {
     const h = new URL(url).hostname
     const m = h.match(/^([a-z0-9]+)\.supabase\.co$/i)
-    return m ? m[1] : null
+    return m?.[1] ?? null
   } catch {
     return null
   }
 }
 
 function refFromJwt(jwt: string | undefined): string | null {
-  if (!jwt || jwt.split('.').length < 2) return null
+  if (!jwt) return null
+  const parts = jwt.split('.')
+  const payloadB64 = parts[1]
+  if (!payloadB64) return null
   try {
-    const payload = JSON.parse(Buffer.from(jwt.split('.')[1], 'base64url').toString('utf8')) as {
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8')) as {
       ref?: string
     }
     return payload.ref ?? null
@@ -38,7 +43,7 @@ function refFromJwt(jwt: string | undefined): string | null {
 function refFromPostgresHost(host: string | undefined): string | null {
   if (!host) return null
   const m = host.match(/^db\.([a-z0-9]+)\.supabase\.co$/i)
-  return m ? m[1] : null
+  return m?.[1] ?? null
 }
 
 async function main() {
@@ -130,7 +135,11 @@ async function main() {
   if (!aligned) process.exit(1)
 }
 
-main().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})
+main()
+  .then(() => {
+    console.error('[ops:diagnostics] verify-stack-alignment complete')
+  })
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })

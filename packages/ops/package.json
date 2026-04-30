@@ -13,16 +13,20 @@
     "build": "tsc",
     "check-types": "tsc --noEmit",
     "lint": "node -e \"process.exit(0)\"",
-    "vercel:align-env": "tsx src/vercel-align-env.ts",
-    "vercel:list-env-keys": "tsx src/vercel-kv-list.ts",
-    "vercel:prune-dev-env": "tsx src/vercel-prune-dev-env.ts"
+    "diagnostics:verify-stack": "tsx src/diagnostics/verify-stack-alignment.ts",
+    "vercel:align-env": "tsx src/vercel/vercel-align-env.ts",
+    "vercel:list-env-keys": "tsx src/vercel/vercel-kv-list.ts",
+    "vercel:prune-dev-env": "tsx src/vercel/vercel-prune-dev-env.ts"
   },
   "dependencies": {
     "@repo/env": "workspace:*",
-    "dotenv": "^17.4.0"
+    "@supabase/supabase-js": "^2.101.1",
+    "dotenv": "^17.4.0",
+    "pg": "^8.20.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/pg": "^8.20.0",
     "tsx": "^4.21.0",
     "typescript": "5.9.2"
   }

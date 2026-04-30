@@ -36,7 +36,7 @@ Use this as a **first-step** checklist. Escalate and open provider dashboards (V
 
 1. Supabase dashboard: project health, connection limits, and recent migrations.
 2. Portal: verify `NEXT_PUBLIC_SUPABASE_URL`, anon key, and service role key in Vercel.
-3. Run `pnpm --filter @repo/iw-portal verify:stack` from a trusted machine with env (aligns Postgres host ref with Supabase project ref).
+3. Run `pnpm --filter @repo/iw-portal verify:stack` from a trusted machine with env (delegates to `@repo/ops` `diagnostics:verify-stack`; aligns Postgres host ref with Supabase project ref).
 4. For schema drift: `db:pull` / migrations per team process — avoid manual prod edits without backup.
 
 ## Email delivery failure (Resend)

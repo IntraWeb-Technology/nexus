@@ -22,8 +22,8 @@ Previously **`@repo/iw-site-q2`** failed ESLint with:
 **`@repo/iw-portal`** (surfaced once `iw-site-q2` was green / cache invalidated):
 
 - `scripts/update-payment-links.js`: one-line **`eslint-disable-next-line`** for `@typescript-eslint/no-require-imports` (plain `node` CJS script).
-- `packages/ops/src/vercel-prune-dev-env.ts` (migrated from portal in Phase 5): same logic as before; relative imports use explicit `.js` specifiers for `@repo/ops` `nodenext` (runtime unchanged under `tsx`).
-- `scripts/verify-stack-alignment.ts`: removed dead `anon` env read.
+- `packages/ops/src/vercel/vercel-prune-dev-env.ts` (migrated from portal in Phase 5; **Phase 8** `vercel/` folder): same logic as before; relative imports use explicit `.js` specifiers for `@repo/ops` `nodenext` (runtime unchanged under `tsx`).
+- `packages/ops` `verify-stack-alignment` (formerly `apps/iw-portal/scripts/verify-stack-alignment.ts`): removed dead `anon` env read (historical note; script now lives under `@repo/ops`).
 
 ## `pnpm check-types` — **PASS**
 
@@ -62,9 +62,9 @@ Full monorepo `turbo run build` succeeds for the current tree.
 **Wiring:**
 
 - `scripts/lib/iw-portal-env-check.ts` — shared helper reading `IW_PORTAL_ENV_VALIDATE`
-- `scripts/verify-stack-alignment.ts` — default **strict**
-- `packages/ops/src/vercel-align-env.ts` — default **report** (partial `.env.local` must not block sync)
-- `packages/ops/src/vercel-prune-dev-env.ts` — default **off** (no env file load; opt-in validate)
+- `packages/ops/src/diagnostics/verify-stack-alignment.ts` — default **strict** (migrated from `scripts/verify-stack-alignment.ts` in Phase 8)
+- `packages/ops/src/vercel/vercel-align-env.ts` — default **report** (partial `.env.local` must not block sync)
+- `packages/ops/src/vercel/vercel-prune-dev-env.ts` — default **off** (no env file load; opt-in validate)
 - `scripts/test-n8n-add-invoice.ts` — default **report** (webhook smoke test after `dotenv`)
 
 `validateIwSiteQ2Env` / `validateN8nEnv` were not added to these entrypoints; portal scripts use the iw-portal contract only. Use `validateN8nEnv` from `@repo/env` in `packages/n8n-workflows` or other n8n-specific scripts when those are migrated.
@@ -77,8 +77,8 @@ Full monorepo `turbo run build` succeeds for the current tree.
 
 **Implementation:**
 
-- Entry: `packages/ops/src/vercel-prune-dev-env.ts` (same control flow and `npx vercel env rm … development` loop; `cwd` remains `apps/iw-portal`).
-- Supporting copies under `packages/ops/src/` (same source as former portal lib): `lib/iw-portal-env-check.ts`, `lib/repo-root.ts`, `vercel-kv-list.ts` — required so `@repo/ops` typechecks with `rootDir: src` and runs standalone. **Phase 7** removed the duplicate `apps/iw-portal/scripts/vercel-kv-list.ts`; `PORTAL_ENV_KEYS` is canonical in ops only.
+- Entry: `packages/ops/src/vercel/vercel-prune-dev-env.ts` (same control flow and `npx vercel env rm … development` loop; `cwd` remains `apps/iw-portal`). **Phase 8** moved ops sources into `vercel/`, `env/`, and `repo/` folders; behavior unchanged.
+- Supporting modules: `env/iw-portal-env-check.ts`, `repo/repo-root.ts`, `vercel/vercel-kv-list.ts` — required so `@repo/ops` typechecks with `rootDir: src` and runs standalone. **Phase 7** removed the duplicate `apps/iw-portal/scripts/vercel-kv-list.ts`; `PORTAL_ENV_KEYS` is canonical in ops only.
 - Portal script: `vercel:prune-dev-env` → `pnpm --filter @repo/ops vercel:prune-dev-env`.
 - **Behavior differences:** None intended. `@repo/env` validation (`applyIwPortalEnvValidation('off')` plus `IW_PORTAL_ENV_VALIDATE` overrides) is unchanged.
 - **Execution notes:** Run from repo root with `pnpm --filter @repo/ops vercel:prune-dev-env` or `pnpm --filter @repo/iw-portal vercel:prune-dev-env`. Still invokes the Vercel CLI per key (slow); requires the same Vercel project link as when run from the app directory.
@@ -91,9 +91,9 @@ Full monorepo `turbo run build` succeeds for the current tree.
 
 **Implementation:**
 
-- Entry: `packages/ops/src/vercel-align-env.ts` — same loop, `cwd` still `apps/iw-portal`, same `dotenv` → `applyIwPortalEnvValidation('report', 'vercel:align-env')` → production / optional preview branch targets.
-- **Imports:** Reuses existing ops modules with explicit `.js` specifiers: `./lib/iw-portal-env-check.js`, `./lib/repo-root.js`, `./vercel-kv-list.js` (byte-for-byte same helpers as portal; no logic refactor).
-- **Consolidation:** No new helper merges; align-env shares the same ops-side copies as `vercel-prune-dev-env`, including `vercel-kv-list.ts` (see Phase 7 for dedupe).
+- Entry: `packages/ops/src/vercel/vercel-align-env.ts` — same loop, `cwd` still `apps/iw-portal`, same `dotenv` → `applyIwPortalEnvValidation('report', 'vercel:align-env')` → production / optional preview branch targets.
+- **Imports:** Reuses ops modules with explicit `.js` specifiers under `env/`, `repo/`, and `vercel/` (no logic refactor).
+- **Consolidation:** No new helper merges; align-env shares the same ops-side modules as `vercel-prune-dev-env`, including `vercel-kv-list.ts` (see Phase 7 for dedupe).
 - **Dependencies:** `@repo/ops` declares `dotenv@^17.4.0` (same range as `@repo/iw-portal`) so `pnpm --filter @repo/ops vercel:align-env` resolves `config()` identically when the portal package is not the cwd.
 - Portal: `vercel:align-env` → `pnpm --filter @repo/ops vercel:align-env`.
 - **Behavior:** None intended vs pre-migration portal `tsx` entry (validated by running ops and portal filters against the same `.env.local` / Vercel project).
@@ -104,16 +104,32 @@ Full monorepo `turbo run build` succeeds for the current tree.
 
 **Scope:** Remove duplicate `apps/iw-portal/scripts/vercel-kv-list.ts`; `@repo/ops` owns `PORTAL_ENV_KEYS` with no behavior or key-list changes.
 
-**Parity:** `apps/iw-portal/scripts/vercel-kv-list.ts` and `packages/ops/src/vercel-kv-list.ts` were **identical** (exported `PORTAL_ENV_KEYS` only) before deletion.
+**Parity:** `apps/iw-portal/scripts/vercel-kv-list.ts` and `packages/ops/src/vercel/vercel-kv-list.ts` (path after Phase 8; previously `packages/ops/src/vercel-kv-list.ts`) were **identical** (exported `PORTAL_ENV_KEYS` only) before deletion.
 
 **References:** No TypeScript imports referenced the portal path; only docs and ops internals used the list (`vercel-align-env`, `vercel-prune-dev-env` already import `./vercel-kv-list.js`).
 
-**Ops:** Added `vercel:list-env-keys` → `tsx src/vercel-kv-list.ts` in `packages/ops/package.json` (module load smoke; same as prior ad-hoc `tsx` on the portal file).
+**Ops:** `vercel:list-env-keys` → `tsx src/vercel/vercel-kv-list.ts` in `packages/ops/package.json` (module load smoke; same as prior ad-hoc `tsx` on the portal file). **Phase 8** moved this path under `src/vercel/`.
 
 **Docs:** [architecture-inventory.md](./architecture-inventory.md) updated (`vercel:align-env` command, ad-hoc list, Vercel integration row); [environment-contract.md](./environment-contract.md) and [ops README](../../packages/ops/README.md) note the canonical module and script.
 
 **Commands (root, re-verified 2026-04-29):** `pnpm lint`, `pnpm check-types`, and `pnpm build` — **PASS**.
 
+## Phase 8 — `verify-stack-alignment` in `@repo/ops` + internal layout
+
+**Scope:** Move `verify-stack-alignment` from `apps/iw-portal/scripts` into `@repo/ops`, harden `packages/ops/src/` into responsibility folders (`diagnostics/`, `vercel/`, `env/`, `repo/`), and delegate `verify:stack` from the portal package without changing Next.js runtime or env var names.
+
+**Implementation:**
+
+- Entry: `packages/ops/src/diagnostics/verify-stack-alignment.ts` — same read-only checks (Supabase ref alignment, optional Postgres `os_*` listing, PostgREST head count, HubSpot / Clerk reachability, static n8n credential note). Loads `apps/iw-portal/.env.local` via `repo/repo-root.ts`; `applyIwPortalEnvValidation('strict')`; Supabase URL/key resolution via `env/supabase-script-env.ts` (parity with former `scripts/lib/supabase-env.ts`).
+- **Structure:** Vercel scripts under `src/vercel/`; portal env validation + script env helpers under `src/env/`; monorepo path helpers under `src/repo/`; stack verification under `src/diagnostics/`. No generic `utils/` folder.
+- **Portal:** `verify:stack` → `pnpm --filter @repo/ops diagnostics:verify-stack`. App-owned `scripts/verify-stack-alignment.ts` removed.
+- **Logging:** `[ops:diagnostics] verify-stack-alignment starting|complete` on **stderr** only so stdout lines stay identical for piping.
+- **Dependencies:** `@supabase/supabase-js` and `pg` added to `@repo/ops` only (scripts package; apps unchanged).
+
+**Behavior differences:** None intended for validation logic or exit codes vs the pre-migration portal `tsx` entry.
+
+**Commands (root, re-verified 2026-04-30):** `pnpm --filter @repo/ops diagnostics:verify-stack`, `pnpm --filter @repo/iw-portal verify:stack`, `pnpm lint`, `pnpm check-types`, `pnpm build` — **PASS**.
+
 ## Recommended next PR-sized task
 
-Migrate **`verify-stack-alignment.ts`** into `@repo/ops` (read-only, reinforces the pattern), or add a **CI workflow** that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR with Node 22 and pnpm cache aligned to the repo.
+Add a **CI workflow** that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR with Node 22 and pnpm cache aligned to the repo, or migrate additional portal scripts in a scoped phase.

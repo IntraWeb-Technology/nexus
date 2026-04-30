@@ -66,10 +66,10 @@ These **tsx scripts** call `validateIwPortalEnv` from `@repo/env` after any `dot
 
 | Script | Default `IW_PORTAL_ENV_VALIDATE` behavior |
 | --- | --- |
-| `scripts/verify-stack-alignment.ts` | **strict** — invalid portal env shape exits before checks |
-| `packages/ops/src/vercel-align-env.ts` (`pnpm --filter @repo/ops vercel:align-env` or `pnpm --filter @repo/iw-portal vercel:align-env`) | **report** — print issues, still run Vercel sync |
-| `packages/ops/src/vercel-prune-dev-env.ts` (`pnpm --filter @repo/ops vercel:prune-dev-env` or `pnpm --filter @repo/iw-portal vercel:prune-dev-env`) | **off** — no `.env.local`; opt in with `report` or `strict` |
-| `packages/ops/src/vercel-kv-list.ts` (`pnpm --filter @repo/ops vercel:list-env-keys`) | **n/a** — exports `PORTAL_ENV_KEYS` only; no `.env` validation |
+| `packages/ops/src/diagnostics/verify-stack-alignment.ts` (`pnpm --filter @repo/ops diagnostics:verify-stack` or `pnpm --filter @repo/iw-portal verify:stack`) | **strict** — invalid portal env shape exits before checks |
+| `packages/ops/src/vercel/vercel-align-env.ts` (`pnpm --filter @repo/ops vercel:align-env` or `pnpm --filter @repo/iw-portal vercel:align-env`) | **report** — print issues, still run Vercel sync |
+| `packages/ops/src/vercel/vercel-prune-dev-env.ts` (`pnpm --filter @repo/ops vercel:prune-dev-env` or `pnpm --filter @repo/iw-portal vercel:prune-dev-env`) | **off** — no `.env.local`; opt in with `report` or `strict` |
+| `packages/ops/src/vercel/vercel-kv-list.ts` (`pnpm --filter @repo/ops vercel:list-env-keys`) | **n/a** — exports `PORTAL_ENV_KEYS` only; no `.env` validation |
 | `scripts/test-n8n-add-invoice.ts` | **report** — smoke test; warn on bad shapes, still run |
 
 Override: set `IW_PORTAL_ENV_VALIDATE` to `strict`, `report`, or `0` / `off` / `false`.
