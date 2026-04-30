@@ -201,7 +201,7 @@ Site URLs: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SCHEDULE_URL`, `NEXT_PUBLIC_ACCO
 
 - **Client:** `apps/iw-portal/src/lib/supabase/client.ts`, `url.ts`
 - **Server (Clerk JWT + service role):** `apps/iw-portal/src/lib/supabase/server.ts`
-- **Scripts:** `apps/iw-portal/scripts/lib/supabase-env.ts`, `apply-portal-schema-postgres.ts`, `seed.ts`, `seed-test-client.ts`
+- **Scripts:** `@repo/env/supabase-script-env` (`resolveSupabaseScriptEnv` for URL + service role); `apply-portal-schema-postgres.ts`, `seed.ts`, `seed-test-client.ts`, and other `scripts/*.ts` that call the resolver
 - **Usage:** Most portal API routes and server actions that persist portal state; types under `src/lib/supabase/types` (if present)
 - **CLI:** `supabase` devDependency; `db:link` / `db:push` / `db:pull` in portal `package.json`
 

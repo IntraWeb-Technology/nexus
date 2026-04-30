@@ -6,7 +6,7 @@ import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { Client } from 'pg'
 import { applyIwPortalEnvValidation } from '../env/iw-portal-env-check.js'
-import { resolveSupabaseScriptEnv } from '../env/supabase-script-env.js'
+import { resolveSupabaseScriptEnv } from '@repo/env/supabase-script-env'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from '../repo/repo-root.js'
 
 console.error('[ops:diagnostics] verify-stack-alignment starting')

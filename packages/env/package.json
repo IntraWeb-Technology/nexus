@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./supabase-script-env": {
+      "types": "./dist/supabase-script-env.d.ts",
+      "import": "./dist/supabase-script-env.js"
     }
   },
   "scripts": {

@@ -9,7 +9,7 @@ Apps **delegate** operational entrypoints here (for example `pnpm --filter @repo
 | Folder | Ownership |
 | --- | --- |
 | `vercel/` | Vercel CLI–driven env sync and allowlists (`vercel-align-env`, `vercel-prune-dev-env`, `vercel-kv-list`). |
-| `env/` | Portal script env validation (`applyIwPortalEnvValidation` → `@repo/env`) and Supabase URL/service-role resolution for ops scripts. |
+| `env/` | Portal script env validation (`applyIwPortalEnvValidation` → `@repo/env`). Supabase URL/service-role resolution for scripts lives in `@repo/env/supabase-script-env` (shared with portal `scripts/`). |
 | `repo/` | Monorepo root resolution and `apps/iw-portal/.env.local` path helpers. |
 | `diagnostics/` | Read-only stack / integration alignment checks (no writes to external systems beyond probe API calls documented per script). |
 

@@ -120,7 +120,7 @@ Full monorepo `turbo run build` succeeds for the current tree.
 
 **Implementation:**
 
-- Entry: `packages/ops/src/diagnostics/verify-stack-alignment.ts` — same read-only checks (Supabase ref alignment, optional Postgres `os_*` listing, PostgREST head count, HubSpot / Clerk reachability, static n8n credential note). Loads `apps/iw-portal/.env.local` via `repo/repo-root.ts`; `applyIwPortalEnvValidation('strict')`; Supabase URL/key resolution via `env/supabase-script-env.ts` (parity with former `scripts/lib/supabase-env.ts`).
+- Entry: `packages/ops/src/diagnostics/verify-stack-alignment.ts` — same read-only checks (Supabase ref alignment, optional Postgres `os_*` listing, PostgREST head count, HubSpot / Clerk reachability, static n8n credential note). Loads `apps/iw-portal/.env.local` via `repo/repo-root.ts`; `applyIwPortalEnvValidation('strict')`; Supabase URL/key resolution via `@repo/env/supabase-script-env` (**Phase 9** consolidated; formerly `env/supabase-script-env.ts` in ops and `scripts/lib/supabase-env.ts` in the portal).
 - **Structure:** Vercel scripts under `src/vercel/`; portal env validation + script env helpers under `src/env/`; monorepo path helpers under `src/repo/`; stack verification under `src/diagnostics/`. No generic `utils/` folder.
 - **Portal:** `verify:stack` → `pnpm --filter @repo/ops diagnostics:verify-stack`. App-owned `scripts/verify-stack-alignment.ts` removed.
 - **Logging:** `[ops:diagnostics] verify-stack-alignment starting|complete` on **stderr** only so stdout lines stay identical for piping.
@@ -129,6 +129,16 @@ Full monorepo `turbo run build` succeeds for the current tree.
 **Behavior differences:** None intended for validation logic or exit codes vs the pre-migration portal `tsx` entry.
 
 **Commands (root, re-verified 2026-04-30):** `pnpm --filter @repo/ops diagnostics:verify-stack`, `pnpm --filter @repo/iw-portal verify:stack`, `pnpm lint`, `pnpm check-types`, `pnpm build` — **PASS**.
+
+## Phase 9 — Supabase script env resolution in `@repo/env`
+
+**Scope:** Remove duplicate Supabase URL + service-role resolution from `packages/ops/src/env/supabase-script-env.ts` and `apps/iw-portal/scripts/lib/supabase-env.ts`; single implementation in `packages/env/src/supabase-script-env.ts`, exported as `@repo/env/supabase-script-env`.
+
+**Parity:** The two deleted modules were **byte-for-byte identical** (trimmed `pick` fallback order and the same error message). Postgres vars remain inlined in consumers that already used `process.env` (`verify-stack-alignment`, `apply-portal-schema-postgres`, etc.) — no semantic change to env names or resolution order for DB URLs.
+
+**Boundaries:** No `@repo/ops` imports in apps; no new Next.js runtime imports — only `tsx` scripts and ops diagnostics import the subpath. No Supabase client in `@repo/env`.
+
+**Commands (root, re-verified 2026-04-30):** `pnpm lint`, `pnpm check-types`, `pnpm build`, `pnpm --filter @repo/ops diagnostics:verify-stack`, and `pnpm --filter @repo/iw-portal verify:stack` — **PASS**.
 
 ## Recommended next PR-sized task
 

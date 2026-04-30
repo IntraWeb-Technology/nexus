@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "pnpm install --frozen-lockfile --filter=@repo/iw-portal... --filter=my-turborepo",
+  "buildCommand": "pnpm exec turbo run build --filter=@repo/iw-portal --cache=local:rw,remote:rw",
+  "outputDirectory": "apps/iw-portal/.next",
+  "ignoreCommand": "npx -y turbo@2.9.6 query affected --base=\"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\" --packages @repo/iw-portal --tasks build --exit-code",
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "portal.intrawebtech.com" }],
+      "destination": "/:path*"
+    }
+  ]
+}

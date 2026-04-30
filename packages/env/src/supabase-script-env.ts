@@ -1,4 +1,9 @@
-type SupabaseScriptEnv = {
+/**
+ * Script-only Supabase URL + service role resolution (Node / tsx).
+ * Reads `process.env` only: no network, no mutation of `process.env`, no Supabase clients.
+ */
+
+export type SupabaseScriptEnv = {
   url: string
   serviceRoleKey: string
 }

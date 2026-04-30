@@ -9,7 +9,7 @@ import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
 import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
-import { resolveSupabaseScriptEnv } from './lib/supabase-env'
+import { resolveSupabaseScriptEnv } from '@repo/env/supabase-script-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()

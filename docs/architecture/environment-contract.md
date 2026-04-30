@@ -64,6 +64,8 @@ Additional keys on **`tasks.build.env`** in `turbo.json` (subset; full list in r
 
 These **tsx scripts** call `validateIwPortalEnv` from `@repo/env` after any `dotenv` load (where applicable). App routes and React code do **not** import `@repo/env` yet.
 
+**Supabase script env (URL + service role):** `resolveSupabaseScriptEnv` from `@repo/env/supabase-script-env` is the single source of truth. It trims and resolves `NEXT_PUBLIC_SUPABASE_URL` → `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` → `SUPABASE_SECRET_KEY`, then throws if either is missing. Used by `packages/ops` diagnostics (`verify-stack-alignment`) and by `apps/iw-portal/scripts/*` that need a service-role client. Postgres connection strings (`POSTGRES_URL_NON_POOLING` / `POSTGRES_URL`, `POSTGRES_HOST`) are still read directly where needed (for example stack verify and schema apply); they were never part of the duplicate module.
+
 | Script | Default `IW_PORTAL_ENV_VALIDATE` behavior |
 | --- | --- |
 | `packages/ops/src/diagnostics/verify-stack-alignment.ts` (`pnpm --filter @repo/ops diagnostics:verify-stack` or `pnpm --filter @repo/iw-portal verify:stack`) | **strict** — invalid portal env shape exits before checks |
