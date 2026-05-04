@@ -16,9 +16,10 @@ const SIGN_OUT_AFTER_ATTEMPTS = 3
 const ATTEMPT_WINDOW_MS = 3 * 60 * 1000
 /** Drop stale nav locks so a later visit to `/post-auth` in the same tab is not blocked forever. */
 const NAV_PENDING_TTL_MS = 12_000
-const PRIMARY_SIGNIN_COOLDOWN_MS = 10_000
 /** Wait before assuming no client session after `?from=continue` (Clerk can hydrate `userId` late). */
 const FROM_CONTINUE_NO_USER_GRACE_MS = 2800
+/** If navigation to `/post-auth/continue` never runs (e.g. hung SDK), drop the lock so the effect can retry. */
+const NAV_ASSIGN_SAFETY_CLEAR_MS = 12_000
 
 function isSatellite(): boolean {
   return process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true'
@@ -112,16 +113,13 @@ export function PostAuthClient() {
   /**
    * Server returned from `/post-auth/continue` without a session and the browser still shows no `userId`
    * after a short grace period — send through Clerk hosted sign-in (required for satellite cookie sync).
+   * (No primary-host cooldown here: a previous cooldown gate left users stuck on this screen forever.)
    */
   useEffect(() => {
     if (needsRedirectCallback || !fromContinue || !isLoaded || userId) return
 
     const t = setTimeout(() => {
       if (userIdRef.current) return
-
-      const last = Number(sessionStorage.getItem(PRIMARY_SIGNIN_COOLDOWN_KEY) || '0')
-      if (Date.now() - last < PRIMARY_SIGNIN_COOLDOWN_MS) return
-
       clearPostAuthFlowState()
       sessionStorage.setItem(PRIMARY_SIGNIN_COOLDOWN_KEY, String(Date.now()))
       escapeToSignIn(clerk)
@@ -156,17 +154,24 @@ export function PostAuthClient() {
         return
       }
 
+      const safetyClear = window.setTimeout(() => {
+        sessionStorage.removeItem(NAV_PENDING_KEY)
+      }, NAV_ASSIGN_SAFETY_CLEAR_MS)
+
       void (async () => {
         try {
-          await clerk.session?.reload?.()
+          // Do not `await clerk.session.reload()` — it can hang indefinitely and block navigation.
           router.refresh()
           await Promise.resolve()
           window.location.assign('/post-auth/continue')
         } catch {
           sessionStorage.removeItem(NAV_PENDING_KEY)
+        } finally {
+          window.clearTimeout(safetyClear)
         }
       })()
-      return
+
+      return () => window.clearTimeout(safetyClear)
     }
 
     const towardSignIn = setTimeout(() => {
