@@ -140,6 +140,63 @@ Full monorepo `turbo run build` succeeds for the current tree.
 
 **Commands (root, re-verified 2026-04-30):** `pnpm lint`, `pnpm check-types`, `pnpm build`, `pnpm --filter @repo/ops diagnostics:verify-stack`, and `pnpm --filter @repo/iw-portal verify:stack` — **PASS**.
 
+## Phase 10 — Release candidate hardening (2026-04-30)
+
+**Scope:** Read-only validation and documentation only (no architecture moves, no `@repo/ops` / `@repo/env` ownership changes).
+
+### Vercel configuration
+
+| Project | Root directory (dashboard / `vercel project inspect`) | Notes |
+| --- | --- | --- |
+| `nexus-iw-portal` | `apps/iw-portal` | Matches repo [`apps/iw-portal/vercel.json`](../../apps/iw-portal/vercel.json) monorepo install/build. **Include files outside the root** must stay enabled in the dashboard so `cd ../..` install/build work (not visible in CLI inspect; confirm manually). |
+| `iw-site-q2` | `apps/iw-site-q2` | Matches repo [`apps/iw-site-q2/vercel.json`](../../apps/iw-site-q2/vercel.json). Production domain `www.intrawebtech.com` responds **HTTP 200** at validation time. |
+| `nexus` | `.` (repo root) | **Misconfiguration still present:** `vercel project inspect nexus` shows root directory `.` and a **turbo** build filter referencing **`web`** (not an active workspace package). Treat as **non-production** until fixed, deleted, or disconnected from the Git integration. Do **not** rely on a root `vercel.json` as primary app config (none committed for that purpose). |
+
+There is no root-level `vercel.json` in this repo for the monorepo root; app-level JSON remains authoritative.
+
+### Environment audit (Vercel CLI, production scope)
+
+**`nexus-iw-portal`:** `vercel env ls production` shows encrypted values for Supabase (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY`), Postgres family (`POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_HOST`, …), `CLERK_SECRET_KEY`, `HUBSPOT_PRIVATE_APP_TOKEN`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, `WEBHOOK_SECRET`, `N8N_BASE_URL`, and related Clerk / Stripe public keys. **Stripe and Resend are present for production.** Some keys (for example `DEBUG_PROMPTS`, `RECAPTCHA_SKIP_IN_DEV`) are attached to **Development, Preview, Production**; confirm values are not dev-only where inappropriate.
+
+**`iw-site-q2`:** `vercel env ls` (all scopes) returned **no rows** from the API while **Production** deployments are **Ready** and the live site returns **200**. Likely explanations: **Shared Environment Variables**, team-level linking, or UI-only configuration. **Action:** In the Vercel dashboard, confirm where production secrets for the marketing app are defined so they are not invisible during audits.
+
+### Build validation
+
+- **Root `package.json`:** There is **no** `pnpm clean` script. A full reset is manual: remove root `node_modules`, app `.next` / `dist` as needed, then `pnpm install --frozen-lockfile` and `pnpm build`.
+- **`pnpm install --frozen-lockfile` + `pnpm build`:** **PASS** (same session as this write-up).
+
+### Vercel deploy status (CLI)
+
+- **`nexus-iw-portal`:** Multiple **Ready** **Production** deployments listed; recent **Preview** builds **Ready** (some historical **Error** / **Canceled** entries remain in history).
+- **`iw-site-q2`:** **Ready** **Production** deployments listed.
+
+### Smoke tests (this session)
+
+- **Portal (local `pnpm --filter @repo/iw-portal start`):** `GET /api/health` returns `ok: true` with Clerk test keys aligned, Supabase configured, HubSpot server token present; `GET /sign-in` and `GET /` return **200**. Browser-only checks (Clerk sign-in UX, dashboard data, console) were **not** substituted here.
+- **Preview deployment URLs:** Unauthenticated `curl` to `*.vercel.app` can return **401** when **Vercel Authentication** / SSO is enabled; that is **not** treated as an application runtime failure.
+- **Marketing (local `pnpm --filter @repo/iw-site-q2 start`):** Listed static routes (`/`, `/about`, `/contact`, …) returned **200**.
+- **Production marketing:** `https://www.intrawebtech.com/` **200**.
+
+### Integration path (form → n8n → HubSpot → Supabase)
+
+**Not re-run end-to-end in this automated session** (no live form POST or n8n execution log captured here). **Partial:** `pnpm --filter @repo/ops diagnostics:verify-stack` confirms Supabase ref alignment, Postgres `os_*` visibility, PostgREST head on `os_deals_sheet`, **HubSpot deals API** reachability, and **Clerk** instance API reachability; repo note for n8n credential naming unchanged.
+
+### verify-stack
+
+`pnpm --filter @repo/ops diagnostics:verify-stack` and `pnpm --filter @repo/iw-portal verify:stack` — **PASS** (same session).
+
+### Rollback plan
+
+[deployment-runbook.md](./deployment-runbook.md) updated with LKG commit procedure, Vercel rollback, env rollback, and irreversible side effects.
+
+### Postgres env resolution
+
+Unchanged from Phase 9: Supabase URL + service role resolution is centralized in `@repo/env/supabase-script-env`; Postgres connection strings remain **direct `process.env` reads** in diagnostics and scripts (documented in [environment-contract.md](./environment-contract.md)).
+
+### Tag `v0.1.0-rc.1`
+
+**Do not tag until:** a full **form → n8n → HubSpot → Supabase** smoke is executed on the target environment, optional Stripe/Resend live checks are satisfied if those features ship in RC, and the **`iw-site-q2` Vercel env source** ambiguity is resolved in the dashboard.
+
 ## Recommended next PR-sized task
 
 Add a **CI workflow** that runs `pnpm lint`, `pnpm check-types`, and `pnpm build` on every PR with Node 22 and pnpm cache aligned to the repo, or migrate additional portal scripts in a scoped phase.
