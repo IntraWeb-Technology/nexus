@@ -26,7 +26,6 @@ export default async function SignInPage() {
           },
         }}
         fallbackRedirectUrl="/post-auth"
-        forceRedirectUrl="/post-auth"
         signUpUrl="/sign-up"
       />
     </div>

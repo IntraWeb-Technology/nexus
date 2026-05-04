@@ -1,14 +1,20 @@
-import { getStaffProfile } from '@/lib/admin/auth'
-import { auth } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
+import { PostAuthClient } from './PostAuthClient'
+import { Suspense } from 'react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PostAuthPage() {
-  const { userId, redirectToSignIn } = await auth()
-  if (!userId) return redirectToSignIn({ returnBackUrl: '/post-auth' })
+function PostAuthFallback() {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <p className="text-sm text-[var(--iw-text-2)]">Loading…</p>
+    </div>
+  )
+}
 
-  const staff = await getStaffProfile()
-  if (staff) redirect('/admin')
-  redirect('/dashboard')
+export default function PostAuthPage() {
+  return (
+    <Suspense fallback={<PostAuthFallback />}>
+      <PostAuthClient />
+    </Suspense>
+  )
 }
