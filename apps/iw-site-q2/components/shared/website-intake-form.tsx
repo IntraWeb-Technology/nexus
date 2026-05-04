@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import KickoffScheduler from "@/components/website-intake/KickoffScheduler";
 import { buildKickoffTitle } from "@/lib/websiteIntakeKickoff";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -289,7 +289,10 @@ export default function WebsiteIntakeForm() {
   const canGoNext = async (): Promise<boolean> => {
     setSubmitStatus(null);
     if (step === "review" || step === "schedule") return true;
-    const fieldsByStep: Record<number, (keyof WebsiteIntakeFormData)[]> = {
+    const fieldsByStep: Record<
+      Exclude<WebsiteIntakeStep, "review" | "schedule">,
+      FieldPath<WebsiteIntakeFormValues>[]
+    > = {
       1: ["firstName", "lastName", "email", "businessName", "industry"],
       2: ["goals", "timeline"],
       3: ["vibe"],
@@ -298,7 +301,7 @@ export default function WebsiteIntakeForm() {
       6: [],
     };
     const fields = fieldsByStep[step];
-    return trigger(fields as any);
+    return trigger(fields);
   };
 
   const next = async () => {
@@ -326,7 +329,7 @@ export default function WebsiteIntakeForm() {
     setSubmitStatus(null);
     if (step === "schedule") return;
     if (step === "review") setStep(6);
-    else setStep((Math.max(1, step - 1) as any) as any);
+    else setStep(Math.max(1, step - 1) as WebsiteIntakeStep);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -622,7 +625,7 @@ export default function WebsiteIntakeForm() {
             <h4 className="text-lg font-heading font-semibold text-white">Goals & timeline</h4>
             <div>
               <p className="block text-sm font-medium text-gray-200 mb-2">Primary goals *</p>
-              {renderMultiSelect("goals", GOALS, goals, (errors.goals as any)?.message)}
+              {renderMultiSelect("goals", GOALS, goals, errors.goals?.message)}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-200 mb-1.5">Describe the outcome you want (optional)</label>
@@ -660,7 +663,7 @@ export default function WebsiteIntakeForm() {
             <h4 className="text-lg font-heading font-semibold text-white">Design preferences</h4>
             <div>
               <p className="block text-sm font-medium text-gray-200 mb-2">Overall vibe *</p>
-              {renderMultiSelect("vibe", VIBES, vibe, (errors.vibe as any)?.message)}
+              {renderMultiSelect("vibe", VIBES, vibe, errors.vibe?.message)}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -717,7 +720,7 @@ export default function WebsiteIntakeForm() {
             <h4 className="text-lg font-heading font-semibold text-white">Content & pages</h4>
             <div>
               <p className="block text-sm font-medium text-gray-200 mb-2">Pages you need *</p>
-              {renderMultiSelect("pages", PAGES, pages, (errors.pages as any)?.message)}
+              {renderMultiSelect("pages", PAGES, pages, errors.pages?.message)}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-200 mb-1.5">Other pages (optional)</label>

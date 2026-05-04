@@ -17,7 +17,7 @@ import { invoicesForPlan } from '../src/lib/invoice-templates'
 import { milestonesForPlan } from '../src/lib/milestones-templates'
 import { exitIfPortalSchemaMissing } from './lib/supabase-schema-check'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
-import { resolveSupabaseScriptEnv } from './lib/supabase-env'
+import { resolveSupabaseScriptEnv } from '@repo/env/supabase-script-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()

@@ -2,6 +2,19 @@
 
 Nexus is the IntraWeb Technologies pnpm + Turborepo monorepo for the client portal, marketing site, n8n workflow assets, and shared build configuration.
 
+## Vercel (monorepo)
+
+There is **no** `vercel.json` at the repository root. Each Next app ships its own file so Vercel never mixes build/output paths between apps.
+
+| App | Vercel **Root Directory** | Config |
+| --- | --- | --- |
+| Client portal | **`apps/iw-portal`** | [`apps/iw-portal/vercel.json`](./apps/iw-portal/vercel.json) |
+| Marketing (`iw-site-q2`) | **`apps/iw-site-q2`** | [`apps/iw-site-q2/vercel.json`](./apps/iw-site-q2/vercel.json) |
+
+For each project, enable **Include files outside the root directory in the Build Step** (pnpm workspace + root lockfile). Details: [`apps/iw-portal/README.md`](./apps/iw-portal/README.md).
+
+**If the portal build succeeds but deploy fails** with `routes-manifest.json` or `.next` under **`apps/iw-site-q2`**, the portal Vercel project’s Root Directory is wrong (often still `apps/iw-site-q2`). Set it to **`apps/iw-portal`** and clear any custom **Output Directory** in project settings.
+
 ## Active Apps
 
 - `apps/iw-portal` - client dashboard, built with Next.js 16, Clerk, Supabase, Stripe, Resend, and Tailwind CSS v4. Local dev port: `3002`.

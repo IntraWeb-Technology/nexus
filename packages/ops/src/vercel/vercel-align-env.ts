@@ -10,8 +10,9 @@
  * - Skips the Vercel **"development"** environment (the one for `vercel dev`): this
  *   project rejects `--sensitive` for that target; use `.env.local` for local dev.
  *
- * From `apps/iw-portal`:
- *   pnpm vercel:align-env
+ * From repo root:
+ *   pnpm --filter @repo/iw-portal vercel:align-env
+ *   pnpm --filter @repo/ops vercel:align-env
  * Optional: `VERCEL_SYNC_PREVIEW_GIT_BRANCHES=development,issue/foo` (comma-separated).
  * `VERCEL_ALIGN_PRODUCTION_ONLY=0` — include Preview branch targets too. Default is
  * production-only to keep Vercel rows minimal.
@@ -22,11 +23,13 @@
 import { config } from 'dotenv'
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
-import { resolveMonorepoRoot, iwPortalEnvLocalPath } from './lib/repo-root'
-import { PORTAL_ENV_KEYS } from './vercel-kv-list'
+import { applyIwPortalEnvValidation } from '../env/iw-portal-env-check.js'
+import { resolveMonorepoRoot, iwPortalEnvLocalPath } from '../repo/repo-root.js'
+import { PORTAL_ENV_KEYS } from './vercel-kv-list.js'
 
 const root = resolveMonorepoRoot(import.meta.url)
 config({ path: iwPortalEnvLocalPath(root) })
+applyIwPortalEnvValidation('report', 'vercel:align-env')
 const appDir = path.join(root, 'apps', 'iw-portal')
 
 const PRODUCTION_ONLY =

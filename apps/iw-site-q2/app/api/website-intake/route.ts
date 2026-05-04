@@ -146,7 +146,6 @@ async function verifyRecaptchaToken(
     const invalidReasonRaw = response!.tokenProperties?.invalidReason;
     const invalidReason = invalidReasonRaw != null ? String(invalidReasonRaw) : "unknown";
     const score = response.riskAnalysis?.score ?? 0;
-    const action = response.tokenProperties?.action ?? "";
     const hostname = response.tokenProperties?.hostname ?? "";
 
     if (!response.tokenProperties?.valid) {
@@ -227,7 +226,9 @@ export async function POST(req: NextRequest) {
       "https://n8n.intrawebtech.com/webhook/hubspot-website-form-lead";
 
     // Do not forward reCAPTCHA token to n8n (secret, large, not part of workflow contract).
-    const { recaptchaToken: _drop, dealStage: _clientDealStage, ...restForN8n } = parsed.data;
+    const restForN8n = { ...parsed.data };
+    delete restForN8n.recaptchaToken;
+    delete restForN8n.dealStage;
     const intakeDealStage = resolveLeadIntakeDealStageForHubSpot(parsed.data.dealStage);
 
     const intakePlain = formatWebsiteIntakePlainText(parsed.data.intake);

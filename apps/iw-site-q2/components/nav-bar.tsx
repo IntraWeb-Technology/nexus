@@ -28,7 +28,7 @@ export function NavBar() {
   const toggle = useCallback(() => setMenuOpen((o) => !o), []);
 
   useEffect(() => {
-    close();
+    queueMicrotask(() => close());
   }, [pathname, close]);
 
   useEffect(() => {

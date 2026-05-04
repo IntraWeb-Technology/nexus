@@ -15,7 +15,7 @@ import { config } from 'dotenv'
 import { createClerkClient } from '@clerk/backend'
 import { createClient } from '@supabase/supabase-js'
 import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
-import { resolveSupabaseScriptEnv } from './lib/supabase-env'
+import { resolveSupabaseScriptEnv } from '@repo/env/supabase-script-env'
 
 config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 
