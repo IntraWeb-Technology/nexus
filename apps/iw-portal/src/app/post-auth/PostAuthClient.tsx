@@ -2,7 +2,7 @@
 
 import { AuthenticateWithRedirectCallback, useAuth, useClerk } from '@clerk/nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 
 const CONTINUE_ATTEMPTS_KEY = 'iw_portal_post_auth_continue_attempts'
 const NAV_PENDING_KEY = 'iw_portal_post_auth_nav_pending'
@@ -17,6 +17,12 @@ const ATTEMPT_WINDOW_MS = 3 * 60 * 1000
 /** Drop stale nav locks so a later visit to `/post-auth` in the same tab is not blocked forever. */
 const NAV_PENDING_TTL_MS = 12_000
 const PRIMARY_SIGNIN_COOLDOWN_MS = 10_000
+/** Wait before assuming no client session after `?from=continue` (Clerk can hydrate `userId` late). */
+const FROM_CONTINUE_NO_USER_GRACE_MS = 2800
+
+function isSatellite(): boolean {
+  return process.env.NEXT_PUBLIC_CLERK_IS_SATELLITE === 'true'
+}
 
 function isNavPending(): boolean {
   if (typeof window === 'undefined') return false
@@ -66,13 +72,17 @@ function clearPostAuthFlowState(): void {
   sessionStorage.removeItem(NAV_PENDING_KEY)
 }
 
-function escapeToSignIn(clerk: ReturnType<typeof useClerk>, useHostedRedirect: boolean): void {
+/**
+ * Satellite: always use Clerk’s hosted sign-in so the primary domain can issue a session that syncs here.
+ * Non-satellite: same-origin `/sign-in` (add `resync` for a short explanation banner).
+ */
+function escapeToSignIn(clerk: ReturnType<typeof useClerk>): void {
   const back = `${window.location.origin}/post-auth`
-  if (useHostedRedirect) {
+  if (isSatellite()) {
     void clerk.redirectToSignIn({ redirectUrl: back })
     return
   }
-  window.location.assign('/sign-in')
+  window.location.assign('/sign-in?resync=1')
 }
 
 /**
@@ -82,7 +92,7 @@ function escapeToSignIn(clerk: ReturnType<typeof useClerk>, useHostedRedirect: b
  * After `userId` is present in the browser, use `router.refresh()` + full navigation to `/post-auth/continue`.
  *
  * `?from=continue` means the server did not see a session on `/post-auth/continue` — the client may still
- * show `userId` (phantom session) or neither; use Clerk hosted `redirectToSignIn` instead of looping on `/sign-in`.
+ * show `userId` (phantom session) or neither; after a grace period with still no `userId`, use Clerk hosted sign-in.
  */
 export function PostAuthClient() {
   const { isLoaded, userId } = useAuth()
@@ -92,21 +102,32 @@ export function PostAuthClient() {
   const qs = searchParams?.toString() ?? ''
   const needsRedirectCallback = useMemo(() => qs.includes('__clerk'), [qs])
   const fromContinue = searchParams.get('from') === 'continue'
+  const userIdRef = useRef(userId)
+  userIdRef.current = userId
 
   useEffect(() => {
     if (fromContinue) sessionStorage.removeItem(NAV_PENDING_KEY)
   }, [fromContinue])
 
-  /** Server returned from `/post-auth/continue` without a session — resync via Clerk (satellite-safe). */
+  /**
+   * Server returned from `/post-auth/continue` without a session and the browser still shows no `userId`
+   * after a short grace period — send through Clerk hosted sign-in (required for satellite cookie sync).
+   */
   useEffect(() => {
     if (needsRedirectCallback || !fromContinue || !isLoaded || userId) return
 
-    const last = Number(sessionStorage.getItem(PRIMARY_SIGNIN_COOLDOWN_KEY) || '0')
-    if (Date.now() - last < PRIMARY_SIGNIN_COOLDOWN_MS) return
+    const t = setTimeout(() => {
+      if (userIdRef.current) return
 
-    clearPostAuthFlowState()
-    sessionStorage.setItem(PRIMARY_SIGNIN_COOLDOWN_KEY, String(Date.now()))
-    escapeToSignIn(clerk, true)
+      const last = Number(sessionStorage.getItem(PRIMARY_SIGNIN_COOLDOWN_KEY) || '0')
+      if (Date.now() - last < PRIMARY_SIGNIN_COOLDOWN_MS) return
+
+      clearPostAuthFlowState()
+      sessionStorage.setItem(PRIMARY_SIGNIN_COOLDOWN_KEY, String(Date.now()))
+      escapeToSignIn(clerk)
+    }, FROM_CONTINUE_NO_USER_GRACE_MS)
+
+    return () => clearTimeout(t)
   }, [needsRedirectCallback, fromContinue, isLoaded, userId, clerk])
 
   useEffect(() => {
@@ -121,7 +142,7 @@ export function PostAuthClient() {
       if (fromContinue && inBurst && prev.n >= SIGN_OUT_AFTER_ATTEMPTS - 1) {
         clearPostAuthFlowState()
         sessionStorage.setItem(PRIMARY_SIGNIN_COOLDOWN_KEY, String(Date.now()))
-        void clerk.signOut().then(() => escapeToSignIn(clerk, true))
+        void clerk.signOut().then(() => escapeToSignIn(clerk))
         return
       }
 
@@ -131,7 +152,7 @@ export function PostAuthClient() {
       if (attempts > MAX_CONTINUE_ATTEMPTS) {
         clearPostAuthFlowState()
         sessionStorage.setItem(PRIMARY_SIGNIN_COOLDOWN_KEY, String(Date.now()))
-        void clerk.signOut().then(() => escapeToSignIn(clerk, true))
+        void clerk.signOut().then(() => escapeToSignIn(clerk))
         return
       }
 
@@ -151,7 +172,7 @@ export function PostAuthClient() {
     const towardSignIn = setTimeout(() => {
       if (fromContinue) return
       clearPostAuthFlowState()
-      escapeToSignIn(clerk, false)
+      escapeToSignIn(clerk)
     }, 2800)
 
     return () => clearTimeout(towardSignIn)
@@ -174,8 +195,8 @@ export function PostAuthClient() {
       <p className="text-sm text-[var(--iw-text-2)]">Finishing sign-in…</p>
       {fromContinue ? (
         <p className="text-xs text-[var(--iw-text-2)]">
-          If this page stays here, your browser session did not sync with the server. You will be redirected to sign in
-          again automatically.
+          Syncing your account with this app. If the server still does not see a session, you will be sent to sign in
+          again on the account host (satellite) or on this page.
         </p>
       ) : null}
       <button
@@ -183,7 +204,7 @@ export function PostAuthClient() {
         className="text-xs font-medium text-[var(--iw-teal-light)] underline"
         onClick={() => {
           clearPostAuthFlowState()
-          void clerk.signOut().then(() => escapeToSignIn(clerk, true))
+          void clerk.signOut().then(() => escapeToSignIn(clerk))
         }}
       >
         Cancel and sign in again

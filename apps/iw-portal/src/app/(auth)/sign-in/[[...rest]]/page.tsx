@@ -2,15 +2,31 @@ import { SignIn } from '@clerk/nextjs'
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
-export default async function SignInPage() {
+type SignInPageProps = {
+  searchParams?: Promise<{ resync?: string }>
+}
+
+export default async function SignInPage({ searchParams }: SignInPageProps) {
   const { userId } = await auth()
   if (userId) redirect('/post-auth')
+
+  const q = searchParams ? await searchParams : {}
+  const showResyncNote = q.resync === '1'
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
       <p className="mb-6 text-center text-sm text-[var(--iw-text-2)]">
         IntraWeb OS — Client Portal
       </p>
+      {showResyncNote ? (
+        <p
+          role="status"
+          className="mb-4 max-w-md rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-4 py-3 text-center text-xs text-[var(--iw-text-2)]"
+        >
+          We could not keep your session in sync with this app. Sign in again below. If you use the hosted account
+          site, finish there first — then you should land back on the dashboard.
+        </p>
+      ) : null}
       <SignIn
         appearance={{
           elements: {
