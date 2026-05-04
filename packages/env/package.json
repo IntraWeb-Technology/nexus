@@ -5,12 +5,14 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./supabase-script-env": {
-      "types": "./dist/supabase-script-env.d.ts",
-      "import": "./dist/supabase-script-env.js"
+      "types": "./src/supabase-script-env.ts",
+      "import": "./dist/supabase-script-env.js",
+      "default": "./dist/supabase-script-env.js"
     }
   },
   "scripts": {
