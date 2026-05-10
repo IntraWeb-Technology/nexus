@@ -92,6 +92,11 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Fixed nav — hash links land with the target visible below the bar */
+  scroll-padding-top: calc(var(--nav-h) + 0.75rem);
+}
+
 html,
 body {
   margin: 0;

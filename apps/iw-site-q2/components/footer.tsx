@@ -1,17 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode, SVGProps } from "react";
-import { companyLegalName, contactEmail, systemsCallUrl } from "@/lib/site";
+import { companyLegalName, contactEmail, navLinks, systemsCallUrl } from "@/lib/site";
 import { IntraWebLogo } from "@/components/intraweb-logo";
 import { Ic } from "@/components/icons";
-
-const footerLinks = [
-  { label: "What We Do", href: "/services" },
-  { label: "How We Work", href: "/work" },
-  { label: "Proof", href: "/#proof" },
-  { label: "Who It’s For", href: "/#fit" },
-  { label: "About", href: "/about" },
-] as const;
 
 function IconSq({ href, label, children }: { href: string; label: string; children: ReactNode }) {
   return (
@@ -166,7 +158,7 @@ export function Footer() {
           <div>
             <nav aria-label="Footer">
               <ul className="m-0 flex list-none flex-col p-0">
-                {footerLinks.map((l) => (
+                {navLinks.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
