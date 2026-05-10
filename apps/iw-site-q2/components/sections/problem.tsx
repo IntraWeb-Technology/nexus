@@ -87,10 +87,6 @@ export function ProblemSection() {
   return (
     <section id="problem" className="marketing-slab marketing-slab--continue">
       <div className="container">
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48, flexWrap: "wrap", gap: 8 }}>
-          <span className="section-marker">[ 02 — THE PROBLEM ]</span>
-        </div>
-
         <Reveal>
           <div style={{ maxWidth: 800, marginBottom: 24 }}>
             <SectionLabel>Why most AI investments fail</SectionLabel>

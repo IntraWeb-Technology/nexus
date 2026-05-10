@@ -16,10 +16,6 @@ export function DiagnosticSection() {
   return (
     <section id="diagnostic" className="marketing-slab">
       <div className="container">
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48, flexWrap: "wrap" }}>
-          <span className="section-marker">[ 05 — THE LOWEST-RISK FIRST STEP ]</span>
-        </div>
-
         <div className="diagnostic-grid">
           <Reveal>
             <div style={{ maxWidth: 640, marginBottom: 8 }}>

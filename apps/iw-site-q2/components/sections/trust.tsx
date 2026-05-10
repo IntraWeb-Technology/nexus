@@ -15,10 +15,6 @@ export function TrustSection() {
   return (
     <section id="trust" className="marketing-slab">
       <div className="container">
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48, flexWrap: "wrap" }}>
-          <span className="section-marker">[ 08 — TRUST ]</span>
-        </div>
-
         <div className="trust-grid" style={{ gap: "clamp(2rem, 4vw, 3rem)" }}>
           <Reveal>
             <div style={{ marginBottom: 12 }}>

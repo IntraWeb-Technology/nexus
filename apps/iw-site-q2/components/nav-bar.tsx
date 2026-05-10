@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
-import { accountsUrl, navLinks } from "@/lib/site";
+import { accountsUrl, navLinks, systemsCallUrl } from "@/lib/site";
 import { IntraWebLogo } from "@/components/intraweb-logo";
-import { Btn, StatusDot } from "@/components/primitives";
+import { Btn } from "@/components/primitives";
 import { Ic } from "@/components/icons";
 
 const WIDE_BP = 960;
@@ -117,11 +117,8 @@ export function NavBar() {
               <div className="nav-mobile-panel__section">
                 <p className="nav-mobile-panel__eyebrow">Next step</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, pointerEvents: "auto" }}>
-                  <Btn variant="secondary" href="/start" icon={false}>
-                    Get started
-                  </Btn>
-                  <Btn variant="primary" href="/diagnostic" onClick={close}>
-                    Get a Free Diagnostic
+                  <Btn variant="primary" href={systemsCallUrl} onClick={close}>
+                    Book a Systems Call
                   </Btn>
                 </div>
               </div>
@@ -140,18 +137,19 @@ export function NavBar() {
           left: 0,
           right: 0,
           zIndex: menuOpen ? 200 : 50,
-          padding: scrolled ? "10px 0" : "18px 0",
-          background: menuOpen || scrolled ? "rgba(5, 9, 18, 0.9)" : "transparent",
-          backdropFilter: menuOpen || scrolled ? "blur(18px) saturate(160%)" : "none",
-          WebkitBackdropFilter: menuOpen || scrolled ? "blur(18px) saturate(160%)" : "none",
-          borderBottom: menuOpen || scrolled ? "1px solid var(--iw-hairline)" : "1px solid transparent",
+          padding: scrolled ? "10px 0" : "16px 0",
+          background:
+            menuOpen || scrolled ? "rgba(7, 16, 25, 0.94)" : "rgba(7, 16, 25, 0.35)",
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          borderBottom: menuOpen || scrolled ? "1px solid var(--iw-border-soft)" : "1px solid transparent",
           transition: "all 280ms var(--ease)",
         }}
       >
         <div className="container nav-shell">
           <div className="nav-shell__left">
             <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }} aria-label="IntraWeb — home">
-              <IntraWebLogo height={32} priority />
+              <IntraWebLogo height={46} priority />
             </Link>
 
             <div className="nav-desktop-only nav-shell__links">
@@ -197,16 +195,12 @@ export function NavBar() {
               >
                 Sign in
               </a>
-              <div className="mono nav-shell__badge">
-                <StatusDot color="var(--iw-teal)" size={5} />
-                <span>ACCEPTING Q2 ENGAGEMENTS</span>
-              </div>
-              <Btn variant="secondary" href="/start" icon={false}>
-                Get started
-              </Btn>
-              <Btn variant="primary" href="/diagnostic">
-                Get a Free Diagnostic
-              </Btn>
+              <a className="btn btn-outline-accent" href={systemsCallUrl}>
+                <span>Book a Systems Call</span>
+                <span className="arrow" aria-hidden>
+                  →
+                </span>
+              </a>
             </div>
             <button
               type="button"

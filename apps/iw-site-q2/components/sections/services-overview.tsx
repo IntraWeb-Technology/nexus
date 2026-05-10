@@ -29,11 +29,6 @@ export function ServicesOverviewSection() {
   return (
     <section id="services-overview" className="marketing-slab">
       <div className="container">
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48 }}>
-          <span className="section-marker">[ 03 — WHAT WE BUILD ]</span>
-          <span className="section-marker">{"// three disciplines"}</span>
-        </div>
-
         <Reveal>
           <SectionLabel>What we build</SectionLabel>
           <h2

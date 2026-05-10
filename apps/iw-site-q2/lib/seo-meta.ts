@@ -57,21 +57,21 @@ export function pageMetadata(p: PageMeta, opts?: { titleAbsolute?: boolean }): M
 }
 
 export const homeSeo: PageMeta = {
-  title: "IntraWeb | AI Automation & Web Systems for SMBs",
+  title: "IntraWeb | Operational Infrastructure for Scaling Teams",
   description:
-    "IntraWeb builds AI-powered web systems, workflow automation, and intelligent integrations for SMBs. Based in NJ, serving the NY metro and remote nationwide.",
+    "IntraWeb builds the operational infrastructure that connects how you work to how you scale — workflow clarity, systems integration, and implementation grounded in operations. Based in NJ, serving teams nationwide.",
   keywords: [
-    "workflow automation NJ",
-    "AI integration small business",
-    "automate business operations",
-    "AI workflow diagnostic",
-    "n8n automation agency",
-    "HubSpot automation",
-    "operations automation NJ",
+    "operational infrastructure",
+    "workflow friction",
+    "systems integration",
+    "RevOps infrastructure",
+    "operations consulting implementation",
+    "business process infrastructure",
+    "NJ operations consulting",
   ],
   path: "",
   ogFilename: "home",
-  ogAlt: "IntraWeb Technologies — AI systems and workflow automation for SMBs",
+  ogAlt: "IntraWeb Technologies — operational infrastructure for scaling organizations",
 };
 
 export const servicesSeo: PageMeta = {

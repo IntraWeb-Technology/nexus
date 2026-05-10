@@ -13,7 +13,7 @@ export const organizationJsonLd = {
   url: SITE_URL,
   logo: `${SITE_URL}/IW-logo-q2.png`,
   description:
-    "AI-first product and automation studio for small and mid-sized businesses. We build workflow automation, AI integrations, and web systems that replace manual operational work.",
+    "IntraWeb builds operational infrastructure — connecting systems, removing workflow friction, and implementing how growing teams operate at scale.",
   foundingDate: "2020",
   founders: [
     {
@@ -59,7 +59,7 @@ export const webSiteJsonLd = {
   "@id": siteId,
   name: "IntraWeb Technologies",
   url: SITE_URL,
-  description: "AI systems and automation infrastructure for SMBs that want to operate smarter.",
+  description: "Operational infrastructure for teams connecting how they work to how they scale.",
   publisher: { "@id": orgId },
   potentialAction: {
     "@type": "SearchAction",
@@ -73,7 +73,7 @@ export const webPageJsonLd = {
   "@type": "WebPage",
   "@id": `${SITE_URL}/#webpage`,
   url: SITE_URL,
-  name: "IntraWeb Technologies | AI automation and web systems for SMBs",
+  name: "IntraWeb Technologies | Operational infrastructure for scaling teams",
   isPartOf: { "@id": siteId },
   about: { "@id": orgId },
 } as const;

@@ -8,14 +8,6 @@ import { SectionLabel } from "@/components/section-label";
 import { Btn, Reveal } from "@/components/primitives";
 import { Ic } from "@/components/icons";
 
-const diagnosticList = [
-  "Full operational process audit",
-  "AI and automation opportunity map",
-  "Risk and integration assessment",
-  "Prioritized implementation roadmap",
-  "Written deliverable you keep, no matter what you decide next",
-];
-
 /** Website offers — product-style marketing cards */
 const websiteProductCards = [
   {
@@ -136,45 +128,7 @@ export function ServicesPageContent() {
         }
       />
 
-      <SectionBlock id="diagnostic" firstAfterHero>
-        <div className="container">
-          <Reveal>
-            <SectionLabel>Start here</SectionLabel>
-            <h2
-              style={{
-                fontSize: "clamp(1.75rem, 2.6vw, 2.1rem)",
-                fontWeight: 600,
-                marginTop: 16,
-                fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
-              }}
-            >
-              AI Workflow Diagnostic
-            </h2>
-            <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--iw-fg-1)", marginTop: 24, maxWidth: 720 }}>
-              Before anything gets built, you need to know what&apos;s worth building. The Diagnostic is a structured
-              engagement — not a discovery call — that maps your operations, identifies where AI and automation deliver
-              real value, and produces a prioritized roadmap you own.
-            </p>
-            <p style={{ fontSize: 16, lineHeight: 1.7, color: "var(--iw-fg-1)", marginTop: 16, maxWidth: 720 }}>
-              Scope and complexity vary. We&apos;ll match the engagement to your situation on the call.
-            </p>
-            <ul style={{ marginTop: 28, color: "var(--iw-fg-1)", lineHeight: 1.7, maxWidth: 640 }}>
-              {diagnosticList.map((x) => (
-                <li key={x} style={{ marginBottom: 8 }}>
-                  {x}
-                </li>
-              ))}
-            </ul>
-            <div style={{ marginTop: 28 }}>
-              <Btn href="/diagnostic" variant="primary">
-                Book a Diagnostic
-              </Btn>
-            </div>
-          </Reveal>
-        </div>
-      </SectionBlock>
-
-      <SectionBlock id="packages">
+      <SectionBlock id="packages" firstAfterHero>
         <div className="container">
           <Reveal>
             <SectionLabel>Integrated packages</SectionLabel>

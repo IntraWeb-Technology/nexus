@@ -62,11 +62,6 @@ export function StatsSection() {
       />
 
       <div className="container" style={{ position: "relative" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 32 }}>
-          <span className="section-marker">[ 07 — BY THE NUMBERS ]</span>
-          <span className="section-marker">{"// instrumented"}</span>
-        </div>
-
         <div className="stats-grid">
           {stats.map((s, i) => (
             <Reveal key={i} delay={i * 80}>

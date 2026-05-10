@@ -22,14 +22,14 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "IntraWeb | AI Automation & Web Systems for SMBs",
+    default: "IntraWeb | Operational Infrastructure for Scaling Teams",
     template: "%s | IntraWeb",
   },
   description:
-    "IntraWeb builds AI-powered web systems, workflow automation, and intelligent integrations for SMBs. Based in NJ, serving the NY metro and remote nationwide.",
+    "Operational infrastructure that connects how you work to how you scale — systems integration, workflow clarity, and implementation for growing teams.",
   openGraph: {
     title: "IntraWeb",
-    description: "AI systems and automation infrastructure for SMBs that want to operate smarter.",
+    description: "Operational infrastructure for teams scaling past workflow friction.",
     type: "website",
   },
 };
