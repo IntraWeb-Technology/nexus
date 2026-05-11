@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { DM_Sans, JetBrains_Mono } from "next/font/google";
-import { NavBar } from "@/components/nav-bar";
-import { Footer } from "@/components/footer";
 import { JsonLd } from "@/components/json-ld";
 import { organizationJsonLd } from "@/lib/geo-jsonld";
 import { SITE_URL } from "@/lib/site-url";
@@ -46,9 +44,7 @@ export default function RootLayout({
     >
       <body>
         <JsonLd data={organizationJsonLd} />
-        <NavBar />
         {children}
-        <Footer />
       </body>
     </html>
   );

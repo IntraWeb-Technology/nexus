@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/json-ld";
-import { AboutPageContent } from "@/components/pages/about-content";
+import { AboutPageContent } from "@/components/pages/about/about-page";
 import { buildBreadcrumbJsonLd, personJsonLd } from "@/lib/geo-jsonld";
 import { aboutSeo, pageMetadata } from "@/lib/seo-meta";
 
