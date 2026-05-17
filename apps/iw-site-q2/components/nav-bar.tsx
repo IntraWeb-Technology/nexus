@@ -149,7 +149,7 @@ export function NavBar() {
         <div className="container nav-shell">
           <div className="nav-shell__left">
             <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }} aria-label="IntraWeb — home">
-              <IntraWebLogo height={46} priority />
+              <IntraWebLogo height={36} priority />
             </Link>
 
             <div className="nav-desktop-only nav-shell__links">
