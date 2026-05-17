@@ -37,11 +37,6 @@ export function ProcessSection() {
   return (
     <section id="process" className="marketing-slab">
       <div className="container">
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 48 }}>
-          <span className="section-marker">[ 04 — HOW IT WORKS ]</span>
-          <span className="section-marker">{"// three phases"}</span>
-        </div>
-
         <Reveal>
           <Eyebrow>How it works</Eyebrow>
           <h2

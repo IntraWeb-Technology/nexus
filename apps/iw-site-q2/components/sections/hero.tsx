@@ -117,7 +117,6 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
             gap: 16,
           }}
         >
-          <span className="section-marker">[ 01 — HERO ]</span>
           <Link
             href="/diagnostic"
             className="mono"
@@ -198,23 +197,6 @@ export function Hero({ intensity = 1 }: { intensity?: number }) {
                   </span>
                 </Btn>
               </div>
-            </HeroRise>
-
-            <HeroRise delay={300} duration={500} y={20}>
-              <p
-                className="mono"
-                style={{
-                  marginTop: 20,
-                  fontSize: 13,
-                  color: "var(--iw-fg-2)",
-                  maxWidth: 560,
-                  lineHeight: 1.6,
-                  letterSpacing: "0.04em",
-                }}
-              >
-                No sales pitch. A structured audit of where AI and automation can cut your operational load — with
-                a clear roadmap you keep.
-              </p>
             </HeroRise>
 
             <HeroRise delay={300} duration={500} y={20}>

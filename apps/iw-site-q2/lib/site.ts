@@ -10,10 +10,11 @@ export const contactEmail = "human@intrawebtech.com";
 export const companyLegalName = "IntraWeb Technologies, LLC.";
 
 export const navLinks = [
-  { label: "Services", href: "/services" },
-  { label: "Work", href: "/work" },
+  { label: "How We Work", href: "/#model" },
+  { label: "Proof", href: "/#proof" },
+  { label: "Who It’s For", href: "/#fit" },
   { label: "About", href: "/about" },
-  { label: "Blog", href: "/blog" },
-  { label: "Diagnostic", href: "/diagnostic" },
-  { label: "Contact", href: "/contact" },
 ] as const;
+
+/** Primary homepage / nav conversion action */
+export const systemsCallUrl = "/contact";

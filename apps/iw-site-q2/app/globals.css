@@ -12,27 +12,44 @@
   --iw-body: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --iw-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --iw-void: #050912;
-  --iw-abyss: #0a1222;
-  --iw-night: #101a2e;
-  --iw-ink: #15223b;
-  --iw-hairline: rgba(147, 197, 253, 0.08);
+  /* Approved mockup palette — operational / corporate dark */
+  --iw-bg: #0a0a0a;
+  --iw-bg-deep: #000000;
+  --iw-panel: #121212;
+  --iw-panel-alt: #161616;
+  --iw-border: #1f2b36;
+  --iw-border-soft: #18232d;
+  --iw-slate-blue: #24384a;
+  --iw-slate-blue-soft: #33485c;
 
-  --iw-fg: #eef3fa;
-  --iw-fg-1: #b9c4d8;
-  --iw-fg-2: #7a879d;
-  --iw-fg-3: #4a5467;
+  --iw-void: #0a0a0a;
+  --iw-abyss: #000000;
+  --iw-night: #0b141d;
+  --iw-ink: #101923;
+  --iw-hairline: rgba(31, 43, 54, 0.85);
 
-  /* Luminous teal + warm amber (prototype) */
-  --iw-teal: #34e7d0;
-  --iw-teal-dim: #15b8a1;
-  --iw-teal-deep: #0f766e;
-  --iw-amber: #ffa155;
-  --iw-amber-hot: #ff7a2e;
-  --iw-plum: #8b5cf6;
-  --iw-plum-dim: #4c1d95;
+  --iw-fg: #ffffff;
+  --iw-fg-1: #c8d1da;
+  --iw-fg-2: #8d9aa7;
+  --iw-fg-3: #6b7784;
 
-  --iw-danger: #f87171;
+  /* Legacy teal vars — kept for inner-page compat; not homepage accent */
+  --iw-teal: #33485c;
+  --iw-teal-dim: #24384a;
+  --iw-teal-deep: #1f2b36;
+  --iw-amber: #f5a623;
+  --iw-amber-hot: #d97706;
+  --iw-plum: #33485c;
+  --iw-plum-dim: #24384a;
+
+  --iw-orange: #d97706;
+  --iw-orange-deep: #b45309;
+  --iw-orange-soft: #f59e0b;
+  --iw-fit-green: #15803d;
+  --iw-fit-green-soft: #22c55e;
+  --iw-red-annotation: #ef3b24;
+
+  --iw-danger: #ef3b24;
 
   --r-xs: 2px;
   --r-sm: 4px;
@@ -44,11 +61,11 @@
 
   --density: 1;
 
-  /* Semantic: accent = primary interactive / labels */
-  --color-accent: var(--iw-teal);
-  --color-accent-hover: var(--iw-teal-dim);
-  --accent: var(--iw-teal);
-  --accent-2: var(--iw-amber);
+  /* Primary accent — orange system */
+  --color-accent: var(--iw-orange);
+  --color-accent-hover: var(--iw-orange-deep);
+  --accent: var(--iw-orange);
+  --accent-2: var(--iw-orange-soft);
   /* Elevated panels on inner pages (cards, callouts) */
   --page-bg-elevated-dark: rgba(16, 26, 46, 0.75);
   --card-border-on-dark: rgba(255, 255, 255, 0.08);
@@ -75,6 +92,11 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Fixed nav — hash links land with the target visible below the bar */
+  scroll-padding-top: calc(var(--nav-h) + 0.75rem);
+}
+
 html,
 body {
   margin: 0;
@@ -89,9 +111,9 @@ body {
 
 body {
   background:
-    radial-gradient(1200px 600px at 15% -10%, rgba(52, 231, 208, 0.08), transparent 60%),
-    radial-gradient(900px 500px at 100% 30%, rgba(255, 161, 85, 0.06), transparent 60%),
-    radial-gradient(900px 700px at 50% 110%, rgba(139, 92, 246, 0.08), transparent 60%),
+    radial-gradient(1000px 520px at 12% -8%, rgba(245, 166, 35, 0.06), transparent 58%),
+    radial-gradient(880px 480px at 92% 18%, rgba(36, 56, 74, 0.35), transparent 55%),
+    radial-gradient(900px 640px at 48% 108%, rgba(3, 7, 12, 0.9), transparent 52%),
     var(--iw-void);
 }
 
@@ -101,7 +123,7 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.4;
+  opacity: 0.22;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.9  0 0 0 0 0.95  0 0 0 0 1  0 0 0 0.25 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
@@ -163,7 +185,6 @@ a {
   margin: 0 0 0.75rem;
 }
 
-/* Strong section kicker: teal (was orange in interim spec) */
 .section-label--accent {
   color: var(--accent);
   font-weight: 600;
@@ -178,7 +199,7 @@ a {
   height: 6px;
   background: var(--accent);
   border-radius: 2px;
-  box-shadow: 0 0 8px var(--accent);
+  box-shadow: none;
 }
 
 .hairline {
@@ -238,28 +259,41 @@ a {
 }
 
 .btn-primary {
-  background: var(--iw-fg);
-  color: var(--iw-void);
-  border-color: var(--iw-fg);
+  background: var(--accent);
+  color: var(--iw-bg-deep);
+  border-color: var(--accent);
 }
 
 .btn-primary:hover {
-  background: var(--accent);
-  color: var(--iw-void);
-  border-color: var(--accent);
+  background: var(--iw-orange-deep);
+  color: #ffffff;
+  border-color: var(--iw-orange-deep);
   transform: translateY(-1px);
-  box-shadow: 0 10px 30px rgba(52, 231, 208, 0.25);
+  box-shadow: 0 8px 24px rgba(245, 166, 35, 0.22);
 }
 
 .btn-secondary {
   background: transparent;
   color: var(--iw-fg);
-  border-color: var(--iw-ink);
+  border-color: var(--iw-border);
 }
 
 .btn-secondary:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* Nav / hero: orange outline CTA */
+.btn-outline-accent {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-outline-accent:hover {
+  background: rgba(245, 166, 35, 0.08);
+  border-color: var(--iw-orange-soft);
+  color: var(--iw-orange-soft);
 }
 
 .btn .arrow {
@@ -280,7 +314,7 @@ a {
 }
 
 .card:hover {
-  border-color: rgba(52, 231, 208, 0.3);
+  border-color: rgba(245, 166, 35, 0.28);
   transform: translateY(-2px);
 }
 
@@ -345,8 +379,8 @@ a {
 .page-hero__bg {
   background-color: var(--iw-abyss);
   background-image:
-    linear-gradient(rgba(147, 197, 253, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(147, 197, 253, 0.04) 1px, transparent 1px);
+    linear-gradient(rgba(51, 72, 92, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(51, 72, 92, 0.12) 1px, transparent 1px);
   background-size: 64px 64px;
   opacity: 0.2;
   mask-image: linear-gradient(180deg, #000, transparent 95%);
@@ -604,9 +638,9 @@ main .home-hero {
   top: var(--nav-h, 72px);
   bottom: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.45);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+  background: rgba(3, 7, 12, 0.72);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   border: 0;
   padding: 0;
   margin: 0;
@@ -1206,3 +1240,5 @@ a.nav-mobile-panel__item[aria-current="page"],
     display: none;
   }
 }
+
+/* About page body: `components/pages/about/about-reference.css` (scoped `.about-ref`) */
