@@ -83,6 +83,9 @@
 
   /* PLACEHOLDER — pillars section spacing — calibrate at visual review */
   --spacing-pillars: 96px;
+
+  /* PLACEHOLDER — continuity section spacing — calibrate at visual review */
+  --spacing-continuity: 100px;
   --color-fg-primary: #eef3fa;
   --color-fg-secondary: #7a879d;      /* PLACEHOLDER: secondary / annotation foreground */
 

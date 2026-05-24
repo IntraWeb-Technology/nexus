@@ -6,6 +6,7 @@ import { ArgumentSection } from "@/components/sections/argument-section";
 import { PillarsSection } from "@/components/sections/pillars-section";
 import { ProofSection } from "@/components/sections/proof-section";
 import { ModelSection } from "@/components/sections/model-section";
+import { ContinuitySection } from "@/components/sections/continuity-section";
 import { FitSection } from "@/components/sections/fit-section";
 import { FinalCTASection } from "@/components/sections/final-cta-section";
 import { webPageJsonLd, webSiteJsonLd } from "@/lib/geo-jsonld";
@@ -24,6 +25,7 @@ export default function Home() {
       <PillarsSection />
       <ProofSection />
       <ModelSection />
+      <ContinuitySection />
       <FitSection />
       <FinalCTASection />
     </main>
