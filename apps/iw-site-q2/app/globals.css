@@ -5,6 +5,9 @@
 @theme {
   --font-heading: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-body: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-bg-argument: var(--color-bg-argument);
+  --color-fg-primary: var(--color-fg-primary);
+  --color-fg-secondary: var(--color-fg-secondary);
 }
 
 :root {
@@ -69,6 +72,11 @@
   /* Elevated panels on inner pages (cards, callouts) */
   --page-bg-elevated-dark: rgba(16, 26, 46, 0.75);
   --card-border-on-dark: rgba(255, 255, 255, 0.08);
+
+  /* ─── Argument band tokens (placeholder — calibrate under Unit 8) ─── */
+  --color-bg-argument: #0d0f14;       /* PLACEHOLDER: dark argument-band background */
+  --color-fg-primary: #eef3fa;        /* PLACEHOLDER: primary foreground / body text */
+  --color-fg-secondary: #7a879d;      /* PLACEHOLDER: secondary / annotation foreground */
 
   /* Vertical rhythm — nav, heroes, sections, page content (single source of truth) */
   --nav-h: 72px;

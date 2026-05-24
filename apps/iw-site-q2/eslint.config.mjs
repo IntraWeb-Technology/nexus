@@ -15,10 +15,11 @@ export default defineConfig([
         {
           patterns: [
             {
-              group: ["./**", "../*"],
-              allow: ["./_primitives/**", "./_primitives/*"],
+              group: ["./*", "../*"],
               message:
-                "Snapshot files must not import from sibling snapshot files. Only _primitives/ is permitted.",
+                "Snapshot files may not import from sibling snapshot files. " +
+                "Only ./_primitives/* imports are permitted. " +
+                "See QUICK-REFERENCE.md rule C-01.",
             },
           ],
         },
