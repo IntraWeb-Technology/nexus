@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JsonLd } from "@/components/json-ld";
 import { HomeHeroSection } from "@/components/sections/home-hero";
 import { FrictionSection } from "@/components/sections/friction-section";
+import { ArgumentSection } from "@/components/sections/argument-section";
 import { ProofSection } from "@/components/sections/proof-section";
 import { ModelSection } from "@/components/sections/model-section";
 import { FitSection } from "@/components/sections/fit-section";
@@ -18,6 +19,7 @@ export default function Home() {
       <JsonLd data={webPageJsonLd} />
       <HomeHeroSection />
       <FrictionSection />
+      <ArgumentSection />
       <ProofSection />
       <ModelSection />
       <FitSection />
