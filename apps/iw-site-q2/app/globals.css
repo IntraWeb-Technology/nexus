@@ -8,6 +8,11 @@
   --color-bg-argument: var(--color-bg-argument);
   --color-fg-primary: var(--color-fg-primary);
   --color-fg-secondary: var(--color-fg-secondary);
+  --spacing-about-identity: var(--spacing-about-identity);
+  --spacing-about-origin: var(--spacing-about-origin);
+  --spacing-about-principles: var(--spacing-about-principles);
+  --spacing-about-fit: var(--spacing-about-fit);
+  --spacing-about-cta: var(--spacing-about-cta);
 }
 
 :root {
@@ -86,6 +91,14 @@
 
   /* PLACEHOLDER — continuity section spacing — calibrate at visual review */
   --spacing-continuity: 100px;
+
+  /* About page — per-section spacing tokens */
+  --spacing-about-identity: 5rem;
+  --spacing-about-origin: 5rem;
+  --spacing-about-principles: 7rem;
+  --spacing-about-fit: 5rem;
+  --spacing-about-cta: 9rem;
+  --spacing-about-cta-bottom: 7rem;
   --color-fg-primary: #eef3fa;
   --color-fg-secondary: #7a879d;      /* PLACEHOLDER: secondary / annotation foreground */
 

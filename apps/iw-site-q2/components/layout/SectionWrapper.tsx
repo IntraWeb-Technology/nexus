@@ -9,7 +9,12 @@ export type SectionId =
   | 'model'
   | 'continuity'
   | 'filter'
-  | 'cta';
+  | 'cta'
+  | 'about-identity'
+  | 'about-origin'
+  | 'about-principles'
+  | 'about-fit'
+  | 'about-cta';
 
 export type SectionSpacingToken =
   | 'hero'
@@ -20,7 +25,12 @@ export type SectionSpacingToken =
   | 'model'
   | 'continuity'
   | 'filter'
-  | 'cta';
+  | 'cta'
+  | 'about-identity'
+  | 'about-origin'
+  | 'about-principles'
+  | 'about-fit'
+  | 'about-cta';
 
 export const SectionWrapper: React.FC<{
   id: SectionId;
