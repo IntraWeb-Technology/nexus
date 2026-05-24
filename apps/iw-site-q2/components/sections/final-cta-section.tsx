@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Calendar, ListChecks, MessageCircle } from "lucide-react";
+import { SectionReveal } from "@/components/motion/section-reveal";
 import { Btn } from "@/components/primitives";
 import { systemsCallUrl } from "@/lib/site";
 
@@ -50,46 +51,48 @@ export function FinalCTASection() {
           }}
         >
           <div className="relative z-10 flex w-full flex-[0_0_auto] flex-col justify-center px-8 py-14 lg:w-[46%] lg:max-w-none lg:px-14 lg:py-20 xl:w-[47%] xl:px-16">
-            <header className="max-w-[620px]">
-              <p
-                className="m-0 mb-5 flex items-center gap-3"
-                style={{
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: ORANGE,
-                }}
-              >
-                <span aria-hidden className="h-px w-8 shrink-0 rounded-full" style={{ background: ORANGE }} />
-                NEXT STEP
-              </p>
-              <h2
-                id="final-cta-heading"
-                className="m-0 font-bold tracking-tight"
-                style={{
-                  fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
-                  fontSize: "clamp(1.5rem, 2.6vw, 2.25rem)",
-                  lineHeight: 1.18,
-                  color: TEXT_PRIMARY,
-                  fontWeight: 700,
-                }}
-              >
-                Operational clarity starts with understanding where friction actually lives.
-              </h2>
-              <p
-                className="m-0 mt-5"
-                style={{
-                  fontSize: "clamp(1rem, 1.05vw, 1.0625rem)",
-                  lineHeight: 1.65,
-                  color: "#c8d1da",
-                  maxWidth: "36rem",
-                }}
-              >
-                We’ll map your operational reality and identify the infrastructure that creates clarity, velocity, and
-                scale.
-              </p>
-            </header>
+            <SectionReveal>
+              <header className="max-w-[620px]">
+                <p
+                  className="m-0 mb-5 flex items-center gap-3"
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: ORANGE,
+                  }}
+                >
+                  <span aria-hidden className="h-px w-8 shrink-0 rounded-full" style={{ background: ORANGE }} />
+                  NEXT STEP
+                </p>
+                <h2
+                  id="final-cta-heading"
+                  className="m-0 font-bold tracking-tight"
+                  style={{
+                    fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
+                    fontSize: "clamp(1.5rem, 2.6vw, 2.25rem)",
+                    lineHeight: 1.18,
+                    color: TEXT_PRIMARY,
+                    fontWeight: 700,
+                  }}
+                >
+                  Operational clarity starts with understanding where friction actually lives.
+                </h2>
+                <p
+                  className="m-0 mt-5"
+                  style={{
+                    fontSize: "clamp(1rem, 1.05vw, 1.0625rem)",
+                    lineHeight: 1.65,
+                    color: "#c8d1da",
+                    maxWidth: "36rem",
+                  }}
+                >
+                  We’ll map your operational reality and identify the infrastructure that creates clarity, velocity,
+                  and scale.
+                </p>
+              </header>
+            </SectionReveal>
 
             <div className="mt-8 flex max-w-[620px] flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Btn variant="primary" href={systemsCallUrl}>

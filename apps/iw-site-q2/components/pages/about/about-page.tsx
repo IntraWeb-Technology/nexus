@@ -17,6 +17,7 @@ import {
   UserRound,
   Users,
 } from 'lucide-react';
+import { SectionReveal } from '@/components/motion/section-reveal';
 import { Btn } from '@/components/primitives';
 import { contactEmail, systemsCallUrl } from '@/lib/site';
 import './about-page.css';
@@ -172,6 +173,7 @@ export function AboutPageContent() {
       {/* Why IntraWeb Exists */}
       <section className="about-section" aria-labelledby="about-origin-heading">
         <div className="container">
+          <SectionReveal>
           <div className="about-origin__grid">
             <div>
               <p className="about-eyebrow">Why IntraWeb Exists</p>
@@ -206,17 +208,20 @@ export function AboutPageContent() {
               </ul>
             </aside>
           </div>
+          </SectionReveal>
         </div>
       </section>
 
       {/* What IntraWeb Stands For */}
       <section className="about-section" aria-labelledby="about-principles-heading">
         <div className="container">
+          <SectionReveal>
           <header className="about-principles__header">
             <p className="about-eyebrow">What IntraWeb Stands For</p>
             <h2 id="about-principles-heading">Three principles govern every engagement</h2>
             <p>They aren&apos;t marketing language — they&apos;re the reasons the work holds up.</p>
           </header>
+          </SectionReveal>
           <div className="about-principles__grid">
             {PRINCIPLES.map(({ num, title, body, output, image, alt }) => (
               <article key={title} className="about-principle-card">
@@ -238,7 +243,9 @@ export function AboutPageContent() {
       {/* Who We Work With — three-column layout */}
       <section className="about-section" aria-labelledby="about-audience-heading">
         <div className="container">
+          <SectionReveal>
           <p className="about-eyebrow about-eyebrow--rule">Who We Work With</p>
+          </SectionReveal>
           <div className="about-audience__grid">
             <article className="about-audience-card">
               <div className="about-audience-card__top">
@@ -312,10 +319,12 @@ export function AboutPageContent() {
       {/* Proof */}
       <section className="about-section" aria-labelledby="about-proof-heading">
         <div className="container">
+          <SectionReveal>
           <p className="about-eyebrow">Proof Is In Our Operation</p>
           <h2 id="about-proof-heading" className="sr-only">
             Proof is in our operation
           </h2>
+          </SectionReveal>
           <div className="about-proof__grid">
             {PROOF_STATS.map(({ title, body, Icon }) => (
               <div key={title} className="about-proof__item">
@@ -331,6 +340,7 @@ export function AboutPageContent() {
       {/* Final CTA */}
       <section className="about-section about-cta" aria-labelledby="about-cta-heading">
         <div className="container">
+          <SectionReveal>
           <div className="about-cta__panel">
             <div className="about-cta__content">
               <p className="about-eyebrow">The First Step</p>
@@ -360,6 +370,7 @@ export function AboutPageContent() {
               />
             </div>
           </div>
+          </SectionReveal>
         </div>
       </section>
     </main>

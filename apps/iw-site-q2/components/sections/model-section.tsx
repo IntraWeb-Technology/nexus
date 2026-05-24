@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Activity, BarChart3, LayoutDashboard, Network } from "lucide-react";
+import { SectionReveal } from "@/components/motion/section-reveal";
 import { cn } from "@/lib/utils";
 import { SECTION_GRADIENT_SEAM } from "@/lib/section-seam";
 
@@ -71,44 +72,46 @@ export function ModelSection() {
         <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)] lg:items-stretch lg:gap-x-10 xl:gap-x-12">
           {/* Left — narrative + process (narrow column) */}
           <div className="min-w-0 lg:max-w-[420px] xl:max-w-[440px]">
-            <p
-              style={{
-                fontSize: 11,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                color: ACCENT,
-                fontWeight: 600,
-                marginBottom: "0.65rem",
-              }}
-            >
-              Our model
-            </p>
-            <h2
-              id="model-heading"
-              style={{
-                fontSize: "clamp(1.45rem, 2.4vw, 1.95rem)",
-                lineHeight: 1.15,
-                fontWeight: 700,
-                color: "#ffffff",
-                marginBottom: "1rem",
-              }}
-            >
-              Infrastructure that creates operational clarity.
-            </h2>
-            <p
-              style={{
-                fontSize: 15,
-                lineHeight: 1.65,
-                fontWeight: 400,
-                color: "rgba(180,180,180,0.96)",
-                marginBottom: "1.1rem",
-              }}
-            >
-              A proven process that connects systems, removes friction, and creates compounding operational impact.
-            </p>
-            <Link href="/work" style={{ fontSize: 14, fontWeight: 600, color: ACCENT }}>
-              See the full process →
-            </Link>
+            <SectionReveal>
+              <p
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: ACCENT,
+                  fontWeight: 600,
+                  marginBottom: "0.65rem",
+                }}
+              >
+                Our model
+              </p>
+              <h2
+                id="model-heading"
+                style={{
+                  fontSize: "clamp(1.45rem, 2.4vw, 1.95rem)",
+                  lineHeight: 1.15,
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  marginBottom: "1rem",
+                }}
+              >
+                Infrastructure that creates operational clarity.
+              </h2>
+              <p
+                style={{
+                  fontSize: 15,
+                  lineHeight: 1.65,
+                  fontWeight: 400,
+                  color: "rgba(180,180,180,0.96)",
+                  marginBottom: "1.1rem",
+                }}
+              >
+                A proven process that connects systems, removes friction, and creates compounding operational impact.
+              </p>
+              <Link href="/work" style={{ fontSize: 14, fontWeight: 600, color: ACCENT }}>
+                See the full process →
+              </Link>
+            </SectionReveal>
 
             <ol className="relative m-0 mt-10 list-none space-y-10 p-0">
               {/* Dim vertical spine through step box centers */}
