@@ -76,11 +76,11 @@
   /* PLACEHOLDER — argument band spacing — calibrate under Unit 8 review */
   --spacing-argument: 0px;
 
-  /* ─── Argument band tokens (placeholder — calibrate under Unit 8) ─── */
-  --color-bg-argument: #0d0f14;       /* PLACEHOLDER: dark argument-band background */
+  /* ─── Argument band tokens ─── */
+  --color-bg-argument: #0a0e16;
   /* PLACEHOLDER — argument band inner padding — confirm under Argument band review */
   --spacing-argument-inner: 80px;
-  --color-fg-primary: #eef3fa;        /* PLACEHOLDER: primary foreground / body text */
+  --color-fg-primary: #eef3fa;
   --color-fg-secondary: #7a879d;      /* PLACEHOLDER: secondary / annotation foreground */
 
   /* Vertical rhythm — nav, heroes, sections, page content (single source of truth) */
