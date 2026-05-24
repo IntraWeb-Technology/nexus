@@ -8,21 +8,22 @@
 ## What this repository is
 
 This is the implementation repository for the IntraWeb Technologies homepage.
-It is governed by perceptual doctrine that intentionally conflicts with standard
-frontend best practice in specific layers. The homepage is an operational
-perception system. Preserving that system under engineering pressure is the
-primary architectural constraint of this codebase.
+It is governed by explicit build constraints that intentionally conflict with
+standard frontend best practice in specific layers. The homepage has authored
+decisions — in spacing, visual weight, component architecture, and section
+boundaries — that must not be normalized. Preserving those decisions under
+engineering pressure is the primary constraint of this codebase.
 
 ---
 
 ## The three things that cannot be normalized
 
 These three decisions are frozen architecture. They are load-bearing.
-Violating any of them collapses the perceptual system the homepage is built on.
+Violating any of them removes an authored property the homepage depends on.
 
 **1. Snapshot files are individually authored artifacts.**
 The seven operational snapshots (SN-01 through SN-07) in
-`/src/components/snapshots/` are not instances of a shared component.
+`/components/snapshots/` are not instances of a shared component.
 They do not share rendering logic. They do not import from each other.
 They do not share layout primitives. Each one is a standalone authored file.
 Duplication between them is acceptable. Abstraction is not.
@@ -61,6 +62,7 @@ These are not optional. They cannot be bypassed by skipping the checklist.
 | Role | Primary layer | What they need to read |
 |------|--------------|----------------------|
 | CI systems | Layer 1 only | Nothing — runs automatically |
+| AI implementation agents (Cursor) | Layer 1 + Layer 2 | `implementation-execution-contract.md` first. Then `QUICK-REFERENCE.md`. Do not read doctrine files — they are not implementation guidance. |
 | Junior maintainers | Layer 1 + Layer 2 | This file + QUICK-REFERENCE.md |
 | Frontend contributors | Layer 2 | This file + QUICK-REFERENCE.md + relevant section governance doc |
 | Governance reviewers | Layer 2 + Layer 3 | All of Layer 2 + relevant doctrine files |
@@ -86,6 +88,7 @@ instead of silent drift.
 
 ## Where to go next
 
+- **Before any implementation work (including Phase 1 scaffolding):** Read `implementation-execution-contract.md`
 - **Before any PR:** Read `QUICK-REFERENCE.md`
 - **Before touching a snapshot:** Read `05-snapshot-authoring-protocol.md`
 - **Before touching the Proof section:** Read `/docs/doctrine/05-proof-section-governance.md`

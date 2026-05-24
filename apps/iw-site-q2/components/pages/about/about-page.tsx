@@ -1,117 +1,233 @@
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
+import {
+  AlertCircle,
+  Calendar,
+  Check,
+  GitBranch,
+  Handshake,
+  Layers,
+  Network,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Target,
+  TrendingUp,
+  User,
+  UserRound,
+  Users,
+} from 'lucide-react';
+import { Btn } from '@/components/primitives';
+import { contactEmail, systemsCallUrl } from '@/lib/site';
+import './about-page.css';
 
-import "./about-reference.css";
-
-const TIMELINE = [
-  { n: "01", title: "Operational intake", body: "Initial conversation, context gathering, and access to the people who know how work actually moves." },
-  { n: "02", title: "Diagnostic", body: "Systems inventory, gap identification, operational assessment, and scope determination." },
-  { n: "03", title: "Infrastructure design", body: "Architecture decisions, system relationships, and implementation sequencing." },
-  { n: "04", title: "Implementation", body: "Phased build, running systems delivered at each phase, and client ownership throughout." },
-  { n: "05", title: "Operational continuity", body: "Monitoring, adjustment, ongoing support, and evolution as the company scales." },
+const PRINCIPLES = [
+  {
+    num: '01',
+    title: 'Diagnosis before build.',
+    body: "We don't scope a project until we understand the operation. Where work stalls, where ownership is unclear, where a single person holds a dependency the organization doesn't know exists. That map comes first. What gets built follows from it.",
+    output: 'Output: Diagnostic map',
+    image: '/about-principle-01.png',
+    alt: 'Whiteboard process map showing operational handoffs and breakpoints',
+  },
+  {
+    num: '02',
+    title: 'Infrastructure, not projects.',
+    body: "A project ends. Infrastructure runs. The systems we build are designed to operate continuously — not to be handed off and forgotten. Delivery isn't the finish line. A stable, running system is.",
+    output: 'Output: Running system',
+    image: '/about-principle-02.png',
+    alt: 'Hand-drawn current-state workflow on graph paper',
+  },
+  {
+    num: '03',
+    title: 'The person who sells the work does the work.',
+    body: "No account management layer. No handoff to a team you haven't met. The operator who diagnoses the problem is the one who builds the solution and maintains what's running.",
+    output: 'Output: Direct accountability',
+    image: '/about-principle-03.png',
+    alt: 'Implementation blueprint checklist on clipboard',
+  },
 ] as const;
 
-const SYSTEM_ROWS = [
-  { icon: "⌘", title: "Workflow automation", body: "Triggered systems that move work forward without manual handoffs." },
-  { icon: "AI", title: "AI-native infrastructure", body: "AI systems designed into your operational environment from the start." },
-  { icon: "▥", title: "Reporting systems", body: "Operational reporting that pulls from where work actually happens." },
-  { icon: "◫", title: "Client platforms", body: "Custom portals that give clients visibility and control without manual updates." },
-  { icon: "◎", title: "CRM and sales ops", body: "CRM infrastructure connected to fulfillment, delivery, and revenue recognition." },
-  { icon: "↔", title: "System integrations", body: "Connections between tools that were never designed to work together." },
+const BREAKING_POINTS = [
+  {
+    title: 'Handoff failures',
+    body: 'Work moves between people and systems without a clear owner, so delays compound at every transition.',
+    Icon: AlertCircle,
+  },
+  {
+    title: 'Manual steps',
+    body: 'Critical paths depend on someone remembering to update a spreadsheet, inbox, or shared doc.',
+    Icon: UserRound,
+  },
+  {
+    title: 'Reporting gaps',
+    body: 'Leadership visibility depends on manual assembly — exports, DMs, and one person who knows where everything lives.',
+    Icon: RefreshCw,
+  },
 ] as const;
 
-const COMPARISON = [
-  ["Scope is defined before the operational environment is understood.", "Diagnostic precedes scope. The operational environment determines what gets built."],
-  ["Recommendations are delivered for the client to implement.", "Running infrastructure is delivered. The client owns working systems, not a framework."],
-  ["AI is added onto existing workflows.", "AI is designed into operational infrastructure from the start."],
-  ["The engagement ends at delivery.", "Operational continuity is built into the relationship."],
+const WHO_THIS_IS_FOR = [
+  'Operations lead or founder in a growing business (10–150 people)',
+  'Feeling friction from manual steps, handoffs, or disconnected systems',
+  'Ready to invest in infrastructure that creates lasting operational leverage',
+  'Values clear diagnosis, honest feedback, and direct execution',
 ] as const;
 
-const EXPECTATIONS = [
+const WHAT_WE_LOOK_FOR = [
   {
-    title: "Communication is direct",
-    body: "No account management layer. The person you talk to in the first conversation is the person who does the work.",
+    title: 'Growth is creating friction',
+    body: "You've outgrown ad-hoc processes and the gaps are getting expensive.",
+    Icon: TrendingUp,
   },
   {
-    title: "The diagnostic is real",
-    body: "It surfaces how the organization actually functions. That determines whether the work will succeed.",
+    title: 'Openness to change',
+    body: "You're ready to fix root causes, not just patch symptoms.",
+    Icon: GitBranch,
   },
   {
-    title: "Access matters",
-    body: "Effective diagnostics require access to the people who know how the work really moves.",
+    title: 'Executive alignment',
+    body: "There's clarity that this work is a priority.",
+    Icon: Users,
+  },
+] as const;
+
+const HOW_WE_WORK = [
+  {
+    title: 'Direct collaboration',
+    body: 'You work with the people doing the work — no middle layers.',
+    Icon: User,
   },
   {
-    title: "Timelines reflect operational reality",
-    body: "We work against what the organization can absorb and operationalize at each phase.",
+    title: 'Transparent process',
+    body: 'Clear diagnostics, shared plans, and visible progress.',
+    Icon: Layers,
   },
   {
-    title: "The relationship is designed for continuity",
-    body: "Operational infrastructure evolves. Most engagements continue past initial implementation.",
+    title: 'Built for the long run',
+    body: 'We design systems that scale with your business.',
+    Icon: ShieldCheck,
+  },
+] as const;
+
+const PROOF_STATS = [
+  {
+    title: '15+ years building systems',
+    body: 'Production infrastructure across companies at different operational scales.',
+    Icon: Calendar,
+  },
+  {
+    title: 'Connected operational layers',
+    body: 'Workflows, data, reporting, and integrations designed as one environment.',
+    Icon: Network,
+  },
+  {
+    title: 'Direct access to the operator',
+    body: 'The person in the first conversation is the person doing the work.',
+    Icon: Handshake,
+  },
+  {
+    title: 'Systems built for continuity',
+    body: 'Infrastructure maintained and evolved as the business scales.',
+    Icon: ShieldCheck,
   },
 ] as const;
 
 export function AboutPageContent() {
   return (
-    <main className="about-ref about-page min-h-screen pb-[var(--space-page-bottom)]">
+    <main className="about-page min-h-screen pb-[var(--space-page-bottom)]">
+      {/* Hero */}
       <section className="about-hero" aria-labelledby="about-hero-heading">
-        <div className="about-hero__bg" aria-hidden>
+        <div className="about-hero__media" aria-hidden>
           <Image
-            src="/from-chaos-to-clarity.png"
+            src="/about-hero-workspace.png"
             alt=""
             fill
             priority
             sizes="100vw"
             className="object-cover object-center"
-            style={{ objectPosition: "38% center" }}
           />
           <div className="about-hero__scrim" />
           <div className="about-hero__fade" />
         </div>
-        <div className="about-container about-hero__inner">
-          <div className="about-hero__grid">
-            <div className="hero-copy">
-              <p className="mono about-hero__eyebrow">About IntraWeb</p>
-              <h1 id="about-hero-heading">Operational systems built for how your company actually works.</h1>
-              <p>We build the infrastructure, automation, and AI systems that turn operational complexity into clarity.</p>
-            </div>
-            <div className="hero-overlay">
-              <p>
-                IntraWeb builds integrated operational systems for companies that need their tools, workflows, and people
-                to function as one environment.
-              </p>
-              <p>The work sits at the intersection of systems architecture, workflow automation, and AI implementation.</p>
+        <div className="container">
+          <div className="about-hero__copy">
+            <p className="about-eyebrow">About IntraWeb</p>
+            <h1 id="about-hero-heading">IntraWeb Technologies</h1>
+            <p className="about-hero__lead">
+              We are a technology partner for small and mid-sized businesses that need to operate at a level the market
+              now demands — without the overhead of an enterprise technology department.
+            </p>
+            <div className="about-hero__actions">
+              <Btn variant="primary" href={systemsCallUrl}>
+                Book a Systems Call
+              </Btn>
+              <Link className="about-hero__email" href={`mailto:${contactEmail}`}>
+                Email us →
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="about-section light" aria-labelledby="builds-title">
-        <div className="about-container split systems">
-          <div className="section-intro">
-            <p className="eyebrow dark">What IntraWeb builds</p>
-            <h2 id="builds-title">What IntraWeb builds</h2>
-            <p>Different companies have different operational gaps.</p>
-            <p>
-              The systems we build sit at the intersection of infrastructure, automation, custom platforms, and AI implementation.
-            </p>
-            <p>
-              The goal is not a single tool or workflow. It is the operational layer that connects systems, people, and data so
-              the whole environment functions.
-            </p>
-            <Link href="/services">
-              Explore what we build <span aria-hidden>→</span>
-            </Link>
+      {/* Why IntraWeb Exists */}
+      <section className="about-section" aria-labelledby="about-origin-heading">
+        <div className="container">
+          <div className="about-origin__grid">
+            <div>
+              <p className="about-eyebrow">Why IntraWeb Exists</p>
+              <h2 id="about-origin-heading" className="about-origin__headline">
+                Small and mid-sized businesses compete in markets shaped by companies with more resources and more
+                operational capacity.
+              </h2>
+              <p>
+                Enterprise-grade systems used to require enterprise-level investment. That changed — but building
+                operational infrastructure correctly still requires understanding how the business actually runs before
+                determining what gets built.
+              </p>
+              <p>
+                IntraWeb was founded to close that gap: giving growing companies access to operational depth designed
+                for how they work, maintained as they scale, and built to outlast the engagement that created it.
+              </p>
+            </div>
+            <aside className="about-breaking" aria-labelledby="about-breaking-heading">
+              <h3 id="about-breaking-heading">What kept breaking</h3>
+              <ul className="about-breaking__list">
+                {BREAKING_POINTS.map(({ title, body, Icon }) => (
+                  <li key={title} className="about-breaking__item">
+                    <span className="about-breaking__icon" aria-hidden>
+                      <Icon size={18} strokeWidth={1.75} />
+                    </span>
+                    <div>
+                      <h4>{title}</h4>
+                      <p>{body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </aside>
           </div>
+        </div>
+      </section>
 
-          <div className="system-list">
-            {SYSTEM_ROWS.map((row) => (
-              <article key={row.title}>
-                <span className="mini-icon" aria-hidden>
-                  {row.icon}
-                </span>
-                <div>
-                  <h3>{row.title}</h3>
-                  <p>{row.body}</p>
+      {/* What IntraWeb Stands For */}
+      <section className="about-section" aria-labelledby="about-principles-heading">
+        <div className="container">
+          <header className="about-principles__header">
+            <p className="about-eyebrow">What IntraWeb Stands For</p>
+            <h2 id="about-principles-heading">Three principles govern every engagement</h2>
+            <p>They aren&apos;t marketing language — they&apos;re the reasons the work holds up.</p>
+          </header>
+          <div className="about-principles__grid">
+            {PRINCIPLES.map(({ num, title, body, output, image, alt }) => (
+              <article key={title} className="about-principle-card">
+                <div className="about-principle-card__image">
+                  <Image src={image} alt={alt} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                </div>
+                <div className="about-principle-card__body">
+                  <p className="about-principle-card__num">{num}</p>
+                  <h3>{title}</h3>
+                  <p>{body}</p>
+                  <span className="about-principle-card__tag">{output}</span>
                 </div>
               </article>
             ))}
@@ -119,98 +235,130 @@ export function AboutPageContent() {
         </div>
       </section>
 
-      <section className="about-section dark" aria-labelledby="engagements-title">
-        <div className="about-container split process-section">
-          <div className="section-intro">
-            <p className="eyebrow">How engagements work</p>
-            <h2 id="engagements-title">How engagements work</h2>
-            <p>
-              Every engagement starts with understanding how your organization actually functions, not how it is supposed to function.
-            </p>
-            <p>From there, we design and build the operational infrastructure that creates durable change in phases, with you.</p>
-            <Link href="/diagnostic">
-              See the process <span aria-hidden>→</span>
-            </Link>
-          </div>
+      {/* Who We Work With — three-column layout */}
+      <section className="about-section" aria-labelledby="about-audience-heading">
+        <div className="container">
+          <p className="about-eyebrow about-eyebrow--rule">Who We Work With</p>
+          <div className="about-audience__grid">
+            <article className="about-audience-card">
+              <div className="about-audience-card__top">
+                <div className="about-audience-card__icon" aria-hidden>
+                  <User size={22} strokeWidth={1.5} />
+                </div>
+                <h3 id="about-audience-heading">Who this is for</h3>
+                <p className="about-audience-card__intro">
+                  We work with operators who are feeling the limits of their current way of working.
+                </p>
+              </div>
+              <ul className="about-audience-card__list about-audience-card__list--checks">
+                {WHO_THIS_IS_FOR.map((item) => (
+                  <li key={item}>
+                    <Check className="about-audience-card__check" size={18} strokeWidth={2.5} aria-hidden />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
 
-          <div className="timeline">
-            {TIMELINE.map((step) => (
-              <article key={step.n}>
-                <span>{step.n}</span>
-                <h3>{step.title}</h3>
-                <p>{step.body}</p>
-              </article>
+            <article className="about-audience-card">
+              <div className="about-audience-card__top">
+                <div className="about-audience-card__icon" aria-hidden>
+                  <Search size={22} strokeWidth={1.5} />
+                </div>
+                <h3>What we look for</h3>
+                <p className="about-audience-card__intro">
+                  A few signals that help us know we can create real impact together.
+                </p>
+              </div>
+              <ul className="about-audience-card__list about-audience-card__list--features">
+                {WHAT_WE_LOOK_FOR.map(({ title, body, Icon }) => (
+                  <li key={title}>
+                    <Icon className="about-audience-card__feature-icon" size={20} strokeWidth={1.5} aria-hidden />
+                    <div>
+                      <p className="about-audience-card__feature-title">{title}</p>
+                      <p className="about-audience-card__feature-body">{body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="about-audience-card">
+              <div className="about-audience-card__top">
+                <div className="about-audience-card__icon" aria-hidden>
+                  <Target size={22} strokeWidth={1.5} />
+                </div>
+                <h3>How we work together</h3>
+                <p className="about-audience-card__intro">
+                  A working relationship built on clarity, focus, and shared accountability.
+                </p>
+              </div>
+              <ul className="about-audience-card__list about-audience-card__list--features">
+                {HOW_WE_WORK.map(({ title, body, Icon }) => (
+                  <li key={title}>
+                    <Icon className="about-audience-card__feature-icon" size={20} strokeWidth={1.5} aria-hidden />
+                    <div>
+                      <p className="about-audience-card__feature-title">{title}</p>
+                      <p className="about-audience-card__feature-body">{body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      {/* Proof */}
+      <section className="about-section" aria-labelledby="about-proof-heading">
+        <div className="container">
+          <p className="about-eyebrow">Proof Is In Our Operation</p>
+          <h2 id="about-proof-heading" className="sr-only">
+            Proof is in our operation
+          </h2>
+          <div className="about-proof__grid">
+            {PROOF_STATS.map(({ title, body, Icon }) => (
+              <div key={title} className="about-proof__item">
+                <Icon className="about-proof__icon" size={24} strokeWidth={1.5} aria-hidden />
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="about-section dark" aria-labelledby="why-title">
-        <div className="about-container two-panel">
-          <div>
-            <p className="eyebrow">Why IntraWeb</p>
-            <h2 id="why-title">Why the approach is different</h2>
-            <p>
-              Most engagements deliver recommendations, tools, or documentation while leaving the operational environment largely
-              unexamined.
-            </p>
-
-            <div className="comparison">
-              <div className="head">Most engagements</div>
-              <div className="head">IntraWeb engagements</div>
-              {COMPARISON.flatMap(([most, intra], i) => [
-                <p key={`most-${i}`}>{most}</p>,
-                <p key={`intra-${i}`}>{intra}</p>,
-              ])}
+      {/* Final CTA */}
+      <section className="about-section about-cta" aria-labelledby="about-cta-heading">
+        <div className="container">
+          <div className="about-cta__panel">
+            <div className="about-cta__content">
+              <p className="about-eyebrow">The First Step</p>
+              <h2 id="about-cta-heading">
+                The first step is understanding exactly where your operation is losing ground.
+              </h2>
+              <p>
+                That&apos;s what the initial conversation is for — not a pitch, not a proposal. A clear diagnostic read on
+                what&apos;s breaking and why, whether you engage further or not.
+              </p>
+              <div className="about-cta__actions">
+                <Btn variant="primary" href={systemsCallUrl}>
+                  Book a Systems Call
+                </Btn>
+                <Link className="about-hero__email" href={`mailto:${contactEmail}`}>
+                  Or email us directly →
+                </Link>
+              </div>
             </div>
-          </div>
-
-          <div>
-            <p className="eyebrow">What to expect</p>
-            <h2 id="expect-title">What to expect</h2>
-            <p>A few things worth knowing before reaching out.</p>
-
-            <div className="expectations">
-              {EXPECTATIONS.map((item) => (
-                <article key={item.title}>
-                  <h3>{item.title}</h3>
-                  <p>{item.body}</p>
-                </article>
-              ))}
+            <div className="about-cta__media" aria-hidden>
+              <Image
+                src="/about-cta-notebook.png"
+                alt=""
+                fill
+                sizes="(max-width: 900px) 100vw, 45vw"
+                className="object-cover object-center"
+              />
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="about-section light final" aria-label="Operator background and contact">
-        <div className="about-container closing-grid">
-          <div>
-            <p className="eyebrow dark">Operator background</p>
-            <h2>Operator background</h2>
-            <p>IntraWeb is founded and operated by John Schibelli.</p>
-            <p>
-              Fifteen-plus years in engineering building production systems in React, Next.js, and TypeScript across companies at
-              different operational scales shaped the way this work is approached.
-            </p>
-            <p>The frustration was consistent: too much focus on individual systems, not enough on the operational layer that connects them.</p>
-            <p>Clients work with the person who designs and builds the systems. More context. Better decisions. Better outcomes.</p>
-          </div>
-
-          <div className="operator-media" aria-hidden>
-            <div className="operator-photo-wrap">
-              <Image src="/hero-01.png" alt="" fill sizes="(max-width: 1100px) 100vw, 38vw" />
-            </div>
-          </div>
-
-          <div className="cta-panel">
-            <p className="eyebrow dark">Start a conversation</p>
-            <h2>Start a conversation</h2>
-            <p>If what is on this page matches what you are dealing with operationally, the right next step is a conversation.</p>
-            <p>Start with your operational context: what is working, what is not, and where the gaps are creating the most friction.</p>
-            <Link href="/contact" className="button">
-              Contact / Start a conversation <span aria-hidden>→</span>
-            </Link>
-            <small>First conversation is diagnostic, not sales.</small>
           </div>
         </div>
       </section>

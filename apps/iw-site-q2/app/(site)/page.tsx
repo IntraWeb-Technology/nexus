@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { JsonLd } from "@/components/json-ld";
 import { HomeHeroSection } from "@/components/sections/home-hero";
 import { FrictionSection } from "@/components/sections/friction-section";
+import { ArgumentSection } from "@/components/sections/argument-section";
 import { ProofSection } from "@/components/sections/proof-section";
 import { ModelSection } from "@/components/sections/model-section";
+import { ContinuitySection } from "@/components/sections/continuity-section";
 import { FitSection } from "@/components/sections/fit-section";
 import { FinalCTASection } from "@/components/sections/final-cta-section";
 import { webPageJsonLd, webSiteJsonLd } from "@/lib/geo-jsonld";
@@ -18,8 +20,10 @@ export default function Home() {
       <JsonLd data={webPageJsonLd} />
       <HomeHeroSection />
       <FrictionSection />
+      <ArgumentSection />
       <ProofSection />
       <ModelSection />
+      <ContinuitySection />
       <FitSection />
       <FinalCTASection />
     </main>

@@ -29,7 +29,7 @@ or does it make the page feel more like every other SaaS homepage?
 
 - **[C-01]** Snapshot files may not import from sibling snapshot files.
 - **[C-02]** Snapshot files may not import from shared snapshot infrastructure.
-  No `/src/components/snapshots/_shared/` directory may exist.
+  No `/components/snapshots/_shared/` directory may exist.
 - **[C-03]** Snapshot geometry may not be extracted into shared rendering components.
   `Snapshot.tsx`, `DiagramNode.tsx`, `DiagramRenderer.tsx` and similar files
   are forbidden by name and by function.
@@ -49,15 +49,15 @@ or does it make the page feel more like every other SaaS homepage?
 
 ## STRUCTURAL rules — violation likely indicates drift, requires doctrine review before merge
 
-- **[S-01]** Any new file in `/src/components/` not matching an approved pattern
+- **[S-01]** Any new file in `/components/` not matching an approved pattern
   requires governance justification in the PR.
 - **[S-02]** Tailwind `@apply` consolidation across snapshot or section files
   is presumed dangerous until reviewed.
-- **[S-03]** Geometry utilities in `/src/lib/geometry-math.ts` must operate on
+- **[S-03]** Geometry utilities in `/lib/geometry-math.ts` must operate on
   values, not structure. If a function's signature contains operational vocabulary
   (node, edge, hub, annotation, snapshot, layout), it belongs in the authored
   artifact, not the utility file.
-- **[S-04]** If `/src/lib/geometry-math.ts` exceeds 200 lines, audit before merge.
+- **[S-04]** If `/lib/geometry-math.ts` exceeds 200 lines, audit before merge.
 - **[S-05]** Storybook stories for snapshot components must not share controls
   or expose variant props. Each snapshot gets an isolated story.
 - **[S-06]** Visual regression testing must not be applied to snapshot components.
@@ -98,7 +98,7 @@ Creating any of the following is a CRITICAL violation:
 
 Open a governance issue and wait for review when:
 
-- A new file in `/src/components/` does not match an approved pattern
+- A new file in `/components/` does not match an approved pattern
 - A single commit touches multiple protected directories
 - A refactor reduces total line count by more than 20% (abstraction extraction signal)
 - Any change to spacing tokens across more than one section
@@ -116,11 +116,11 @@ These are the only shared constructs permitted:
 
 | Abstraction | Path | What it is |
 |-------------|------|------------|
-| Typography primitives | `src/components/primitives/typography.tsx` | Heading scales, monospace label |
-| Annotation label | `src/components/snapshots/_primitives/AnnotationLabel.tsx` | Positioned text. API: `position`, `text`, `weight` only |
-| Section wrapper | `src/components/layout/SectionWrapper.tsx` | Per-section spacing tokens. No uniform rhythm enforcement |
+| Typography primitives | `components/primitives/typography.tsx` | Heading scales, monospace label |
+| Annotation label | `components/snapshots/_primitives/AnnotationLabel.tsx` | Positioned text. API: `position`, `text`, `weight` only |
+| Section wrapper | `components/layout/SectionWrapper.tsx` | Per-section spacing tokens. No uniform rhythm enforcement |
 | Color tokens | `tailwind.config.ts` | Locked palette. No layout tokens |
-| Geometry math | `src/lib/geometry-math.ts` | Value-level SVG math only. No structural vocabulary |
+| Geometry math | `lib/geometry-math.ts` | Value-level SVG math only. No structural vocabulary |
 
 Nothing else is shared. Duplication outside this list is acceptable.
 
