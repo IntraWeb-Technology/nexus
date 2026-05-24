@@ -3,6 +3,7 @@ import { JsonLd } from "@/components/json-ld";
 import { HomeHeroSection } from "@/components/sections/home-hero";
 import { FrictionSection } from "@/components/sections/friction-section";
 import { ArgumentSection } from "@/components/sections/argument-section";
+import { PillarsSection } from "@/components/sections/pillars-section";
 import { ProofSection } from "@/components/sections/proof-section";
 import { ModelSection } from "@/components/sections/model-section";
 import { FitSection } from "@/components/sections/fit-section";
@@ -20,6 +21,7 @@ export default function Home() {
       <HomeHeroSection />
       <FrictionSection />
       <ArgumentSection />
+      <PillarsSection />
       <ProofSection />
       <ModelSection />
       <FitSection />
