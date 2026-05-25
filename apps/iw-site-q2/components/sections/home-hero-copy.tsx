@@ -49,7 +49,7 @@ export function HomeHeroCopy() {
           }}
         >
           We remove workflow friction, eliminate operational inefficiency, and connect your systems so your
-          organization can operate with clarity and scale without adding headcount.
+          organization can operate with clarity and scale.
         </p>
       </HeroRise>
       <HeroRise delay={staggerMs * 3} duration={durationMs} y={y}>

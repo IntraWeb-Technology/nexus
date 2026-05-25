@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { BarChart3, CircleCheck, Clock, FileCheck, TrendingUp, UserRound } from "lucide-react";
 import type { CSSProperties } from "react";
-import Link from "next/link";
 import { ProofArtifactAppear } from "@/components/motion/proof-artifact-appear";
 import { SectionReveal } from "@/components/motion/section-reveal";
 import { SECTION_GRADIENT_SEAM } from "@/lib/section-seam";
@@ -202,7 +201,7 @@ export function ProofSection() {
                   marginBottom: "0.65rem",
                 }}
               >
-                Proof: what changed
+                What changed
               </p>
               <h2
                 id="proof-heading"
@@ -229,9 +228,6 @@ export function ProofSection() {
               >
                 Pattern recognition without implementation consequence is analysis. Here is what changed.
               </p>
-              <Link href="/work" style={{ fontSize: 14, fontWeight: 600, color: PROOF_ACCENT }}>
-                View more proof →
-              </Link>
             </div>
           </SectionReveal>
 
