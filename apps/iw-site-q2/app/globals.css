@@ -424,6 +424,29 @@ a {
   }
 }
 
+/* Homepage hero photo — slow Ken Burns (environment, not UI chrome) */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes home-hero-ken-burns {
+    0% {
+      transform: scale(1) translate(0, 0);
+    }
+    100% {
+      transform: scale(1.045) translate(-1.2%, -0.6%);
+    }
+  }
+
+  .home-hero__ken-burns {
+    animation: home-hero-ken-burns 22s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero__ken-burns {
+    animation: none !important;
+  }
+}
+
 /* Section rhythm — same top/bottom on all marketing sections */
 section.marketing-slab {
   padding: var(--space-section-y) 0;

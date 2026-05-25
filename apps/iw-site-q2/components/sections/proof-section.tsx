@@ -1,7 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { BarChart3, CircleCheck, Clock, FileCheck, TrendingUp, UserRound } from "lucide-react";
 import type { CSSProperties } from "react";
-import Link from "next/link";
+import { ProofArtifactAppear } from "@/components/motion/proof-artifact-appear";
+import { SectionReveal } from "@/components/motion/section-reveal";
 import { SECTION_GRADIENT_SEAM } from "@/lib/section-seam";
 
 const SECTION_BG = "#0a0a0a";
@@ -188,50 +189,50 @@ export function ProofSection() {
     >
       <div className="container" style={{ paddingTop: 60, paddingBottom: 60 }}>
         <div className="grid gap-10 lg:grid-cols-[minmax(0,260px)_1fr] lg:gap-x-12 xl:gap-x-14 lg:items-start">
-          <div className="lg:sticky lg:top-28" style={{ alignSelf: "start" }}>
-            <p
-              style={{
-                fontSize: 11,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: PROOF_ACCENT,
-                fontWeight: 600,
-                marginBottom: "0.65rem",
-              }}
-            >
-              Proof: what changed
-            </p>
-            <h2
-              id="proof-heading"
-              style={{
-                fontSize: "clamp(1.45rem, 2.4vw, 2rem)",
-                lineHeight: 1.12,
-                fontWeight: 700,
-                color: "#ffffff",
-                marginBottom: "0.85rem",
-              }}
-            >
-              Real environments.
-              <br />
-              Real changes.
-            </h2>
-            <p
-              style={{
-                fontSize: 15,
-                lineHeight: 1.65,
-                fontWeight: 400,
-                color: "rgba(163,163,163,0.98)",
-                marginBottom: "1.15rem",
-              }}
-            >
-              Pattern recognition without implementation consequence is analysis. Here is what changed.
-            </p>
-            <Link href="/work" style={{ fontSize: 14, fontWeight: 600, color: PROOF_ACCENT }}>
-              View more proof →
-            </Link>
-          </div>
+          <SectionReveal>
+            <div className="lg:sticky lg:top-28" style={{ alignSelf: "start" }}>
+              <p
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: PROOF_ACCENT,
+                  fontWeight: 600,
+                  marginBottom: "0.65rem",
+                }}
+              >
+                What changed
+              </p>
+              <h2
+                id="proof-heading"
+                style={{
+                  fontSize: "clamp(1.45rem, 2.4vw, 2rem)",
+                  lineHeight: 1.12,
+                  fontWeight: 700,
+                  color: "#ffffff",
+                  marginBottom: "0.85rem",
+                }}
+              >
+                Real environments.
+                <br />
+                Real changes.
+              </h2>
+              <p
+                style={{
+                  fontSize: 15,
+                  lineHeight: 1.65,
+                  fontWeight: 400,
+                  color: "rgba(163,163,163,0.98)",
+                  marginBottom: "1.15rem",
+                }}
+              >
+                Pattern recognition without implementation consequence is analysis. Here is what changed.
+              </p>
+            </div>
+          </SectionReveal>
 
           <div className="grid grid-cols-1 gap-5 md:gap-4 xl:grid-cols-3">
+            <ProofArtifactAppear index={0}>
             <Artifact
               icon={FileCheck}
               title="Request to Fulfillment"
@@ -246,7 +247,9 @@ export function ProofSection() {
                 "No visibility until customer follows up",
               ]}
             />
+            </ProofArtifactAppear>
 
+            <ProofArtifactAppear index={1}>
             <Artifact
               icon={BarChart3}
               title="Monthly Reporting"
@@ -261,7 +264,9 @@ export function ProofSection() {
                 "Stakeholders wait without visibility",
               ]}
             />
+            </ProofArtifactAppear>
 
+            <ProofArtifactAppear index={2}>
             <Artifact
               icon={UserRound}
               title="Onboarding Process"
@@ -276,6 +281,7 @@ export function ProofSection() {
                 "No consistent onboarding experience",
               ]}
             />
+            </ProofArtifactAppear>
           </div>
         </div>
       </div>

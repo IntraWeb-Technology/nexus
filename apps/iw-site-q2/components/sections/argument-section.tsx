@@ -1,6 +1,8 @@
 import { SectionWrapper } from '@/components/layout/SectionWrapper';
 import { ArgumentPillarsGrid } from '@/components/sections/pillars-section';
 
+// Hard boundary — no scroll fade at band edges (F-09). Rupture stays abrupt.
+
 export function ArgumentSection() {
   return (
     <SectionWrapper id="argument" spacing="argument" rupture="argument-band">
