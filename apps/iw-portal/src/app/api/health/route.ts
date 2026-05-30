@@ -1,3 +1,8 @@
+import {
+  clerkSatelliteConfigured,
+  clerkSatelliteResolveFapiProxyUrl,
+  isClerkSatelliteMode,
+} from '@/lib/clerk-satellite'
 import { isHubSpotConfigured } from '@/lib/hubspot/config'
 import { getSupabaseApiUrl } from '@/lib/supabase/url'
 import { headers } from 'next/headers'
@@ -56,6 +61,17 @@ export async function GET() {
     present(supabaseUrl) &&
     present(supabaseAnon)
 
+  const clerkDomainEnv = process.env.NEXT_PUBLIC_CLERK_DOMAIN?.trim() || null
+  const clerkFapiProxyFlag = process.env.NEXT_PUBLIC_CLERK_SATELLITE_FAPI_PROXY === 'true'
+  const forwardedOrigin = requestHost ? `https://${requestHost}` : ''
+  const resolvedFapiProxyUrl = clerkSatelliteResolveFapiProxyUrl({ forwardedOrigin })
+  const satelliteConfigured = clerkSatelliteConfigured()
+  const clerkSatelliteMisconfig =
+    satelliteConfigured &&
+    clerkFapiProxyFlag &&
+    Boolean(clerkDomainEnv) &&
+    !process.env.NEXT_PUBLIC_CLERK_PROXY_URL?.trim()
+
   return NextResponse.json(
     {
       ok,
@@ -65,6 +81,12 @@ export async function GET() {
         mismatchedLiveTestPair: mismatchedPair,
         /** Helps debug Clerk `host_invalid`: this host must exist on the Clerk app for that publishable key. */
         requestHost,
+        isSatelliteMode: isClerkSatelliteMode(),
+        satelliteConfigured,
+        fapiProxyEnabled: Boolean(resolvedFapiProxyUrl),
+        /** When set with FAPI proxy (and no explicit proxy URL), Clerk may still load `clerk.{domain}` and DNS fails. */
+        domainEnvSet: Boolean(clerkDomainEnv),
+        satelliteMisconfigDomainWithFapiProxy: clerkSatelliteMisconfig,
       },
       supabase: {
         projectRef: supabaseProjectRef(supabaseUrl),
