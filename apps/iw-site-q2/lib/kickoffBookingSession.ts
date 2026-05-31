@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import type { BookingFlow } from "@/lib/bookingFlowTypes";
 
 const ALG = "HS256";
 
@@ -21,6 +22,8 @@ export type KickoffBookingClaims = {
   company: string;
   phone?: string;
   dealId?: string;
+  /** Booking flow discriminator; defaults to kickoff for legacy tokens */
+  flow?: BookingFlow;
   iat: number;
   exp: number;
 };
@@ -98,6 +101,7 @@ export function buildBookingSessionPayload(
   contactId: string,
   contact: { email: string; firstName: string; lastName: string; company: string; phone?: string },
   dealId?: string | null,
+  flow: BookingFlow = "kickoff",
 ): { bookingSession: string; hubspotContactId: string; hubspotDealId?: string } | Record<string, never> {
   const secret = getKickoffBookingSecret();
   if (!secret) {
@@ -112,6 +116,7 @@ export function buildBookingSessionPayload(
       company: contact.company,
       phone: contact.phone?.trim() || undefined,
       dealId: dealId || undefined,
+      flow,
     },
     secret,
     getKickoffBookingTtlSec(),

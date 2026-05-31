@@ -9,6 +9,7 @@ import { tmpdir } from "os";
 import { timingSafeEqual } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildN8nContactLeadWebhookPayload } from "@/lib/n8nLeadIntakeDealStage";
+import { buildBookingSessionPayload } from "@/lib/kickoffBookingSession";
 import { escapeHtml, wrapIntraWebStaffEmailHtml } from "@/lib/emailShell";
 
 /** Lazy init so `next build` / route analysis does not require RESEND_API_KEY at module load. */
@@ -547,6 +548,7 @@ ${websiteForHubSpot ? `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e
     let contactAction: ContactSyncResult["contactAction"] = "skipped";
     let tier: Tier = "starter";
     let n8nFired = false;
+    let hubspotContactId: string | null = null;
 
     let hubspotPromise = Promise.resolve();
 
@@ -626,6 +628,7 @@ ${websiteForHubSpot ? `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e
       });
       hubspotContactsSummary = sync.hubspotContactsSummary;
       contactAction = sync.contactAction;
+      hubspotContactId = sync.contactId;
 
       const n8nUrl = process.env.N8N_CONTACT_WEBHOOK_URL?.trim();
       if (sync.contactId && n8nUrl) {
@@ -682,6 +685,22 @@ ${websiteForHubSpot ? `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e
     const responseBody: Record<string, unknown> = {
       message: "Message sent successfully",
     };
+
+    if (hubspotContactId) {
+      const sessionExtras = buildBookingSessionPayload(
+        hubspotContactId,
+        {
+          email,
+          firstName,
+          lastName,
+          company: companyName,
+          phone,
+        },
+        undefined,
+        "diagnostic",
+      );
+      Object.assign(responseBody, sessionExtras);
+    }
 
     const includeIntegrationDetails =
       process.env.CONTACT_INTEGRATION_DEBUG === "true" ||

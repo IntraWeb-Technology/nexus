@@ -251,8 +251,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "OS_SUPABASE_POSTGRES",
-          "name": "Supabase OS Postgres"
+          "id": "SHSVYlQKM9cAdx5k",
+          "name": "Supabase IW-Portal"
         }
       }
     }
@@ -715,8 +715,8 @@
         ],
         "credentials": {
           "postgres": {
-            "id": "OS_SUPABASE_POSTGRES",
-            "name": "Supabase OS Postgres"
+            "id": "SHSVYlQKM9cAdx5k",
+            "name": "Supabase IW-Portal"
           }
         }
       }

@@ -1,7 +1,8 @@
+// apps/iw-site-q2/components/contact/ContactForm.tsx
+
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 const PAIN_POINT_MAX = 1000;
 const RECAPTCHA_ACTION = "contact";
@@ -27,6 +28,21 @@ declare global {
     };
   }
 }
+
+export type ContactFormSuccessPayload = {
+  bookingSession?: string;
+  contactId?: string;
+  dealId?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  companyName: string;
+};
+
+type ContactFormProps = {
+  onSuccess: (payload: ContactFormSuccessPayload) => void;
+  disabled?: boolean;
+};
 
 function isGoogleApiKeyMistakenForSiteKey(key: string): boolean {
   return key.trim().startsWith("AIza");
@@ -70,8 +86,7 @@ function buildPainPoint(parts: { message: string; situation: string; budget: str
   return s.replace(/\s+/g, " ").trim().slice(0, PAIN_POINT_MAX);
 }
 
-export function ContactForm() {
-  const router = useRouter();
+export function ContactForm({ onSuccess, disabled = false }: ContactFormProps) {
   const [status, setStatus] = useState<"idle" | "sending">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const recaptchaReady = useRef(false);
@@ -81,7 +96,7 @@ export function ContactForm() {
     if (!siteKey) return null;
     if (isGoogleApiKeyMistakenForSiteKey(siteKey)) {
       console.error(
-        "[reCAPTCHA] NEXT_PUBLIC_RECAPTCHA_SITE_KEY must be a reCAPTCHA Enterprise website key, not a Google API key."
+        "[reCAPTCHA] NEXT_PUBLIC_RECAPTCHA_SITE_KEY must be a reCAPTCHA Enterprise website key, not a Google API key.",
       );
       return null;
     }
@@ -144,18 +159,29 @@ export function ContactForm() {
               recaptchaToken: recaptchaToken ?? undefined,
             }),
           });
+          const data = (await response.json().catch(() => ({}))) as {
+            message?: string;
+            error?: string;
+            bookingSession?: string;
+            hubspotContactId?: string;
+            hubspotDealId?: string;
+          };
           if (!response.ok) {
-            const errData = (await response.json().catch(() => ({}))) as {
-              message?: string;
-              error?: string;
-            };
             const userMessage =
-              errData.message === "Invalid form data" && errData.error
-                ? errData.error
-                : errData.message || errData.error || "Submission failed";
+              data.message === "Invalid form data" && data.error
+                ? data.error
+                : data.message || data.error || "Submission failed";
             throw new Error(userMessage);
           }
-          router.push("/thank-you?form=contact");
+          onSuccess({
+            bookingSession: data.bookingSession,
+            contactId: data.hubspotContactId,
+            dealId: data.hubspotDealId,
+            email,
+            firstName,
+            lastName,
+            companyName,
+          });
         } catch (err) {
           setErrorMessage(err instanceof Error ? err.message : "Something went wrong. Please try again.");
         } finally {
@@ -171,11 +197,22 @@ export function ContactForm() {
       ) : null}
       <label style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "var(--iw-fg-1)" }}>
         Name
-        <input name="name" required className="contact-input" placeholder="Your name" disabled={status === "sending"} />
+        <input
+          name="name"
+          required
+          className="contact-input"
+          placeholder="Your name"
+          disabled={status === "sending" || disabled}
+        />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "var(--iw-fg-1)" }}>
         Company / Organization
-        <input name="company" className="contact-input" placeholder="Company" disabled={status === "sending"} />
+        <input
+          name="company"
+          className="contact-input"
+          placeholder="Company"
+          disabled={status === "sending" || disabled}
+        />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "var(--iw-fg-1)" }}>
         Email
@@ -185,7 +222,7 @@ export function ContactForm() {
           required
           className="contact-input"
           placeholder="you@company.com"
-          disabled={status === "sending"}
+          disabled={status === "sending" || disabled}
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "var(--iw-fg-1)" }}>
@@ -197,12 +234,12 @@ export function ContactForm() {
           className="contact-input"
           placeholder="+1 555 000 0000"
           autoComplete="tel"
-          disabled={status === "sending"}
+          disabled={status === "sending" || disabled}
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "var(--iw-fg-1)" }}>
         What best describes your situation?
-        <select name="situation" required className="contact-input" disabled={status === "sending"}>
+        <select name="situation" required className="contact-input" disabled={status === "sending" || disabled}>
           <option value="">Select…</option>
           {situations.map((s) => (
             <option key={s} value={s}>
@@ -213,7 +250,7 @@ export function ContactForm() {
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "var(--iw-fg-1)" }}>
         Approximate budget range
-        <select name="budget" required className="contact-input" disabled={status === "sending"}>
+        <select name="budget" required className="contact-input" disabled={status === "sending" || disabled}>
           <option value="">Select…</option>
           {budgets.map((b) => (
             <option key={b} value={b}>
@@ -230,7 +267,7 @@ export function ContactForm() {
           rows={5}
           className="contact-input"
           placeholder="Context, timeline, systems involved…"
-          disabled={status === "sending"}
+          disabled={status === "sending" || disabled}
         />
       </label>
       <label style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 14, color: "var(--iw-fg-1)" }}>
@@ -239,12 +276,12 @@ export function ContactForm() {
           name="referral"
           className="contact-input"
           placeholder="Referral, search, content, etc."
-          disabled={status === "sending"}
+          disabled={status === "sending" || disabled}
         />
       </label>
       <div style={{ marginTop: 8 }}>
-        <button type="submit" className="btn btn-primary" disabled={status === "sending"}>
-          <span>{status === "sending" ? "Sending…" : "Submit"}</span>
+        <button type="submit" className="btn btn-primary" disabled={status === "sending" || disabled}>
+          <span>{status === "sending" ? "Sending…" : "Submit & schedule diagnostic"}</span>
         </button>
       </div>
     </form>

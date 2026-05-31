@@ -4,8 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DateTime } from "luxon";
 import { ChevronLeft, ChevronRight, Clock, Globe, Loader2, Video } from "lucide-react";
 import type { KickoffIntakeContact } from "@/lib/websiteIntakeKickoff";
+import type { BookingFlow } from "@/lib/bookingFlowTypes";
 
 type Slot = { start: string; end?: string };
+
+const DEFAULT_ENDPOINTS = { slots: "/api/kickoff/slots", book: "/api/kickoff/book" };
 
 const WEEK_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
@@ -37,6 +40,9 @@ export type KickoffSchedulerProps = {
   fallbackCalUrl: string;
   kickoffTitle: string;
   onContinue: (opts: { scheduled: boolean; booked?: boolean; startIso?: string }) => void;
+  flow?: BookingFlow;
+  endpoints?: { slots: string; book: string };
+  onUnavailable?: () => void;
 };
 
 export default function KickoffScheduler({
@@ -46,6 +52,9 @@ export default function KickoffScheduler({
   fallbackCalUrl,
   kickoffTitle,
   onContinue,
+  flow = "kickoff",
+  endpoints = DEFAULT_ENDPOINTS,
+  onUnavailable,
 }: KickoffSchedulerProps) {
   void _submittedData;
   const defaultTz = useMemo(
@@ -112,24 +121,50 @@ export default function KickoffScheduler({
     if (!bookingSession) return;
     setSlotsLoading(true);
     setSlotsError(null);
-    try {
-      const u = new URL("/api/kickoff/slots", window.location.origin);
+
+    const fetchOnce = async (): Promise<Slot[]> => {
+      const u = new URL(endpoints.slots, window.location.origin);
       u.searchParams.set("anchorDate", anchorForFetch);
       u.searchParams.set("timeZone", timeZone);
       u.searchParams.set("spanDays", String(spanDays));
+      u.searchParams.set("flow", flow);
+      u.searchParams.set("bookingSession", bookingSession);
       const res = await fetch(u.toString());
       const json = (await res.json()) as { ok?: boolean; slots?: Slot[]; error?: string };
       if (!res.ok) {
-        throw new Error(json.error || `HTTP ${res.status}`);
+        const err = new Error(json.error || `HTTP ${res.status}`) as Error & { status?: number };
+        err.status = res.status;
+        throw err;
       }
-      setSlots(json.slots || []);
+      return json.slots || [];
+    };
+
+    try {
+      let result: Slot[];
+      try {
+        result = await fetchOnce();
+      } catch (first) {
+        const status = (first as Error & { status?: number }).status;
+        const looksLikeCalDown = !status || status >= 500;
+        if (onUnavailable && looksLikeCalDown) {
+          try {
+            result = await fetchOnce();
+          } catch {
+            onUnavailable();
+            return;
+          }
+        } else {
+          throw first;
+        }
+      }
+      setSlots(result);
     } catch (e) {
       setSlotsError(e instanceof Error ? e.message : "Could not load times");
       setSlots([]);
     } finally {
       setSlotsLoading(false);
     }
-  }, [anchorForFetch, timeZone, spanDays, bookingSession]);
+  }, [anchorForFetch, timeZone, spanDays, bookingSession, endpoints.slots, flow, onUnavailable]);
 
   useEffect(() => {
     void loadSlots();
@@ -156,7 +191,7 @@ export default function KickoffScheduler({
     setBooking(true);
     setBookError(null);
     try {
-      const res = await fetch("/api/kickoff/book", {
+      const res = await fetch(endpoints.book, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
