@@ -27,7 +27,26 @@ export async function GET(request: Request) {
 
   const url = doc.file_url
   if (url.startsWith('http://') || url.startsWith('https://')) {
-    return NextResponse.redirect(url)
+    // Security: Allowlist external URLs to prevent open redirect attacks
+    const allowedDomains = [
+      'supabase.co',
+      'storage.googleapis.com',
+      's3.amazonaws.com',
+      process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^https?:\/\//, '').split('/')[0]
+    ].filter(Boolean)
+    
+    try {
+      const urlObj = new URL(url)
+      const isAllowed = allowedDomains.some(domain => 
+        urlObj.hostname === domain || urlObj.hostname.endsWith(`.${domain}`)
+      )
+      if (!isAllowed) {
+        return NextResponse.json({ error: 'Invalid file URL' }, { status: 400 })
+      }
+      return NextResponse.redirect(url)
+    } catch {
+      return NextResponse.json({ error: 'Invalid file URL' }, { status: 400 })
+    }
   }
 
   const bucket = supabase.storage.from('client-uploads')
