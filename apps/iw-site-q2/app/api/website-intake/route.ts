@@ -183,6 +183,18 @@ export async function POST(req: NextRequest) {
     const recaptchaSiteKey = process.env.RECAPTCHA_ENTERPRISE_SITE_KEY;
     const recaptchaEnabled = Boolean(recaptchaProjectId && recaptchaSiteKey);
 
+    // Security: In production, fail if reCAPTCHA is not configured
+    if (process.env.NODE_ENV === "production" && !recaptchaEnabled) {
+      console.error("[website-intake] SECURITY: reCAPTCHA not configured in production");
+      return NextResponse.json(
+        { 
+          error: "service_unavailable", 
+          message: "Security verification is not configured. Please contact support." 
+        },
+        { status: 503 }
+      );
+    }
+
     const skipRecaptchaInDev =
       process.env.NODE_ENV === "development" && process.env.RECAPTCHA_SKIP_IN_DEV === "true";
 
