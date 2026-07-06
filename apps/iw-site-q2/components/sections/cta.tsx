@@ -2,7 +2,7 @@
 
 import { Btn, Reveal } from "@/components/primitives";
 import { SectionLabel } from "@/components/section-label";
-import { scheduleUrl } from "@/lib/site";
+import { systemsCallUrl } from "@/lib/site";
 
 export function CtaSection() {
   return (
@@ -101,7 +101,7 @@ export function CtaSection() {
             </Reveal>
             <Reveal delay={200}>
               <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
-                <Btn variant="primary" href={scheduleUrl}>
+                <Btn variant="primary" href={systemsCallUrl}>
                   Schedule a Call
                 </Btn>
               </div>

@@ -97,6 +97,25 @@ function escapeHtml(s) {
     .replace(/"/g, '&quot;')
 }
 
+function buildUnsubscribeHref(owner, recipientEmail, secrets) {
+  const configuredUnsub = String(owner?.unsubscribeUrl || '').trim()
+  const supportEmail = String(owner?.email || '').trim()
+  const recipient = String(recipientEmail || '').trim().toLowerCase()
+  if (configuredUnsub) {
+    return configuredUnsub.replace(/\{\{email\}\}/g, encodeURIComponent(recipient))
+  }
+  const secret = String(secrets?.webhookSecret || '').trim()
+  const base = String(owner?.n8nBaseUrl || '').trim().replace(/\/$/, '')
+  if (secret && base && recipient) {
+    const sig = hmacSha256Hex(recipient, secret, 32)
+    return `${base}/webhook/email-unsubscribe?email=${encodeURIComponent(recipient)}&sig=${sig}`
+  }
+  if (!supportEmail || !recipient) return ''
+  const subject = encodeURIComponent('Unsubscribe from IntraWeb emails')
+  const body = encodeURIComponent(`Please remove ${recipient} from your mailing list.`)
+  return `mailto:${encodeURIComponent(supportEmail)}?subject=${subject}&body=${body}`
+}
+
 function wrapEmail(innerHtml) {
   const owner = config.owner || {}
   // Served from apps/iw-site-q2/public (www.intrawebtech.com root).
@@ -119,6 +138,7 @@ function wrapEmail(innerHtml) {
   const company = escapeHtml(owner.companyName || 'IntraWeb Technologies LLC')
   const supportEmail = String(owner.email || '').trim()
   const calendarLink = String(owner.calendarLink || '').trim()
+  const recipientEmail = String(input.to || '').trim()
 
   const imgStyle =
     'display:block;max-width:280px;width:100%;height:auto;border:0;margin:0;'
@@ -126,14 +146,24 @@ function wrapEmail(innerHtml) {
 
   let logoBlock
   if (logoUrl) {
-    logoBlock =
-      `<div class="iw-email-logo">` +
-      `<img class="iw-email-logo-light" src="${escapeHtml(logoUrl)}" width="280" alt="${company}" style="${imgStyle}" />` +
-      `<img class="iw-email-logo-dark" src="${escapeHtml(logoUrlDark)}" width="280" alt="${company}" style="${imgStyle}" />` +
-      `</div>${tagline}`
+    const useDarkVariant = Boolean(logoUrlDark && logoUrlDark !== logoUrl)
+    if (useDarkVariant) {
+      logoBlock =
+        `<div class="iw-email-logo">` +
+        `<img class="iw-email-logo-light" src="${escapeHtml(logoUrl)}" width="280" alt="${company}" style="${imgStyle}" />` +
+        `<img class="iw-email-logo-dark" src="${escapeHtml(logoUrlDark)}" width="280" alt="${company}" style="${imgStyle}" />` +
+        `</div>${tagline}`
+    } else {
+      logoBlock =
+        `<div class="iw-email-logo">` +
+        `<img src="${escapeHtml(logoUrl)}" width="280" alt="${company}" style="${imgStyle}" />` +
+        `</div>${tagline}`
+    }
   } else {
     logoBlock = `<div class="iw-email-logo iw-email-wordmark" style="font-family:Montserrat,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${E.text};letter-spacing:-0.02em;">IntraWeb</div>${tagline}`
   }
+
+  const unsubHref = buildUnsubscribeHref(owner, recipientEmail, config.secrets)
 
   const footerBits = []
   if (supportEmail) {
@@ -145,6 +175,11 @@ function wrapEmail(innerHtml) {
   if (calendarLink) {
     footerBits.push(
       `<a href="${escapeHtml(calendarLink)}" style="color:${E.link};text-decoration:none;">Schedule time</a>`,
+    )
+  }
+  if (unsubHref) {
+    footerBits.push(
+      `<a href="${escapeHtml(unsubHref)}" style="color:${E.link};text-decoration:none;">Unsubscribe</a>`,
     )
   }
   const footerLine2 = footerBits.length ? `<p style="margin:0;">${footerBits.join(' · ')}</p>` : ''
@@ -201,11 +236,22 @@ const skip =
 
 const finalHtml = skip ? String(input.html) : wrapEmail(String(input.html))
 
+const unsubHref = buildUnsubscribeHref(config.owner, input.to, config.secrets)
+
 const payload = {
   from,
   to: [input.to],
   subject: input.subject,
   html: finalHtml,
+}
+
+if (unsubHref) {
+  payload.headers = {
+    'List-Unsubscribe': `<${unsubHref}>`,
+  }
+  if (!unsubHref.startsWith('mailto:')) {
+    payload.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'
+  }
 }
 
 if (input.attachments) {

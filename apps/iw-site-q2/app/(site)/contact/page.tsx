@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/json-ld";
-import { ContactPageContent } from "@/components/pages/contact-content";
+import { ContactExperience } from "@/components/contact/ContactExperience";
 import { buildBreadcrumbJsonLd } from "@/lib/geo-jsonld";
 import { contactSeo, pageMetadata } from "@/lib/seo-meta";
 
@@ -15,7 +15,7 @@ export default function ContactPage() {
           { name: "Contact", path: "/contact" },
         ])}
       />
-      <ContactPageContent />
+      <ContactExperience />
     </>
   );
 }

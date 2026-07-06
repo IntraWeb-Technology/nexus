@@ -146,8 +146,13 @@ pnpm --filter @repo/ops diagnostics:verify-stack
 pnpm --filter @repo/iw-portal verify:stack
 ```
 
+## Self-hosted Supabase (Hostinger VPS)
+
+To migrate off managed `*.supabase.co` to Docker on Hostinger KVM, follow [supabase-self-host-hostinger.md](./supabase-self-host-hostinger.md). Bootstrap script: `apps/iw-portal/scripts/self-host/bootstrap-supabase-vps.sh`.
+
 ## Related docs
 
+- [supabase-self-host-hostinger.md](./supabase-self-host-hostinger.md)
 - [webhook-contracts.md](./webhook-contracts.md)
 - [apps/iw-portal/docs/n8n-integration.md](../../apps/iw-portal/docs/n8n-integration.md)
 - [packages/n8n-workflows/RUNBOOK.md](../../packages/n8n-workflows/RUNBOOK.md)

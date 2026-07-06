@@ -70,7 +70,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: $json.maxTokens, system: $json.systemPrompt, messages: [{ role: 'user', content: $json.userPrompt }] }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: $json.maxTokens, system: $json.systemPrompt, messages: [{ role: 'user', content: $json.userPrompt }] }) }}",
         "options": {
           "timeout": 120000
         }
@@ -266,7 +266,7 @@
           },
           "sendBody": true,
           "specifyBody": "json",
-          "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: $json.maxTokens, system: $json.systemPrompt, messages: [{ role: 'user', content: $json.userPrompt }] }) }}",
+          "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: $json.maxTokens, system: $json.systemPrompt, messages: [{ role: 'user', content: $json.userPrompt }] }) }}",
           "options": {
             "timeout": 120000
           }

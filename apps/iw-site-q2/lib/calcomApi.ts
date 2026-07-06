@@ -72,9 +72,11 @@ export async function fetchAvailableSlots(params: {
   end: string;
   timeZone: string;
   format?: "time" | "range";
+  /** When set, overrides env-based event resolution (e.g. diagnostic vs kickoff). */
+  event?: CalEventResolution;
 }): Promise<{ ok: true; slots: NormalizedSlot[] } | { ok: false; error: string; status?: number }> {
   const auth = authHeader();
-  const resolution = getCalEventResolution();
+  const resolution = params.event ?? getCalEventResolution();
   if (!auth) {
     return { ok: false, error: "CAL_API_KEY is not configured" };
   }
@@ -155,6 +157,8 @@ export type CreateCalBookingInput = {
   };
   title?: string;
   metadata?: Record<string, string>;
+  /** When set, overrides env-based event resolution (e.g. diagnostic vs kickoff). */
+  event?: CalEventResolution;
 };
 
 export type CreateCalBookingResult =
@@ -170,7 +174,7 @@ export type CreateCalBookingResult =
 
 export async function createCalBooking(input: CreateCalBookingInput): Promise<CreateCalBookingResult> {
   const auth = authHeader();
-  const resolution = getCalEventResolution();
+  const resolution = input.event ?? getCalEventResolution();
   if (!auth) {
     return { ok: false, error: "CAL_API_KEY is not configured" };
   }

@@ -395,6 +395,38 @@ export interface OsPreCallIntakeRow {
   submitted_at: string
 }
 
+export type DataSubjectRequestType = 'delete_personal_data' | 'marketing_opt_out' | 'access_copy'
+
+export type DataSubjectRequestStatus =
+  | 'pending_verification'
+  | 'verified'
+  | 'processing'
+  | 'completed'
+  | 'partial'
+  | 'rejected'
+  | 'manual_review'
+
+export interface DataSubjectRequest {
+  id: string
+  email: string
+  request_type: DataSubjectRequestType
+  status: DataSubjectRequestStatus
+  note: string | null
+  verification_token_hash: string | null
+  verified_at: string | null
+  completed_at: string | null
+  execution_log: ExecutionLogEntry[]
+  retention_exceptions: string[]
+  source_ip: string | null
+  created_at: string
+}
+
+export interface ExecutionLogEntry {
+  step: string
+  status: 'ok' | 'skipped' | 'error'
+  detail?: string
+}
+
 /** HubSpot → Supabase mirror (`hubspot_crm_entities`); updated from `/api/webhook/hubspot` only. */
 export interface HubSpotCrmEntityRow {
   object_type: 'contact' | 'deal' | 'company'

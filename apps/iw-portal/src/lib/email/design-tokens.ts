@@ -54,6 +54,10 @@ export type EmailShellFooter = {
   companyName: string
   supportEmail?: string
   calendarUrl?: string
+  /** Recipient address — used for mailto unsubscribe body. */
+  recipientEmail?: string
+  /** Optional override; supports `{{email}}` placeholder. */
+  unsubscribeUrl?: string
 }
 
 /**
@@ -87,6 +91,7 @@ export function wrapIntraWebEmailHtml(
   const company = escapeHtml(footer.companyName)
   const support = footer.supportEmail?.trim()
   const cal = footer.calendarUrl?.trim()
+  const recipient = footer.recipientEmail?.trim() || ''
 
   const imgStyle =
     'display:block;max-width:280px;width:100%;height:auto;border:0;margin:0;'
@@ -94,21 +99,44 @@ export function wrapIntraWebEmailHtml(
 
   let logoBlock: string
   if (logoUrl) {
-    logoBlock =
-      `<div class="iw-email-logo">` +
-      `<img class="iw-email-logo-light" src="${escapeHtml(logoUrl)}" width="280" alt="${company}" style="${imgStyle}" />` +
-      `<img class="iw-email-logo-dark" src="${escapeHtml(logoUrlDark)}" width="280" alt="${company}" style="${imgStyle}" />` +
-      `</div>${tagline}`
+    const useDarkVariant = Boolean(logoUrlDark && logoUrlDark !== logoUrl)
+    if (useDarkVariant) {
+      logoBlock =
+        `<div class="iw-email-logo">` +
+        `<img class="iw-email-logo-light" src="${escapeHtml(logoUrl)}" width="280" alt="${company}" style="${imgStyle}" />` +
+        `<img class="iw-email-logo-dark" src="${escapeHtml(logoUrlDark)}" width="280" alt="${company}" style="${imgStyle}" />` +
+        `</div>${tagline}`
+    } else {
+      logoBlock =
+        `<div class="iw-email-logo">` +
+        `<img src="${escapeHtml(logoUrl)}" width="280" alt="${company}" style="${imgStyle}" />` +
+        `</div>${tagline}`
+    }
   } else {
     logoBlock = `<div class="iw-email-logo iw-email-wordmark" style="font-family:Montserrat,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${IW_EMAIL.text};letter-spacing:-0.02em;">IntraWeb</div>${tagline}`
   }
 
+  function buildUnsubscribeHref(): string {
+    const configured = footer.unsubscribeUrl?.trim()
+    if (configured) {
+      return configured.replace(/\{\{email\}\}/g, encodeURIComponent(recipient))
+    }
+    if (!support || !recipient) return ''
+    const subject = encodeURIComponent('Unsubscribe from IntraWeb emails')
+    const body = encodeURIComponent(`Please remove ${recipient} from your mailing list.`)
+    return `mailto:${encodeURIComponent(support)}?subject=${subject}&body=${body}`
+  }
+
+  const unsubHref = buildUnsubscribeHref()
   const footerLine2 = [
     support
       ? `<a href="mailto:${escapeHtml(support)}" style="color:${IW_EMAIL.link};text-decoration:none;">${escapeHtml(support)}</a>`
       : '',
     cal
       ? `<a href="${escapeHtml(cal)}" style="color:${IW_EMAIL.link};text-decoration:none;">Schedule time</a>`
+      : '',
+    unsubHref
+      ? `<a href="${escapeHtml(unsubHref)}" style="color:${IW_EMAIL.link};text-decoration:none;">Unsubscribe</a>`
       : '',
   ]
     .filter(Boolean)

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContactBlock, LegalPageLayout } from "@/components/legal-page-layout";
-import { contactEmail } from "@/lib/site";
+import { contactEmail, privacyEmail } from "@/lib/site";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -234,11 +235,13 @@ export default function PrivacyPage() {
         General inquiries: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
       </p>
       <p>
-        For data subject requests, please email <a href="mailto:privacy@intrawebtech.com">privacy@intrawebtech.com</a>{" "}
-        with &ldquo;Data Subject Request&rdquo; in the subject line.
+        For data subject requests, use our{" "}
+        <Link href="/data-deletion">data deletion &amp; privacy request form</Link> or email{" "}
+        <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a> with &ldquo;Data Subject Request&rdquo; in the subject
+        line.
       </p>
 
-      <ContactBlock heading="Questions about your data?" text="Contact our privacy team at" email="privacy@intrawebtech.com" />
+      <ContactBlock heading="Questions about your data?" text="Contact our privacy team at" email={privacyEmail} />
     </LegalPageLayout>
   );
 }

@@ -162,7 +162,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const result = $('Generate Post').first().json;\nconst config = $('Get Config').first().json;\nlet postData;\n\ntry {\n  postData = JSON.parse(result.data.text);\n} catch(e) {\n  postData = {\n    hook: result.data.text.substring(0, 100),\n    full_post: result.data.text,\n    hashtags: '',\n    suggested_link: '',\n    news_source: ''\n  };\n}\n\nreturn [{\n  json: {\n    sheetId: config.google.masterSheetId,\n    dateGenerated: new Date().toISOString(),\n    newsHook: postData.hook || '',\n    fullPost: postData.full_post || '',\n    hashtags: postData.hashtags || '',\n    suggestedLink: postData.suggested_link || '',\n    status: 'draft',\n    scheduledTime: '',\n    postNotes: `Source: ${postData.news_source || ''}`\n  }\n}];"
+        "jsCode": "const result = $('Generate Post').first().json;\nconst config = $('Get Config').first().json;\n\nif (result.success === false || !result.data?.text) {\n  throw new Error(result.error || 'Generate Post returned no content');\n}\n\nconst text = result.data.text;\nlet postData;\n\ntry {\n  postData = JSON.parse(text);\n} catch (e) {\n  postData = {\n    hook: text.substring(0, 100),\n    full_post: text,\n    hashtags: '',\n    suggested_link: '',\n    news_source: '',\n  };\n}\n\nreturn [\n  {\n    json: {\n      sheetId: config.google?.masterSheetId,\n      dateGenerated: new Date().toISOString(),\n      newsHook: postData.hook || '',\n      fullPost: postData.full_post || '',\n      hashtags: postData.hashtags || '',\n      suggestedLink: postData.suggested_link || '',\n      status: 'draft',\n      scheduledTime: '',\n      postNotes: `Source: ${postData.news_source || ''}`,\n    },\n  },\n];\n"
       },
       "id": "sys07-format",
       "name": "Format for Sheet",
@@ -251,8 +251,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "OS_SUPABASE_POSTGRES",
-          "name": "Supabase OS Postgres"
+          "id": "SHSVYlQKM9cAdx5k",
+          "name": "Supabase IW-Portal"
         }
       }
     }
@@ -626,7 +626,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const result = $('Generate Post').first().json;\nconst config = $('Get Config').first().json;\nlet postData;\n\ntry {\n  postData = JSON.parse(result.data.text);\n} catch(e) {\n  postData = {\n    hook: result.data.text.substring(0, 100),\n    full_post: result.data.text,\n    hashtags: '',\n    suggested_link: '',\n    news_source: ''\n  };\n}\n\nreturn [{\n  json: {\n    sheetId: config.google.masterSheetId,\n    dateGenerated: new Date().toISOString(),\n    newsHook: postData.hook || '',\n    fullPost: postData.full_post || '',\n    hashtags: postData.hashtags || '',\n    suggestedLink: postData.suggested_link || '',\n    status: 'draft',\n    scheduledTime: '',\n    postNotes: `Source: ${postData.news_source || ''}`\n  }\n}];"
+          "jsCode": "const result = $('Generate Post').first().json;\nconst config = $('Get Config').first().json;\n\nif (result.success === false || !result.data?.text) {\n  throw new Error(result.error || 'Generate Post returned no content');\n}\n\nconst text = result.data.text;\nlet postData;\n\ntry {\n  postData = JSON.parse(text);\n} catch (e) {\n  postData = {\n    hook: text.substring(0, 100),\n    full_post: text,\n    hashtags: '',\n    suggested_link: '',\n    news_source: '',\n  };\n}\n\nreturn [\n  {\n    json: {\n      sheetId: config.google?.masterSheetId,\n      dateGenerated: new Date().toISOString(),\n      newsHook: postData.hook || '',\n      fullPost: postData.full_post || '',\n      hashtags: postData.hashtags || '',\n      suggestedLink: postData.suggested_link || '',\n      status: 'draft',\n      scheduledTime: '',\n      postNotes: `Source: ${postData.news_source || ''}`,\n    },\n  },\n];\n"
         },
         "id": "sys07-format",
         "name": "Format for Sheet",
@@ -715,8 +715,8 @@
         ],
         "credentials": {
           "postgres": {
-            "id": "OS_SUPABASE_POSTGRES",
-            "name": "Supabase OS Postgres"
+            "id": "SHSVYlQKM9cAdx5k",
+            "name": "Supabase IW-Portal"
           }
         }
       }

@@ -297,7 +297,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const contacts = $('Get Inactive Customers').all();\nconst config = $('Get Config (Reactivation)').first().json;\nconst now = new Date();\nconst threshold = config.timing.reactivationDays * 24 * 60 * 60 * 1000;\n\nconst inactive = contacts.filter(c => {\n  const p = c.json.properties || c.json;\n  const lastActivity = p.last_activity_date ? new Date(p.last_activity_date) : null;\n  return !lastActivity || (now - lastActivity) > threshold;\n});\n\nreturn inactive.map(c => {\n  const p = c.json.properties || c.json;\n  return {\n    json: {\n      contactId: c.json.id,\n      firstName: p.firstname || '',\n      lastName: p.lastname || '',\n      email: p.email || '',\n      phone: p.phone || '',\n      company: p.company || '',\n      config\n    }\n  };\n});"
+        "jsCode": "const contacts = $('Get Inactive Customers').all();\nconst config = $('Get Config (Reactivation)').first().json;\nconst staticData = $getWorkflowStaticData('global');\nconst sentMap = staticData.reactivationSent || {};\nconst now = Date.now();\nconst inactiveMs = config.timing.reactivationDays * 24 * 60 * 60 * 1000;\nconst cooldownMs = (config.timing.reactivationCooldownDays ?? config.timing.reactivationDays) * 24 * 60 * 60 * 1000;\n\nfunction companyLabel(raw) {\n  if (!raw) return '';\n  if (typeof raw === 'string') return raw.trim();\n  if (typeof raw === 'object') {\n    return String(raw.name || raw.company || raw.properties?.name || raw.value || '').trim();\n  }\n  return String(raw).trim();\n}\n\nfunction hasEmail(email) {\n  const e = (email || '').trim();\n  return e.includes('@');\n}\n\nfunction parseHubSpotDate(value) {\n  if (value === null || value === undefined || value === '') return null;\n  const d = new Date(value);\n  return Number.isNaN(d.getTime()) ? null : d;\n}\n\nfunction flagIsTrue(value) {\n  return String(value || '').toLowerCase() === 'true';\n}\n\nfunction lastSentMs(contactId, p) {\n  const fromStatic = sentMap[String(contactId)];\n  if (fromStatic && Number.isFinite(fromStatic)) return fromStatic;\n  const fromHubSpot = parseHubSpotDate(p.last_reactivation_sent_date);\n  return fromHubSpot ? fromHubSpot.getTime() : 0;\n}\n\nconst eligible = contacts\n  .map((c) => {\n    const p = c.json.properties || c.json;\n    return { contactId: c.json.id, p };\n  })\n  .filter(({ contactId, p }) => {\n    if (!hasEmail(p.email)) return false;\n    if (flagIsTrue(p.replied_flag) || flagIsTrue(p.booking_flag) || flagIsTrue(p.email_opt_out)) return false;\n\n    const lastActivity = parseHubSpotDate(p.last_activity_date);\n    const isInactive = !lastActivity || (now - lastActivity.getTime()) > inactiveMs;\n    if (!isInactive) return false;\n\n    const sentAt = lastSentMs(contactId, p);\n    if (sentAt && (now - sentAt) < cooldownMs) return false;\n\n    return true;\n  })\n  .map(({ contactId, p }) => ({\n    contactId,\n    firstName: p.firstname || '',\n    lastName: p.lastname || '',\n    email: (p.email || '').trim(),\n    phone: p.phone || '',\n    company: companyLabel(p.company),\n    lastActivityMs: parseHubSpotDate(p.last_activity_date)?.getTime() ?? 0,\n    lastReactivationMs: lastSentMs(contactId, p),\n    config,\n  }));\n\nif (eligible.length === 0) return [];\n\neligible.sort((a, b) => {\n  if (a.lastReactivationMs !== b.lastReactivationMs) return a.lastReactivationMs - b.lastReactivationMs;\n  return a.lastActivityMs - b.lastActivityMs;\n});\n\nconst pick = eligible[0];\nreturn [{\n  json: {\n    contactId: pick.contactId,\n    firstName: pick.firstName,\n    lastName: pick.lastName,\n    email: pick.email,\n    phone: pick.phone,\n    company: pick.company,\n    config: pick.config,\n  },\n}];"
       },
       "id": "sys11-react-filter",
       "name": "Filter Inactive",
@@ -310,7 +310,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    to: d.email,\n    subject: `Checking in — ${d.company}`,\n    html: `<p>Hi ${d.firstName || 'there'},</p><p>It's been a while since we last worked together, and I wanted to check in.</p><p>A lot has changed in the AI automation space since our last project. We've built some powerful new systems — from AI-powered lead qualification to automated client reporting — that could make a real difference for ${d.company}.</p><p>Would you be open to a quick 15-minute catch-up? I'd love to hear what's new on your end and share what we've been building.</p><p><a href=\"${d.config.owner.calendarLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">Book a 15-minute catch-up</a></p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05 — Referral & Reactivation Engine'\n  }\n}];"
+        "jsCode": "const items = $input.all();\nif (items.length === 0) return [];\nconst d = items[0].json;\nconst company = d.company || 'your team';\n\nreturn [{\n  json: {\n    contactId: d.contactId,\n    to: d.email,\n    subject: `Checking in — ${company}`,\n    html: `<p>Hi ${d.firstName || 'there'},</p><p>It's been a while since we last worked together, and I wanted to check in.</p><p>A lot has changed in the AI automation space since our last project. We've built some powerful new systems — from AI-powered lead qualification to automated client reporting — that could make a real difference for ${company}.</p><p>Would you be open to a quick 15-minute catch-up? I'd love to hear what's new on your end and share what we've been building.</p><p><a href=\"${d.config.owner.calendarLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">Book a 15-minute catch-up</a></p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05 — Referral & Reactivation Engine',\n  },\n}];"
       },
       "id": "sys11-react-email-prep",
       "name": "Prep Reactivation Email",
@@ -364,7 +364,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        1584,
+        1920,
         608
       ],
       "webhookId": "c03ad13a-839f-4b83-8e80-81c55bd5802d"
@@ -378,7 +378,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1792,
+        2144,
         608
       ]
     },
@@ -410,7 +410,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2016,
+        2368,
         608
       ]
     },
@@ -423,7 +423,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2240,
+        2592,
         608
       ]
     },
@@ -458,7 +458,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2464,
+        2816,
         608
       ]
     },
@@ -467,7 +467,21 @@
         "authentication": "appToken",
         "operation": "getAll",
         "limit": 200,
-        "additionalFields": {}
+        "additionalFields": {},
+        "options": {
+          "properties": [
+            "firstname",
+            "lastname",
+            "email",
+            "phone",
+            "company",
+            "last_activity_date",
+            "last_reactivation_sent_date",
+            "replied_flag",
+            "booking_flag",
+            "email_opt_out"
+          ]
+        }
       },
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2.2,
@@ -483,6 +497,46 @@
           "name": "HubSpot App Token account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Prep Reactivation Email').first().json;\nconst staticData = $getWorkflowStaticData('global');\nstaticData.reactivationSent = staticData.reactivationSent || {};\nstaticData.reactivationSent[String(prep.contactId)] = Date.now();\n\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\n\nreturn [{\n  json: {\n    contactId: prep.contactId,\n    lastReactivationSentDate: String(today.getTime()),\n  },\n}];"
+      },
+      "id": "sys11-react-stamp",
+      "name": "Stamp Reactivation Sent",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.contactId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { last_reactivation_sent_date: $json.lastReactivationSentDate } }) }}",
+        "options": {}
+      },
+      "id": "sys11-react-hubspot-stamp",
+      "name": "Update HubSpot Reactivation Date",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1696,
+        608
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -644,7 +698,7 @@
       "main": [
         [
           {
-            "node": "Wait 4 Days",
+            "node": "Stamp Reactivation Sent",
             "type": "main",
             "index": 0
           }
@@ -700,6 +754,28 @@
         [
           {
             "node": "Filter Inactive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stamp Reactivation Sent": {
+      "main": [
+        [
+          {
+            "node": "Update HubSpot Reactivation Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update HubSpot Reactivation Date": {
+      "main": [
+        [
+          {
+            "node": "Wait 4 Days",
             "type": "main",
             "index": 0
           }
@@ -1045,7 +1121,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const contacts = $('Get Inactive Customers').all();\nconst config = $('Get Config (Reactivation)').first().json;\nconst now = new Date();\nconst threshold = config.timing.reactivationDays * 24 * 60 * 60 * 1000;\n\nconst inactive = contacts.filter(c => {\n  const p = c.json.properties || c.json;\n  const lastActivity = p.last_activity_date ? new Date(p.last_activity_date) : null;\n  return !lastActivity || (now - lastActivity) > threshold;\n});\n\nreturn inactive.map(c => {\n  const p = c.json.properties || c.json;\n  return {\n    json: {\n      contactId: c.json.id,\n      firstName: p.firstname || '',\n      lastName: p.lastname || '',\n      email: p.email || '',\n      phone: p.phone || '',\n      company: p.company || '',\n      config\n    }\n  };\n});"
+          "jsCode": "const contacts = $('Get Inactive Customers').all();\nconst config = $('Get Config (Reactivation)').first().json;\nconst staticData = $getWorkflowStaticData('global');\nconst sentMap = staticData.reactivationSent || {};\nconst now = Date.now();\nconst inactiveMs = config.timing.reactivationDays * 24 * 60 * 60 * 1000;\nconst cooldownMs = (config.timing.reactivationCooldownDays ?? config.timing.reactivationDays) * 24 * 60 * 60 * 1000;\n\nfunction companyLabel(raw) {\n  if (!raw) return '';\n  if (typeof raw === 'string') return raw.trim();\n  if (typeof raw === 'object') {\n    return String(raw.name || raw.company || raw.properties?.name || raw.value || '').trim();\n  }\n  return String(raw).trim();\n}\n\nfunction hasEmail(email) {\n  const e = (email || '').trim();\n  return e.includes('@');\n}\n\nfunction parseHubSpotDate(value) {\n  if (value === null || value === undefined || value === '') return null;\n  const d = new Date(value);\n  return Number.isNaN(d.getTime()) ? null : d;\n}\n\nfunction flagIsTrue(value) {\n  return String(value || '').toLowerCase() === 'true';\n}\n\nfunction lastSentMs(contactId, p) {\n  const fromStatic = sentMap[String(contactId)];\n  if (fromStatic && Number.isFinite(fromStatic)) return fromStatic;\n  const fromHubSpot = parseHubSpotDate(p.last_reactivation_sent_date);\n  return fromHubSpot ? fromHubSpot.getTime() : 0;\n}\n\nconst eligible = contacts\n  .map((c) => {\n    const p = c.json.properties || c.json;\n    return { contactId: c.json.id, p };\n  })\n  .filter(({ contactId, p }) => {\n    if (!hasEmail(p.email)) return false;\n    if (flagIsTrue(p.replied_flag) || flagIsTrue(p.booking_flag) || flagIsTrue(p.email_opt_out)) return false;\n\n    const lastActivity = parseHubSpotDate(p.last_activity_date);\n    const isInactive = !lastActivity || (now - lastActivity.getTime()) > inactiveMs;\n    if (!isInactive) return false;\n\n    const sentAt = lastSentMs(contactId, p);\n    if (sentAt && (now - sentAt) < cooldownMs) return false;\n\n    return true;\n  })\n  .map(({ contactId, p }) => ({\n    contactId,\n    firstName: p.firstname || '',\n    lastName: p.lastname || '',\n    email: (p.email || '').trim(),\n    phone: p.phone || '',\n    company: companyLabel(p.company),\n    lastActivityMs: parseHubSpotDate(p.last_activity_date)?.getTime() ?? 0,\n    lastReactivationMs: lastSentMs(contactId, p),\n    config,\n  }));\n\nif (eligible.length === 0) return [];\n\neligible.sort((a, b) => {\n  if (a.lastReactivationMs !== b.lastReactivationMs) return a.lastReactivationMs - b.lastReactivationMs;\n  return a.lastActivityMs - b.lastActivityMs;\n});\n\nconst pick = eligible[0];\nreturn [{\n  json: {\n    contactId: pick.contactId,\n    firstName: pick.firstName,\n    lastName: pick.lastName,\n    email: pick.email,\n    phone: pick.phone,\n    company: pick.company,\n    config: pick.config,\n  },\n}];"
         },
         "id": "sys11-react-filter",
         "name": "Filter Inactive",
@@ -1058,7 +1134,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    to: d.email,\n    subject: `Checking in — ${d.company}`,\n    html: `<p>Hi ${d.firstName || 'there'},</p><p>It's been a while since we last worked together, and I wanted to check in.</p><p>A lot has changed in the AI automation space since our last project. We've built some powerful new systems — from AI-powered lead qualification to automated client reporting — that could make a real difference for ${d.company}.</p><p>Would you be open to a quick 15-minute catch-up? I'd love to hear what's new on your end and share what we've been building.</p><p><a href=\"${d.config.owner.calendarLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">Book a 15-minute catch-up</a></p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05 — Referral & Reactivation Engine'\n  }\n}];"
+          "jsCode": "const items = $input.all();\nif (items.length === 0) return [];\nconst d = items[0].json;\nconst company = d.company || 'your team';\n\nreturn [{\n  json: {\n    contactId: d.contactId,\n    to: d.email,\n    subject: `Checking in — ${company}`,\n    html: `<p>Hi ${d.firstName || 'there'},</p><p>It's been a while since we last worked together, and I wanted to check in.</p><p>A lot has changed in the AI automation space since our last project. We've built some powerful new systems — from AI-powered lead qualification to automated client reporting — that could make a real difference for ${company}.</p><p>Would you be open to a quick 15-minute catch-up? I'd love to hear what's new on your end and share what we've been building.</p><p><a href=\"${d.config.owner.calendarLink}\" style=\"color:#0d9488;text-decoration:none;font-weight:600;\">Book a 15-minute catch-up</a></p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 05 — Referral & Reactivation Engine',\n  },\n}];"
         },
         "id": "sys11-react-email-prep",
         "name": "Prep Reactivation Email",
@@ -1112,7 +1188,7 @@
         "type": "n8n-nodes-base.wait",
         "typeVersion": 1.1,
         "position": [
-          1584,
+          1920,
           608
         ],
         "webhookId": "c03ad13a-839f-4b83-8e80-81c55bd5802d"
@@ -1126,7 +1202,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1792,
+          2144,
           608
         ]
       },
@@ -1158,7 +1234,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2016,
+          2368,
           608
         ]
       },
@@ -1171,7 +1247,7 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2240,
+          2592,
           608
         ]
       },
@@ -1206,7 +1282,7 @@
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2464,
+          2816,
           608
         ]
       },
@@ -1215,7 +1291,21 @@
           "authentication": "appToken",
           "operation": "getAll",
           "limit": 200,
-          "additionalFields": {}
+          "additionalFields": {},
+          "options": {
+            "properties": [
+              "firstname",
+              "lastname",
+              "email",
+              "phone",
+              "company",
+              "last_activity_date",
+              "last_reactivation_sent_date",
+              "replied_flag",
+              "booking_flag",
+              "email_opt_out"
+            ]
+          }
         },
         "type": "n8n-nodes-base.hubspot",
         "typeVersion": 2.2,
@@ -1231,6 +1321,46 @@
             "name": "HubSpot App Token account"
           }
         }
+      },
+      {
+        "parameters": {
+          "jsCode": "const prep = $('Prep Reactivation Email').first().json;\nconst staticData = $getWorkflowStaticData('global');\nstaticData.reactivationSent = staticData.reactivationSent || {};\nstaticData.reactivationSent[String(prep.contactId)] = Date.now();\n\nconst today = new Date();\ntoday.setUTCHours(0, 0, 0, 0);\n\nreturn [{\n  json: {\n    contactId: prep.contactId,\n    lastReactivationSentDate: String(today.getTime()),\n  },\n}];"
+        },
+        "id": "sys11-react-stamp",
+        "name": "Stamp Reactivation Sent",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1472,
+          608
+        ]
+      },
+      {
+        "parameters": {
+          "method": "PATCH",
+          "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.contactId }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "hubspotAppToken",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify({ properties: { last_reactivation_sent_date: $json.lastReactivationSentDate } }) }}",
+          "options": {}
+        },
+        "id": "sys11-react-hubspot-stamp",
+        "name": "Update HubSpot Reactivation Date",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          1696,
+          608
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        },
+        "onError": "continueRegularOutput"
       }
     ],
     "connections": {
@@ -1392,7 +1522,7 @@
         "main": [
           [
             {
-              "node": "Wait 4 Days",
+              "node": "Stamp Reactivation Sent",
               "type": "main",
               "index": 0
             }
@@ -1448,6 +1578,28 @@
           [
             {
               "node": "Filter Inactive",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Stamp Reactivation Sent": {
+        "main": [
+          [
+            {
+              "node": "Update HubSpot Reactivation Date",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update HubSpot Reactivation Date": {
+        "main": [
+          [
+            {
+              "node": "Wait 4 Days",
               "type": "main",
               "index": 0
             }
