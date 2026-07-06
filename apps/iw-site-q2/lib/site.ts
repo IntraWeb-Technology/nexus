@@ -7,6 +7,9 @@ export const accountsUrl =
 /** Public inbound email (link text + mailto in footer, contact) */
 export const contactEmail = "human@intrawebtech.com";
 
+/** Privacy / data subject requests */
+export const privacyEmail = "privacy@intrawebtech.com";
+
 export const companyLegalName = "IntraWeb Technologies, LLC.";
 
 export const navLinks = [

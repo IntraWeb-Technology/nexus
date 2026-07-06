@@ -239,6 +239,9 @@ export function Footer() {
             <Link href="/privacy" className="transition-colors duration-200 hover:text-[#c8d1da]">
               Privacy
             </Link>
+            <Link href="/data-deletion" className="transition-colors duration-200 hover:text-[#c8d1da]">
+              Data Deletion
+            </Link>
             <Link href="/terms" className="transition-colors duration-200 hover:text-[#c8d1da]">
               Terms
             </Link>

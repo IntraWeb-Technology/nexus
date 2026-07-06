@@ -1,0 +1,462 @@
+{
+  "updatedAt": "2026-06-16T03:49:19.239Z",
+  "createdAt": "2026-06-16T03:49:19.240Z",
+  "id": "BKRuq4jpMBp6Rhvj",
+  "name": "SYS 05 — Email Unsubscribe Handler",
+  "description": "GET/POST /webhook/email-unsubscribe — validates signed link, sets HubSpot email_opt_out, logs note + automations sheet.",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Email Unsubscribe\n\nSigned link from SW: Send Email via Resend footer.\n\n`?email=...&sig=HMAC-SHA256(webhookSecret, email)`\n\nSets `email_opt_out=true`, HubSpot note, automations log.",
+        "height": 200,
+        "width": 420,
+        "color": 5
+      },
+      "id": "note-unsub",
+      "name": "Note — About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "path": "email-unsubscribe",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "unsub-webhook",
+      "name": "Email Unsubscribe Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        280,
+        360
+      ],
+      "webhookId": "iw-email-unsubscribe-webhook"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1eTTVoSFSlSPvZV4",
+          "mode": "id"
+        }
+      },
+      "id": "unsub-config",
+      "name": "Get Config",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        500,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Pure JS HMAC-SHA256 (hex). Works in n8n task-runner sandboxes without require('crypto').\n */\nfunction hmacSha256Hex(message, key, hexChars = 64) {\n  function toBytes(str) {\n    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str)\n    const out = []\n    for (let i = 0; i < str.length; i++) {\n      let c = str.charCodeAt(i)\n      if (c < 0x80) out.push(c)\n      else if (c < 0x800) {\n        out.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f))\n      } else if (c >= 0xd800 && c < 0xdc00) {\n        const c2 = str.charCodeAt(++i)\n        const u = 0x10000 + ((c & 0x3ff) << 10) + (c2 & 0x3ff)\n        out.push(\n          0xf0 | (u >> 18),\n          0x80 | ((u >> 12) & 0x3f),\n          0x80 | ((u >> 6) & 0x3f),\n          0x80 | (u & 0x3f),\n        )\n      } else {\n        out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f))\n      }\n    }\n    return new Uint8Array(out)\n  }\n\n  function rotr(n, x) {\n    return (x >>> n) | (x << (32 - n))\n  }\n\n  function sha256Bytes(data) {\n    const K = [\n      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,\n      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,\n      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,\n      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,\n      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,\n      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,\n      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,\n      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,\n    ]\n    const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]\n    const l = data.length\n    const withOne = l + 1\n    const padLen = (withOne % 64 <= 56 ? 56 : 120) - (withOne % 64) + withOne\n    const total = padLen + 8\n    const buf = new Uint8Array(total)\n    buf.set(data)\n    buf[l] = 0x80\n    const bitLen = l * 8\n    const view = new DataView(buf.buffer)\n    view.setUint32(total - 4, bitLen >>> 0)\n    view.setUint32(total - 8, Math.floor(bitLen / 0x100000000))\n\n    const w = new Uint32Array(64)\n    for (let i = 0; i < total; i += 64) {\n      for (let j = 0; j < 16; j++) {\n        const o = i + j * 4\n        w[j] =\n          (buf[o] << 24) | (buf[o + 1] << 16) | (buf[o + 2] << 8) | buf[o + 3]\n      }\n      for (let j = 16; j < 64; j++) {\n        const s0 = rotr(7, w[j - 15]) ^ rotr(18, w[j - 15]) ^ (w[j - 15] >>> 3)\n        const s1 = rotr(17, w[j - 2]) ^ rotr(19, w[j - 2]) ^ (w[j - 2] >>> 10)\n        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) >>> 0\n      }\n      let a = H[0],\n        b = H[1],\n        c = H[2],\n        d = H[3],\n        e = H[4],\n        f = H[5],\n        g = H[6],\n        h = H[7]\n      for (let j = 0; j < 64; j++) {\n        const S1 = rotr(6, e) ^ rotr(11, e) ^ rotr(25, e)\n        const ch = (e & f) ^ (~e & g)\n        const t1 = (h + S1 + ch + K[j] + w[j]) >>> 0\n        const S0 = rotr(2, a) ^ rotr(13, a) ^ rotr(22, a)\n        const maj = (a & b) ^ (a & c) ^ (b & c)\n        const t2 = (S0 + maj) >>> 0\n        h = g\n        g = f\n        f = e\n        e = (d + t1) >>> 0\n        d = c\n        c = b\n        b = a\n        a = (t1 + t2) >>> 0\n      }\n      H[0] = (H[0] + a) >>> 0\n      H[1] = (H[1] + b) >>> 0\n      H[2] = (H[2] + c) >>> 0\n      H[3] = (H[3] + d) >>> 0\n      H[4] = (H[4] + e) >>> 0\n      H[5] = (H[5] + f) >>> 0\n      H[6] = (H[6] + g) >>> 0\n      H[7] = (H[7] + h) >>> 0\n    }\n    const out = new Uint8Array(32)\n    const dv = new DataView(out.buffer)\n    for (let i = 0; i < 8; i++) dv.setUint32(i * 4, H[i])\n    return out\n  }\n\n  function bytesToHex(bytes) {\n    return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')\n  }\n\n  const block = 64\n  let keyBytes = toBytes(key)\n  if (keyBytes.length > block) keyBytes = sha256Bytes(keyBytes)\n  const paddedKey = new Uint8Array(block)\n  paddedKey.set(keyBytes)\n  const oKey = new Uint8Array(block)\n  const iKey = new Uint8Array(block)\n  for (let i = 0; i < block; i++) {\n    oKey[i] = paddedKey[i] ^ 0x5c\n    iKey[i] = paddedKey[i] ^ 0x36\n  }\n  const msg = toBytes(message)\n  const inner = new Uint8Array(block + msg.length)\n  inner.set(iKey)\n  inner.set(msg, block)\n  const outer = new Uint8Array(block + 32)\n  outer.set(oKey)\n  outer.set(sha256Bytes(inner), block)\n  return bytesToHex(sha256Bytes(outer)).slice(0, hexChars)\n}\n\nconst root = $('Email Unsubscribe Webhook').first().json\nconst query = root.query || root.params || {}\nconst email = String(query.email || '').trim().toLowerCase()\nconst sig = String(query.sig || '').trim()\nconst config = $('Get Config').first().json\nconst secret = String(config.secrets?.webhookSecret || '').trim()\n\nfunction fail(message) {\n  return [{ json: { valid: false, message, email } }]\n}\n\nif (!email || !email.includes('@')) return fail('Invalid email address.')\nif (!secret) return fail('Unsubscribe is not configured.')\n\nconst expected = hmacSha256Hex(email, secret, 32)\nif (!sig || sig !== expected) return fail('Invalid or expired unsubscribe link.')\n\nreturn [{ json: { valid: true, email } }]\n"
+      },
+      "id": "unsub-validate",
+      "name": "Validate Unsubscribe Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "unsub-valid",
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "unsub-if-valid",
+      "name": "Valid Link?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        940,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ filterGroups: [{ filters: [{ propertyName: 'email', operator: 'EQ', value: $json.email }] }], properties: ['email', 'firstname', 'lastname', 'email_opt_out'], limit: 1 }) }}",
+        "options": {}
+      },
+      "id": "unsub-search",
+      "name": "Search HubSpot Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1160,
+        280
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const search = $('Search HubSpot Contact').first().json\nconst results = search.results || []\nconst email = $('Validate Unsubscribe Link').first().json.email\nconst contact = results[0] || null\nconst contactId = contact?.id ? String(contact.id) : ''\nconst firstName = contact?.properties?.firstname || ''\nconst lastName = contact?.properties?.lastname || ''\n\nreturn [\n  {\n    json: {\n      email,\n      contactId,\n      contactFound: Boolean(contactId),\n      contactName: `${firstName} ${lastName}`.trim() || email,\n    },\n  },\n]\n"
+      },
+      "id": "unsub-extract",
+      "name": "Extract Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "unsub-found",
+              "leftValue": "={{ $json.contactFound }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "unsub-if-found",
+      "name": "Contact Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.contactId }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { email_opt_out: \"true\" } }) }}",
+        "options": {}
+      },
+      "id": "unsub-patch",
+      "name": "Mark Opted Out in HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1820,
+        200
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ properties: { hs_note_body: `Contact unsubscribed from marketing/reactivation emails via email link on ${new Date().toISOString()}.`, hs_timestamp: String(Date.now()) }, associations: [{ to: { id: $('Extract Contact').first().json.contactId }, types: [{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 202 }] }] }) }}",
+        "options": {}
+      },
+      "id": "unsub-note",
+      "name": "Log HubSpot Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2040,
+        200
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Extract Contact').first().json\nconst valid = $('Validate Unsubscribe Link').first().json.valid === true\n\nreturn [\n  {\n    json: {\n      workflowName: 'SYS 05 — Email Unsubscribe Handler',\n      contactName: d.contactName || d.email,\n      phone: '',\n      eventType: 'email_unsubscribed',\n      status: valid ? 'success' : 'error',\n      notes: d.contactFound ? `HubSpot contact ${d.contactId}` : 'No HubSpot contact match',\n    },\n  },\n]\n"
+      },
+      "id": "unsub-prep-log",
+      "name": "Prep Automations Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2260,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1qQFLOSHZsS9JPKP",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowName": "={{ $json.workflowName }}",
+            "contactName": "={{ $json.contactName }}",
+            "phone": "={{ $json.phone }}",
+            "eventType": "={{ $json.eventType }}",
+            "status": "={{ $json.status }}",
+            "notes": "={{ $json.notes }}"
+          }
+        }
+      },
+      "id": "unsub-log",
+      "name": "Log to Sheet",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        2480,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const E = {\n  bg: '#f8fafc',\n  card: '#ffffff',\n  border: '#e2e8f0',\n  text: '#0f1419',\n  muted: '#475569',\n  teal: '#0d9488',\n  link: '#0d9488',\n  footerBg: '#fafbfc',\n}\n\nconst LOGO = 'https://www.intrawebtech.com/IW-logo-q2.png'\nconst COMPANY = 'IntraWeb Technologies LLC'\nconst SUPPORT = 'john.schibelli@intrawebtech.com'\n\nfunction escapeHtml(s) {\n  return String(s ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n}\n\nconst valid = $('Validate Unsubscribe Link').first().json.valid === true\nconst email = $('Validate Unsubscribe Link').first().json.email || ''\nconst message = $('Validate Unsubscribe Link').first().json.message || 'We could not process this request.'\n\nlet hubspot = {}\ntry {\n  hubspot = $('Extract Contact').first().json || {}\n} catch {\n  hubspot = {}\n}\n\nconst contactFound = Boolean(hubspot.contactId)\n\nlet title = 'Unsubscribe request'\nlet body = message\nlet tone = 'neutral'\n\nif (valid && contactFound) {\n  title = 'You are unsubscribed'\n  body = `${escapeHtml(email)} will no longer receive marketing or reactivation emails from IntraWeb.`\n  tone = 'success'\n} else if (valid && !contactFound) {\n  title = 'Request received'\n  body = `We recorded your unsubscribe request for ${escapeHtml(email)}.`\n  tone = 'success'\n} else {\n  tone = 'error'\n}\n\nconst icon =\n  tone === 'success'\n    ? `<div style=\"width:48px;height:48px;border-radius:999px;background:#ecfdf5;border:1px solid #99f6e4;display:flex;align-items:center;justify-content:center;margin:0 0 16px;font-size:24px;line-height:1;color:${E.teal};\">✓</div>`\n    : `<div style=\"width:48px;height:48px;border-radius:999px;background:#fef2f2;border:1px solid #fecaca;display:flex;align-items:center;justify-content:center;margin:0 0 16px;font-size:24px;line-height:1;color:#dc2626;\">!</div>`\n\nconst tagline = `<p style=\"margin:14px 0 0;font-family:Montserrat,Segoe UI,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${E.teal};\">Systems &amp; automation for growing teams</p>`\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\" />\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n<meta name=\"color-scheme\" content=\"light dark\" />\n<title>${escapeHtml(title)} — ${escapeHtml(COMPANY)}</title>\n<link href=\"https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&amp;family=Roboto:wght@400;500;700&amp;display=swap\" rel=\"stylesheet\" />\n</head>\n<body style=\"margin:0;padding:0;background:${E.bg};\">\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:${E.bg};padding:32px 16px;min-height:100vh;\">\n  <tr><td align=\"center\" style=\"padding:24px 0;\">\n  <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:600px;width:100%;background:${E.card};border-radius:12px;border:1px solid ${E.border};overflow:hidden;box-shadow:0 1px 3px rgba(15,20,25,0.06);\">\n    <tr><td style=\"padding:0;height:4px;background:${E.teal};font-size:0;line-height:4px;\">&nbsp;</td></tr>\n    <tr><td style=\"padding:28px 24px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;text-align:left;\">\n      <img src=\"${LOGO}\" width=\"220\" alt=\"${escapeHtml(COMPANY)}\" style=\"display:block;max-width:220px;width:100%;height:auto;border:0;margin:0;\" />\n      ${tagline}\n    </td></tr>\n    <tr><td style=\"padding:8px 24px 32px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};\">\n      ${icon}\n      <h1 style=\"margin:0 0 12px;font-family:Montserrat,Segoe UI,Helvetica,Arial,sans-serif;font-size:24px;font-weight:700;line-height:1.25;color:${E.text};letter-spacing:-0.02em;\">${escapeHtml(title)}</h1>\n      <p style=\"margin:0 0 16px;color:${E.muted};\">${body}</p>\n      ${\n        tone === 'success'\n          ? `<p style=\"margin:0;font-size:13px;color:${E.muted};\">You can close this window. No further action is needed.</p>`\n          : `<p style=\"margin:0;font-size:13px;color:${E.muted};\">If you believe this is an error, email <a href=\"mailto:${escapeHtml(SUPPORT)}\" style=\"color:${E.link};text-decoration:none;\">${escapeHtml(SUPPORT)}</a>.</p>`\n      }\n    </td></tr>\n    <tr><td style=\"padding:20px 24px 28px;border-top:1px solid ${E.border};background:${E.footerBg};font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};\">\n      <p style=\"margin:0 0 8px;\">${escapeHtml(COMPANY)}</p>\n      <p style=\"margin:0;\"><a href=\"mailto:${escapeHtml(SUPPORT)}\" style=\"color:${E.link};text-decoration:none;\">${escapeHtml(SUPPORT)}</a> · <a href=\"https://cal.com/intraweb/discovery?overlayCalendar=true\" style=\"color:${E.link};text-decoration:none;\">Schedule time</a> · <a href=\"https://www.intrawebtech.com\" style=\"color:${E.link};text-decoration:none;\">intrawebtech.com</a></p>\n    </td></tr>\n  </table>\n  </td></tr>\n</table>\n</body>\n</html>`\n\nreturn [{ json: { html } }]\n"
+      },
+      "id": "unsub-response-prep",
+      "name": "Prep Response HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "unsub-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2920,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Email Unsubscribe Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Config": {
+      "main": [
+        [
+          {
+            "node": "Validate Unsubscribe Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Unsubscribe Link": {
+      "main": [
+        [
+          {
+            "node": "Valid Link?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid Link?": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Response HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "Extract Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Contact": {
+      "main": [
+        [
+          {
+            "node": "Contact Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contact Found?": {
+      "main": [
+        [
+          {
+            "node": "Mark Opted Out in HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Opted Out in HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Log HubSpot Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log HubSpot Note": {
+      "main": [
+        [
+          {
+            "node": "Prep Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Automations Log": {
+      "main": [
+        [
+          {
+            "node": "Log to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Prep Response HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Response HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/New_York"
+  },
+  "staticData": null,
+  "pinData": {}
+}

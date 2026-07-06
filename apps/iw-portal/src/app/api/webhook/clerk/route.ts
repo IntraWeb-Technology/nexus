@@ -7,6 +7,9 @@ import {
   parseClerkWebhookUser,
   provisionSelfSignupCustomer,
 } from '@/lib/data/provision-self-signup'
+import {
+  cleanupClientAfterClerkDeletion,
+} from '@/lib/privacy/execute-data-deletion'
 import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { triggerLoginEvent } from '@/lib/n8n/client'
 import { createServiceSupabase } from '@/lib/supabase/server'
@@ -151,6 +154,32 @@ export async function POST(request: Request) {
           lastError: e instanceof Error ? e.message : 'session.created handling failed',
         })
         console.error('[clerk webhook] session.created', e)
+      }
+    }
+  }
+
+  if (evt.type === 'user.deleted') {
+    const userId = String(evt.data.id ?? '')
+    if (userId) {
+      try {
+        await cleanupClientAfterClerkDeletion(userId)
+        await recordIntegrationEvent({
+          provider: 'clerk',
+          eventType: evt.type,
+          externalEventId: svixId,
+          status: 'processed',
+          payload: { userId },
+        })
+      } catch (e) {
+        await recordIntegrationEvent({
+          provider: 'clerk',
+          eventType: evt.type,
+          externalEventId: svixId,
+          status: 'failed',
+          payload: evt.data,
+          lastError: e instanceof Error ? e.message : 'user.deleted cleanup failed',
+        })
+        console.error('[clerk webhook] user.deleted', e)
       }
     }
   }

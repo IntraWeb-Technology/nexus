@@ -1,30 +1,34 @@
 /**
- * Set an n8n workflow Code node's parameters.jsCode from a local .js file.
- *
- * Usage:
- *   node packages/n8n-workflows/scripts/inject-code-node-from-file.mjs \
- *     "packages/n8n-workflows/03_sales/SYS 03 — Proposal and Contract Delivery.json" \
- *     "Prep PDF Input" \
- *     "packages/n8n-workflows/03_sales/_proposal-gen-pdf-prep.js"
+ * Inject Code node jsCode from file, optionally prefixing shared HMAC helper.
  */
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const PKG = path.resolve(__dirname, '..')
 
 const workflowPath = process.argv[2]
 const nodeName = process.argv[3]
 const jsPath = process.argv[4]
+const withHmac = process.argv[5] === '--with-hmac'
 
 if (!workflowPath || !nodeName || !jsPath) {
   console.error(
-    'Usage: node inject-code-node-from-file.mjs <workflow.json> <node name> <source.js>',
+    'Usage: node inject-code-node-from-file.mjs <workflow.json> <node name> <source.js> [--with-hmac]',
   )
   process.exit(1)
 }
 
 const absWf = path.resolve(workflowPath)
 const absJs = path.resolve(jsPath)
+let code = fs.readFileSync(absJs, 'utf8')
+if (withHmac) {
+  const hmac = fs.readFileSync(path.join(PKG, '_shared/_hmac-sha256-hex.js'), 'utf8')
+  code = `${hmac}\n${code}`
+}
+
 const wf = JSON.parse(fs.readFileSync(absWf, 'utf8'))
-const code = fs.readFileSync(absJs, 'utf8')
 
 function patchNodes(nodes) {
   if (!Array.isArray(nodes)) return 0
@@ -46,5 +50,5 @@ if (patched === 0) {
   process.exit(1)
 }
 
-fs.writeFileSync(absWf, JSON.stringify(wf, null, 2) + '\n', 'utf8')
+fs.writeFileSync(absWf, `${JSON.stringify(wf, null, 2)}\n`, 'utf8')
 console.log('Updated', patched, '×', nodeName, 'in', absWf, '←', absJs)

@@ -188,7 +188,8 @@
         "additionalFields": {
           "properties": [
             "replied_flag",
-            "booking_flag"
+            "booking_flag",
+            "email_opt_out"
           ]
         },
         "options": {}
@@ -229,6 +230,15 @@
             {
               "id": "check-booking-1",
               "leftValue": "={{ $json.properties.booking_flag }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "optout-3",
+              "leftValue": "={{ $json.properties.email_opt_out }}",
               "rightValue": "true",
               "operator": {
                 "type": "string",
@@ -312,7 +322,8 @@
         "additionalFields": {
           "properties": [
             "replied_flag",
-            "booking_flag"
+            "booking_flag",
+            "email_opt_out"
           ]
         },
         "options": {}
@@ -353,6 +364,15 @@
             {
               "id": "cr2b",
               "leftValue": "={{ $json.properties.booking_flag }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "optout-3",
+              "leftValue": "={{ $json.properties.email_opt_out }}",
               "rightValue": "true",
               "operator": {
                 "type": "string",
@@ -441,7 +461,8 @@
         "additionalFields": {
           "properties": [
             "replied_flag",
-            "booking_flag"
+            "booking_flag",
+            "email_opt_out"
           ]
         },
         "options": {}
@@ -482,6 +503,15 @@
             {
               "id": "cr3b",
               "leftValue": "={{ $json.properties.booking_flag }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "optout-3",
+              "leftValue": "={{ $json.properties.email_opt_out }}",
               "rightValue": "true",
               "operator": {
                 "type": "string",
@@ -565,7 +595,8 @@
         "additionalFields": {
           "properties": [
             "replied_flag",
-            "booking_flag"
+            "booking_flag",
+            "email_opt_out"
           ]
         },
         "options": {}
@@ -606,6 +637,15 @@
             {
               "id": "cr4b",
               "leftValue": "={{ $json.properties.booking_flag }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "optout-3",
+              "leftValue": "={{ $json.properties.email_opt_out }}",
               "rightValue": "true",
               "operator": {
                 "type": "string",
@@ -1262,7 +1302,8 @@
           "additionalFields": {
             "properties": [
               "replied_flag",
-              "booking_flag"
+              "booking_flag",
+              "email_opt_out"
             ]
           },
           "options": {}
@@ -1303,6 +1344,15 @@
               {
                 "id": "check-booking-1",
                 "leftValue": "={{ $json.properties.booking_flag }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              },
+              {
+                "id": "optout-3",
+                "leftValue": "={{ $json.properties.email_opt_out }}",
                 "rightValue": "true",
                 "operator": {
                   "type": "string",
@@ -1386,7 +1436,8 @@
           "additionalFields": {
             "properties": [
               "replied_flag",
-              "booking_flag"
+              "booking_flag",
+              "email_opt_out"
             ]
           },
           "options": {}
@@ -1427,6 +1478,15 @@
               {
                 "id": "cr2b",
                 "leftValue": "={{ $json.properties.booking_flag }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              },
+              {
+                "id": "optout-3",
+                "leftValue": "={{ $json.properties.email_opt_out }}",
                 "rightValue": "true",
                 "operator": {
                   "type": "string",
@@ -1515,7 +1575,8 @@
           "additionalFields": {
             "properties": [
               "replied_flag",
-              "booking_flag"
+              "booking_flag",
+              "email_opt_out"
             ]
           },
           "options": {}
@@ -1556,6 +1617,15 @@
               {
                 "id": "cr3b",
                 "leftValue": "={{ $json.properties.booking_flag }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              },
+              {
+                "id": "optout-3",
+                "leftValue": "={{ $json.properties.email_opt_out }}",
                 "rightValue": "true",
                 "operator": {
                   "type": "string",
@@ -1639,7 +1709,8 @@
           "additionalFields": {
             "properties": [
               "replied_flag",
-              "booking_flag"
+              "booking_flag",
+              "email_opt_out"
             ]
           },
           "options": {}
@@ -1680,6 +1751,15 @@
               {
                 "id": "cr4b",
                 "leftValue": "={{ $json.properties.booking_flag }}",
+                "rightValue": "true",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEquals"
+                }
+              },
+              {
+                "id": "optout-3",
+                "leftValue": "={{ $json.properties.email_opt_out }}",
                 "rightValue": "true",
                 "operator": {
                   "type": "string",
