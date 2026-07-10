@@ -1,0 +1,1586 @@
+{
+  "id": "uRUY8ZSdzpVeTkr3",
+  "name": "Social media automation with n8n + Postiz",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "sonar-pro",
+        "messages": {
+          "message": [
+            {
+              "content": "={{ `You are a professional news researcher. Find 6-8 recent news stories about this topic from the past 48 hours.\n\nTOPIC: ${$json.topic}\n\nTrending signals from our collectors (use as hints, verify with search):\n${($json.topStories || []).slice(0, 8).map((s, i) => `${i + 1}. [${s.source}] ${s.title} — ${s.link}`).join('\\n') || 'No collector hints available.'}\n\nFor EACH story use this exact format:\n---\n### STORY N\nTitle: [headline]\nDate: [when published]\nSummary: [2-3 sentences]\nWhy it matters: [1-2 sentences]\nSource URL: https://full-article-url-here\nExtra URLs: [optional or \"none\"]\n\nCRITICAL: Source URL must be a full https:// URL to a specific article or video page. Never use bracket citation numbers like [1] or [10]. Never use a homepage.` }}"
+            }
+          ]
+        },
+        "simplify": true,
+        "options": {},
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexity",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        96
+      ],
+      "id": "1ba807cc-7e82-44c7-96df-b5995dfc19f7",
+      "name": "AI Research",
+      "credentials": {
+        "perplexityApi": {
+          "id": "XhJaG2O0MbAIGfNr",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-5",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-5"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ `You are a professional AI writer for LinkedIn-style posts.\n\nPOST TYPE: ${$json.postType || 'primary'}\nTARGET TOPIC: ${$json.topic}\n\n${($json.postType || '') === 'engage' ? `Write ONE short engagement post (poll-style question, quick tip, or thought-provoking question). 2-4 sentences max. No URLs.` : ($json.postType || '') === 'deep' ? `Write ONE deep technical post (architecture insight, system design lesson, or tutorial angle). 6-8 sentences with double line breaks. No URLs.` : `From the story catalog below, write 4 different draft posts (different stories/angles). Each draft should be unique.\n\nRules for each draft:\n- No URLs in text (added automatically)\n- 4-6 sentences, double line breaks, end with a question\n- Professional tone, no hashtags/emojis/em dashes`}\n\nReturn ONLY valid JSON:\n${($json.postType || '') === 'engage' || ($json.postType || '') === 'deep' ? '{\\n  \"headline\": \"...\",\\n  \"message\": \"...\",\\n  \"short_message\": \"...\",\\n  \"story_index\": 1\\n}' : '{\\n  \"drafts\": [\\n    { \"headline\": \"...\", \"message\": \"...\", \"short_message\": \"...\", \"story_index\": 1, \"score\": 85 },\\n    { \"headline\": \"...\", \"message\": \"...\", \"short_message\": \"...\", \"story_index\": 2, \"score\": 80 }\\n  ]\\n}'}\n\n## Research briefing:\n${$json.researchText || 'Use the target topic directly.'}` }}"
+            }
+          ]
+        },
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        96
+      ],
+      "id": "83ce0669-4cf4-4587-9b1d-b3e04d658d4c",
+      "name": "AI Writer",
+      "credentials": {
+        "anthropicApi": {
+          "id": "HprVnCwfCT3ULYEp",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-5",
+          "mode": "list",
+          "cachedResultName": "claude-sonnet-5"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an expert visual prompt engineer for LinkedIn social posts.\n\nWrite ONE detailed image-generation prompt based on the post below. The image must be professional, modern, and visually compelling. Do not include any text, logos, watermarks, or UI chrome in the image.\n\nHeadline: {{ $json.headline }}\n\nPost:\n{{ $json.message }}\n\nReturn ONLY the image prompt text. No JSON, no markdown, no explanation."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        2896,
+        432
+      ],
+      "id": "2357ec94-4844-4c7c-a66f-b8f8e1ff60d7",
+      "name": "AI Image Prompt Agent",
+      "credentials": {
+        "anthropicApi": {
+          "id": "HprVnCwfCT3ULYEp",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "uploadFile",
+        "binaryProperty": "data"
+      },
+      "type": "n8n-nodes-postiz.postiz",
+      "typeVersion": 1,
+      "position": [
+        3696,
+        336
+      ],
+      "id": "a2019a5b-d76d-4737-9a85-a87e15e944b5",
+      "name": "Postiz",
+      "credentials": {
+        "postizApi": {
+          "id": "KJwRVUwShdQGGfmz",
+          "name": "Postiz account"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3.1-flash-image-preview"
+        },
+        "prompt": "={{ ($json.content || []).find((c) => c.type === 'text')?.text || $json.content?.[0]?.text || '' }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        3248,
+        432
+      ],
+      "id": "100aedbc-c885-4064-9b2d-f2214b692a70",
+      "name": "Generate an image",
+      "maxTries": 3,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "emxiXMEBhKL51r1m",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getIntegrations"
+      },
+      "type": "n8n-nodes-postiz.postiz",
+      "typeVersion": 1,
+      "position": [
+        3920,
+        336
+      ],
+      "id": "b78bcdae-008e-49de-9d52-38a8da5a0929",
+      "name": "Postiz - Get Channels",
+      "credentials": {
+        "postizApi": {
+          "id": "KJwRVUwShdQGGfmz",
+          "name": "Postiz account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeNode(name) {\n  try { return $(name).first()?.json || null; } catch { return null; }\n}\n\nconst selected = safeNode('Select Best Draft') || $input.first()?.json || {};\nconst research = safeNode('Format Research') || {};\nconst stories = research.stories || [];\nconst citations = research.citations || [];\nconst sourceUrlsFromText = research.sourceUrlsFromText || [];\nconst topicData = safeNode('Collect and Score Sources') || safeNode('Topic') || {};\n\nconst post = {\n  headline: selected.headline || '',\n  message: selected.message || '',\n  short_message: selected.short_message || '',\n  story_index: Number(selected.story_index) || 1,\n};\n\nfunction cleanUrl(url) { return (url || '').trim().replace(/[.,;:!?\\)\\]]+$/, ''); }\nfunction isValidUrl(url) { return typeof url === 'string' && /^https?:\\/\\//i.test(cleanUrl(url)); }\nfunction extractSourceUrls(blockText) {\n  return [...blockText.matchAll(/^Source URL:\\s*(https?:\\/\\/[^\\s\\)\\]\"'<>]+)/gim)].map((m) => cleanUrl(m[1]));\n}\nfunction splitStoryBlocks(blockText) {\n  return blockText.replace(/\\r/g, '').split(/(?:^|\\n)---+(?:\\n|$)/).map((b) => b.trim()).filter((b) => /STORY\\s+\\d+/i.test(b));\n}\nfunction urlForStoryIndex(storyIndex) {\n  const story = stories.find((s) => s.index === storyIndex);\n  if (story?.primaryUrl && isValidUrl(story.primaryUrl)) return story.primaryUrl;\n  const blocks = splitStoryBlocks(research.researchText || '');\n  const block = blocks.find((b) => new RegExp(`STORY\\\\s+${storyIndex}`, 'i').test(b)) || blocks[storyIndex - 1] || blocks[0];\n  if (block) { const urls = extractSourceUrls(block); if (isValidUrl(urls[0])) return urls[0]; }\n  const collected = safeNode('Collect and Score Sources')?.topStories || [];\n  if (isValidUrl(collected[storyIndex - 1]?.link)) return collected[storyIndex - 1].link;\n  for (const url of [citations[storyIndex - 1], citations[0], sourceUrlsFromText[storyIndex - 1], sourceUrlsFromText[0]]) {\n    if (isValidUrl(url)) return url;\n  }\n  return '';\n}\nfunction stripUrls(input) {\n  return (input || '').replace(/https?:\\/\\/[^\\s\\)\\]\"'<>]+/gi, '').replace(/\\n{3,}/g, '\\n\\n').trim();\n}\nfunction attachSource(body, url) {\n  const cleaned = stripUrls(body);\n  const link = cleanUrl(url);\n  if (!link || cleaned.includes(link)) return cleaned;\n  return `${cleaned}\\n\\n${link}`;\n}\n\nconst storyIndex = Number(post.story_index) || 1;\nconst primaryUrl = urlForStoryIndex(storyIndex);\n\nreturn [{ json: {\n  headline: post.headline || '',\n  message: attachSource(post.message || post.short_message || '', primaryUrl),\n  short_message: attachSource(post.short_message || post.message || '', primaryUrl),\n  topic: selected.topic || research.topic || topicData.topic || '',\n  postType: selected.postType || research.postType || topicData.postType || 'primary',\n  pipelineSlot: selected.pipelineSlot || research.pipelineSlot || topicData.pipelineSlot || 'publish',\n  publishNow: selected.publishNow ?? research.publishNow ?? topicData.publishNow ?? false,\n  story_index: storyIndex,\n  story_title: stories.find((s) => s.index === storyIndex)?.title || '',\n  primaryUrl,\n  citations,\n} }];\n"
+      },
+      "id": "parse-post-json-node",
+      "name": "Parse Post JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeNode(name) {\n  try { return $(name).first()?.json || null; } catch { return null; }\n}\n\nconst channels = $('Postiz - Get Channels').all().map((item) => item.json);\nconst upload = safeNode('Postiz') || {};\nconst post = safeNode('Parse Post JSON') || safeNode('Load Primary Draft') || safeNode('Validate Draft') || safeNode('Mark Upload Failed') || {};\n\nconst limits = { threads: 500, bluesky: 300, linkedin: 3000, x: 280, twitter: 280, facebook: 63206, instagram: 2200 };\n\nfunction contentForPlatform(platform) {\n  const long = post.message || post.headline || post.short_message || '';\n  const short = post.short_message || post.headline || long;\n  const max = limits[platform];\n  if (max && (platform === 'threads' || platform === 'bluesky' || platform === 'x' || platform === 'twitter')) {\n    return short.length <= max ? short : `${short.slice(0, max - 3)}...`;\n  }\n  if (max && long.length > max) return `${long.slice(0, max - 3)}...`;\n  return long;\n}\n\nfunction platformSettings(platform) {\n  const settings = { __type: platform };\n  if (platform === 'instagram' || platform === 'instagram-standalone') settings.post_type = 'post';\n  if (platform === 'facebook') settings.post_type = 'post';\n  return settings;\n}\n\nconst imageAttachment = upload?.id && upload?.path ? [{ id: upload.id, path: upload.path }] : [];\nconst publishNow = post.publishNow === true;\nconst postType = post.postType || 'primary';\n\nconst posts = channels.filter((c) => !c.disabled).map((channel) => {\n  const platform = channel.identifier || channel.platform;\n  return {\n    integration: { id: channel.id },\n    value: [{ content: contentForPlatform(platform), id: '', image: imageAttachment }],\n    group: '',\n    settings: platformSettings(platform),\n  };\n});\n\nreturn [{ json: {\n  type: publishNow ? 'now' : 'draft',\n  shortLink: false,\n  date: new Date().toISOString(),\n  tags: [{ value: postType }],\n  posts,\n  channelCount: posts.length,\n  postType,\n  publishNow,\n  mediaUploadFailed: post.mediaUploadFailed === true,\n} }];\n"
+      },
+      "id": "build-all-channel-posts",
+      "name": "Build All Channel Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4144,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://postiz-t8bc.srv1343086.hstgr.cloud/api/public/v1/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ type: $json.type, shortLink: $json.shortLink, date: $json.date, tags: $json.tags, posts: $json.posts }) }}",
+        "options": {}
+      },
+      "id": "postiz-post-all-channels",
+      "name": "Postiz - Post All Channels",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4368,
+        336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "pKZXgJlIMZJY3me8",
+          "name": "Postiz API Authorization"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeNode(name) {\n  try { return $(name).first()?.json || null; } catch { return null; }\n}\n\nconst upstream = $input.first().json;\nconst collected = safeNode('Collect and Score Sources');\nconst topicData = safeNode('Topic');\n\nconst topic = collected?.topic || topicData?.topic || upstream.topic || 'Breaking Tech News';\nconst postType = collected?.postType || topicData?.postType || upstream.postType || 'primary';\nconst pipelineSlot = collected?.pipelineSlot || topicData?.pipelineSlot || upstream.pipelineSlot || 'publish';\nconst publishNow = collected?.publishNow ?? topicData?.publishNow ?? upstream.publishNow ?? false;\n\nlet researchText = '';\nif (typeof upstream.message === 'string') researchText = upstream.message;\nelse if (typeof upstream.content === 'string') researchText = upstream.content;\nelse researchText = JSON.stringify(upstream, null, 2);\nresearchText = researchText.replace(/\\r/g, '');\n\nconst rawCitations = Array.isArray(upstream.citations)\n  ? upstream.citations.filter((url) => typeof url === 'string' && /^https?:\\/\\//i.test(url))\n  : [];\n\nfunction cleanUrl(url) { return (url || '').trim().replace(/[.,;:!?\\)\\]]+$/, ''); }\nfunction urlScore(url) {\n  try {\n    const pathParts = new URL(url).pathname.split('/').filter(Boolean);\n    if (/youtube\\.com|youtu\\.be|vimeo\\.com/i.test(url)) return 100;\n    if (pathParts.length >= 3) return 85;\n    if (pathParts.length >= 1) return 55;\n    return 5;\n  } catch { return 0; }\n}\nfunction isArticleUrl(url) { return urlScore(cleanUrl(url)) >= 50; }\nfunction pickPrimaryUrl(urls) {\n  const unique = [...new Set(urls.map(cleanUrl).filter(Boolean))];\n  return unique.sort((a, b) => urlScore(b) - urlScore(a)).find(isArticleUrl) || unique[0] || '';\n}\nfunction extractUrls(text) { return (text.match(/https?:\\/\\/[^\\s\\)\\]\"'<>]+/gi) || []).map(cleanUrl); }\nfunction extractSourceUrls(text) {\n  return [...new Set([...text.matchAll(/^Source URL:\\s*(.+)$/gim)].flatMap((m) => extractUrls(m[1])))];\n}\nfunction splitStoryBlocks(text) {\n  return text.split(/(?:^|\\n)---+(?:\\n|$)/).map((b) => b.replace(/^---+\\s*/m, '').trim()).filter((b) => /STORY\\s+\\d+/i.test(b));\n}\nfunction resolveCitationRefs(text, citationList) {\n  return text.replace(/Source URL:\\s*\\[(\\d+)\\]/gi, (_, n) => {\n    const url = citationList[Number(n) - 1] || citationList[Number(n)] || citationList[0];\n    return url && /^https?:\\/\\//i.test(url) ? `Source URL: ${url}` : `Source URL: ${url || `[${n}]`}`;\n  });\n}\n\nresearchText = resolveCitationRefs(researchText, rawCitations);\nconst sourceUrlsFromText = extractSourceUrls(researchText);\nconst citations = [...new Set([...sourceUrlsFromText.filter(isArticleUrl), ...rawCitations.filter(isArticleUrl)])];\nlet storyBlocks = splitStoryBlocks(researchText);\nif (!storyBlocks.length && citations.length) {\n  storyBlocks = citations.map((url, i) => `### STORY ${i + 1}\\nTitle: Story ${i + 1}\\nSource URL: ${url}`);\n}\n\nconst stories = storyBlocks.map((block, index) => {\n  const storyIndex = Number((block.match(/STORY\\s+(\\d+)/i) || [])[1]) || index + 1;\n  const titleMatch = block.match(/Title:\\s*(.+)/i);\n  const title = (titleMatch?.[1] || `Story ${storyIndex}`).replace(/^\\*+|\\*+$/g, '').trim();\n  const blockUrls = [...extractSourceUrls(block), ...extractUrls(block)];\n  const fallbackUrls = blockUrls.length ? blockUrls : [citations[storyIndex - 1], citations[index], citations[0]].filter(Boolean);\n  return { index: storyIndex, title, primaryUrl: pickPrimaryUrl(fallbackUrls), sourceUrls: blockUrls.filter(isArticleUrl) };\n}).filter((s) => s.primaryUrl).sort((a, b) => a.index - b.index);\n\nconst storyCatalog = stories.length\n  ? stories.map((s) => `${s.index}. ${s.title}\\n   Source: ${s.primaryUrl}`).join('\\n')\n  : citations.map((url, i) => `${i + 1}. Source: ${url}`).join('\\n');\n\nreturn [{ json: { topic, postType, pipelineSlot, publishNow, stories, citations, sourceUrlsFromText, storyCatalog, researchText: `${researchText}\\n\\n## Story catalog:\\n${storyCatalog}` } }];\n"
+      },
+      "id": "format-research-node",
+      "name": "Format Research",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1424,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first()?.json || {};\nconst postType = input.postType || 'primary';\nconst pipelineSlot = input.pipelineSlot || 'publish';\nconst publishNow = input.publishNow === true;\nif (input.topStories?.length) return [{ json: { ...input } }];\nconst TOPICS = ['Breaking Tech News','AI News','Software Engineering','System Design','Architecture','Cloud','Cybersecurity','Programming Languages','Developer Tools','Open Source','GitHub Trending','Tech Companies','Startups','Engineering Career','Debugging','Performance','DevOps','Databases','Frontend','Backend','Testing','Productivity','History of Computing','Engineering Opinion','Tool Spotlight','Weekly Roundup'];\nconst ENGAGE_TOPICS = ['Engineering Opinion','Productivity','Tool Spotlight','Testing','Debugging'];\nconst DEEP_TOPICS = ['System Design','Architecture','Backend','DevOps','Performance','Databases','Cloud'];\nconst pool = postType === 'engage' ? ENGAGE_TOPICS : postType === 'deep' ? DEEP_TOPICS : TOPICS;\nconst staticData = $getWorkflowStaticData('global');\nif (!Array.isArray(staticData.recentTopics)) staticData.recentTopics = [];\nconst recent = new Set(staticData.recentTopics.slice(-8));\nlet candidates = pool.filter((t) => !recent.has(t));\nif (!candidates.length) candidates = [...pool];\nconst topic = candidates[Math.floor(Math.random() * candidates.length)];\nstaticData.recentTopics.push(topic);\nif (staticData.recentTopics.length > 16) staticData.recentTopics = staticData.recentTopics.slice(-16);\nreturn [{ json: { topic, postType, pipelineSlot, publishNow, skipResearch: postType === 'engage' || postType === 'deep', pickedAt: new Date().toISOString() } }];"
+      },
+      "id": "dad9daa3-e828-42bb-9b33-9653bf2715ea",
+      "name": "Topic",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        },
+        "timezone": "America/New_York"
+      },
+      "id": "trigger-7am-prep",
+      "name": "7AM Prep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        },
+        "timezone": "America/New_York"
+      },
+      "id": "trigger-8am-primary",
+      "name": "8AM Primary",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -368,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * 2,4"
+            }
+          ]
+        },
+        "timezone": "America/New_York"
+      },
+      "id": "trigger-12pm-engage",
+      "name": "12PM Engage",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "30 17 * * 1,3,5"
+            }
+          ]
+        },
+        "timezone": "America/New_York"
+      },
+      "id": "trigger-530pm-deep",
+      "name": "530PM Deep",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { pipelineSlot: 'prep', postType: 'primary', publishNow: false } }];"
+      },
+      "id": "init-prep-slot",
+      "name": "Init Prep Slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { pipelineSlot: 'publish', postType: 'primary', publishNow: false } }];"
+      },
+      "id": "init-primary-slot",
+      "name": "Init Primary Slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { pipelineSlot: 'publish', postType: 'engage', publishNow: false } }];"
+      },
+      "id": "init-engage-slot",
+      "name": "Init Engage Slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { pipelineSlot: 'publish', postType: 'deep', publishNow: false } }];"
+      },
+      "id": "init-deep-slot",
+      "name": "Init Deep Slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        672
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeNode(name) {\n  try { return $(name).first()?.json || null; } catch { return null; }\n}\n\nfunction parseWriterOutput(rawText) {\n  const cleaned = rawText.replace(/^```json\\s*|```\\s*$/g, '').trim();\n  try { return JSON.parse(cleaned); } catch { return null; }\n}\n\nfunction parseDraftObjects(rawText) {\n  const cleaned = rawText.replace(/^```json\\s*|```\\s*$/g, '').trim();\n  const parsed = parseWriterOutput(cleaned);\n  if (parsed?.drafts?.length) return parsed.drafts;\n  if (parsed?.headline || parsed?.message) return [parsed];\n  return [];\n}\n\nconst writer = safeNode('AI Writer') || {};\nconst context = safeNode('Collect and Score Sources') || safeNode('Topic') || safeNode('Format Research') || {};\n\nlet parsed = null;\nif (writer.output && typeof writer.output === 'object') parsed = writer.output;\nelse if (writer.parsedOutput && typeof writer.parsedOutput === 'object') parsed = writer.parsedOutput;\n\nlet drafts = [];\nif (parsed?.drafts?.length) drafts = parsed.drafts;\nelse if (parsed?.headline || parsed?.message) drafts = [parsed];\nelse {\n  let text = '';\n  if (Array.isArray(writer.content)) text = writer.content.find((c) => c.type === 'text')?.text || '';\n  else if (typeof writer.text === 'string') text = writer.text;\n  drafts = parseDraftObjects(text);\n}\n\ndrafts = drafts.filter((d) => d.message || d.headline);\n\nfunction draftScore(draft) {\n  let score = Number(draft.score) || 0;\n  const msg = draft.message || '';\n  if (msg.includes('?')) score += 10;\n  if (msg.length >= 200 && msg.length <= 1400) score += 8;\n  if (draft.headline) score += 5;\n  if (msg.startsWith('{')) score -= 50;\n  return score;\n}\n\ndrafts.sort((a, b) => draftScore(b) - draftScore(a));\nconst winner = drafts[0] || {\n  headline: context.topic || 'Tech update',\n  message: 'Unable to parse writer output.',\n  short_message: 'Unable to parse writer output.',\n  story_index: 1,\n  score: 0,\n};\n\nreturn [{ json: {\n  ...winner,\n  draftsGenerated: drafts.length,\n  topic: context.topic,\n  postType: context.postType || 'primary',\n  pipelineSlot: context.pipelineSlot || 'publish',\n  publishNow: context.publishNow === true,\n} }];\n"
+      },
+      "id": "select-best-draft",
+      "name": "Select Best Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeNode(name) {\n  try {\n    return $(name).first()?.json || null;\n  } catch {\n    return null;\n  }\n}\n\nconst parsed = $input.first()?.json || safeNode('Parse Post JSON') || {};\nconst selected = safeNode('Select Best Draft') || {};\nconst today = new Date().toISOString().slice(0, 10);\n\nconst draft = {\n  date: today,\n  post_type: 'primary',\n  headline: selected.headline || parsed.headline || '',\n  message: selected.message || parsed.message || '',\n  short_message: selected.short_message || parsed.short_message || '',\n  primary_url: parsed.primaryUrl || '',\n  topic: selected.topic || parsed.topic || '',\n  story_index: selected.story_index || parsed.story_index || 1,\n  story_title: parsed.story_title || '',\n  saved_at: new Date().toISOString(),\n  draftsGenerated: selected.draftsGenerated || 1,\n};\n\nif (!draft.message || draft.message.trim().startsWith('{')) {\n  throw new Error('Draft message is empty or still raw JSON. Re-run 7AM Prep.');\n}\n\nreturn [{ json: { status: 'saved', date: today, draft, message: `Primary draft saved for ${today}. Ready for 8:00 AM publish.` } }];"
+      },
+      "id": "save-pipeline-draft",
+      "name": "Save Pipeline Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeAll(name) {\n  try { return $(name).all().map((item) => item.json); } catch { return []; }\n}\n\nconst today = new Date().toISOString().slice(0, 10);\nconst slot = $('Init Primary Slot').first()?.json || { pipelineSlot: 'publish', postType: 'primary', publishNow: false };\nconst rows = safeAll(\"Get Today's Draft\");\nconst row = rows.find((r) => r.date === today && r.message && !String(r.message).trim().startsWith('{'));\n\nif (row?.message) {\n  return [{ json: {\n    hasDraft: true,\n    headline: row.headline,\n    message: row.message,\n    short_message: row.short_message,\n    primaryUrl: row.primary_url,\n    topic: row.topic,\n    story_index: row.story_index,\n    story_title: row.story_title,\n    saved_at: row.saved_at,\n    date: row.date,\n    pipelineSlot: 'publish',\n    postType: 'primary',\n    publishNow: slot.publishNow === true,\n    loadedFrom: `data-table (${today})`,\n  } }];\n}\n\nreturn [{ json: {\n  hasDraft: false,\n  pipelineSlot: slot.pipelineSlot || 'publish',\n  postType: slot.postType || 'primary',\n  publishNow: slot.publishNow === true,\n  generateFallback: true,\n  draftMissing: true,\n  message: `No saved draft for ${today}. Generating content inline before saving to Postiz as draft.`,\n} }];\n"
+      },
+      "id": "load-primary-draft",
+      "name": "Load Primary Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "prep-check",
+              "leftValue": "={{ $json.pipelineSlot }}",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "prep"
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          }
+        },
+        "options": {}
+      },
+      "id": "prep-or-publish",
+      "name": "Prep or Publish",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeNode(name) {\n  try { return $(name).first()?.json || null; } catch { return null; }\n}\n\nconst slot = safeNode('Init Primary Slot') || safeNode('Init Prep Slot') || $input.first()?.json || {};\nconst pipelineSlot = slot.pipelineSlot || 'prep';\nconst postType = slot.postType || 'primary';\nconst publishNow = slot.publishNow === true;\n\nconst UA = 'Mozilla/5.0 (compatible; IntraWebSocialBot/1.0; +https://intrawebtech.com)';\nconst SOURCE_WEIGHTS = { 'hacker-news': 10, 'github-trending': 9, 'product-hunt': 8, reddit: 7 };\nconst KEYWORDS = ['ai', 'software', 'engineering', 'developer', 'cloud', 'security', 'database', 'frontend', 'backend', 'devops', 'open source', 'startup', 'architecture', 'programming', 'api', 'kubernetes', 'typescript', 'python', 'react', 'llm'];\n\nasync function fetchText(url) {\n  try {\n    const body = await this.helpers.httpRequest({ method: 'GET', url, headers: { 'User-Agent': UA, Accept: 'application/rss+xml, application/xml, text/xml, */*' }, timeout: 30000 });\n    const text = typeof body === 'string' ? body : JSON.stringify(body);\n    if (/502 Bad Gateway|<title>502/i.test(text)) return '';\n    return text;\n  } catch { return ''; }\n}\n\nasync function fetchHnStories() {\n  for (const url of ['https://news.ycombinator.com/rss', 'https://hnrss.org/best?count=30']) {\n    const xml = await fetchText.call(this, url);\n    if (xml && /<item/i.test(xml)) return { xml, status: 'ok', via: url };\n  }\n  try {\n    const ids = await this.helpers.httpRequest({ method: 'GET', url: 'https://hacker-news.firebaseio.com/v0/topstories.json', json: true, timeout: 30000 });\n    const stories = [];\n    for (const id of (ids || []).slice(0, 20)) {\n      try {\n        const item = await this.helpers.httpRequest({ method: 'GET', url: `https://hacker-news.firebaseio.com/v0/item/${id}.json`, json: true, timeout: 15000 });\n        if (item?.title && item?.url) stories.push({ title: item.title, link: item.url, summary: '', source: 'hacker-news', publishedAt: new Date((item.time || Date.now() / 1000) * 1000).toISOString() });\n      } catch {}\n    }\n    if (stories.length) return { stories, status: 'ok', via: 'firebase-api' };\n  } catch {}\n  return { xml: '', stories: [], status: 'failed', via: 'none' };\n}\n\nfunction parseRss(xml, source) {\n  if (!xml || typeof xml !== 'string') return [];\n  const blocks = xml.match(/<(?:item|entry)[\\s\\S]*?<\\/(?:item|entry)>/gi) || [];\n  const stories = [];\n  for (const block of blocks) {\n    const titleMatch = block.match(/<title[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/title>/i);\n    const linkMatch = block.match(/<link[^>]*href=\"([^\"]+)\"/i) || block.match(/<link[^>]*>([\\s\\S]*?)<\\/link>/i);\n    const descMatch = block.match(/<(?:description|summary|content)[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/(?:description|summary|content)>/i);\n    const dateMatch = block.match(/<(?:pubDate|updated|published)[^>]*>([\\s\\S]*?)<\\/(?:pubDate|updated|published)>/i);\n    const title = (titleMatch?.[1] || '').replace(/<[^>]*>/g, '').trim();\n    const link = (linkMatch?.[1] || '').replace(/<[^>]*>/g, '').trim();\n    const summary = (descMatch?.[1] || '').replace(/<[^>]*>/g, '').trim().slice(0, 400);\n    const publishedAt = dateMatch ? new Date(dateMatch[1].trim()) : new Date();\n    if (!title || !link || !/^https?:\\/\\//i.test(link)) continue;\n    stories.push({ title, link, summary, source, publishedAt: publishedAt.toISOString() });\n  }\n  return stories;\n}\n\nconst fetchStatus = {};\nconst all = [];\nconst hn = await fetchHnStories.call(this);\nfetchStatus['hacker-news'] = hn.status;\nif (hn.stories?.length) all.push(...hn.stories); else all.push(...parseRss(hn.xml, 'hacker-news'));\nfor (const [key, url] of [['github-trending', 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml'], ['reddit', 'https://www.reddit.com/r/programming+devops+technology/hot/.rss?limit=25'], ['product-hunt', 'https://www.producthunt.com/feed']]) {\n  const xml = await fetchText.call(this, url);\n  fetchStatus[key] = xml ? 'ok' : 'failed';\n  all.push(...parseRss(xml, key));\n}\nconst seen = new Set();\nconst now = Date.now();\nfunction normalizeTitle(title) { return title.toLowerCase().replace(/[^a-z0-9\\s]/g, '').replace(/\\s+/g, ' ').trim(); }\nfunction scoreStory(story) {\n  let score = SOURCE_WEIGHTS[story.source] || 5;\n  const ageHours = (now - new Date(story.publishedAt).getTime()) / 3600000;\n  if (ageHours <= 24) score += 8; else if (ageHours <= 48) score += 4; else if (ageHours <= 72) score += 1;\n  const haystack = `${story.title} ${story.summary}`.toLowerCase();\n  for (const keyword of KEYWORDS) if (haystack.includes(keyword)) score += 1.5;\n  try { if (new URL(story.link).pathname.split('/').filter(Boolean).length >= 2) score += 2; } catch {}\n  return Math.round(score * 10) / 10;\n}\nconst scored = [];\nfor (const story of all) {\n  const key = `${normalizeTitle(story.title)}|${story.link}`;\n  if (seen.has(key)) continue;\n  seen.add(key);\n  scored.push({ ...story, score: scoreStory(story) });\n}\nscored.sort((a, b) => b.score - a.score);\nconst topStories = scored.slice(0, 12);\nif (!topStories.length) throw new Error(`All source fetches failed. Status: ${JSON.stringify(fetchStatus)}`);\nreturn [{ json: { pipelineSlot, postType, publishNow, topic: topStories[0].title, topStories, storyCount: topStories.length, fetchStatus, collectedAt: new Date().toISOString(), generateFallback: slot.generateFallback === true } }];\n"
+      },
+      "id": "collect-score-sources",
+      "name": "Collect and Score Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "g3axXQ2YWW4MFb9r"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "date",
+              "keyValue": "={{ $now.format('yyyy-MM-dd') }}"
+            },
+            {
+              "keyName": "post_type",
+              "keyValue": "primary"
+            }
+          ]
+        },
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "saved_at"
+      },
+      "id": "get-todays-draft",
+      "name": "Get Today's Draft",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        80,
+        320
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "g3axXQ2YWW4MFb9r"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "date",
+              "keyValue": "={{ $json.draft.date }}"
+            },
+            {
+              "keyName": "post_type",
+              "keyValue": "={{ $json.draft.post_type }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $json.draft.date }}",
+            "post_type": "={{ $json.draft.post_type }}",
+            "headline": "={{ $json.draft.headline }}",
+            "message": "={{ $json.draft.message }}",
+            "short_message": "={{ $json.draft.short_message }}",
+            "primary_url": "={{ $json.draft.primary_url }}",
+            "topic": "={{ $json.draft.topic }}",
+            "story_index": "={{ $json.draft.story_index }}",
+            "story_title": "={{ $json.draft.story_title }}",
+            "saved_at": "={{ $json.draft.saved_at }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "post_type",
+              "displayName": "post_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "headline",
+              "displayName": "headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "short_message",
+              "displayName": "short_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "primary_url",
+              "displayName": "primary_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "topic",
+              "displayName": "topic",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "story_index",
+              "displayName": "story_index",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "story_title",
+              "displayName": "story_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "saved_at",
+              "displayName": "saved_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "store-draft-table",
+      "name": "Store Draft in Table",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2960,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "draft-check",
+              "leftValue": "={{ $json.hasDraft }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          }
+        },
+        "options": {}
+      },
+      "id": "has-saved-draft",
+      "name": "Has Saved Draft?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        528,
+        320
+      ]
+    },
+    {
+      "id": "skip-research-if",
+      "name": "Skip Research?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1100,
+        96
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip-research-check",
+              "leftValue": "={{ $json.skipResearch }}",
+              "operator": {
+                "name": "filter.operator.equals",
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "needs-image-if",
+      "name": "Needs Image?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2600,
+        336
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "needs-image-check",
+              "leftValue": "={{ $json.postType }}",
+              "operator": {
+                "name": "filter.operator.notEquals",
+                "operation": "notEquals",
+                "type": "string"
+              },
+              "rightValue": "engage"
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "validate-draft-node",
+      "name": "Validate Draft",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        320
+      ],
+      "parameters": {
+        "jsCode": "const input = $input.first()?.json || {};\nconst today = new Date().toISOString().slice(0, 10);\nif (!input.hasDraft) return [{ json: input }];\nif (!input.message || String(input.message).trim().startsWith('{')) {\n  throw new Error('Saved draft has invalid message. Re-run 7AM Prep.');\n}\nconst savedMs = Date.parse(input.saved_at || '') || 0;\nconst ageHours = savedMs ? (Date.now() - savedMs) / 3600000 : 999;\nconst isToday = input.date === today || String(input.loadedFrom || '').includes(today);\nif (!isToday || ageHours > 24) {\n  return [{ json: {\n    ...input,\n    hasDraft: false,\n    generateFallback: true,\n    draftStale: true,\n    message: `Draft is stale or missing for ${today}. Regenerating inline.`,\n  } }];\n}\nreturn [{ json: { ...input, draftValid: true } }];\n"
+      }
+    },
+    {
+      "id": "acquire-mutex-node",
+      "name": "Acquire Mutex",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        208
+      ],
+      "parameters": {
+        "jsCode": "const input = $input.first()?.json || {};\nconst staticData = $getWorkflowStaticData('global');\nconst now = Date.now();\nconst runningSince = staticData.runningSince || 0;\nif (runningSince && (now - runningSince) < 30 * 60 * 1000) {\n  return [{ json: { ...input, mutexBlocked: true, runningSince, slotStartedAt: now } }];\n}\nstaticData.runningSince = now;\nstaticData.runStartedAt = now;\nreturn [{ json: { ...input, mutexBlocked: false, runningSince: now, slotStartedAt: now } }];\n"
+      }
+    },
+    {
+      "id": "mutex-blocked-if",
+      "name": "Mutex Blocked?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        620,
+        208
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "mutex-check",
+              "leftValue": "={{ $json.mutexBlocked }}",
+              "operator": {
+                "name": "filter.operator.equals",
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "route-slot-switch",
+      "name": "Route Slot",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        840,
+        208
+      ],
+      "parameters": {
+        "mode": "rules",
+        "options": {},
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "route-prep",
+                    "leftValue": "={{ $json.pipelineSlot }}",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "prep"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "prep"
+            },
+            {
+              "conditions": {
+                "combinator": "or",
+                "conditions": [
+                  {
+                    "id": "route-engage",
+                    "leftValue": "={{ $json.postType }}",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "engage"
+                  },
+                  {
+                    "id": "route-deep",
+                    "leftValue": "={{ $json.postType }}",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "deep"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "engageDeep"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "draft-still-valid-if",
+      "name": "Draft Still Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        960,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "draft-valid-check",
+              "leftValue": "={{ $json.hasDraft }}",
+              "operator": {
+                "name": "filter.operator.equals",
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "log-skipped-node",
+      "name": "Log Skipped Run",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        840,
+        80
+      ],
+      "parameters": {
+        "jsCode": "const input = $input.first()?.json || {};\nreturn [{ json: {\n  execution_id: $execution.id,\n  slot: input.pipelineSlot || 'unknown',\n  post_type: input.postType || 'unknown',\n  status: 'skipped',\n  headline: '',\n  topic: '',\n  postiz_id: '',\n  error_message: 'Mutex blocked — another run in progress',\n  duration_ms: 0,\n  created_at: new Date().toISOString(),\n} }];\n"
+      }
+    },
+    {
+      "id": "log-run-outcome-node",
+      "name": "Log Run Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4584,
+        336
+      ],
+      "parameters": {
+        "jsCode": "function safeNode(name) {\n  try { return $(name).first()?.json || null; } catch { return null; }\n}\n\nconst staticData = $getWorkflowStaticData('global');\nconst startedAt = staticData.runStartedAt || Date.now();\nconst post = safeNode('Parse Post JSON') || safeNode('Load Primary Draft') || safeNode('Validate Draft') || {};\nconst slot = safeNode('Acquire Mutex') || {};\nconst postiz = safeNode('Postiz - Post All Channels') || {};\nconst uploadFailed = safeNode('Mark Upload Failed');\n\nlet status = 'success';\nlet errorMessage = '';\nif (uploadFailed?.mediaUploadFailed) {\n  status = 'partial';\n  errorMessage = uploadFailed.uploadError || 'Postiz media upload failed; posted text-only';\n}\nif (postiz.error) {\n  status = 'error';\n  errorMessage = postiz.error.message || JSON.stringify(postiz.error).slice(0, 500);\n}\n\nreturn [{ json: {\n  execution_id: $execution.id,\n  slot: slot.pipelineSlot || post.pipelineSlot || 'unknown',\n  post_type: post.postType || slot.postType || 'primary',\n  status,\n  headline: post.headline || '',\n  topic: post.topic || '',\n  postiz_id: String(postiz.id || postiz.postId || postiz.data?.id || ''),\n  error_message: errorMessage,\n  duration_ms: Date.now() - startedAt,\n  created_at: new Date().toISOString(),\n} }];\n"
+      }
+    },
+    {
+      "id": "log-run-table-node",
+      "name": "Store Run Log",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        5024,
+        336
+      ],
+      "parameters": {
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "xFUUGHuJD0YMJeiD"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "execution_id": "={{ $json.execution_id }}",
+            "slot": "={{ $json.slot }}",
+            "post_type": "={{ $json.post_type }}",
+            "status": "={{ $json.status }}",
+            "headline": "={{ $json.headline }}",
+            "topic": "={{ $json.topic }}",
+            "postiz_id": "={{ $json.postiz_id }}",
+            "error_message": "={{ $json.error_message }}",
+            "duration_ms": "={{ $json.duration_ms }}",
+            "created_at": "={{ $json.created_at }}"
+          }
+        }
+      }
+    },
+    {
+      "id": "release-mutex-node",
+      "name": "Release Mutex",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5248,
+        336
+      ],
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global'); staticData.runningSince = 0; return $input.all();"
+      }
+    },
+    {
+      "id": "structured-output-parser",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1648,
+        280
+      ],
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"drafts\": [\n    {\n      \"headline\": \"Example headline\",\n      \"message\": \"Example message\",\n      \"short_message\": \"Short message\",\n      \"story_index\": 1,\n      \"score\": 85\n    }\n  ]\n}"
+      }
+    },
+    {
+      "id": "prep-upload-failed",
+      "name": "Mark Upload Failed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3920,
+        480
+      ],
+      "parameters": {
+        "jsCode": "const post = $('Parse Post JSON').first()?.json || $('Load Primary Draft').first()?.json || $('Validate Draft').first()?.json || $input.first()?.json || {};\nconst err = $input.first()?.json?.error || {};\nreturn [{ json: {\n  ...post,\n  mediaUploadFailed: true,\n  uploadError: err.message || err.description || 'Postiz upload failed',\n} }];\n"
+      }
+    },
+    {
+      "id": "prep-notify-error",
+      "name": "Prep Error Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4368,
+        520
+      ],
+      "parameters": {
+        "jsCode": "const post = $('Parse Post JSON').first()?.json || $('Load Primary Draft').first()?.json || $('Validate Draft').first()?.json || {};\nconst slot = $('Acquire Mutex').first()?.json || {};\nconst err = $input.first()?.json?.error || $input.first()?.json || {};\nconst msg = err.message || err.description || JSON.stringify(err).slice(0, 500);\nreturn [{ json: {\n  priority: 'error',\n  message: `Social pipeline failed (${slot.postType || post.postType || 'unknown'} / ${slot.pipelineSlot || 'publish'}): ${post.headline || post.topic || 'no headline'} — ${msg}`,\n} }];\n"
+      }
+    },
+    {
+      "id": "notify-error-node",
+      "name": "Notify Error",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        4584,
+        520
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "PGf6jPoWtxSPlr0h"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "7AM Prep": {
+      "main": [
+        [
+          {
+            "node": "Init Prep Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8AM Primary": {
+      "main": [
+        [
+          {
+            "node": "Init Primary Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12PM Engage": {
+      "main": [
+        [
+          {
+            "node": "Init Engage Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "530PM Deep": {
+      "main": [
+        [
+          {
+            "node": "Init Deep Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Prep Slot": {
+      "main": [
+        [
+          {
+            "node": "Acquire Mutex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Primary Slot": {
+      "main": [
+        [
+          {
+            "node": "Acquire Mutex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Engage Slot": {
+      "main": [
+        [
+          {
+            "node": "Acquire Mutex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init Deep Slot": {
+      "main": [
+        [
+          {
+            "node": "Acquire Mutex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Acquire Mutex": {
+      "main": [
+        [
+          {
+            "node": "Mutex Blocked?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mutex Blocked?": {
+      "main": [
+        [
+          {
+            "node": "Log Skipped Run",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route Slot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Skipped Run": {
+      "main": [
+        [
+          {
+            "node": "Store Run Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Slot": {
+      "main": [
+        [
+          {
+            "node": "Collect and Score Sources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Topic",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Today's Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Today's Draft": {
+      "main": [
+        [
+          {
+            "node": "Load Primary Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Primary Draft": {
+      "main": [
+        [
+          {
+            "node": "Has Saved Draft?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Saved Draft?": {
+      "main": [
+        [
+          {
+            "node": "Validate Draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Collect and Score Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Draft": {
+      "main": [
+        [
+          {
+            "node": "Draft Still Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Draft Still Valid?": {
+      "main": [
+        [
+          {
+            "node": "Needs Image?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Collect and Score Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect and Score Sources": {
+      "main": [
+        [
+          {
+            "node": "Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Topic": {
+      "main": [
+        [
+          {
+            "node": "Skip Research?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Research?": {
+      "main": [
+        [
+          {
+            "node": "AI Writer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Research": {
+      "main": [
+        [
+          {
+            "node": "Format Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Research": {
+      "main": [
+        [
+          {
+            "node": "AI Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Writer": {
+      "main": [
+        [
+          {
+            "node": "Select Best Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_outputParser": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Best Draft": {
+      "main": [
+        [
+          {
+            "node": "Parse Post JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Post JSON": {
+      "main": [
+        [
+          {
+            "node": "Prep or Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep or Publish": {
+      "main": [
+        [
+          {
+            "node": "Save Pipeline Draft",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Needs Image?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Pipeline Draft": {
+      "main": [
+        [
+          {
+            "node": "Store Draft in Table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Draft in Table": {
+      "main": [
+        [
+          {
+            "node": "Log Run Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Image?": {
+      "main": [
+        [
+          {
+            "node": "AI Image Prompt Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Postiz - Get Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Image Prompt Agent": {
+      "main": [
+        [
+          {
+            "node": "Generate an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate an image": {
+      "main": [
+        [
+          {
+            "node": "Postiz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postiz": {
+      "main": [
+        [
+          {
+            "node": "Postiz - Get Channels",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Upload Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Upload Failed": {
+      "main": [
+        [
+          {
+            "node": "Prep Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Error Alert": {
+      "main": [
+        [
+          {
+            "node": "Notify Error",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Postiz - Get Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postiz - Get Channels": {
+      "main": [
+        [
+          {
+            "node": "Build All Channel Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build All Channel Posts": {
+      "main": [
+        [
+          {
+            "node": "Postiz - Post All Channels",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postiz - Post All Channels": {
+      "main": [
+        [
+          {
+            "node": "Log Run Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Run Outcome": {
+      "main": [
+        [
+          {
+            "node": "Store Run Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Run Log": {
+      "main": [
+        [
+          {
+            "node": "Release Mutex",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "description": "Automated social media pipeline (America/New_York): 7AM prep, 8AM primary publish, Tue/Thu engage, Mon/Wed/Fri deep. Drafts in social_pipeline_drafts; runs logged in social_pipeline_runs. Review Postiz drafts before publishing."
+}

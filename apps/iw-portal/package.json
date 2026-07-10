@@ -18,7 +18,7 @@
     "db:link": "pnpm exec supabase link --project-ref wvjwibsomjecolcigjgr",
     "db:push": "pnpm exec supabase db push",
     "db:pull": "pnpm exec supabase db pull",
-    "db:push:self-hosted": "pnpm exec supabase db push --db-url \"${SELF_HOSTED_DATABASE_URL:?Set SELF_HOSTED_DATABASE_URL}\"",
+    "db:push:self-hosted": "tsx scripts/self-host/db-push-self-hosted.ts",
     "self-host:bootstrap-docs": "echo Run bootstrap-supabase-vps.sh ON the Hostinger VPS — see docs/architecture/supabase-self-host-hostinger.md",
     "hubspot:ensure-co-properties": "tsx scripts/hubspot/ensure-change-order-properties.ts",
     "hubspot:ensure-reactivation-contact-properties": "tsx scripts/hubspot/ensure-reactivation-contact-properties.ts",
