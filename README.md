@@ -28,6 +28,16 @@ For each project, enable **Include files outside the root directory in the Build
 - `packages/eslint-config` - shared ESLint configuration.
 - `packages/typescript-config` - shared TypeScript configuration.
 
+## Documentation
+
+| Area | Path |
+| --- | --- |
+| Architecture | [`docs/architecture/`](./docs/architecture/) |
+| Portal guides | [`docs/portal/`](./docs/portal/) |
+| n8n automations | [`docs/automations/`](./docs/automations/) |
+| Implementation audit | [`docs/audit/`](./docs/audit/) |
+| Portfolio case study (engineering) | [`docs/portfolio/intraweb-platform-case-study.md`](./docs/portfolio/intraweb-platform-case-study.md) |
+
 ## Requirements
 
 - Node.js `22.x`
