@@ -78,6 +78,20 @@ UPSTASH_REDIS_REST_URL=...
 UPSTASH_REDIS_REST_TOKEN=...
 ```
 
+### Strapi CMS (site key `personal`)
+
+Server-only editorial content for `apps/site`. See `apps/site/.env.example` and `apps/site/lib/strapi.ts`.
+
+```bash
+STRAPI_URL=http://127.0.0.1:1337
+STRAPI_API_TOKEN=
+STRAPI_CONTENT_ENABLED=true
+```
+
+Resolution order: **Strapi → local loaders → Hashnode (blog only)**. Soft-fails so the site never blanks.
+
+**Content gap:** `apps/site/content/blog` is often empty in this nexus copy. Sync markdown from portfolio-os `apps/site/content/blog` (canonical SoT). Do not delete `lib/local-blog-loader.ts`.
+
 Optional:
 
 ```bash

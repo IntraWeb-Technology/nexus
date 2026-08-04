@@ -1,10 +1,21 @@
-# Shared content model (draft v0)
+# Shared content model (v1)
 
-**Status:** Draft — derived from [audit.md](./audit.md)  
-**Date:** 2026-08-03  
-**Strapi major:** 5.x (align with live `cms.intrawebtech.com` **5.51.1**)
+**Status:** Accepted for implementation  
+**Date:** 2026-08-04  
+**Strapi major:** 5.51.1 (`apps/cms-strapi`; align with live branding CMS version)  
+**Contracts:** [architecture-contracts.md](./architecture-contracts.md)
 
-Only types justified by audited content. Deviations from the baseline prompt are called out.
+## Schema deviations from baseline prompt (accepted)
+
+| Item | Decision |
+|---|---|
+| `redirect.statusCode` | Enum `http_301`…`http_308` (GraphQL-safe); client normalizes to numeric 301–308 |
+| `project.projectStatus` | Field renamed from `status` (reserved with Draft & Publish); domain model still exposes `status` |
+| `shared.stat-item` | Added for `blocks.stats` repeatable items |
+| Nav children | One level of `shared.link` (no recursive component) |
+| `blocks.faq-section.items` | Relation to FAQ Item collection |
+
+Only types justified by audited content. Deviations from the baseline prompt are called out above.
 
 ## Site keys
 

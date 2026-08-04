@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_shared_contact_informations",
+  "info": {
+    "displayName": "Contact Information",
+    "icon": "phone",
+    "description": "Site contact details"
+  },
+  "options": {},
+  "attributes": {
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "addressLine1": {
+      "type": "string"
+    },
+    "addressLine2": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "region": {
+      "type": "string"
+    },
+    "postalCode": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    }
+  }
+}

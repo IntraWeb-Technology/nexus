@@ -5,8 +5,8 @@ import { Footer } from '../../../components/shared/footer';
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft, Calendar, User, Clock, Eye, Tag } from "lucide-react";
+import { Calendar, User, Clock, Tag } from "lucide-react";
+import { fetchPostBySlug } from '../../../lib/content-api';
 
 interface BlogPostPageProps {
   params: Promise<{
@@ -41,40 +41,7 @@ const defaultPublication = {
 
 export async function generateMetadata(props: BlogPostPageProps): Promise<Metadata> {
   const params = await props.params;
-  const GQL_ENDPOINT = 'https://gql.hashnode.com/';
-  const host = process.env.NEXT_PUBLIC_HASHNODE_PUBLICATION_HOST || 'mindware.hashnode.dev';
-
-  // Fetch post from Hashnode
-  const query = `
-    query PostBySlug($host: String!, $slug: String!) {
-      publication(host: $host) {
-        post(slug: $slug) {
-          id
-          title
-          brief
-          slug
-          publishedAt
-          coverImage { url }
-          author { name }
-          tags { name slug }
-        }
-      }
-    }
-  `;
-
-  let post: any = null;
-  try {
-    const res = await fetch(GQL_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables: { host, slug: params.slug } }),
-      next: { revalidate: 60 },
-    });
-    const data = await res.json();
-    post = data?.data?.publication?.post;
-  } catch (error) {
-    console.error('Error fetching Hashnode post:', error);
-  }
+  const post = await fetchPostBySlug(params.slug);
 
   if (!post) {
     return {
@@ -102,45 +69,7 @@ export async function generateMetadata(props: BlogPostPageProps): Promise<Metada
 
 export default async function BlogPostPage(props: BlogPostPageProps) {
   const params = await props.params;
-  const GQL_ENDPOINT = 'https://gql.hashnode.com/';
-  const host = process.env.NEXT_PUBLIC_HASHNODE_PUBLICATION_HOST || 'mindware.hashnode.dev';
-
-  // Fetch post from Hashnode
-  const query = `
-    query PostBySlug($host: String!, $slug: String!) {
-      publication(host: $host) {
-        post(slug: $slug) {
-          id
-          title
-          brief
-          slug
-          publishedAt
-          coverImage { url }
-          author { name }
-          tags { name slug }
-          content {
-            markdown
-            html
-          }
-          readTimeInMinutes
-        }
-      }
-    }
-  `;
-
-  let post: any = null;
-  try {
-    const res = await fetch(GQL_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables: { host, slug: params.slug } }),
-      next: { revalidate: 60 },
-    });
-    const data = await res.json();
-    post = data?.data?.publication?.post;
-  } catch (error) {
-    console.error('Error fetching Hashnode post:', error);
-  }
+  const post = await fetchPostBySlug(params.slug);
 
   if (!post) {
     notFound();
@@ -195,7 +124,7 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
 
             {post.tags && post.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {post.tags.map((tag: any) => (
+                {post.tags.map((tag) => (
                   <span
                     key={tag.slug}
                     className="inline-flex items-center px-3 py-1 bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-full text-sm"
@@ -218,7 +147,9 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
                   }}
                 />
               ) : post.content?.markdown ? (
-                <div>{post.content.markdown}</div>
+                <div className="whitespace-pre-wrap">{post.content.markdown}</div>
+              ) : post.brief ? (
+                <p className="text-stone-700 dark:text-stone-300">{post.brief}</p>
               ) : (
                 <p className="text-stone-600 dark:text-stone-400 italic">
                   No content available for this article.
@@ -249,5 +180,3 @@ export default async function BlogPostPage(props: BlogPostPageProps) {
     </AppProvider>
   );
 }
-
-

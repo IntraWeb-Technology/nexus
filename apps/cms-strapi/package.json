@@ -11,6 +11,12 @@
     "develop": "strapi develop",
     "start": "strapi start",
     "strapi": "strapi",
+    "seed:sites": "tsx scripts/seed-sites.ts",
+    "seed:sites:dry": "tsx scripts/seed-sites.ts --dry-run",
+    "migrate:content:dry-run": "tsx scripts/migrate/src/migrate.ts --dry-run",
+    "migrate:content": "tsx scripts/migrate/src/migrate.ts --write",
+    "migrate:content:validate": "tsx scripts/migrate/src/migrate.ts --validate",
+    "migrate:content:rollback": "tsx scripts/migrate/src/rollback.ts",
     "upgrade": "npx @strapi/upgrade latest",
     "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
@@ -20,6 +26,7 @@
     "@strapi/plugin-users-permissions": "5.51.1",
     "@strapi/strapi": "5.51.1",
     "better-sqlite3": "12.8.0",
+    "pg": "^8.22.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.30.3",
@@ -29,6 +36,8 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "js-yaml": "^4.1.0",
+    "tsx": "^4.23.5",
     "typescript": "^5"
   },
   "engines": {

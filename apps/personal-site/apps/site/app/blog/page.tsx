@@ -7,11 +7,11 @@ import { Container } from '../../components/shared/container';
 import { DEFAULT_COVER } from '../../utils/const';
 import { BlueskySVG, FacebookSVG, GithubSVG, LinkedinSVG, RssSVG } from '../../components/icons';
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ArticleSVG } from '../../components/icons';
 import FeaturedPost from '../../components/features/blog/featured-post';
 import ModernPostCard from '../../components/features/blog/modern-post-card';
 import NewsletterCTA from '../../components/features/newsletter/newsletter-cta';
+import { fetchPosts, fetchPublication } from '../../lib/content-api';
 
 export const revalidate = 60;
 
@@ -41,54 +41,32 @@ const defaultPublication = {
 };
 
 export default async function BlogPage() {
-  const GQL_ENDPOINT = 'https://gql.hashnode.com/';
-  const host = process.env.NEXT_PUBLIC_HASHNODE_PUBLICATION_HOST || 'mindware.hashnode.dev';
+  // Strapi → local markdown → Hashnode (soft-fail; never blank the index)
+  const [posts, publication] = await Promise.all([
+    fetchPosts(10),
+    fetchPublication(),
+  ]);
 
-  // Fetch latest posts from Hashnode
-  const query = `
-    query PostsByPublication($host: String!, $first: Int!, $after: String) {
-      publication(host: $host) {
-        posts(first: $first, after: $after) {
-          edges {
-            node {
-              id
-              title
-              brief
-              slug
-              publishedAt
-              coverImage { url }
-              author { name }
-              tags { name slug }
-            }
-          }
-        }
+  const publicationForLayout = publication
+    ? {
+        ...defaultPublication,
+        id: publication.id,
+        title: publication.title,
+        displayTitle: publication.displayTitle || publication.title,
+        descriptionSEO: publication.descriptionSEO || defaultPublication.descriptionSEO,
+        url: publication.url,
+        posts: publication.posts || defaultPublication.posts,
+        author: publication.author || defaultPublication.author,
       }
-    }
-  `;
-
-  let posts: any[] = [];
-  try {
-    const res = await fetch(GQL_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, variables: { host, first: 10 } }),
-      next: { revalidate: 60 },
-    });
-    const data = await res.json();
-    const edges = data?.data?.publication?.posts?.edges || [];
-    posts = edges.map((e: any) => e.node);
-  } catch (error) {
-    console.error('Error fetching Hashnode posts:', error);
-    posts = [];
-  }
+    : defaultPublication;
 
   const featuredPost = posts[0];
   const morePosts = posts.slice(1, 4);
 
   return (
-    <AppProvider publication={defaultPublication as any}>
+    <AppProvider publication={publicationForLayout as any}>
       {/* Navigation */}
-      <ModernHeader publication={defaultPublication} />
+      <ModernHeader publication={publicationForLayout} />
 
       {/* Modern Hero Section */}
       {posts.length > 0 && (
@@ -154,7 +132,7 @@ export default async function BlogPage() {
               {/* RSS Feed */}
               <Link
                 prefetch={false}
-                href="/rss.xml"
+                href="/blog/rss.xml"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Open blog XML Feed, opens in new tab"
@@ -239,7 +217,7 @@ export default async function BlogPage() {
         )}
       </Container>
       <Chatbot />
-      <Footer publication={defaultPublication} />
+      <Footer publication={publicationForLayout} />
     </AppProvider>
   );
 }

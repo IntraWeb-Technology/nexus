@@ -1,0 +1,32 @@
+{
+  "name": "@repo/strapi-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-only typed Strapi 5 REST client for multi-site editorial content",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "check-types": "tsc --noEmit",
+    "lint": "node -e \"process.exit(0)\"",
+    "test": "node --import tsx --test src/query.test.ts src/client.test.ts src/normalize/article.test.ts"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.21.0",
+    "typescript": "5.9.2"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

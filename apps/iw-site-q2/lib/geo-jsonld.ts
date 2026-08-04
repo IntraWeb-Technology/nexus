@@ -258,8 +258,8 @@ export const diagnosticHowToJsonLd = {
   ],
 } as const;
 
-function faqPageMainEntity() {
-  return geoFaqItems.map((x) => ({
+function faqPageMainEntity(items: { q: string; a: string }[] = [...geoFaqItems]) {
+  return items.map((x) => ({
     "@type": "Question" as const,
     name: x.q,
     acceptedAnswer: { "@type": "Answer" as const, text: x.a },
@@ -271,6 +271,15 @@ export const homeFaqPageJsonLd = {
   "@type": "FAQPage",
   mainEntity: faqPageMainEntity(),
 };
+
+/** Build FAQPage JSON-LD from resolved FAQ pairs (Strapi or hardcoded). */
+export function buildFaqPageJsonLd(items: { q: string; a: string }[]) {
+  return {
+    "@context": "https://schema.org" as const,
+    "@type": "FAQPage" as const,
+    mainEntity: faqPageMainEntity(items.length ? items : [...geoFaqItems]),
+  };
+}
 
 export function buildBreadcrumbJsonLd(crumbs: { name: string; path: string }[]) {
   return {

@@ -1,0 +1,27 @@
+{
+  "migrationBatch": "c456b7dc-8088-42cd-9078-c21e809a4354",
+  "generatedAt": "2026-08-04T07:27:12.588Z",
+  "count": 1,
+  "items": [
+    {
+      "reason": "services-pricing-tiers-need-review",
+      "type": "service",
+      "sourcePath": "E:\\IntraWeb-Technologies\\10_Repos\\nexus\\apps\\iw-site-q2\\components\\pages\\services-content.tsx",
+      "suggestedSiteKeys": [
+        "intraweb"
+      ],
+      "notes": "Website package tiers (Starter/Growth/Advanced) and retainers have no explicit prices in source. Map to Service + shared.feature after editorial pricing decisions; do not invent prices.",
+      "data": {
+        "extractedServiceCount": 27,
+        "categories": [
+          "website-package",
+          "website-addon",
+          "automation-engagement",
+          "saas-engineering",
+          "retainer",
+          "ecommerce-capability"
+        ]
+      }
+    }
+  ]
+}

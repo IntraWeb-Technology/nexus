@@ -4,14 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
-import { accountsUrl, navLinks, systemsCallUrl } from "@/lib/site";
+import { accountsUrl, navLinks as defaultNavLinks, systemsCallUrl } from "@/lib/site";
+import type { SiteNavLink } from "@/lib/cms-content-types";
 import { IntraWebLogo } from "@/components/intraweb-logo";
 import { Btn } from "@/components/primitives";
 import { Ic } from "@/components/icons";
 
 const WIDE_BP = 960;
 
-export function NavBar() {
+type Props = {
+  /** Optional CMS/header links; defaults to hardcoded `navLinks` from `lib/site`. */
+  links?: SiteNavLink[];
+};
+
+export function NavBar({ links }: Props = {}) {
+  const navLinks = links?.length ? links : defaultNavLinks;
   const pathname = usePathname();
   const menuId = useId();
   const [scrolled, setScrolled] = useState(false);

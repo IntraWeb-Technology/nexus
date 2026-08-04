@@ -62,13 +62,24 @@ export interface MDXCaseStudy {
   content: string;
 }
 
-const contentDirectory = path.join(process.cwd(), 'content', 'case-studies');
+const contentDirectoryCandidates = [
+  path.join(process.cwd(), 'content', 'case-studies'),
+  path.join(process.cwd(), 'apps', 'site', 'content', 'case-studies'),
+];
+
+function resolveCaseStudyDirectory(): string {
+  for (const candidate of contentDirectoryCandidates) {
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return contentDirectoryCandidates[0];
+}
 
 /**
  * Get all MDX case study slugs with caching
  */
 export function getAllCaseStudySlugs(): string[] {
   try {
+    const contentDirectory = resolveCaseStudyDirectory();
     if (!fs.existsSync(contentDirectory)) {
       return [];
     }
@@ -108,6 +119,7 @@ export const getCaseStudyBySlug = withPerformanceTracking(
   'getCaseStudyBySlug',
   async function getCaseStudyBySlug(slug: string): Promise<MDXCaseStudy | null> {
   try {
+    const contentDirectory = resolveCaseStudyDirectory();
     const filePath = path.join(contentDirectory, `${slug}.mdx`);
     
     if (!fs.existsSync(filePath)) {
@@ -407,6 +419,7 @@ export async function validateAllCaseStudies(): Promise<{
   
   for (const slug of slugs) {
     try {
+      const contentDirectory = resolveCaseStudyDirectory();
       const filePath = path.join(contentDirectory, `${slug}.mdx`);
       const fileContents = fs.readFileSync(filePath, 'utf8');
       const { data, content } = matter(fileContents);

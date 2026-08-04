@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_blocks_stats",
+  "info": {
+    "displayName": "Stats",
+    "icon": "chartBubble",
+    "description": "Statistics row"
+  },
+  "options": {},
+  "attributes": {
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.stat-item"
+    }
+  }
+}

@@ -1,3 +1,55 @@
+# cms-strapi
+
+Multi-site editorial CMS for **IntraWeb Technology**, built on Strapi 5.51.1
+(TypeScript). It is the single source of truth for editorial content
+(pages, articles, projects, case studies, services, FAQs, testimonials,
+navigation, redirects) shared across the `personal` (johnschibelli.dev)
+and `intraweb` (intrawebtech.com) sites. See
+[`docs/strapi-migration/contracts.md`](../../docs/strapi-migration/contracts.md)
+and [`docs/strapi-migration/content-model.md`](../../docs/strapi-migration/content-model.md)
+in the repo root for the frozen content model and API contracts. Operational
+data (auth, billing, portal RBAC) is explicitly **out of scope** here — see
+the Portal boundary section of the contracts doc.
+
+## Content model highlights
+
+- **Sites** (`personal`, `intraweb`) are the ownership root. `Site.key` is
+  immutable after creation (enforced by a lifecycle hook) since frontends
+  hardcode it.
+- Single-site types (Site Settings, Navigation, Page, Service, Redirect)
+  relate to exactly one Site; multi-site types (Article, Project, Case
+  Study, Testimonial, FAQ Item) use a many-to-many `sites` relation;
+  global types (Author, Category, Tag, Technology) have no Site relation.
+- `Page.sections` is the only dynamic zone (`blocks.hero`, `blocks.rich-text`,
+  `blocks.cta`, `blocks.faq-section`, `blocks.media`, `blocks.stats`).
+- Uniqueness rules (`Site.key`, `(site, slug)` on Page, one Site Settings
+  per Site, slug-per-site on Article/Project/Case Study) are enforced via
+  content-type lifecycle hooks in `src/api/*/content-types/*/lifecycles.ts`
+  — see inline comments for Draft & Publish / Document Service caveats.
+
+## Bootstrap seed
+
+On every boot, `src/index.ts` idempotently ensures the two contract-defined
+`Site` rows (`personal`, `intraweb`) exist — it only inserts missing keys
+and never mutates existing rows. For fuller seeding/migration workflows see
+`scripts/seed-sites.ts` and `scripts/migrate/`.
+
+## Health check
+
+`GET /api/health` (no auth) returns `{ "ok": true }` for liveness probes.
+
+## Database
+
+`config/database.ts` supports `sqlite` (dev default), `postgres` (prod —
+the `pg` driver is a dependency), and `mysql` via `DATABASE_CLIENT`. Copy
+`.env.example` to `.env` and fill in real secrets — **never commit `.env`**.
+The live instance at `cms.intrawebtech.com` is a deploy target only; do not
+point local development at it, and do not write production schemas without
+an explicit inventory + backup + approval step (see ADR-002 in the docs
+site).
+
+---
+
 # 🚀 Getting started with Strapi
 
 Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.

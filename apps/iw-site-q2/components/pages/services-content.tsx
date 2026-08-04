@@ -7,8 +7,9 @@ import { PageHero } from "@/components/page-hero";
 import { SectionLabel } from "@/components/section-label";
 import { Btn, Reveal } from "@/components/primitives";
 import { Ic } from "@/components/icons";
+import type { CmsServiceCard, GeoFaqPair } from "@/lib/cms-content-types";
 
-/** Website offers — product-style marketing cards */
+/** Website offers — product-style marketing cards (hardcoded fallback) */
 const websiteProductCards = [
   {
     id: "web-starter",
@@ -109,7 +110,16 @@ function SectionBlock({ children, id, firstAfterHero }: { children: React.ReactN
   );
 }
 
-export function ServicesPageContent() {
+export function ServicesPageContent({
+  faqItems,
+  cmsServices,
+}: {
+  faqItems?: GeoFaqPair[];
+  /** When present, replaces hardcoded website package cards (no prices invented). */
+  cmsServices?: CmsServiceCard[] | null;
+} = {}) {
+  const useCmsPackages = Boolean(cmsServices?.length);
+
   return (
     <main className="iw-with-bc">
       <BreadcrumbNav
@@ -151,95 +161,166 @@ export function ServicesPageContent() {
             className="services-three"
             style={{ marginTop: 40, gap: 24, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px,1fr))" }}
           >
-            {websiteProductCards.map((pkg, i) => (
-              <Reveal key={pkg.id} delay={i * 80}>
-                <div
-                  className="card"
-                  style={{
-                    height: "100%",
-                    padding: 28,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 16,
-                    borderRadius: 12,
-                    border: "1px solid var(--card-border-on-dark, rgba(255,255,255,0.08))",
-                    background: "var(--page-bg-elevated-dark, rgba(16, 26, 46, 0.75))",
-                    boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
-                  }}
-                >
-                  <div>
-                    <h3
-                      style={{
-                        margin: 0,
-                        fontSize: "clamp(1.25rem, 1.5vw, 1.4rem)",
-                        fontWeight: 700,
-                        fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
-                        color: "var(--iw-fg)",
-                        letterSpacing: "-0.03em",
-                      }}
-                    >
-                      {pkg.name}
-                    </h3>
-                    <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.5, color: "var(--iw-fg-2)" }}>{pkg.tagline}</p>
+            {useCmsPackages
+              ? cmsServices!.map((svc, i) => (
+                  <Reveal key={svc.documentId} delay={i * 80}>
                     <div
+                      className="card"
                       style={{
-                        marginTop: 14,
-                        padding: "14px 16px",
-                        borderRadius: 8,
-                        background: "rgba(52, 231, 208, 0.06)",
-                        border: "1px solid rgba(52, 231, 208, 0.12)",
+                        height: "100%",
+                        padding: 28,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 16,
+                        borderRadius: 12,
+                        border: "1px solid var(--card-border-on-dark, rgba(255,255,255,0.08))",
+                        background: "var(--page-bg-elevated-dark, rgba(16, 26, 46, 0.75))",
+                        boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
                       }}
                     >
-                      <p
-                        className="mono"
-                        style={{ margin: 0, fontSize: 9, color: "var(--iw-amber)", letterSpacing: "0.12em" }}
-                      >
-                        ABOUT THIS SIZE
-                      </p>
-                      <p
-                        style={{
-                          margin: "6px 0 0",
-                          fontSize: "clamp(1.25rem, 1.3vw, 1.4rem)",
-                          fontWeight: 700,
-                          color: "var(--iw-fg)",
-                          letterSpacing: "-0.03em",
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        {pkg.pages}
-                      </p>
-                      <p style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.5, color: "var(--iw-fg-2)" }}>
-                        {pkg.pagesNote}
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {pkg.highlights.map((h) => (
-                      <div key={h} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                        <Ic.check width={18} height={18} style={{ color: "var(--color-accent)", flexShrink: 0, marginTop: 2 }} />
-                        <span style={{ fontSize: 15, lineHeight: 1.5, color: "var(--iw-fg-1)" }}>{h}</span>
+                      <div>
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: "clamp(1.25rem, 1.5vw, 1.4rem)",
+                            fontWeight: 700,
+                            fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
+                            color: "var(--iw-fg)",
+                            letterSpacing: "-0.03em",
+                          }}
+                        >
+                          {svc.name}
+                        </h3>
+                        {svc.shortDescription ? (
+                          <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.5, color: "var(--iw-fg-2)" }}>
+                            {svc.shortDescription}
+                          </p>
+                        ) : null}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </Reveal>
-            ))}
+                      {svc.features.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                          {svc.features.map((f) => (
+                            <div key={f.title} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                              <Ic.check
+                                width={18}
+                                height={18}
+                                style={{ color: "var(--color-accent)", flexShrink: 0, marginTop: 2 }}
+                              />
+                              <span style={{ fontSize: 15, lineHeight: 1.5, color: "var(--iw-fg-1)" }}>
+                                {f.description ? `${f.title} — ${f.description}` : f.title}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </Reveal>
+                ))
+              : websiteProductCards.map((pkg, i) => (
+                  <Reveal key={pkg.id} delay={i * 80}>
+                    <div
+                      className="card"
+                      style={{
+                        height: "100%",
+                        padding: 28,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 16,
+                        borderRadius: 12,
+                        border: "1px solid var(--card-border-on-dark, rgba(255,255,255,0.08))",
+                        background: "var(--page-bg-elevated-dark, rgba(16, 26, 46, 0.75))",
+                        boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+                      }}
+                    >
+                      <div>
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: "clamp(1.25rem, 1.5vw, 1.4rem)",
+                            fontWeight: 700,
+                            fontFamily: "var(--font-dm-sans), var(--iw-display), sans-serif",
+                            color: "var(--iw-fg)",
+                            letterSpacing: "-0.03em",
+                          }}
+                        >
+                          {pkg.name}
+                        </h3>
+                        <p style={{ margin: "10px 0 0", fontSize: 15, lineHeight: 1.5, color: "var(--iw-fg-2)" }}>
+                          {pkg.tagline}
+                        </p>
+                        <div
+                          style={{
+                            marginTop: 14,
+                            padding: "14px 16px",
+                            borderRadius: 8,
+                            background: "rgba(52, 231, 208, 0.06)",
+                            border: "1px solid rgba(52, 231, 208, 0.12)",
+                          }}
+                        >
+                          <p
+                            className="mono"
+                            style={{ margin: 0, fontSize: 9, color: "var(--iw-amber)", letterSpacing: "0.12em" }}
+                          >
+                            ABOUT THIS SIZE
+                          </p>
+                          <p
+                            style={{
+                              margin: "6px 0 0",
+                              fontSize: "clamp(1.25rem, 1.3vw, 1.4rem)",
+                              fontWeight: 700,
+                              color: "var(--iw-fg)",
+                              letterSpacing: "-0.03em",
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {pkg.pages}
+                          </p>
+                          <p style={{ margin: "8px 0 0", fontSize: 13, lineHeight: 1.5, color: "var(--iw-fg-2)" }}>
+                            {pkg.pagesNote}
+                          </p>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {pkg.highlights.map((h) => (
+                          <div key={h} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                            <Ic.check
+                              width={18}
+                              height={18}
+                              style={{ color: "var(--color-accent)", flexShrink: 0, marginTop: 2 }}
+                            />
+                            <span style={{ fontSize: 15, lineHeight: 1.5, color: "var(--iw-fg-1)" }}>{h}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
           </div>
-          <Reveal delay={120}>
-            <h3 style={{ marginTop: 48, fontSize: 20, fontWeight: 600 }}>Add-ons</h3>
-            <ul style={{ marginTop: 12, color: "var(--iw-fg-1)" }}>
-              {addons.map((a) => (
-                <li key={a} style={{ marginBottom: 6 }}>
-                  {a}
-                </li>
-              ))}
-            </ul>
-            <div style={{ marginTop: 28, fontSize: 16, color: "var(--iw-fg-1)" }}>
-              <Btn href="/diagnostic" variant="primary">
-                Not sure which fits? Start with a Diagnostic
-              </Btn>
-            </div>
-          </Reveal>
+          {!useCmsPackages ? (
+            <Reveal delay={120}>
+              <h3 style={{ marginTop: 48, fontSize: 20, fontWeight: 600 }}>Add-ons</h3>
+              <ul style={{ marginTop: 12, color: "var(--iw-fg-1)" }}>
+                {addons.map((a) => (
+                  <li key={a} style={{ marginBottom: 6 }}>
+                    {a}
+                  </li>
+                ))}
+              </ul>
+              <div style={{ marginTop: 28, fontSize: 16, color: "var(--iw-fg-1)" }}>
+                <Btn href="/diagnostic" variant="primary">
+                  Not sure which fits? Start with a Diagnostic
+                </Btn>
+              </div>
+            </Reveal>
+          ) : (
+            <Reveal delay={120}>
+              <div style={{ marginTop: 28, fontSize: 16, color: "var(--iw-fg-1)" }}>
+                <Btn href="/diagnostic" variant="primary">
+                  Not sure which fits? Start with a Diagnostic
+                </Btn>
+              </div>
+            </Reveal>
+          )}
         </div>
       </SectionBlock>
 
@@ -459,7 +540,7 @@ export function ServicesPageContent() {
           </Reveal>
         </div>
       </SectionBlock>
-      <GeoFaqBlock className="marketing-slab marketing-slab--page-end" id="faq" />
+      <GeoFaqBlock className="marketing-slab marketing-slab--page-end" id="faq" items={faqItems} />
     </main>
   );
 }

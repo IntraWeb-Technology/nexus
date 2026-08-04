@@ -11,9 +11,10 @@
     "start": "next start --port 3010",
     "lint": "eslint",
     "check-types": "tsc --noEmit",
-    "test": "tsx --test lib/data-deletion.test.ts"
+    "test": "tsx --test lib/data-deletion.test.ts lib/strapi.test.ts lib/strapi-secrets.test.ts"
   },
   "dependencies": {
+    "@repo/strapi-client": "workspace:*",
     "@anthropic-ai/sdk": "^0.54.0",
     "@calcom/embed-react": "^1.5.3",
     "clsx": "^2.1.1",
