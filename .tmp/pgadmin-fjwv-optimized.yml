@@ -1,0 +1,33 @@
+services:
+  pgadmin:
+    image: dpage/pgadmin4:8.14
+    restart: unless-stopped
+    mem_limit: 256m
+    memswap_limit: 256m
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${ADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${ADMIN_PASSWORD}
+      PGADMIN_LISTEN_PORT: "80"
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
+      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: "30"
+      PGADMIN_DISABLE_POSTFIX: "True"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - edge
+      - postiz-network
+      - temporal-network
+
+networks:
+  edge:
+    external: true
+    name: edge
+  postiz-network:
+    external: true
+    name: postiz-t8bc_postiz-network
+  temporal-network:
+    external: true
+    name: postiz-t8bc_temporal-network
+
+volumes:
+  pgadmin-data:
