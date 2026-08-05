@@ -18,12 +18,19 @@ export function isStrapiContentEnabled(): boolean {
   return flag === "true" || flag === "1";
 }
 
+type StrapiEnv = {
+  STRAPI_URL?: string;
+  STRAPI_API_TOKEN?: string;
+  STRAPI_CONTENT_ENABLED?: string;
+  STRAPI_PREVIEW_SECRET?: string;
+};
+
 /**
  * Returns a configured client, or `null` when Strapi should not be used.
  * Does not throw at import time; safe to call from server components.
  */
 export function getStrapiClient(
-  env: NodeJS.ProcessEnv = process.env,
+  env: StrapiEnv = process.env,
 ): StrapiClient | null {
   const flag = env.STRAPI_CONTENT_ENABLED?.trim().toLowerCase();
   if (flag !== undefined && flag !== "" && flag !== "true" && flag !== "1") {
