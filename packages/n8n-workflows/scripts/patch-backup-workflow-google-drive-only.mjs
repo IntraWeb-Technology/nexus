@@ -257,7 +257,7 @@ async function main() {
   const root = baseUrl()
   const key = (process.env.N8N_API_KEY || '').trim()
   if (!root || !key) {
-    console.error('Set N8N_API_URL and N8N_API_KEY (e.g. apps/iw-site/.env.local).')
+    console.error('Set N8N_API_URL and N8N_API_KEY (e.g. apps/iw-portal/.env.local).')
     process.exit(1)
   }
   const apiRoot = `${root}/api/v1`

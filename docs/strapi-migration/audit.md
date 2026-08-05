@@ -50,7 +50,7 @@ This audit is the prerequisite for shared content-model design. No destructive c
 |---|---|
 | Package manager | pnpm `10.33.0` |
 | Node | `22.x` |
-| Monorepo | Turborepo `^2.9.6`; workspace `apps/*` (excludes legacy `apps/iw-site`), `packages/*` |
+| Monorepo | Turborepo `^2.9.6`; workspace `apps/*` / `packages/*` (see `pnpm-workspace.yaml` excludes) |
 | Commands | `pnpm build`, `pnpm lint`, `pnpm check-types`, `pnpm --filter @repo/iw-site-q2 {dev,build,lint,check-types,test}` |
 
 ### 3.2 Personal site (`apps/personal-site`)

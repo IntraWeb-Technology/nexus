@@ -1,6 +1,5 @@
 packages:
   - "apps/*"
-  - "!apps/iw-site"
   # Temporary build-check copy — duplicate package name breaks Turbo
   - "!apps/_cms-strapi-build-check"
   # Yarn/Nextra docs live in a separate repo (git submodule); not part of pnpm workspace

@@ -20,7 +20,7 @@ For each project, enable **Include files outside the root directory in the Build
 - `apps/iw-portal` - client dashboard, built with Next.js 16, Clerk, Supabase, Stripe, Resend, and Tailwind CSS v4. Local dev port: `3002`.
 - `apps/iw-site-q2` - production marketing site, built with Next.js 16, reCAPTCHA Enterprise, Cal.com, Resend, Anthropic SDK, and Tailwind CSS v4. Local dev port: `3010`.
 
-`apps/iw-site` is the legacy marketing app and is explicitly excluded from the pnpm workspace.
+Legacy `apps/iw-site` was removed from this monorepo (relocated elsewhere).
 
 ## Packages
 
@@ -104,12 +104,12 @@ pnpm --filter @repo/n8n-workflows sync:n8n:package
 pnpm --filter @repo/n8n-workflows push:n8n:workflow
 ```
 
-Legacy note: `apps/iw-site/scripts` contains deprecated compatibility wrappers and hard-stops for older n8n commands. Use `packages/n8n-workflows/scripts` as the only source of truth.
+Use `packages/n8n-workflows/scripts` as the only source of truth.
 Operational runbook: `packages/n8n-workflows/RUNBOOK.md`.
 
 ## Workspace Notes
 
-- `pnpm-workspace.yaml` includes `apps/*` and `packages/*`, with `apps/iw-site` excluded.
+- `pnpm-workspace.yaml` includes `apps/*` and `packages/*` (see file for current excludes).
 - Turborepo uses `envMode: strict`; add build-time environment variables to `turbo.json` when app code reads them during build.
 - `@/` path aliases differ by app:
   - `apps/iw-portal`: `@/*` resolves to `src/*`.

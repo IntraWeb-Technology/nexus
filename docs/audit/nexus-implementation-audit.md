@@ -9,7 +9,7 @@
 
 IntraWeb Nexus is a multi-tenant **client portal** and **staff operations console** for IntraWeb Technologies. Clients see project progress, documents, messaging, billing, and change orders. Staff oversee operations, clients, billing, integrations, and an OS command surface. An **n8n automation layer** provisions and syncs CRM/billing events into the portal; the portal remains the system of record for client delivery state.
 
-Companion surface in the same monorepo: **`apps/iw-site-q2`** (public marketing/conversion site). Legacy `apps/iw-site` is excluded from the workspace.
+Companion surface in the same monorepo: **`apps/iw-site-q2`** (public marketing/conversion site). Legacy `apps/iw-site` was removed from this monorepo.
 
 ## Maturity summary
 

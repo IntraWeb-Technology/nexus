@@ -13,7 +13,7 @@
  * great for search, validate, and one-off `n8n_get_workflow` in chat; **bulk export to disk** is
  * what this script is for (stable in CI and does not depend on the agent).
  *
- * Env: loads `apps/iw-site/.env.local`, then `apps/iw-portal/.env.local`, then repo root `.env.local`
+ * Env: loads `apps/iw-site-q2/.env.local`, then `apps/iw-portal/.env.local`, then repo root `.env.local`
  * (first assignment wins for duplicate keys). Typical n8n keys:
  *   N8N_API_URL  — e.g. https://n8n.intrawebtech.com (no /api/v1 suffix)
  *   N8N_API_KEY  — Settings → API in n8n (header X-N8N-API-KEY)

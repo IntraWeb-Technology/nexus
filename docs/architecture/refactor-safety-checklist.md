@@ -50,7 +50,7 @@ pnpm --filter @repo/iw-portal test
 
 ## Do not touch (without explicit approval)
 
-- `apps/iw-site` workspace exclusion and legacy app contents used only for reference.
+- Legacy `apps/iw-site` is no longer in this monorepo; marketing work stays in `apps/iw-site-q2`.
 - Production-only destructive scripts (`vercel-prune-dev-env`, HubSpot ensure scripts) on production tenants without a reviewed runbook.
 - n8n workflow **IDs** embedded in automation and docs.
 - Live customer data without backup and a named owner.

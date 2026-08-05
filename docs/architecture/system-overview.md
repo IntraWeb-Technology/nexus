@@ -11,7 +11,7 @@ Nexus is the pnpm + Turborepo monorepo for IntraWeb Technologies. It hosts the *
 | **iw-portal** (`@repo/iw-portal`) | Authenticated client dashboard: projects, billing, documents, milestones, messages, change orders; receives webhooks from Clerk, Stripe, HubSpot, and n8n. |
 | **iw-site-q2** (`@repo/iw-site-q2`) | Public marketing site: contact form, website intake, kickoff booking; uses reCAPTCHA Enterprise, Cal.com, Resend, HubSpot, and optional n8n webhooks. |
 
-**Legacy:** `apps/iw-site` is excluded from the workspace and should not be used for new work.
+**Note:** legacy `apps/iw-site` was removed from this monorepo; use `apps/iw-site-q2` for marketing.
 
 ## Package responsibilities
 

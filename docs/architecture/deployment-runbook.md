@@ -76,7 +76,7 @@ pnpm check-types
 
 ## Environment variable requirements
 
-1. Copy/fill `.env.local` per app (not committed). n8n scripts may also read root and `apps/iw-portal/.env.local` (and legacy `apps/iw-site/.env.local` in some scripts).
+1. Copy/fill `.env.local` per app (not committed). n8n scripts may also read root, `apps/iw-portal/.env.local`, and `apps/iw-site-q2/.env.local`.
 2. Align production secrets with [integration-map.md](./integration-map.md).
 3. After changing turbo env lists, validate a clean `pnpm build` so caches are not stale with wrong env.
 
