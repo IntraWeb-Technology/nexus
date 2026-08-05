@@ -4,24 +4,31 @@
 
 Repository: [IntraWeb-Technology/nexus](https://github.com/IntraWeb-Technology/nexus).
 
-Workflow file: `.github/workflows/ci.yml` (job `ci`).
+Workflow files:
+
+| Workflow | Purpose |
+|----------|---------|
+| `.github/workflows/ci.yml` | Affected lint / typecheck / test / build + **CI Gate** |
+| `.github/workflows/deploy.yml` | Affected Strapi Docker build (Hostinger apply optional) |
 
 | Item | Value |
 |------|--------|
-| Triggers | `push` and `pull_request` to `main` and `development` |
+| Triggers (CI) | `push` / `pull_request` to `main` and `development`; `workflow_dispatch` (`force_all`, `skip_turbo_cache`) |
+| Triggers (Deploy) | `push` to `main`; `workflow_dispatch` (`force_all`, `app`, `force_deploy`) |
 | Runner | `ubuntu-latest` |
 | Node.js | 22 |
-| Package manager | pnpm **10.33.0** via **Corepack** (`corepack enable` then `corepack prepare pnpm@10.33.0 --activate`) |
-| Cache | pnpm store restored with `actions/cache`, keyed by OS and hash of root `pnpm-lock.yaml` |
+| Package manager | pnpm **10.33.0** via **Corepack** |
+| Cache | pnpm store + Turborepo `.turbo` (CI validate job) |
+| Change detection | `.github/scripts/affected.mjs` → `turbo query affected` (fail closed) |
+| Checkout | `fetch-depth: 0` (required for accurate affected ranges) |
 
-Steps run in order:
+CI jobs:
 
-1. `pnpm install --frozen-lockfile`
-2. `pnpm lint`
-3. `pnpm check-types`
-4. `pnpm build`
+1. **Detect affected** — resolve base/head SHAs, emit package/app summary
+2. **Validate** — `turbo run lint check-types test build --filter=...[BASE]` (or full workspace on `force_all` / detection failure)
+3. **CI Gate** — always runs; required status check should point here
 
-This workflow validates the monorepo only; it does not deploy or call hosting APIs. Deployment steps belong in separate automation if you add them later.
+Next.js production deploys remain on **Vercel** (`ignoreCommand` + `turbo query affected` per app). See [ci-affected.md](./ci-affected.md).
 
 ## Local development
 

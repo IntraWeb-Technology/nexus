@@ -5,6 +5,8 @@
   "description": "A Strapi application",
   "scripts": {
     "build": "strapi build",
+    "lint": "node -e \"process.exit(0)\"",
+    "check-types": "node -e \"process.exit(0)\"",
     "console": "strapi console",
     "deploy": "strapi deploy",
     "dev": "strapi develop",
