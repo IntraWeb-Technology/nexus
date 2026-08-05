@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-04T05:33:18.350Z",
-  "migrationBatch": "2026-08-04T05:33:18.349Z",
-  "mode": "dry-run",
+  "generatedAt": "2026-08-04T18:21:20.369Z",
+  "migrationBatch": "2026-08-04T18:21:20.367Z",
+  "mode": "write",
   "items": [
     {
       "domain": "case-studies",

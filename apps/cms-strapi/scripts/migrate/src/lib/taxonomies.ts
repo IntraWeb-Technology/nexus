@@ -118,7 +118,8 @@ export async function upsertGeneric(
   uid: string,
   findFilters: Record<string, unknown>,
   payload: Record<string, unknown>,
-  mode: RunMode
+  mode: RunMode,
+  options: { published?: boolean } = {}
 ): Promise<{ documentId?: string; action: "created" | "updated" | "would-create" | "would-update" }> {
   if (mode !== "write") {
     const existing = await tryFindQuiet(uid, findFilters);
@@ -128,10 +129,10 @@ export async function upsertGeneric(
   }
   const existing = await findOne(uid, findFilters);
   if (existing) {
-    const updated = await updateEntry(uid, existing.documentId, payload);
+    const updated = await updateEntry(uid, existing.documentId, payload, options);
     return { documentId: updated.documentId, action: "updated" };
   }
-  const created = await createEntry(uid, payload);
+  const created = await createEntry(uid, payload, options);
   return { documentId: created.documentId, action: "created" };
 }
 

@@ -120,25 +120,39 @@ export async function findMany(
 
 export async function createEntry(
   uid: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  options: { published?: boolean } = {}
 ): Promise<StrapiEntry> {
-  const result = await request<{ data: StrapiEntry }>("POST", `/api/${uid}`, { data: payload });
+  // Content API has no /actions/publish route (that's Content Manager / admin only).
+  // Strapi 5 publishes on write via ?status=published.
+  const qs = options.published ? "?status=published" : "";
+  const result = await request<{ data: StrapiEntry }>("POST", `/api/${uid}${qs}`, {
+    data: payload,
+  });
   return result.data;
 }
 
 export async function updateEntry(
   uid: string,
   documentId: string,
-  payload: Record<string, unknown>
+  payload: Record<string, unknown>,
+  options: { published?: boolean } = {}
 ): Promise<StrapiEntry> {
-  const result = await request<{ data: StrapiEntry }>("PUT", `/api/${uid}/${documentId}`, {
-    data: payload,
-  });
+  const qs = options.published ? "?status=published" : "";
+  const result = await request<{ data: StrapiEntry }>(
+    "PUT",
+    `/api/${uid}/${documentId}${qs}`,
+    { data: payload }
+  );
   return result.data;
 }
 
+/**
+ * Publish via Content API by re-saving with status=published.
+ * (POST /api/:uid/:id/actions/publish returns 405 — admin Content Manager only.)
+ */
 export async function publishEntry(uid: string, documentId: string): Promise<void> {
-  await request("POST", `/api/${uid}/${documentId}/actions/publish`);
+  await request("PUT", `/api/${uid}/${documentId}?status=published`, { data: {} });
 }
 
 /** Wrap a many-relation id array in Strapi v5's explicit `set` form so the

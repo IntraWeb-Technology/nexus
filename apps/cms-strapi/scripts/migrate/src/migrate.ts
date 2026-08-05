@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { checkConnectivity, findOne, publishEntry, relationSet } from "./lib/strapiClient";
+import { checkConnectivity, findOne, relationSet } from "./lib/strapiClient";
 import { upsertGeneric, TaxonomyCache } from "./lib/taxonomies";
 import { uploadMediaFromUrl } from "./lib/media";
 import { MigrationReport } from "./lib/report";
@@ -232,13 +232,13 @@ async function runArticles(
         ? { hashnodeId: { $eq: plan.hashnodeId } }
         : { slug: { $eq: plan.slug }, sites: { key: { $eq: plan.sites[0] } } };
 
-      const { documentId, action } = await upsertGeneric("articles", findFilters, payload, mode);
-
-      if (mode === "write" && documentId && plan.shouldPublish) {
-        await publishEntry("articles", documentId).catch((err) =>
-          console.warn(`[articles] publish failed for ${plan.slug}: ${(err as Error).message}`)
-        );
-      }
+      const { documentId, action } = await upsertGeneric(
+        "articles",
+        findFilters,
+        payload,
+        mode,
+        { published: Boolean(plan.shouldPublish) }
+      );
 
       report.addResult(toUpsertResult("articles", plan.slug, action, documentId, plan.sourceFile));
     } catch (err) {
@@ -301,7 +301,7 @@ async function runProjects(mode: RunMode, taxonomy: TaxonomyCache, report: Migra
         repositoryUrl: plan.repositoryUrl,
         liveUrl: plan.liveUrl,
         documentationUrl: plan.documentationUrl,
-        status: plan.status,
+        projectStatus: plan.status,
         startDate: plan.startDate,
         endDate: plan.endDate,
         featured: plan.featured,
@@ -315,13 +315,9 @@ async function runProjects(mode: RunMode, taxonomy: TaxonomyCache, report: Migra
         "projects",
         { slug: { $eq: plan.slug } },
         payload,
-        mode
+        mode,
+        { published: true }
       );
-      if (mode === "write" && documentId) {
-        await publishEntry("projects", documentId).catch((err) =>
-          console.warn(`[projects] publish failed for ${plan.slug}: ${(err as Error).message}`)
-        );
-      }
       report.addResult(toUpsertResult("projects", plan.slug, action, documentId, plan.sourceFile));
     } catch (err) {
       report.addResult({
@@ -408,13 +404,9 @@ async function runCaseStudies(mode: RunMode, taxonomy: TaxonomyCache, report: Mi
         "case-studies",
         { slug: { $eq: plan.slug } },
         payload,
-        mode
+        mode,
+        { published: Boolean(plan.shouldPublish) }
       );
-      if (mode === "write" && documentId && plan.shouldPublish) {
-        await publishEntry("case-studies", documentId).catch((err) =>
-          console.warn(`[case-studies] publish failed for ${plan.slug}: ${(err as Error).message}`)
-        );
-      }
       if (documentId) relatedProjectIds.set(plan.slug, documentId);
       report.addResult(toUpsertResult("case-studies", plan.slug, action, documentId, plan.sourceFile));
     } catch (err) {
@@ -460,13 +452,9 @@ async function runFaq(mode: RunMode, taxonomy: TaxonomyCache, report: MigrationR
         "faq-items",
         { question: { $eq: plan.question } },
         payload,
-        mode
+        mode,
+        { published: true }
       );
-      if (mode === "write" && documentId) {
-        await publishEntry("faq-items", documentId).catch((err) =>
-          console.warn(`[faq] publish failed for "${plan.question}": ${(err as Error).message}`)
-        );
-      }
       report.addResult(toUpsertResult("faq", plan.question, action, documentId, plan.sourceFile));
     } catch (err) {
       report.addResult({
@@ -510,13 +498,9 @@ async function runNav(mode: RunMode, taxonomy: TaxonomyCache, report: MigrationR
         "navigations",
         { site: { key: { $eq: plan.siteKey } }, location: { $eq: plan.location } },
         payload,
-        mode
+        mode,
+        { published: true }
       );
-      if (mode === "write" && documentId) {
-        await publishEntry("navigations", documentId).catch((err) =>
-          console.warn(`[nav] publish failed for ${plan.name}: ${(err as Error).message}`)
-        );
-      }
       report.addResult(toUpsertResult("nav", plan.name, action, documentId, plan.sourceFile));
     } catch (err) {
       report.addResult({
