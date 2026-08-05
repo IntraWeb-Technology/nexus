@@ -73,15 +73,10 @@ export async function getStaffProfile(): Promise<StaffProfile | null> {
       .maybeSingle()
     if (error || !data) return null
     const staff = data as StaffProfile
-    if (staff.clerk_user_id !== userId) {
-      try {
-        const service = createServiceSupabase()
-        await service.from('staff_users').update({ clerk_user_id: userId }).eq('id', staff.id)
-      } catch {
-        // Best-effort reconciliation only; matching email still confirms identity.
-      }
-    }
-    return { ...staff, clerk_user_id: userId } as StaffProfile
+    // Security: Only return staff profile if clerk_user_id already matches.
+    // Prevents account takeover via email alone. Manual reconciliation required.
+    if (staff.clerk_user_id !== userId) return null
+    return staff
   }
 
   const bootstrapStaffFromClerkOrg = async (): Promise<StaffProfile | null> => {

@@ -71,19 +71,21 @@ function toHubSpotSingleLinePainPoint(s: string): string {
 }
 
 const formSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  companyName: z.string().min(1),
+  email: z.string().email().max(255),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  companyName: z.string().min(1).max(255),
   phone: z
     .string()
     .min(1, "Phone is required")
+    .max(50)
     .refine((v) => {
       const d = digitsOnly(v);
       return d.length >= 10 && d.length <= 15;
     }, "Enter a valid phone number (10–15 digits, e.g. +1 555 000 0000)"),
   website: z
     .string()
+    .max(500)
     .optional()
     .transform((s) => (s == null ? "" : s.trim()))
     .refine(isValidOptionalWebsite, "Enter a valid URL or leave blank"),
