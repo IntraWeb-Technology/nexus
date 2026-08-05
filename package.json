@@ -27,6 +27,10 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": ["supabase"],
-    "ignoredBuiltDependencies": ["sharp", "unrs-resolver"]
+    "ignoredBuiltDependencies": ["sharp", "unrs-resolver"],
+    "overrides": {
+      "@types/react": "^19.2.2",
+      "@types/react-dom": "^19.2.2"
+    }
   }
 }
