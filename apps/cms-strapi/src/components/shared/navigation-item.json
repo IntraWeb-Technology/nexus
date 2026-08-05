@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_shared_navigation_items",
+  "info": {
+    "displayName": "Navigation Item",
+    "icon": "bulletList",
+    "description": "Nav item with optional child links"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "href": {
+      "type": "string",
+      "required": true
+    },
+    "openInNewTab": {
+      "type": "boolean",
+      "default": false
+    },
+    "children": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.link"
+    }
+  }
+}

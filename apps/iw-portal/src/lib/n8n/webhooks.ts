@@ -1,4 +1,13 @@
-import type { ChangeOrderStatus, NotificationType, Plan } from '@/lib/supabase/types'
+import type {
+  BillingKind,
+  BillingPhase,
+  ChangeOrderStatus,
+  ExternalInvoiceSource,
+  NotificationType,
+  Plan,
+} from '@/lib/supabase/types'
+import type { EngagementPhase } from '@/lib/milestones-templates'
+import type { ProposalLifecycleEventType } from '@/lib/proposals/lifecycle'
 
 export type N8nInboundAction =
   | 'update_milestone'
@@ -9,7 +18,9 @@ export type N8nInboundAction =
   | 'add_invoice'
   | 'log_activity'
   | 'provision_client'
+  | 'link_portal_clerk_user'
   | 'update_change_order'
+  | 'attach_project_document'
 
 export interface N8nEnvelope<T extends N8nInboundAction, D> {
   action: T
@@ -38,6 +49,30 @@ export type AddDocumentData = {
   requires_signature?: boolean
 }
 
+/** HubSpot deal id for os_contracts_queue row (must match portal project’s linked deal). */
+export type AttachProjectDocumentData = {
+  queue_type: 'proposal' | 'contract'
+  hubspot_deal_id: string
+  /** Friendly filename for the documents list (PDF). */
+  name: string
+  /** PDF bytes as base64; alternative to storage_path. */
+  base64?: string
+  /** Existing path in client-uploads (project_id/...); use if file was uploaded out-of-band. */
+  storage_path?: string
+  file_size_kb?: number
+  requires_signature?: boolean
+  /** Optional: keep Google Drive link for staff / migration. */
+  drive_link?: string | null
+  /** Used when creating a new os_contracts_queue row. */
+  client_name?: string
+  company?: string
+  industry?: string
+  deal_value?: string
+  tier?: string
+  contact_email?: string
+  pain_points?: string
+}
+
 export type AddNotificationData = {
   type: NotificationType
   title: string
@@ -51,6 +86,32 @@ export type AddInvoiceData = {
   status: 'paid' | 'pending' | 'overdue' | 'void'
   sku?: string
   due_date?: string
+  /**
+   * HubSpot CRM `invoices` object id (string). When set, `add_invoice` **updates** the existing Supabase
+   * row for that id instead of inserting, keeping one portal row in sync and deduplicating the merged
+   * billing list with HubSpot-fetched invoices (`mergeBillingRows` in `src/lib/billing/types.ts`).
+   */
+  hubspot_invoice_id?: string
+  /** ISO 8601 or parseable date-time when the invoice was marked paid (e.g. HubSpot payment date). */
+  paid_at?: string
+  /** Three-letter ISO currency code (lowercase in DB), e.g. `usd`. */
+  currency?: string
+  /** Canonical billing timeline phase for UI grouping. */
+  billing_phase?: BillingPhase
+  /** Explicit billing kind so recurring rows do not mix with milestone rows. */
+  billing_kind?: BillingKind
+  /** Fixed ordering for phase timeline cards (1..3). */
+  milestone_order?: 1 | 2 | 3
+  /** External source for idempotent upserts by external object id. */
+  external_source?: ExternalInvoiceSource
+  /** Source object id (HubSpot invoice id, Stripe invoice id, etc.). */
+  external_object_id?: string
+  /** Recurring service period start date (YYYY-MM-DD). */
+  service_period_start?: string
+  /** Recurring service period end date (YYYY-MM-DD). */
+  service_period_end?: string
+  /** Optional recurring group key, e.g. monthly maintenance series id. */
+  maintenance_group_key?: string
 }
 
 /** Use `project_slug` **or** `hubspot_deal_id` (matches `projects.hubspot_deal_id`) to resolve the project. */
@@ -59,7 +120,7 @@ export type AddInvoiceInboundPayload =
   | { action: 'add_invoice'; hubspot_deal_id: string; data: AddInvoiceData }
 
 export type LogActivityData = {
-  type: 'milestone' | 'payment' | 'message' | 'document' | 'task' | 'login' | 'system'
+  type: 'milestone' | 'payment' | 'message' | 'document' | 'task' | 'login' | 'system' | 'proposal'
   label: string
   detail?: string
 }
@@ -72,8 +133,38 @@ export type ProvisionClientData = {
   hubspot_deal_id: string
   plan: Plan
   start_date: string
-  /** If omitted, a unique placeholder is generated until Clerk user exists */
+  /**
+   * If omitted, `provision:hs:<hubspot_contact_id>` is used until Clerk links.
+   * When set to a real `user_…` id and that portal client already exists (e.g. auto-provision),
+   * the new project is attached to that row so `hubspot_deal_id` / milestones live under the
+   * signed-in user without a duplicate client.
+   */
   clerk_user_id?: string
+  /** When `qualified`, seeds pre-contract milestones instead of the full delivery template. */
+  engagement_phase?: EngagementPhase
+  /**
+   * When `false`, the portal does not insert `invoicesForPlan` template rows. Use n8n `add_invoice` with
+   * `amount_cents` from HubSpot (deal/line items, including discounts). When omitted or `true`, template
+   * invoice seeds are inserted (legacy list-style amounts).
+   */
+  seed_template_invoices?: boolean
+  /**
+   * Closed-set slug for maintenance package eligibility (matches STRIPE_MAINTENANCE_PACKAGES plan_slugs).
+   * Also synced from HubSpot via webhook (HUBSPOT_DEAL_PORTAL_PLAN_PROPERTY).
+   */
+  portal_plan_slug?: string | null
+}
+
+/**
+ * After HubSpot `provision_client`, swap placeholder `clerk_user_id` for the real Clerk
+ * `user_…` id (e.g. from Clerk API / invite accepted). At least one of `hubspot_contact_id`
+ * or `email` should match the provisioned client row.
+ */
+export type LinkPortalClerkUserData = {
+  clerk_user_id: string
+  hubspot_contact_id?: string
+  /** Strongly recommended when the HubSpot row was linked by contact id only — merges placeholder clients after auto-provision. */
+  email?: string
 }
 
 /** HubSpot / n8n: set portal row status after staff approval (or decline). `project_slug` must match the change order's project. */
@@ -82,6 +173,14 @@ export type UpdateChangeOrderData = {
   status: ChangeOrderStatus
   staff_notes?: string | null
 }
+
+/** Inbound actions that do not use `project_slug` on the envelope (HubSpot continuity helpers). */
+export type N8nInboundPayloadNoSlug =
+  | { action: 'link_portal_clerk_user'; data: LinkPortalClerkUserData }
+
+export type AttachProjectDocumentInboundPayload =
+  | N8nEnvelope<'attach_project_document', AttachProjectDocumentData>
+  | { action: 'attach_project_document'; hubspot_deal_id: string; data: AttachProjectDocumentData }
 
 export type N8nInboundPayload =
   | N8nEnvelope<'update_milestone', UpdateMilestoneData>
@@ -92,7 +191,9 @@ export type N8nInboundPayload =
   | AddInvoiceInboundPayload
   | N8nEnvelope<'log_activity', LogActivityData>
   | N8nEnvelope<'provision_client', ProvisionClientData>
+  | N8nInboundPayloadNoSlug
   | N8nEnvelope<'update_change_order', UpdateChangeOrderData>
+  | AttachProjectDocumentInboundPayload
 
 export interface StaffAlertPayload {
   project_slug: string
@@ -151,6 +252,32 @@ export interface StripeCatalogCheckoutPayload {
   discounts?: StripeCatalogDiscountSummary | null
 }
 
+/** Stripe subscription lifecycle mirror payload (Stripe -> Supabase -> HubSpot Deal). */
+export interface StripeSubscriptionSyncPayload {
+  event: 'stripe_subscription_sync'
+  stripe_event_id: string
+  stripe_subscription_id: string
+  stripe_customer_id: string | null
+  status:
+    | 'active'
+    | 'trialing'
+    | 'past_due'
+    | 'canceled'
+    | 'unpaid'
+    | 'incomplete'
+    | 'incomplete_expired'
+  cancel_at_period_end: boolean
+  current_period_start: string | null
+  current_period_end: string | null
+  latest_invoice_id: string | null
+  currency: string | null
+  amount_cents: number | null
+  price_id: string | null
+  product_id: string | null
+  project_slug: string | null
+  hubspot_deal_id: string | null
+}
+
 export interface DocumentSignedPayload {
   project_slug: string
   document_name: string
@@ -179,4 +306,28 @@ export interface ChangeOrderRequestedPayload {
   pdf_signed_url: string | null
   /** Plain-text summary for HubSpot deal notes / Slack. */
   summary: string
+}
+
+export interface ProposalLifecyclePayload {
+  event_id: string
+  event_type: ProposalLifecycleEventType | 'generated'
+  proposal_id: string
+  project_id: string
+  project_slug: string
+  client_name: string
+  client_email: string
+  actor_clerk_user_id: string | null
+  actor_name: string
+  hubspot_deal_id: string | null
+  hubspot_contact_id: string | null
+  occurred_at: string
+  decision_version: number
+  metadata: {
+    status: string
+    proposal_status_detail: string | null
+    queue_type: 'proposal'
+    drive_link: string | null
+    deal_value: string | null
+    note: string | null
+  }
 }

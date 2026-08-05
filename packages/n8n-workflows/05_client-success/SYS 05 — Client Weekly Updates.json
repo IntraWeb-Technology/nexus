@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T13:26:20.200Z",
+  "updatedAt": "2026-04-19T19:25:36.445Z",
   "createdAt": "2026-03-08T22:52:09.866Z",
   "id": "K7ndggofjscFDRHN",
   "name": "SYS 05 — Client Weekly Updates",
@@ -40,6 +40,7 @@
     },
     {
       "parameters": {
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
@@ -126,7 +127,24 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "PGf6jPoWtxSPlr0h",
+          "mode": "id",
+          "cachedResultName": "SW: Send Google Chat Alert"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "={{ $json.message }}",
+            "priority": "={{ $json.priority }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys08-warn",
@@ -140,7 +158,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    systemPrompt: 'Write a weekly client update email for IntraWeb Technologies. Tone: direct, professional, no filler. Sections: What we did this week, What\\'s next, Items needed from you. Return HTML only. No markdown, no backticks.',\n    userPrompt: `Client: ${d.clientName}\\nTier: ${d.tier}\\nDeal stage: ${d.dealStage}\\nRecent activity: ${d.noRecentActivity ? 'No logged activity this week' : 'Activity logged this week'}\\n\\nWrite a professional weekly update email.`,\n    maxTokens: 2000\n  }\n}];"
+        "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    systemPrompt: 'Write a weekly client update email for IntraWeb Technologies. Tone: direct, professional, no filler. Sections: What we did this week, What\\'s next, Items needed from you. Return a BODY FRAGMENT only: use <p>, <ul>/<li>, <strong> as needed. Do NOT output <!DOCTYPE>, <html>, <head>, or <body>. No markdown, no backticks. Use inline hex colors only (no CSS variables): primary text #0f1419, muted #475569, links and emphasis #0d9488.',\n    userPrompt: `Client: ${d.clientName}\\nTier: ${d.tier}\\nDeal stage: ${d.dealStage}\\nRecent activity: ${d.noRecentActivity ? 'No logged activity this week' : 'Activity logged this week'}\\n\\nWrite a professional weekly update email.`,\n    maxTokens: 2000\n  }\n}];"
       },
       "id": "sys08-claude-prep",
       "name": "Prep Claude Prompt",
@@ -153,7 +171,25 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "4PPD67ZzEON8Rxxe",
+          "mode": "id",
+          "cachedResultName": "SW: Call Claude API"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "systemPrompt": "={{ $json.systemPrompt }}",
+            "userPrompt": "={{ $json.userPrompt }}",
+            "maxTokens": "={{ $json.maxTokens }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys08-claude",
@@ -180,7 +216,26 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FF6VOLCcRxI4uNYD",
+          "mode": "id",
+          "cachedResultName": "SW: Send Email via Resend"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "subject": "={{ $json.subject }}",
+            "html": "={{ $json.html }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys08-email",
@@ -207,7 +262,28 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1qQFLOSHZsS9JPKP",
+          "mode": "id",
+          "cachedResultName": "SW: Log to Automations Log Sheet"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowName": "={{ $json.workflowName }}",
+            "contactName": "={{ $json.contactName }}",
+            "phone": "={{ $json.phone }}",
+            "eventType": "={{ $json.eventType }}",
+            "status": "={{ $json.status }}",
+            "notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys08-log",
@@ -386,20 +462,24 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "timezone": "America/New_York",
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedMode": "fixed",
     "errorWorkflow": "w9S9LovIY8CxchZm"
   },
-  "staticData": null,
+  "staticData": {
+    "node:Every Friday 4PM EST": {
+      "recurrenceRules": []
+    }
+  },
   "meta": {
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "47278ad3-9682-4959-8541-2c78b1d06563",
-  "activeVersionId": "0ddf7f22-c13a-45db-a467-9e02c1fa5e6f",
-  "versionCounter": 52,
+  "versionId": "eb3d8609-71f8-4276-8927-e55da01d62c6",
+  "activeVersionId": "eb3d8609-71f8-4276-8927-e55da01d62c6",
+  "versionCounter": 138,
   "triggerCount": 1,
   "shared": [
     {
@@ -422,18 +502,13 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:05:40.574Z",
-    "createdAt": "2026-04-03T03:05:40.574Z",
-    "versionId": "0ddf7f22-c13a-45db-a467-9e02c1fa5e6f",
+    "updatedAt": "2026-04-19T19:25:36.446Z",
+    "createdAt": "2026-04-19T19:25:36.446Z",
+    "versionId": "eb3d8609-71f8-4276-8927-e55da01d62c6",
     "workflowId": "K7ndggofjscFDRHN",
     "nodes": [
       {
-        "parameters": {
-          "content": "## SYS 05 — Client Weekly Updates\n\n**Trigger:** Every Friday 4PM EST (cron).\n\n**What it does:** Loads all closed-won clients from HubSpot, checks for recent activity (last 7 days). If no activity, sends a Google Chat warning before sending. For each client, uses Claude to generate a weekly update email (what we did, what's next, items needed), then sends via Resend. Keeps clients informed and surfaces stale accounts.\n\n**Dependencies:** CONFIG, HubSpot, Call Claude API, Send Email, Send Google Chat Alert, Log.",
-          "height": 320,
-          "width": 460,
-          "color": 5
-        },
+        "parameters": {},
         "id": "note-sys08",
         "name": "Note — About this workflow",
         "type": "n8n-nodes-base.stickyNote",
@@ -459,64 +534,38 @@
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.3,
         "position": [
-          250,
-          300
+          256,
+          304
         ]
       },
       {
         "parameters": {
           "source": "database",
-          "workflowId": ""
+          "workflowId": {
+            "__rl": true,
+            "value": "1eTTVoSFSlSPvZV4",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+            "cachedResultName": "CONFIG — Global Settings"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys08-config",
         "name": "Get Config",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          470,
-          300
+          480,
+          304
         ]
-      },
-      {
-        "parameters": {
-          "resource": "deal",
-          "operation": "getAll",
-          "filters": {
-            "values": [
-              {
-                "propertyName": "dealstage",
-                "operator": "EQ",
-                "value": "closed_won"
-              }
-            ]
-          },
-          "limit": 100,
-          "options": {
-            "properties": [
-              "dealname",
-              "tier",
-              "contact_email",
-              "contact_firstname",
-              "dealstage",
-              "monthly_retainer",
-              "last_activity_date"
-            ]
-          }
-        },
-        "id": "sys08-get-clients",
-        "name": "Get Active Clients",
-        "type": "n8n-nodes-base.hubspot",
-        "typeVersion": 2,
-        "position": [
-          690,
-          300
-        ],
-        "credentials": {
-          "hubspotApi": {
-            "id": "volH6pGD5psvPC7a",
-            "name": "HubSpot App Token"
-          }
-        }
       },
       {
         "parameters": {
@@ -527,8 +576,8 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          910,
-          300
+          912,
+          304
         ]
       },
       {
@@ -559,8 +608,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          1130,
-          300
+          1136,
+          304
         ]
       },
       {
@@ -572,48 +621,83 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1350,
-          200
+          1360,
+          208
         ]
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_GOOGLE_CHAT_ALERT_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "PGf6jPoWtxSPlr0h",
+            "mode": "id",
+            "cachedResultName": "SW: Send Google Chat Alert"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "message": "={{ $json.message }}",
+              "priority": "={{ $json.priority }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys08-warn",
         "name": "Send Warning",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          1570,
-          200
+          1584,
+          208
         ]
       },
       {
         "parameters": {
-          "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    systemPrompt: 'Write a weekly client update email for IntraWeb Technologies. Tone: direct, professional, no filler. Sections: What we did this week, What\\'s next, Items needed from you. Return HTML only. No markdown, no backticks.',\n    userPrompt: `Client: ${d.clientName}\\nTier: ${d.tier}\\nDeal stage: ${d.dealStage}\\nRecent activity: ${d.noRecentActivity ? 'No logged activity this week' : 'Activity logged this week'}\\n\\nWrite a professional weekly update email.`,\n    maxTokens: 2000\n  }\n}];"
+          "jsCode": "const d = $input.first().json;\n\nreturn [{\n  json: {\n    systemPrompt: 'Write a weekly client update email for IntraWeb Technologies. Tone: direct, professional, no filler. Sections: What we did this week, What\\'s next, Items needed from you. Return a BODY FRAGMENT only: use <p>, <ul>/<li>, <strong> as needed. Do NOT output <!DOCTYPE>, <html>, <head>, or <body>. No markdown, no backticks. Use inline hex colors only (no CSS variables): primary text #0f1419, muted #475569, links and emphasis #0d9488.',\n    userPrompt: `Client: ${d.clientName}\\nTier: ${d.tier}\\nDeal stage: ${d.dealStage}\\nRecent activity: ${d.noRecentActivity ? 'No logged activity this week' : 'Activity logged this week'}\\n\\nWrite a professional weekly update email.`,\n    maxTokens: 2000\n  }\n}];"
         },
         "id": "sys08-claude-prep",
         "name": "Prep Claude Prompt",
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1350,
+          1360,
           400
         ]
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_CALL_CLAUDE_API_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "4PPD67ZzEON8Rxxe",
+            "mode": "id",
+            "cachedResultName": "SW: Call Claude API"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "systemPrompt": "={{ $json.systemPrompt }}",
+              "userPrompt": "={{ $json.userPrompt }}",
+              "maxTokens": "={{ $json.maxTokens }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys08-claude",
         "name": "Generate Update",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          1570,
+          1584,
           400
         ]
       },
@@ -626,21 +710,40 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1790,
+          1792,
           400
         ]
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_EMAIL_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "FF6VOLCcRxI4uNYD",
+            "mode": "id",
+            "cachedResultName": "SW: Send Email via Resend"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "subject": "={{ $json.subject }}",
+              "html": "={{ $json.html }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys08-email",
         "name": "Send Update Email",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2010,
+          2016,
           400
         ]
       },
@@ -653,23 +756,66 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2230,
+          2240,
           400
         ]
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_LOG_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "1qQFLOSHZsS9JPKP",
+            "mode": "id",
+            "cachedResultName": "SW: Log to Automations Log Sheet"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowName": "={{ $json.workflowName }}",
+              "contactName": "={{ $json.contactName }}",
+              "phone": "={{ $json.phone }}",
+              "eventType": "={{ $json.eventType }}",
+              "status": "={{ $json.status }}",
+              "notes": "={{ $json.notes }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys08-log",
         "name": "Log to Sheet",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2450,
+          2464,
           400
         ]
+      },
+      {
+        "parameters": {
+          "authentication": "appToken",
+          "resource": "deal",
+          "operation": "getAll",
+          "filters": {}
+        },
+        "type": "n8n-nodes-base.hubspot",
+        "typeVersion": 2.2,
+        "position": [
+          688,
+          304
+        ],
+        "id": "1cb666f9-5c6d-4f93-8f8b-e68a5ab4e5d1",
+        "name": "Get Active Clients",
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
       }
     ],
     "connections": {
@@ -689,17 +835,6 @@
           [
             {
               "node": "Get Active Clients",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Get Active Clients": {
-        "main": [
-          [
-            {
-              "node": "Process Each Client",
               "type": "main",
               "index": 0
             }
@@ -811,12 +946,40 @@
             }
           ]
         ]
+      },
+      "Get Active Clients": {
+        "main": [
+          [
+            {
+              "node": "Process Each Client",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
       }
     },
     "authors": "John Schibelli",
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-19T19:25:36.486Z",
+        "id": 3047,
+        "workflowId": "K7ndggofjscFDRHN",
+        "versionId": "eb3d8609-71f8-4276-8927-e55da01d62c6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:36.472Z",
+        "id": 3046,
+        "workflowId": "K7ndggofjscFDRHN",
+        "versionId": "eb3d8609-71f8-4276-8927-e55da01d62c6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
   }
 }

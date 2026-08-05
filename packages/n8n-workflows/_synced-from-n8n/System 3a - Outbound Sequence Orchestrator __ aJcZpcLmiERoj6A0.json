@@ -1,0 +1,847 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T04:54:28.505Z",
+  "id": "aJcZpcLmiERoj6A0",
+  "name": "System 3a - Outbound Sequence Orchestrator",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## README\nOwns the System 3 webhook, wait cadence, and stop/continue branching.\n\nImport child workflows first, then set every blank `Execute Workflow` `workflowId` in this file before activating.\n\nWebhook path: `start-outbound-sequence`.",
+        "height": 220,
+        "width": 420,
+        "color": 5
+      },
+      "id": "640de953-df82-48d4-897b-49751611b14b",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "start-outbound-sequence",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "7c660754-6832-4d4f-a2cb-70f6b40cea40",
+      "name": "Webhook Start Sequence",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        224,
+        288
+      ],
+      "webhookId": "start-outbound-sequence"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nconst contactId = body.contact_id || '';\nconst contactName = body.contact_name || body.firstname || 'there';\nconst companyName = body.company_name || body.company || '';\nconst phoneRaw = body.phone || '';\nconst email = body.email || '';\nconst industry = body.industry || 'your industry';\n\nlet phone = phoneRaw.replace(/[^0-9]/g, '');\nif (phone.length === 10) {\n  phone = '+1' + phone;\n} else if (phone.length === 11 && phone.startsWith('1')) {\n  phone = '+' + phone;\n} else {\n  phone = phoneRaw;\n}\n\nconst firstName = contactName.split(' ')[0] || contactName;\n\nreturn [{\n  json: {\n    contact_id: contactId,\n    contact_name: contactName,\n    first_name: firstName,\n    company_name: companyName,\n    phone,\n    phone_raw: phoneRaw,\n    email,\n    industry,\n    sequence_start: new Date().toISOString(),\n    sequence_stop: false,\n    touch_count: 0\n  }\n}];"
+      },
+      "id": "bd0f4e0f-82fb-447d-83b6-c845c716286b",
+      "name": "Set Sequence Variables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nreturn [{\n  json: {\n    ...lead,\n    touch_number: 1,\n    touch_count: 1,\n    ai_system_prompt: 'You are writing a cold outreach email for John at IntraWeb Technologies, NJ-based AI automation consulting. Voice: direct, specific, no fluff, no em dashes. Reference the recipient\\'s specific industry. One clear pain point. Soft CTA to reply or book. Output valid JSON with fields: subject (string) and body_html (string with HTML email markup).',\n    ai_user_prompt: `Write a personalized intro cold outreach email to ${lead.first_name} at ${lead.company_name}, a business in the ${lead.industry} industry in NJ. Address one specific operational pain point common in ${lead.industry}. CTA is to reply or book a 15-min call. Sign off as John from IntraWeb Technologies. Output JSON only with subject and body_html fields.`,\n    default_subject: `Quick question about ${lead.company_name}`,\n    default_body_html: `<p>Hi ${lead.first_name},</p><p>Following up on some ideas for ${lead.company_name}.</p><p>- John, IntraWeb Technologies</p>`,\n    hubspot_note_intro: 'Touch 1 (Day 0) - Intro email sent via Resend.',\n    should_log_to_sheet: true,\n    sheet_log_status: 'Success',\n    sheet_log_summary: `Touch 1 email sent to ${lead.contact_name} at ${lead.company_name}`,\n    sheet_log_context: 'Sequence start'\n  }\n}];"
+      },
+      "id": "4ce1382d-d03b-4007-aba0-eba5c6840e08",
+      "name": "Prepare Touch 1 Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c8a5f7e8-ac96-42b0-8da1-5ef3b8ea245a",
+      "name": "Execute: Email Touch 1",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        880,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "id": "a265d7c6-090f-4b8f-8637-42f3718a8af3",
+      "name": "Wait 2 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        208
+      ],
+      "webhookId": "wait-2-days-touch2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2a18c4fc-a5e6-4d2d-99df-076cf6ca9efe",
+      "name": "Execute: Stop Check T2",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s03a-cond-01",
+              "leftValue": "={{ $json.should_stop }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "19db47b1-22e3-44f3-b222-cd5181b6162b",
+      "name": "If Stop T2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nreturn [{\n  json: {\n    ...lead,\n    touch_number: 2,\n    touch_count: 2,\n    sms_body: `Hi ${lead.first_name}, sent you an email about automating ${lead.company_name}'s operations. Worth a 15-min chat? - John, IntraWeb`,\n    hubspot_note_intro: `Touch 2 (Day 2) - SMS sent via Twilio to ${lead.phone}.`\n  }\n}];"
+      },
+      "id": "1697f619-c2fb-47b5-89bf-74833ffec3c8",
+      "name": "Prepare Touch 2 SMS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e041cf6d-1dbb-466c-9026-b0f3421c533f",
+      "name": "Execute: SMS Touch 2",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1984,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "id": "7275aaf4-3e3b-478e-8210-73fe31341ca7",
+      "name": "Wait 3 Days T3",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2208,
+        304
+      ],
+      "webhookId": "wait-3-days-touch3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6f321b74-ccf7-4f1f-b7ac-eda912ec3fec",
+      "name": "Execute: Stop Check T3",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s03a-cond-02",
+              "leftValue": "={{ $json.should_stop }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "06afe26d-2b4f-406b-ae43-b3078bc3cd8a",
+      "name": "If Stop T3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nreturn [{\n  json: {\n    ...lead,\n    touch_number: 3,\n    touch_count: 3,\n    ai_system_prompt: 'You are writing a follow-up cold outreach email for John at IntraWeb Technologies, NJ-based AI automation consulting. Voice: direct, specific, no fluff, no em dashes. This is touch 3 in a sequence. Reference specific automation examples for the recipient\\'s industry. Show what\\'s possible with AI automation. CTA to book a 15-min call. Output valid JSON with fields: subject (string) and body_html (string with HTML email markup).',\n    ai_user_prompt: `Write a follow-up email (touch 3, day 5) to ${lead.first_name} at ${lead.company_name} in the ${lead.industry} industry. Include 2-3 specific real-world automation examples relevant to ${lead.industry} businesses. Show what IntraWeb could build for them. CTA: book a 15-min call. Output JSON only with subject and body_html fields.`,\n    default_subject: `What AI automation looks like for ${lead.industry} businesses`,\n    default_body_html: `<p>Hi ${lead.first_name},</p><p>Wanted to share some examples of what automation could look like for ${lead.company_name}.</p><p>- John, IntraWeb Technologies</p>`,\n    hubspot_note_intro: 'Touch 3 (Day 5) - Automation examples email sent.',\n    should_log_to_sheet: false,\n    sheet_log_status: 'Success',\n    sheet_log_summary: '',\n    sheet_log_context: ''\n  }\n}];"
+      },
+      "id": "652ba1ec-2a34-4106-a715-91f18fe1557a",
+      "name": "Prepare Touch 3 Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2864,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "9fd8c9e2-96e2-4024-aa7e-194c43fdcc62",
+      "name": "Execute: Email Touch 3",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        3088,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "id": "4f82c957-27b9-4142-a14f-1e4e12647f6b",
+      "name": "Wait 3 Days T4",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3312,
+        400
+      ],
+      "webhookId": "wait-3-days-touch4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b0c0a1dd-28e2-483a-9bce-95c2c0b96b05",
+      "name": "Execute: Stop Check T4",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        3520,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s03a-cond-03",
+              "leftValue": "={{ $json.should_stop }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f21fd974-50c3-438a-975b-bccc0e1e5e07",
+      "name": "If Stop T4",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3744,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nreturn [{\n  json: {\n    ...lead,\n    touch_number: 4,\n    touch_count: 4,\n    sms_body: `Hi ${lead.first_name}, following up on a few automation ideas I sent over for ${lead.company_name}. Happy to do a quick 15-min call to walk through it. Worth it? - John, IntraWeb`,\n    hubspot_note_intro: 'Touch 4 (Day 8) - SMS sent via Twilio.'\n  }\n}];"
+      },
+      "id": "ca693b2a-fad2-4a88-a066-b23ab3ab2805",
+      "name": "Prepare Touch 4 SMS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3968,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a614e503-663d-4384-8abe-b365cde74ea9",
+      "name": "Execute: SMS Touch 4",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        4192,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 6,
+        "unit": "days"
+      },
+      "id": "1b1d7d5a-cdb4-4674-aea8-8c248c6fb1fc",
+      "name": "Wait 6 Days T5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        4400,
+        512
+      ],
+      "webhookId": "wait-6-days-touch5"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "350c34ca-5114-4bbf-bab2-3e652226f3e0",
+      "name": "Execute: Stop Check T5",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        4624,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s03a-cond-04",
+              "leftValue": "={{ $json.should_stop }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "510c309d-f80b-4844-9e28-cdb5a581fb3b",
+      "name": "If Stop T5",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4848,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nreturn [{\n  json: {\n    ...lead,\n    touch_number: 5,\n    touch_count: 5,\n    ai_system_prompt: 'You are writing a closing-the-loop final email in a 5-touch cold outreach sequence for John at IntraWeb Technologies, NJ-based AI automation consulting. Voice: direct, no fluff, no em dashes. This is the last email in the sequence. Be respectful of their time. Offer a free 20-minute operations audit with zero obligation. Make it easy to say yes. Output valid JSON with fields: subject (string) and body_html (string with HTML email markup).',\n    ai_user_prompt: `Write the final closing-the-loop email (touch 5, day 14) to ${lead.first_name} at ${lead.company_name} in the ${lead.industry} industry. Acknowledge this is the last email. Offer a free 20-minute operations audit. Make the offer feel low-risk and specific. CTA: reply yes or click the calendar link. Sign off as John from IntraWeb. Output JSON only with subject and body_html fields.`,\n    default_subject: `Closing the loop - free 20-min ops audit for ${lead.company_name}`,\n    default_body_html: `<p>Hi ${lead.first_name},</p><p>Last email from me. Wanted to offer a free 20-minute operations audit for ${lead.company_name} - no pitch, just value.</p><p>- John, IntraWeb Technologies</p>`,\n    hubspot_note_intro: 'Touch 5 (Day 14) - Final closing email sent. Sequence complete.',\n    should_log_to_sheet: false,\n    sheet_log_status: 'Success',\n    sheet_log_summary: '',\n    sheet_log_context: ''\n  }\n}];"
+      },
+      "id": "31cc5626-cefc-46bb-86f9-6a14216cb7dc",
+      "name": "Prepare Touch 5 Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        5072,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "071ba468-5cbd-497e-ada7-d4c8c3e2ab9f",
+      "name": "Execute: Email Touch 5",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        5280,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "68a779b6-ea5c-4c8a-abd6-3dc559bb9a95",
+      "name": "Execute: Finalize Sequence",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        5504,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Outbound sequence started\", \"contact_id\": \"{{ $('Set Sequence Variables').item.json.contact_id }}\" }",
+        "options": {}
+      },
+      "id": "a39a9f02-c4ba-46e9-845f-39226e17549e",
+      "name": "Return 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        672,
+        400
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "4f0bba6c-d667-4165-adc7-511f7b7527c6",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOOGLE_CHAT_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*ERROR - System 3: Outbound Sequence*\\n\\nWorkflow: {{ $json.workflow.name }}\\nNode: {{ $json.execution.lastNodeExecuted }}\\nError: {{ $json.execution.error.message }}\\nTime: {{ $now.toISO() }}\\n\\nImmediate attention required.\"\n}",
+        "options": {}
+      },
+      "id": "ea14c14c-35d9-4736-bb43-1d62990c901c",
+      "name": "Error Alert Google Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        544
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ad5aa378-8cbc-480a-97d5-fc2a8a0362d9",
+      "name": "Sequence Stopped",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        112
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Start Sequence": {
+      "main": [
+        [
+          {
+            "node": "Set Sequence Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Sequence Variables": {
+      "main": [
+        [
+          {
+            "node": "Prepare Touch 1 Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Return 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Touch 1 Email": {
+      "main": [
+        [
+          {
+            "node": "Execute: Email Touch 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Email Touch 1": {
+      "main": [
+        [
+          {
+            "node": "Wait 2 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2 Days": {
+      "main": [
+        [
+          {
+            "node": "Execute: Stop Check T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Stop Check T2": {
+      "main": [
+        [
+          {
+            "node": "If Stop T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Stop T2": {
+      "main": [
+        [
+          {
+            "node": "Sequence Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Touch 2 SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Touch 2 SMS": {
+      "main": [
+        [
+          {
+            "node": "Execute: SMS Touch 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: SMS Touch 2": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days T3": {
+      "main": [
+        [
+          {
+            "node": "Execute: Stop Check T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Stop Check T3": {
+      "main": [
+        [
+          {
+            "node": "If Stop T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Stop T3": {
+      "main": [
+        [
+          {
+            "node": "Sequence Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Touch 3 Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Touch 3 Email": {
+      "main": [
+        [
+          {
+            "node": "Execute: Email Touch 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Email Touch 3": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days T4": {
+      "main": [
+        [
+          {
+            "node": "Execute: Stop Check T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Stop Check T4": {
+      "main": [
+        [
+          {
+            "node": "If Stop T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Stop T4": {
+      "main": [
+        [
+          {
+            "node": "Sequence Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Touch 4 SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Touch 4 SMS": {
+      "main": [
+        [
+          {
+            "node": "Execute: SMS Touch 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: SMS Touch 4": {
+      "main": [
+        [
+          {
+            "node": "Wait 6 Days T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 6 Days T5": {
+      "main": [
+        [
+          {
+            "node": "Execute: Stop Check T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Stop Check T5": {
+      "main": [
+        [
+          {
+            "node": "If Stop T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Stop T5": {
+      "main": [
+        [
+          {
+            "node": "Sequence Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Touch 5 Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Touch 5 Email": {
+      "main": [
+        [
+          {
+            "node": "Execute: Email Touch 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute: Email Touch 5": {
+      "main": [
+        [
+          {
+            "node": "Execute: Finalize Sequence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Error Alert Google Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "17d8c28f-36ac-415f-9db1-99ed2bd4e2db",
+  "activeVersionId": null,
+  "versionCounter": 6,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T04:54:28.509Z",
+      "createdAt": "2026-03-06T04:54:28.509Z",
+      "role": "workflow:owner",
+      "workflowId": "aJcZpcLmiERoj6A0",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

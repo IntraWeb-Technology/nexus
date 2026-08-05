@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T03:42:42.760Z",
+  "updatedAt": "2026-04-22T01:24:13.067Z",
   "createdAt": "2026-03-08T22:44:07.701Z",
   "id": "FF6VOLCcRxI4uNYD",
   "name": "SW: Send Email via Resend",
@@ -9,7 +9,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** In the parent workflow, the Execute Sub-workflow node must map these fields under **Workflow Inputs** (passing only the previous node is not enough when using workflow ID).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.",
+        "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** This trigger declares `to`, `subject`, `html`, and optional fields so the parent's **Execute Sub-workflow** node lists them for mapping (data is not inferred from the previous node by default).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.\n\n**Branding:** `html` should be a **body fragment** (paragraphs, lists, links). **Prepare Email** wraps it in the IntraWeb email shell (logo from `config.branding.logoUrl` in CONFIG — HTTPS image URL; wordmark fallback if empty). Pass `skipBranding: true` to send raw HTML (full documents, rare internal sends). If `html` already contains `data-iw-email-shell=\"1\"` or starts with `<!DOCTYPE` / `<html`, wrapping is skipped.",
         "height": 280,
         "width": 420,
         "color": 5
@@ -25,7 +25,35 @@
     },
     {
       "parameters": {
-        "inputSource": "passthrough"
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "to",
+              "type": "string"
+            },
+            {
+              "name": "subject",
+              "type": "string"
+            },
+            {
+              "name": "html",
+              "type": "string"
+            },
+            {
+              "name": "attachments",
+              "type": "array"
+            },
+            {
+              "name": "skipBranding",
+              "type": "boolean"
+            },
+            {
+              "name": "workflowName",
+              "type": "string"
+            }
+          ]
+        }
       },
       "id": "c9dbe382-aecb-4dca-a8e3-d30cdd86771d",
       "name": "Execute Workflow Trigger",
@@ -38,7 +66,35 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $('Execute Workflow Trigger').first().json;\nconst config = $('Call \\'CONFIG — Global Settings\\'').first().json;\n\nif (!input.to) {\n  const keys = input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input);\n  throw new Error('Missing required field \"to\". Map Workflow Inputs in the Execute Sub-workflow node: to, subject, html (and optional workflowName). Expected { to, subject, html }. Received keys: ' + keys);\n}\nif (!input.subject) {\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.');\n}\nif (!input.html) {\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.');\n}\n\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`;\n\nconst payload = {\n  from: from,\n  to: [input.to],\n  subject: input.subject,\n  html: input.html\n};\n\nif (input.attachments) {\n  payload.attachments = input.attachments;\n}\n\nreturn [{\n  json: {\n    payload: payload,\n    workflowName: input.workflowName || 'SW: Send Email via Resend',\n    to: input.to\n  }\n}];"
+        "jsCode": "function flattenWorkflowInputs(j) {\n  if (!j || typeof j !== 'object' || Array.isArray(j)) return {}\n  const out = { ...j }\n  const wi = out.workflowInputs\n  if (wi && typeof wi === 'object' && !Array.isArray(wi)) {\n    Object.assign(out, wi)\n    delete out.workflowInputs\n  }\n  return out\n}\nreturn $input.all().map((item) => ({ json: flattenWorkflowInputs(item.json || {}) }))"
+      },
+      "id": "f4a1c9e2-8b3d-4f1a-9c2e-7d6b5a403918",
+      "name": "Pass workflow inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "e3b8f7a6-5c4d-43e2-8d91-0a1b2c3d4e5f",
+      "name": "Merge trigger and config",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        540,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Pure JS HMAC-SHA256 (hex). Works in n8n task-runner sandboxes without require('crypto').\n */\nfunction hmacSha256Hex(message, key, hexChars = 64) {\n  function toBytes(str) {\n    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str)\n    const out = []\n    for (let i = 0; i < str.length; i++) {\n      let c = str.charCodeAt(i)\n      if (c < 0x80) out.push(c)\n      else if (c < 0x800) {\n        out.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f))\n      } else if (c >= 0xd800 && c < 0xdc00) {\n        const c2 = str.charCodeAt(++i)\n        const u = 0x10000 + ((c & 0x3ff) << 10) + (c2 & 0x3ff)\n        out.push(\n          0xf0 | (u >> 18),\n          0x80 | ((u >> 12) & 0x3f),\n          0x80 | ((u >> 6) & 0x3f),\n          0x80 | (u & 0x3f),\n        )\n      } else {\n        out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f))\n      }\n    }\n    return new Uint8Array(out)\n  }\n\n  function rotr(n, x) {\n    return (x >>> n) | (x << (32 - n))\n  }\n\n  function sha256Bytes(data) {\n    const K = [\n      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,\n      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,\n      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,\n      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,\n      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,\n      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,\n      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,\n      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,\n    ]\n    const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]\n    const l = data.length\n    const withOne = l + 1\n    const padLen = (withOne % 64 <= 56 ? 56 : 120) - (withOne % 64) + withOne\n    const total = padLen + 8\n    const buf = new Uint8Array(total)\n    buf.set(data)\n    buf[l] = 0x80\n    const bitLen = l * 8\n    const view = new DataView(buf.buffer)\n    view.setUint32(total - 4, bitLen >>> 0)\n    view.setUint32(total - 8, Math.floor(bitLen / 0x100000000))\n\n    const w = new Uint32Array(64)\n    for (let i = 0; i < total; i += 64) {\n      for (let j = 0; j < 16; j++) {\n        const o = i + j * 4\n        w[j] =\n          (buf[o] << 24) | (buf[o + 1] << 16) | (buf[o + 2] << 8) | buf[o + 3]\n      }\n      for (let j = 16; j < 64; j++) {\n        const s0 = rotr(7, w[j - 15]) ^ rotr(18, w[j - 15]) ^ (w[j - 15] >>> 3)\n        const s1 = rotr(17, w[j - 2]) ^ rotr(19, w[j - 2]) ^ (w[j - 2] >>> 10)\n        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) >>> 0\n      }\n      let a = H[0],\n        b = H[1],\n        c = H[2],\n        d = H[3],\n        e = H[4],\n        f = H[5],\n        g = H[6],\n        h = H[7]\n      for (let j = 0; j < 64; j++) {\n        const S1 = rotr(6, e) ^ rotr(11, e) ^ rotr(25, e)\n        const ch = (e & f) ^ (~e & g)\n        const t1 = (h + S1 + ch + K[j] + w[j]) >>> 0\n        const S0 = rotr(2, a) ^ rotr(13, a) ^ rotr(22, a)\n        const maj = (a & b) ^ (a & c) ^ (b & c)\n        const t2 = (S0 + maj) >>> 0\n        h = g\n        g = f\n        f = e\n        e = (d + t1) >>> 0\n        d = c\n        c = b\n        b = a\n        a = (t1 + t2) >>> 0\n      }\n      H[0] = (H[0] + a) >>> 0\n      H[1] = (H[1] + b) >>> 0\n      H[2] = (H[2] + c) >>> 0\n      H[3] = (H[3] + d) >>> 0\n      H[4] = (H[4] + e) >>> 0\n      H[5] = (H[5] + f) >>> 0\n      H[6] = (H[6] + g) >>> 0\n      H[7] = (H[7] + h) >>> 0\n    }\n    const out = new Uint8Array(32)\n    const dv = new DataView(out.buffer)\n    for (let i = 0; i < 8; i++) dv.setUint32(i * 4, H[i])\n    return out\n  }\n\n  function bytesToHex(bytes) {\n    return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')\n  }\n\n  const block = 64\n  let keyBytes = toBytes(key)\n  if (keyBytes.length > block) keyBytes = sha256Bytes(keyBytes)\n  const paddedKey = new Uint8Array(block)\n  paddedKey.set(keyBytes)\n  const oKey = new Uint8Array(block)\n  const iKey = new Uint8Array(block)\n  for (let i = 0; i < block; i++) {\n    oKey[i] = paddedKey[i] ^ 0x5c\n    iKey[i] = paddedKey[i] ^ 0x36\n  }\n  const msg = toBytes(message)\n  const inner = new Uint8Array(block + msg.length)\n  inner.set(iKey)\n  inner.set(msg, block)\n  const outer = new Uint8Array(block + 32)\n  outer.set(oKey)\n  outer.set(sha256Bytes(inner), block)\n  return bytesToHex(sha256Bytes(outer)).slice(0, hexChars)\n}\n\n/**\n * n8n Code node: SW — Send Email via Resend → \"Prepare Email\"\n * Input is **Merge trigger and config** output: flat merge of workflow inputs + CONFIG (n8n 2.14+\n * task runner: avoid $('…') to other nodes — use $input only).\n * Keep hex values in sync with apps/iw-portal/src/lib/email/design-tokens.ts\n */\nconst EMAIL_KEYS = new Set([\n  'to',\n  'subject',\n  'html',\n  'attachments',\n  'skipBranding',\n  'workflowName',\n])\n\nfunction flattenSubworkflowPayload(obj) {\n  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {}\n  const out = { ...obj }\n  const wi = out.workflowInputs\n  if (wi && typeof wi === 'object' && !Array.isArray(wi)) {\n    Object.assign(out, wi)\n    delete out.workflowInputs\n  }\n  return out\n}\n\nfunction safeFirstJson(nodeName) {\n  try {\n    return $(nodeName).first()?.json\n  } catch {\n    return null\n  }\n}\n\n/** CONFIG from merge + email fields (merge can be CONFIG-only; n8n may nest inputs under workflowInputs). */\nfunction buildMergedItem() {\n  const fromMerge = flattenSubworkflowPayload($input.first()?.json)\n  const fromPass = flattenSubworkflowPayload(safeFirstJson('Pass workflow inputs'))\n  const fromTrig = flattenSubworkflowPayload(safeFirstJson('Execute Workflow Trigger'))\n  const out = { ...fromMerge }\n  for (const k of EMAIL_KEYS) {\n    const v = fromMerge[k] ?? fromPass[k] ?? fromTrig[k]\n    if (v !== undefined) out[k] = v\n  }\n  return out\n}\n\nconst m = buildMergedItem()\n\nconst input = {}\nconst config = {}\nfor (const [k, v] of Object.entries(m)) {\n  if (EMAIL_KEYS.has(k)) input[k] = v\n  else config[k] = v\n}\n\nif (!input.to) {\n  const keys =\n    input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input)\n  throw new Error(\n    'Missing required field \"to\". In the **parent** workflow, open the Execute Sub-workflow node → **Workflow Inputs** and map `to`, `subject`, and `html` (expressions or fixed values). n8n does not pass the previous node\\'s fields automatically. Expected { to, subject, html }. Merged keys: ' +\n      Object.keys(m).join(', ') +\n      ' (email fields picked: ' +\n      keys +\n      ')',\n  )\n}\nif (!input.subject) {\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.')\n}\nif (!input.html) {\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.')\n}\nif (!config.owner) {\n  throw new Error(\n    'Missing CONFIG on merged item (no owner). Ensure Get CONFIG ran and Merge combines trigger + CONFIG outputs.',\n  )\n}\n\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`\n\nconst E = {\n  bg: '#f8fafc',\n  card: '#ffffff',\n  border: '#e2e8f0',\n  text: '#0f1419',\n  muted: '#475569',\n  teal: '#0d9488',\n  link: '#0d9488',\n}\n\nfunction escapeHtml(s) {\n  return String(s ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n}\n\nfunction buildUnsubscribeHref(owner, recipientEmail, secrets) {\n  const configuredUnsub = String(owner?.unsubscribeUrl || '').trim()\n  const supportEmail = String(owner?.email || '').trim()\n  const recipient = String(recipientEmail || '').trim().toLowerCase()\n  if (configuredUnsub) {\n    return configuredUnsub.replace(/\\{\\{email\\}\\}/g, encodeURIComponent(recipient))\n  }\n  const secret = String(secrets?.webhookSecret || '').trim()\n  const base = String(owner?.n8nBaseUrl || '').trim().replace(/\\/$/, '')\n  if (secret && base && recipient) {\n    const sig = hmacSha256Hex(recipient, secret, 32)\n    return `${base}/webhook/email-unsubscribe?email=${encodeURIComponent(recipient)}&sig=${sig}`\n  }\n  if (!supportEmail || !recipient) return ''\n  const subject = encodeURIComponent('Unsubscribe from IntraWeb emails')\n  const body = encodeURIComponent(`Please remove ${recipient} from your mailing list.`)\n  return `mailto:${encodeURIComponent(supportEmail)}?subject=${subject}&body=${body}`\n}\n\nfunction wrapEmail(innerHtml) {\n  const owner = config.owner || {}\n  // Served from apps/iw-site-q2/public (www.intrawebtech.com root).\n  const DEFAULT_LOGO = 'https://www.intrawebtech.com/IW-logo-q2.png'\n  const DEFAULT_LOGO_DARK = 'https://www.intrawebtech.com/IW-logo-q2.png'\n  let logoUrl = String(config.branding?.logoUrl || '').trim()\n  if (!logoUrl || (logoUrl.includes('intraweb-logo-black') && !logoUrl.includes('inverted'))) {\n    logoUrl = DEFAULT_LOGO\n  } else if (\n    logoUrl.includes('intrawebtech.com') &&\n    logoUrl.includes('/intraweb-logo-light.png') &&\n    !logoUrl.includes('/branding/')\n  ) {\n    logoUrl = DEFAULT_LOGO\n  }\n  let logoUrlDark = String(config.branding?.logoUrlDark || '').trim()\n  if (!logoUrlDark) {\n    logoUrlDark = DEFAULT_LOGO_DARK\n  }\n  const company = escapeHtml(owner.companyName || 'IntraWeb Technologies LLC')\n  const supportEmail = String(owner.email || '').trim()\n  const calendarLink = String(owner.calendarLink || '').trim()\n  const recipientEmail = String(input.to || '').trim()\n\n  const imgStyle =\n    'display:block;max-width:280px;width:100%;height:auto;border:0;margin:0;'\n  const tagline = `<p class=\"iw-email-tagline\" style=\"margin:14px 0 0;font-family:Montserrat,Segoe UI,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${E.teal};\">Systems &amp; automation for growing teams</p>`\n\n  let logoBlock\n  if (logoUrl) {\n    const useDarkVariant = Boolean(logoUrlDark && logoUrlDark !== logoUrl)\n    if (useDarkVariant) {\n      logoBlock =\n        `<div class=\"iw-email-logo\">` +\n        `<img class=\"iw-email-logo-light\" src=\"${escapeHtml(logoUrl)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\n        `<img class=\"iw-email-logo-dark\" src=\"${escapeHtml(logoUrlDark)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\n        `</div>${tagline}`\n    } else {\n      logoBlock =\n        `<div class=\"iw-email-logo\">` +\n        `<img src=\"${escapeHtml(logoUrl)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\n        `</div>${tagline}`\n    }\n  } else {\n    logoBlock = `<div class=\"iw-email-logo iw-email-wordmark\" style=\"font-family:Montserrat,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${E.text};letter-spacing:-0.02em;\">IntraWeb</div>${tagline}`\n  }\n\n  const unsubHref = buildUnsubscribeHref(owner, recipientEmail, config.secrets)\n\n  const footerBits = []\n  if (supportEmail) {\n    const e = escapeHtml(supportEmail)\n    footerBits.push(\n      `<a href=\"mailto:${e}\" style=\"color:${E.link};text-decoration:none;\">${e}</a>`,\n    )\n  }\n  if (calendarLink) {\n    footerBits.push(\n      `<a href=\"${escapeHtml(calendarLink)}\" style=\"color:${E.link};text-decoration:none;\">Schedule time</a>`,\n    )\n  }\n  if (unsubHref) {\n    footerBits.push(\n      `<a href=\"${escapeHtml(unsubHref)}\" style=\"color:${E.link};text-decoration:none;\">Unsubscribe</a>`,\n    )\n  }\n  const footerLine2 = footerBits.length ? `<p style=\"margin:0;\">${footerBits.join(' · ')}</p>` : ''\n\n  const headStyles = `<style type=\"text/css\">\n.iw-email-body table { width:100% !important; max-width:100%; border-collapse:collapse; }\n.iw-email-body img { max-width:100%; height:auto; }\n.iw-email-logo-light { display:block !important; }\n.iw-email-logo-dark { display:none !important; }\n@media (prefers-color-scheme: dark) {\n  .iw-email-logo-light { display:none !important; }\n  .iw-email-logo-dark { display:block !important; }\n  .iw-email-tagline { color:#5eead4 !important; }\n  .iw-email-wordmark { color:#f8fafc !important; }\n}\n</style>`\n\n  return `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\" />\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n<meta name=\"color-scheme\" content=\"light dark\" />\n<link href=\"https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap\" rel=\"stylesheet\" />\n${headStyles}\n</head>\n<body style=\"margin:0;padding:0;background:${E.bg};\">\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:${E.bg};padding:32px 0;\">\n  <tr><td align=\"center\">\n  <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:600px;width:100%;background:${E.card};border-radius:12px;border:1px solid ${E.border};overflow:hidden;\" data-iw-email-shell=\"1\">\n    <tr><td style=\"padding:0;height:4px;background:${E.teal};font-size:0;line-height:4px;\">&nbsp;</td></tr>\n    <tr><td style=\"padding:28px 20px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;\">\n      ${logoBlock}\n    </td></tr>\n    <tr><td style=\"padding:8px 20px 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};\">\n      <div class=\"iw-email-body\" style=\"min-height:72px;\">${innerHtml}</div>\n    </td></tr>\n    <tr><td style=\"padding:20px 20px 28px;border-top:1px solid ${E.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};\">\n      <p style=\"margin:0 0 8px;\">${company}</p>\n      ${footerLine2}\n    </td></tr>\n  </table>\n  </td></tr>\n</table>\n</body>\n</html>`\n}\n\nconst rawHtml = String(input.html || '').trim()\nconst skip =\n  input.skipBranding === true ||\n  rawHtml.includes('data-iw-email-shell=\"1\"') ||\n  /^<(!DOCTYPE|html)\\b/i.test(rawHtml)\n\nconst finalHtml = skip ? String(input.html) : wrapEmail(String(input.html))\n\nconst unsubHref = buildUnsubscribeHref(config.owner, input.to, config.secrets)\n\nconst payload = {\n  from,\n  to: [input.to],\n  subject: input.subject,\n  html: finalHtml,\n}\n\nif (unsubHref) {\n  payload.headers = {\n    'List-Unsubscribe': `<${unsubHref}>`,\n  }\n  if (!unsubHref.startsWith('mailto:')) {\n    payload.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'\n  }\n}\n\nif (input.attachments) {\n  payload.attachments = input.attachments\n}\n\nreturn [\n  {\n    json: {\n      payload,\n      workflowName: input.workflowName || 'SW: Send Email via Resend',\n      to: input.to,\n    },\n  },\n]\n"
       },
       "id": "15a1d2ab-3522-4836-9edc-ba822d26f4d3",
       "name": "Prepare Email",
@@ -217,7 +273,7 @@
         224
       ],
       "id": "95edbf69-3783-463c-bef3-4edc9e5393d2",
-      "name": "Call 'CONFIG — Global Settings'"
+      "name": "Get CONFIG"
     }
   ],
   "connections": {
@@ -225,7 +281,12 @@
       "main": [
         [
           {
-            "node": "Call 'CONFIG — Global Settings'",
+            "node": "Pass workflow inputs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get CONFIG",
             "type": "main",
             "index": 0
           }
@@ -305,7 +366,29 @@
         ]
       ]
     },
-    "Call 'CONFIG — Global Settings'": {
+    "Pass workflow inputs": {
+      "main": [
+        [
+          {
+            "node": "Merge trigger and config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Merge trigger and config",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge trigger and config": {
       "main": [
         [
           {
@@ -329,9 +412,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-  "activeVersionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-  "versionCounter": 132,
+  "versionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
+  "activeVersionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
+  "versionCounter": 380,
   "triggerCount": 0,
   "shared": [
     {
@@ -354,14 +437,14 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-03-29T22:36:57.970Z",
-    "createdAt": "2026-03-29T22:36:57.970Z",
-    "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+    "updatedAt": "2026-04-22T01:24:13.068Z",
+    "createdAt": "2026-04-22T01:24:13.068Z",
+    "versionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
     "workflowId": "FF6VOLCcRxI4uNYD",
     "nodes": [
       {
         "parameters": {
-          "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** In the parent workflow, the Execute Sub-workflow node must map these fields under **Workflow Inputs** (passing only the previous node is not enough when using workflow ID).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.",
+          "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** This trigger declares `to`, `subject`, `html`, and optional fields so the parent's **Execute Sub-workflow** node lists them for mapping (data is not inferred from the previous node by default).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.\n\n**Branding:** `html` should be a **body fragment** (paragraphs, lists, links). **Prepare Email** wraps it in the IntraWeb email shell (logo from `config.branding.logoUrl` in CONFIG — HTTPS image URL; wordmark fallback if empty). Pass `skipBranding: true` to send raw HTML (full documents, rare internal sends). If `html` already contains `data-iw-email-shell=\"1\"` or starts with `<!DOCTYPE` / `<html`, wrapping is skipped.",
           "height": 280,
           "width": 420,
           "color": 5
@@ -377,7 +460,35 @@
       },
       {
         "parameters": {
-          "inputSource": "passthrough"
+          "inputSource": "workflowInputs",
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "to",
+                "type": "string"
+              },
+              {
+                "name": "subject",
+                "type": "string"
+              },
+              {
+                "name": "html",
+                "type": "string"
+              },
+              {
+                "name": "attachments",
+                "type": "array"
+              },
+              {
+                "name": "skipBranding",
+                "type": "boolean"
+              },
+              {
+                "name": "workflowName",
+                "type": "string"
+              }
+            ]
+          }
         },
         "id": "c9dbe382-aecb-4dca-a8e3-d30cdd86771d",
         "name": "Execute Workflow Trigger",
@@ -390,7 +501,35 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $('Execute Workflow Trigger').first().json;\nconst config = $('Call \\'CONFIG — Global Settings\\'').first().json;\n\nif (!input.to) {\n  const keys = input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input);\n  throw new Error('Missing required field \"to\". Map Workflow Inputs in the Execute Sub-workflow node: to, subject, html (and optional workflowName). Expected { to, subject, html }. Received keys: ' + keys);\n}\nif (!input.subject) {\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.');\n}\nif (!input.html) {\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.');\n}\n\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`;\n\nconst payload = {\n  from: from,\n  to: [input.to],\n  subject: input.subject,\n  html: input.html\n};\n\nif (input.attachments) {\n  payload.attachments = input.attachments;\n}\n\nreturn [{\n  json: {\n    payload: payload,\n    workflowName: input.workflowName || 'SW: Send Email via Resend',\n    to: input.to\n  }\n}];"
+          "jsCode": "function flattenWorkflowInputs(j) {\n  if (!j || typeof j !== 'object' || Array.isArray(j)) return {}\n  const out = { ...j }\n  const wi = out.workflowInputs\n  if (wi && typeof wi === 'object' && !Array.isArray(wi)) {\n    Object.assign(out, wi)\n    delete out.workflowInputs\n  }\n  return out\n}\nreturn $input.all().map((item) => ({ json: flattenWorkflowInputs(item.json || {}) }))"
+        },
+        "id": "f4a1c9e2-8b3d-4f1a-9c2e-7d6b5a403918",
+        "name": "Pass workflow inputs",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          360,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {}
+        },
+        "id": "e3b8f7a6-5c4d-43e2-8d91-0a1b2c3d4e5f",
+        "name": "Merge trigger and config",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          540,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "/**\n * Pure JS HMAC-SHA256 (hex). Works in n8n task-runner sandboxes without require('crypto').\n */\nfunction hmacSha256Hex(message, key, hexChars = 64) {\n  function toBytes(str) {\n    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str)\n    const out = []\n    for (let i = 0; i < str.length; i++) {\n      let c = str.charCodeAt(i)\n      if (c < 0x80) out.push(c)\n      else if (c < 0x800) {\n        out.push(0xc0 | (c >> 6), 0x80 | (c & 0x3f))\n      } else if (c >= 0xd800 && c < 0xdc00) {\n        const c2 = str.charCodeAt(++i)\n        const u = 0x10000 + ((c & 0x3ff) << 10) + (c2 & 0x3ff)\n        out.push(\n          0xf0 | (u >> 18),\n          0x80 | ((u >> 12) & 0x3f),\n          0x80 | ((u >> 6) & 0x3f),\n          0x80 | (u & 0x3f),\n        )\n      } else {\n        out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 0x3f), 0x80 | (c & 0x3f))\n      }\n    }\n    return new Uint8Array(out)\n  }\n\n  function rotr(n, x) {\n    return (x >>> n) | (x << (32 - n))\n  }\n\n  function sha256Bytes(data) {\n    const K = [\n      0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,\n      0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,\n      0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,\n      0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,\n      0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,\n      0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,\n      0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,\n      0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,\n    ]\n    const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]\n    const l = data.length\n    const withOne = l + 1\n    const padLen = (withOne % 64 <= 56 ? 56 : 120) - (withOne % 64) + withOne\n    const total = padLen + 8\n    const buf = new Uint8Array(total)\n    buf.set(data)\n    buf[l] = 0x80\n    const bitLen = l * 8\n    const view = new DataView(buf.buffer)\n    view.setUint32(total - 4, bitLen >>> 0)\n    view.setUint32(total - 8, Math.floor(bitLen / 0x100000000))\n\n    const w = new Uint32Array(64)\n    for (let i = 0; i < total; i += 64) {\n      for (let j = 0; j < 16; j++) {\n        const o = i + j * 4\n        w[j] =\n          (buf[o] << 24) | (buf[o + 1] << 16) | (buf[o + 2] << 8) | buf[o + 3]\n      }\n      for (let j = 16; j < 64; j++) {\n        const s0 = rotr(7, w[j - 15]) ^ rotr(18, w[j - 15]) ^ (w[j - 15] >>> 3)\n        const s1 = rotr(17, w[j - 2]) ^ rotr(19, w[j - 2]) ^ (w[j - 2] >>> 10)\n        w[j] = (w[j - 16] + s0 + w[j - 7] + s1) >>> 0\n      }\n      let a = H[0],\n        b = H[1],\n        c = H[2],\n        d = H[3],\n        e = H[4],\n        f = H[5],\n        g = H[6],\n        h = H[7]\n      for (let j = 0; j < 64; j++) {\n        const S1 = rotr(6, e) ^ rotr(11, e) ^ rotr(25, e)\n        const ch = (e & f) ^ (~e & g)\n        const t1 = (h + S1 + ch + K[j] + w[j]) >>> 0\n        const S0 = rotr(2, a) ^ rotr(13, a) ^ rotr(22, a)\n        const maj = (a & b) ^ (a & c) ^ (b & c)\n        const t2 = (S0 + maj) >>> 0\n        h = g\n        g = f\n        f = e\n        e = (d + t1) >>> 0\n        d = c\n        c = b\n        b = a\n        a = (t1 + t2) >>> 0\n      }\n      H[0] = (H[0] + a) >>> 0\n      H[1] = (H[1] + b) >>> 0\n      H[2] = (H[2] + c) >>> 0\n      H[3] = (H[3] + d) >>> 0\n      H[4] = (H[4] + e) >>> 0\n      H[5] = (H[5] + f) >>> 0\n      H[6] = (H[6] + g) >>> 0\n      H[7] = (H[7] + h) >>> 0\n    }\n    const out = new Uint8Array(32)\n    const dv = new DataView(out.buffer)\n    for (let i = 0; i < 8; i++) dv.setUint32(i * 4, H[i])\n    return out\n  }\n\n  function bytesToHex(bytes) {\n    return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')\n  }\n\n  const block = 64\n  let keyBytes = toBytes(key)\n  if (keyBytes.length > block) keyBytes = sha256Bytes(keyBytes)\n  const paddedKey = new Uint8Array(block)\n  paddedKey.set(keyBytes)\n  const oKey = new Uint8Array(block)\n  const iKey = new Uint8Array(block)\n  for (let i = 0; i < block; i++) {\n    oKey[i] = paddedKey[i] ^ 0x5c\n    iKey[i] = paddedKey[i] ^ 0x36\n  }\n  const msg = toBytes(message)\n  const inner = new Uint8Array(block + msg.length)\n  inner.set(iKey)\n  inner.set(msg, block)\n  const outer = new Uint8Array(block + 32)\n  outer.set(oKey)\n  outer.set(sha256Bytes(inner), block)\n  return bytesToHex(sha256Bytes(outer)).slice(0, hexChars)\n}\n\n/**\n * n8n Code node: SW — Send Email via Resend → \"Prepare Email\"\n * Input is **Merge trigger and config** output: flat merge of workflow inputs + CONFIG (n8n 2.14+\n * task runner: avoid $('…') to other nodes — use $input only).\n * Keep hex values in sync with apps/iw-portal/src/lib/email/design-tokens.ts\n */\nconst EMAIL_KEYS = new Set([\n  'to',\n  'subject',\n  'html',\n  'attachments',\n  'skipBranding',\n  'workflowName',\n])\n\nfunction flattenSubworkflowPayload(obj) {\n  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {}\n  const out = { ...obj }\n  const wi = out.workflowInputs\n  if (wi && typeof wi === 'object' && !Array.isArray(wi)) {\n    Object.assign(out, wi)\n    delete out.workflowInputs\n  }\n  return out\n}\n\nfunction safeFirstJson(nodeName) {\n  try {\n    return $(nodeName).first()?.json\n  } catch {\n    return null\n  }\n}\n\n/** CONFIG from merge + email fields (merge can be CONFIG-only; n8n may nest inputs under workflowInputs). */\nfunction buildMergedItem() {\n  const fromMerge = flattenSubworkflowPayload($input.first()?.json)\n  const fromPass = flattenSubworkflowPayload(safeFirstJson('Pass workflow inputs'))\n  const fromTrig = flattenSubworkflowPayload(safeFirstJson('Execute Workflow Trigger'))\n  const out = { ...fromMerge }\n  for (const k of EMAIL_KEYS) {\n    const v = fromMerge[k] ?? fromPass[k] ?? fromTrig[k]\n    if (v !== undefined) out[k] = v\n  }\n  return out\n}\n\nconst m = buildMergedItem()\n\nconst input = {}\nconst config = {}\nfor (const [k, v] of Object.entries(m)) {\n  if (EMAIL_KEYS.has(k)) input[k] = v\n  else config[k] = v\n}\n\nif (!input.to) {\n  const keys =\n    input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input)\n  throw new Error(\n    'Missing required field \"to\". In the **parent** workflow, open the Execute Sub-workflow node → **Workflow Inputs** and map `to`, `subject`, and `html` (expressions or fixed values). n8n does not pass the previous node\\'s fields automatically. Expected { to, subject, html }. Merged keys: ' +\n      Object.keys(m).join(', ') +\n      ' (email fields picked: ' +\n      keys +\n      ')',\n  )\n}\nif (!input.subject) {\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.')\n}\nif (!input.html) {\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.')\n}\nif (!config.owner) {\n  throw new Error(\n    'Missing CONFIG on merged item (no owner). Ensure Get CONFIG ran and Merge combines trigger + CONFIG outputs.',\n  )\n}\n\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`\n\nconst E = {\n  bg: '#f8fafc',\n  card: '#ffffff',\n  border: '#e2e8f0',\n  text: '#0f1419',\n  muted: '#475569',\n  teal: '#0d9488',\n  link: '#0d9488',\n}\n\nfunction escapeHtml(s) {\n  return String(s ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n}\n\nfunction buildUnsubscribeHref(owner, recipientEmail, secrets) {\n  const configuredUnsub = String(owner?.unsubscribeUrl || '').trim()\n  const supportEmail = String(owner?.email || '').trim()\n  const recipient = String(recipientEmail || '').trim().toLowerCase()\n  if (configuredUnsub) {\n    return configuredUnsub.replace(/\\{\\{email\\}\\}/g, encodeURIComponent(recipient))\n  }\n  const secret = String(secrets?.webhookSecret || '').trim()\n  const base = String(owner?.n8nBaseUrl || '').trim().replace(/\\/$/, '')\n  if (secret && base && recipient) {\n    const sig = hmacSha256Hex(recipient, secret, 32)\n    return `${base}/webhook/email-unsubscribe?email=${encodeURIComponent(recipient)}&sig=${sig}`\n  }\n  if (!supportEmail || !recipient) return ''\n  const subject = encodeURIComponent('Unsubscribe from IntraWeb emails')\n  const body = encodeURIComponent(`Please remove ${recipient} from your mailing list.`)\n  return `mailto:${encodeURIComponent(supportEmail)}?subject=${subject}&body=${body}`\n}\n\nfunction wrapEmail(innerHtml) {\n  const owner = config.owner || {}\n  // Served from apps/iw-site-q2/public (www.intrawebtech.com root).\n  const DEFAULT_LOGO = 'https://www.intrawebtech.com/IW-logo-q2.png'\n  const DEFAULT_LOGO_DARK = 'https://www.intrawebtech.com/IW-logo-q2.png'\n  let logoUrl = String(config.branding?.logoUrl || '').trim()\n  if (!logoUrl || (logoUrl.includes('intraweb-logo-black') && !logoUrl.includes('inverted'))) {\n    logoUrl = DEFAULT_LOGO\n  } else if (\n    logoUrl.includes('intrawebtech.com') &&\n    logoUrl.includes('/intraweb-logo-light.png') &&\n    !logoUrl.includes('/branding/')\n  ) {\n    logoUrl = DEFAULT_LOGO\n  }\n  let logoUrlDark = String(config.branding?.logoUrlDark || '').trim()\n  if (!logoUrlDark) {\n    logoUrlDark = DEFAULT_LOGO_DARK\n  }\n  const company = escapeHtml(owner.companyName || 'IntraWeb Technologies LLC')\n  const supportEmail = String(owner.email || '').trim()\n  const calendarLink = String(owner.calendarLink || '').trim()\n  const recipientEmail = String(input.to || '').trim()\n\n  const imgStyle =\n    'display:block;max-width:280px;width:100%;height:auto;border:0;margin:0;'\n  const tagline = `<p class=\"iw-email-tagline\" style=\"margin:14px 0 0;font-family:Montserrat,Segoe UI,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${E.teal};\">Systems &amp; automation for growing teams</p>`\n\n  let logoBlock\n  if (logoUrl) {\n    const useDarkVariant = Boolean(logoUrlDark && logoUrlDark !== logoUrl)\n    if (useDarkVariant) {\n      logoBlock =\n        `<div class=\"iw-email-logo\">` +\n        `<img class=\"iw-email-logo-light\" src=\"${escapeHtml(logoUrl)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\n        `<img class=\"iw-email-logo-dark\" src=\"${escapeHtml(logoUrlDark)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\n        `</div>${tagline}`\n    } else {\n      logoBlock =\n        `<div class=\"iw-email-logo\">` +\n        `<img src=\"${escapeHtml(logoUrl)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\n        `</div>${tagline}`\n    }\n  } else {\n    logoBlock = `<div class=\"iw-email-logo iw-email-wordmark\" style=\"font-family:Montserrat,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${E.text};letter-spacing:-0.02em;\">IntraWeb</div>${tagline}`\n  }\n\n  const unsubHref = buildUnsubscribeHref(owner, recipientEmail, config.secrets)\n\n  const footerBits = []\n  if (supportEmail) {\n    const e = escapeHtml(supportEmail)\n    footerBits.push(\n      `<a href=\"mailto:${e}\" style=\"color:${E.link};text-decoration:none;\">${e}</a>`,\n    )\n  }\n  if (calendarLink) {\n    footerBits.push(\n      `<a href=\"${escapeHtml(calendarLink)}\" style=\"color:${E.link};text-decoration:none;\">Schedule time</a>`,\n    )\n  }\n  if (unsubHref) {\n    footerBits.push(\n      `<a href=\"${escapeHtml(unsubHref)}\" style=\"color:${E.link};text-decoration:none;\">Unsubscribe</a>`,\n    )\n  }\n  const footerLine2 = footerBits.length ? `<p style=\"margin:0;\">${footerBits.join(' · ')}</p>` : ''\n\n  const headStyles = `<style type=\"text/css\">\n.iw-email-body table { width:100% !important; max-width:100%; border-collapse:collapse; }\n.iw-email-body img { max-width:100%; height:auto; }\n.iw-email-logo-light { display:block !important; }\n.iw-email-logo-dark { display:none !important; }\n@media (prefers-color-scheme: dark) {\n  .iw-email-logo-light { display:none !important; }\n  .iw-email-logo-dark { display:block !important; }\n  .iw-email-tagline { color:#5eead4 !important; }\n  .iw-email-wordmark { color:#f8fafc !important; }\n}\n</style>`\n\n  return `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\" />\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n<meta name=\"color-scheme\" content=\"light dark\" />\n<link href=\"https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap\" rel=\"stylesheet\" />\n${headStyles}\n</head>\n<body style=\"margin:0;padding:0;background:${E.bg};\">\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:${E.bg};padding:32px 0;\">\n  <tr><td align=\"center\">\n  <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:600px;width:100%;background:${E.card};border-radius:12px;border:1px solid ${E.border};overflow:hidden;\" data-iw-email-shell=\"1\">\n    <tr><td style=\"padding:0;height:4px;background:${E.teal};font-size:0;line-height:4px;\">&nbsp;</td></tr>\n    <tr><td style=\"padding:28px 20px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;\">\n      ${logoBlock}\n    </td></tr>\n    <tr><td style=\"padding:8px 20px 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};\">\n      <div class=\"iw-email-body\" style=\"min-height:72px;\">${innerHtml}</div>\n    </td></tr>\n    <tr><td style=\"padding:20px 20px 28px;border-top:1px solid ${E.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};\">\n      <p style=\"margin:0 0 8px;\">${company}</p>\n      ${footerLine2}\n    </td></tr>\n  </table>\n  </td></tr>\n</table>\n</body>\n</html>`\n}\n\nconst rawHtml = String(input.html || '').trim()\nconst skip =\n  input.skipBranding === true ||\n  rawHtml.includes('data-iw-email-shell=\"1\"') ||\n  /^<(!DOCTYPE|html)\\b/i.test(rawHtml)\n\nconst finalHtml = skip ? String(input.html) : wrapEmail(String(input.html))\n\nconst unsubHref = buildUnsubscribeHref(config.owner, input.to, config.secrets)\n\nconst payload = {\n  from,\n  to: [input.to],\n  subject: input.subject,\n  html: finalHtml,\n}\n\nif (unsubHref) {\n  payload.headers = {\n    'List-Unsubscribe': `<${unsubHref}>`,\n  }\n  if (!unsubHref.startsWith('mailto:')) {\n    payload.headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click'\n  }\n}\n\nif (input.attachments) {\n  payload.attachments = input.attachments\n}\n\nreturn [\n  {\n    json: {\n      payload,\n      workflowName: input.workflowName || 'SW: Send Email via Resend',\n      to: input.to,\n    },\n  },\n]\n"
         },
         "id": "15a1d2ab-3522-4836-9edc-ba822d26f4d3",
         "name": "Prepare Email",
@@ -569,7 +708,7 @@
           224
         ],
         "id": "95edbf69-3783-463c-bef3-4edc9e5393d2",
-        "name": "Call 'CONFIG — Global Settings'"
+        "name": "Get CONFIG"
       }
     ],
     "connections": {
@@ -577,7 +716,12 @@
         "main": [
           [
             {
-              "node": "Call 'CONFIG — Global Settings'",
+              "node": "Pass workflow inputs",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get CONFIG",
               "type": "main",
               "index": 0
             }
@@ -657,7 +801,29 @@
           ]
         ]
       },
-      "Call 'CONFIG — Global Settings'": {
+      "Pass workflow inputs": {
+        "main": [
+          [
+            {
+              "node": "Merge trigger and config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get CONFIG": {
+        "main": [
+          [
+            {
+              "node": "Merge trigger and config",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge trigger and config": {
         "main": [
           [
             {
@@ -675,82 +841,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-03-29T22:36:58.014Z",
-        "id": 1091,
+        "createdAt": "2026-04-22T01:24:13.134Z",
+        "id": 3125,
         "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "versionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-03-29T23:15:39.998Z",
-        "id": 1147,
+        "createdAt": "2026-04-22T01:24:13.118Z",
+        "id": 3124,
         "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:05:41.597Z",
-        "id": 1408,
-        "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:05:59.993Z",
-        "id": 1428,
-        "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:42:42.786Z",
-        "id": 1476,
-        "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-03-29T22:36:57.999Z",
-        "id": 1090,
-        "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-03-29T23:15:39.989Z",
-        "id": 1146,
-        "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:05:41.589Z",
-        "id": 1407,
-        "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:05:59.982Z",
-        "id": 1427,
-        "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:42:42.778Z",
-        "id": 1475,
-        "workflowId": "FF6VOLCcRxI4uNYD",
-        "versionId": "89499ac2-e38e-4d17-a2cc-12b326141b17",
+        "versionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T03:42:44.349Z",
+  "updatedAt": "2026-04-21T03:08:02.309Z",
   "createdAt": "2026-03-08T23:03:33.832Z",
   "id": "5zqAo5so5iSSCnXY",
   "name": "SYS 08 — Google Chat Command Center",
@@ -8,12 +8,7 @@
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "content": "## SYS 08 — Google Chat Command Center\n\n**Trigger:** Webhook POST at `/google-chat-command`.\n\n**Critical — Google Chat wiring:** Typing in a space does **not** call n8n by itself. **Incoming webhooks** (CONFIG `chatWebhookUrl`) only **send** messages **into** Chat; they cannot receive user text. You need a **Google Chat app** (Chat API → Configuration) with **HTTP endpoint URL** = your n8n webhook URL (`…/webhook/google-chat-command`). Users must **@mention the app** or **message it in DMs** (per Google). **Activate** this workflow in n8n. Endpoint must be **HTTPS** and reachable from Google.\n\n**What it does:** Parses commands via Claude; routes to HubSpot/Sheets; replies via HTTP to the space webhook from CONFIG.\n\n**Dependencies:** CONFIG, Call Claude API, HubSpot, Google Sheets (Revenue tab).\n\n**n8n 2.12.x:** Execute Sub-workflow = Database + `__rl`. **Prep Parse Prompt** reads Google **Event** shape (`message.text`, nested `event.message`, strips `<users/…>` mentions).",
-        "height": 520,
-        "width": 480,
-        "color": 5
-      },
+      "parameters": {},
       "id": "note-sys12",
       "name": "Note — About this workflow",
       "type": "n8n-nodes-base.stickyNote",
@@ -35,14 +30,13 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        250,
-        300
+        256,
+        640
       ],
       "webhookId": "dc3a6b9b-bc70-4375-b993-a1a294d79963"
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
@@ -63,8 +57,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        470,
-        300
+        480,
+        640
       ]
     },
     {
@@ -76,13 +70,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        690,
-        300
+        704,
+        640
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "4PPD67ZzEON8Rxxe",
@@ -107,8 +100,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        910,
-        300
+        928,
+        640
       ]
     },
     {
@@ -120,13 +113,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1130,
-        300
+        1152,
+        640
       ]
     },
     {
       "parameters": {
-        "mode": "rules",
         "rules": {
           "values": [
             {
@@ -149,8 +141,7 @@
                   }
                 ],
                 "combinator": "and"
-              },
-              "renameOutput": false
+              }
             },
             {
               "conditions": {
@@ -172,8 +163,7 @@
                   }
                 ],
                 "combinator": "and"
-              },
-              "renameOutput": false
+              }
             },
             {
               "conditions": {
@@ -195,8 +185,7 @@
                   }
                 ],
                 "combinator": "and"
-              },
-              "renameOutput": false
+              }
             },
             {
               "conditions": {
@@ -218,8 +207,7 @@
                   }
                 ],
                 "combinator": "and"
-              },
-              "renameOutput": false
+              }
             },
             {
               "conditions": {
@@ -241,8 +229,7 @@
                   }
                 ],
                 "combinator": "and"
-              },
-              "renameOutput": false
+              }
             },
             {
               "conditions": {
@@ -264,8 +251,7 @@
                   }
                 ],
                 "combinator": "and"
-              },
-              "renameOutput": false
+              }
             }
           ]
         },
@@ -278,40 +264,23 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
       "position": [
-        1350,
-        300
+        1376,
+        560
       ]
     },
     {
       "parameters": {
-        "resource": "contact",
         "operation": "getAll",
-        "filters": {
-          "values": [
-            {
-              "propertyName": "createdate",
-              "operator": "GT",
-              "value": "={{ new Date(Date.now() - 7*24*60*60*1000).toISOString() }}"
-            }
-          ]
-        },
         "limit": 50,
-        "options": {
-          "properties": [
-            "firstname",
-            "lastname",
-            "company",
-            "lead_score"
-          ]
-        }
+        "additionalFields": {}
       },
       "id": "sys12-leads",
       "name": "Query Leads",
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2,
       "position": [
-        1570,
-        50
+        1600,
+        64
       ],
       "credentials": {
         "hubspotApi": {
@@ -329,30 +298,23 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1790,
-        50
+        1824,
+        64
       ]
     },
     {
       "parameters": {
         "resource": "deal",
         "operation": "getAll",
-        "limit": 100,
-        "options": {
-          "properties": [
-            "dealname",
-            "dealstage",
-            "amount"
-          ]
-        }
+        "filters": {}
       },
       "id": "sys12-pipeline",
       "name": "Query Pipeline",
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2,
       "position": [
-        1570,
-        200
+        1600,
+        448
       ],
       "credentials": {
         "hubspotApi": {
@@ -370,8 +332,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1790,
-        200
+        1824,
+        448
       ]
     },
     {
@@ -383,8 +345,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1570,
-        600
+        1824,
+        1216
       ]
     },
     {
@@ -396,8 +358,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2010,
-        300
+        2048,
+        640
       ]
     },
     {
@@ -423,8 +385,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        2230,
-        300
+        2272,
+        640
       ]
     },
     {
@@ -436,13 +398,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2450,
-        300
+        2496,
+        640
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1qQFLOSHZsS9JPKP",
@@ -463,8 +424,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2670,
-        300
+        2720,
+        640
       ]
     },
     {
@@ -478,13 +439,12 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.3,
       "position": [
-        2890,
-        300
+        2944,
+        640
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "BAwRpt7tMRXm6YcZ",
@@ -505,8 +465,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        1570,
-        500
+        1600,
+        1024
       ]
     },
     {
@@ -518,35 +478,28 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1790,
-        500
+        1824,
+        1024
       ]
     },
     {
       "parameters": {
-        "operation": "read",
-        "documentId": {
-          "mode": "id",
-          "value": "={{ $('Get Config').first().json.google.masterSheetId }}"
-        },
-        "sheetName": {
-          "mode": "name",
-          "value": "Revenue"
-        },
+        "operation": "executeQuery",
+        "query": "SELECT month_key AS \"Month\", invoiced::text AS \"Invoiced\", collected::text AS \"Collected\", outstanding::text AS \"Outstanding\", overdue::text AS \"Overdue\" FROM public.os_revenue_monthly ORDER BY month_key",
         "options": {}
       },
       "id": "sys12-revenue",
       "name": "Query Revenue",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
-        1570,
-        400
+        1600,
+        832
       ],
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "IJzDJS1jpbItegZD",
-          "name": "Google Sheets account 2"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
@@ -559,38 +512,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1790,
-        400
+        1824,
+        832
       ]
     },
     {
       "parameters": {
         "resource": "deal",
         "operation": "getAll",
-        "filters": {
-          "values": [
-            {
-              "propertyName": "dealstage",
-              "operator": "IN",
-              "value": "closed_won,invoice_sent,paid"
-            }
-          ]
-        },
         "limit": 50,
-        "options": {
-          "properties": [
-            "dealname",
-            "client_health_score"
-          ]
-        }
+        "filters": {}
       },
       "id": "sys12-health",
       "name": "Query Health",
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2,
       "position": [
-        1570,
-        300
+        1600,
+        640
       ],
       "credentials": {
         "hubspotApi": {
@@ -608,38 +547,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1790,
-        300
+        1824,
+        640
       ]
     },
     {
       "parameters": {
         "resource": "deal",
         "operation": "getAll",
-        "filters": {
-          "values": [
-            {
-              "propertyName": "dealstage",
-              "operator": "EQ",
-              "value": "invoice_sent"
-            }
-          ]
-        },
         "limit": 50,
-        "options": {
-          "properties": [
-            "dealname",
-            "amount"
-          ]
-        }
+        "filters": {}
       },
       "id": "sys12-overdue",
       "name": "Query Overdue",
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2,
       "position": [
-        1570,
-        150
+        1600,
+        256
       ],
       "credentials": {
         "hubspotApi": {
@@ -657,8 +582,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1790,
-        150
+        1824,
+        256
       ]
     }
   ],
@@ -962,7 +887,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedMode": "fixed",
     "errorWorkflow": "w9S9LovIY8CxchZm"
@@ -972,9 +897,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "81c2a51f-1ebf-4205-abc1-0282848049b7",
-  "activeVersionId": "81c2a51f-1ebf-4205-abc1-0282848049b7",
-  "versionCounter": 189,
+  "versionId": "3b88ad43-ba0a-4d59-8c34-4abe959cdd99",
+  "activeVersionId": "08781326-9527-4ac9-a5e0-d3f9efa5052f",
+  "versionCounter": 258,
   "triggerCount": 1,
   "shared": [
     {
@@ -997,9 +922,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:42:44.350Z",
-    "createdAt": "2026-04-03T03:42:44.350Z",
-    "versionId": "81c2a51f-1ebf-4205-abc1-0282848049b7",
+    "updatedAt": "2026-04-19T19:25:36.973Z",
+    "createdAt": "2026-04-19T19:25:36.973Z",
+    "versionId": "08781326-9527-4ac9-a5e0-d3f9efa5052f",
     "workflowId": "5zqAo5so5iSSCnXY",
     "nodes": [
       {
@@ -1519,29 +1444,22 @@
       },
       {
         "parameters": {
-          "operation": "read",
-          "documentId": {
-            "mode": "id",
-            "value": "={{ $('Get Config').first().json.google.masterSheetId }}"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "Revenue"
-          },
+          "operation": "executeQuery",
+          "query": "SELECT month_key AS \"Month\", invoiced::text AS \"Invoiced\", collected::text AS \"Collected\", outstanding::text AS \"Outstanding\", overdue::text AS \"Overdue\" FROM public.os_revenue_monthly ORDER BY month_key",
           "options": {}
         },
         "id": "sys12-revenue",
         "name": "Query Revenue",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           1570,
           400
         ],
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "IJzDJS1jpbItegZD",
-            "name": "Google Sheets account 2"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       },
@@ -1960,18 +1878,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T03:42:44.393Z",
-        "id": 1498,
+        "createdAt": "2026-04-19T19:25:37.031Z",
+        "id": 3055,
         "workflowId": "5zqAo5so5iSSCnXY",
-        "versionId": "81c2a51f-1ebf-4205-abc1-0282848049b7",
+        "versionId": "08781326-9527-4ac9-a5e0-d3f9efa5052f",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-03T03:42:44.380Z",
-        "id": 1497,
+        "createdAt": "2026-04-19T19:25:37.016Z",
+        "id": 3054,
         "workflowId": "5zqAo5so5iSSCnXY",
-        "versionId": "81c2a51f-1ebf-4205-abc1-0282848049b7",
+        "versionId": "08781326-9527-4ac9-a5e0-d3f9efa5052f",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }

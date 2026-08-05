@@ -1,5 +1,11 @@
 {
+  "updatedAt": "2026-04-19T19:25:30.278Z",
+  "createdAt": "2026-04-11T00:34:56.265Z",
+  "id": "mVlQSfO4pb5lomdf",
   "name": "SYS 01.5 — Client Intake Brief (Real-Time)",
+  "description": "Triggers on HubSpot contact.creation. If website intake data is present, fetches all intake fields, builds a structured markdown brief, and saves it to E:\\IntraWeb-Technologies\\04_Clients\\Client Briefs\\.",
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -153,7 +159,6 @@
       ]
     }
   ],
-  "pinData": {},
   "connections": {
     "HubSpot — New Contact Created": {
       "main": [
@@ -218,18 +223,613 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1",
+    "availableInMCP": true,
     "binaryMode": "separate",
-    "availableInMCP": true
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+  "staticData": null,
   "meta": {
     "aiBuilderAssisted": true,
-    "templateCredsSetupCompleted": true,
-    "instanceId": "1cff88115aab5ae8f7bdd466a833f75cb8c09b6525a4bcba653e239d88e0a833"
+    "templateCredsSetupCompleted": true
   },
-  "id": "mVlQSfO4pb5lomdf",
-  "tags": []
+  "pinData": {},
+  "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+  "activeVersionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+  "versionCounter": 74,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-11T00:34:56.299Z",
+      "createdAt": "2026-04-11T00:34:56.299Z",
+      "role": "workflow:owner",
+      "workflowId": "mVlQSfO4pb5lomdf",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-11T00:40:12.000Z",
+    "createdAt": "2026-04-11T00:39:52.354Z",
+    "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+    "workflowId": "mVlQSfO4pb5lomdf",
+    "nodes": [
+      {
+        "parameters": {
+          "eventsUi": {
+            "eventValues": [
+              {}
+            ]
+          },
+          "additionalFields": {}
+        },
+        "id": "d2ebaccc-15c5-4e3f-a626-40d416ae21e9",
+        "name": "HubSpot — New Contact Created",
+        "type": "n8n-nodes-base.hubspotTrigger",
+        "typeVersion": 1,
+        "position": [
+          240,
+          304
+        ],
+        "webhookId": "aac4ff50-e0c6-47c3-8b23-8ccae5a65335",
+        "credentials": {
+          "hubspotDeveloperApi": {
+            "id": "GqT0NoNc7c9eAodv",
+            "name": "HubSpot Developer account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "conditions": [
+              {
+                "leftValue": "={{ $json.properties.website_intake_goals }}",
+                "operator": {
+                  "type": "string",
+                  "operation": "isNotEmpty"
+                },
+                "rightValue": ""
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "1c74fd23-e7ed-4e92-bdef-8ce62e592935",
+        "name": "Has Intake Data?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          480,
+          304
+        ]
+      },
+      {
+        "parameters": {
+          "authentication": "appToken",
+          "operation": "get",
+          "contactId": "={{ $json.vid }}",
+          "additionalFields": {
+            "propertiesCollection": {
+              "propertiesValues": {
+                "properties": [
+                  "firstname",
+                  "lastname",
+                  "email",
+                  "company",
+                  "phone",
+                  "website",
+                  "hs_lead_status",
+                  "createdate",
+                  "website_intake_goals",
+                  "website_intake_industry",
+                  "website_intake_timeline",
+                  "website_intake_pages",
+                  "website_intake_competitors",
+                  "website_intake_design_notes"
+                ],
+                "propertyMode": "valueOnly"
+              }
+            }
+          }
+        },
+        "id": "75b6bd15-ab22-4d51-807e-f9d1be6c6166",
+        "name": "Get Full Contact Record",
+        "type": "n8n-nodes-base.hubspot",
+        "typeVersion": 2.2,
+        "position": [
+          720,
+          208
+        ],
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "\nconst p = items[0].json.properties;\nconst get = (key) => p[key]?.value || 'N/A';\n\nconst name = `${get('firstname').trim()} ${get('lastname').trim()}`.trim();\nconst company = get('company') === 'UNKNOWN' ? 'N/A' : get('company');\nconst slug = company.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || \n  name.toLowerCase().replace(/[^a-z0-9]+/g, '-');\nconst dateStr = get('createdate') !== 'N/A' ? new Date(get('createdate')).toLocaleDateString('en-US') : 'N/A';\n\nconst goals = get('website_intake_goals');\nconst industry = get('website_intake_industry');\nconst timeline = get('website_intake_timeline');\nconst pages = get('website_intake_pages');\nconst competitors = get('website_intake_competitors');\nconst designNotes = get('website_intake_design_notes');\n\nconst pageCount = pages !== 'N/A' ? pages.split(',').length : 0;\nconst goalLower = goals.toLowerCase();\nlet tier = 'Growth';\nlet tierReason = 'Mid-range page count and goals suggest Growth tier.';\nif (pageCount <= 4 || goalLower.includes('simple')) {\n  tier = 'Starter';\n  tierReason = 'Limited pages and straightforward goals fit the Starter tier.';\n} else if (pageCount > 8 || goalLower.includes('automat') || goalLower.includes('integrat')) {\n  tier = 'Growth';\n  tierReason = 'Multiple pages with automation or integration goals align with Growth tier.';\n}\n\nconst gaps = [];\nif (get('phone') === 'N/A') gaps.push('No phone number on file');\nif (get('website') === 'N/A') gaps.push('No existing website URL provided');\nif (competitors === 'N/A') gaps.push('No competitor or inspiration sites listed');\nif (designNotes === 'N/A') gaps.push('No design direction notes');\nif (timeline.toLowerCase().includes('flexible')) gaps.push('Timeline is flexible — confirm hard deadlines on discovery call');\nif (company === 'N/A') gaps.push('Company name unknown — confirm on call');\n\nconst gapBlock = gaps.length > 0 ? gaps.map(g => `- ${g}`).join('\\n') : '- No critical gaps identified';\n\nconst brief = `# Client Intake Brief\n**Name:** ${name}\n**Company:** ${company}\n**Email:** ${get('email')}\n**Phone:** ${get('phone')}\n**Lead Status:** ${get('hs_lead_status')}\n**Submitted:** ${dateStr}\n\n---\n\n## What They're Building\n${name} is looking to build a website for ${company} in the ${industry} space. Their primary goals include ${goals.toLowerCase()}. Timeline is ${timeline.toLowerCase()}.\n\n---\n\n## Intake Details\n- **Industry:** ${industry}\n- **Goals:** ${goals}\n- **Timeline:** ${timeline}\n- **Pages Requested:** ${pages}\n- **Competitors / Inspiration:** ${competitors}\n- **Design Notes:** ${designNotes}\n\n---\n\n## Red Flags / Gaps\n${gapBlock}\n\n---\n\n## Recommended IW Tier\n**${tier}** — ${tierReason}\n`;\n\nreturn [{ json: { brief, slug, name } }];\n      "
+        },
+        "id": "33e44735-34b6-4332-b31f-5db9c5f8e409",
+        "name": "Build Intake Brief",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          960,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "toBinary",
+          "sourceProperty": "brief",
+          "options": {
+            "fileName": "={{ $json.slug }}-intake-brief.md",
+            "mimeType": "text/markdown"
+          }
+        },
+        "id": "1d6cb787-20ab-4a26-9565-f049ef0c088e",
+        "name": "Convert to File",
+        "type": "n8n-nodes-base.convertToFile",
+        "typeVersion": 1.1,
+        "position": [
+          1200,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "write",
+          "fileName": "=E:\\\\IntraWeb-Technologies\\\\04_Clients\\\\Client Briefs\\\\{{ $('Build Intake Brief').item.json.slug }}-intake-brief.md",
+          "options": {}
+        },
+        "id": "28ae6f3b-740e-455f-ba8a-5a0d49b61afa",
+        "name": "Save to Client Briefs",
+        "type": "n8n-nodes-base.readWriteFile",
+        "typeVersion": 1.1,
+        "position": [
+          1440,
+          208
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "177c0a2b-7e1d-4d70-82ea-1cb4a882a6c8",
+        "name": "Skip — No Intake Data",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          720,
+          432
+        ]
+      }
+    ],
+    "connections": {
+      "HubSpot — New Contact Created": {
+        "main": [
+          [
+            {
+              "node": "Has Intake Data?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Has Intake Data?": {
+        "main": [
+          [
+            {
+              "node": "Get Full Contact Record",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Skip — No Intake Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get Full Contact Record": {
+        "main": [
+          [
+            {
+              "node": "Build Intake Brief",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Intake Brief": {
+        "main": [
+          [
+            {
+              "node": "Convert to File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert to File": {
+        "main": [
+          [
+            {
+              "node": "Save to Client Briefs",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "John Schibelli",
+    "name": "Version 99b5d0e0",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-11T00:40:12.720Z",
+        "id": 1538,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:32:57.443Z",
+        "id": 1610,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:33:38.819Z",
+        "id": 1658,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:18:35.189Z",
+        "id": 1727,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:22:02.831Z",
+        "id": 1777,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:54:02.624Z",
+        "id": 1859,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:55:38.706Z",
+        "id": 1919,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:00:34.919Z",
+        "id": 1985,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:11:40.545Z",
+        "id": 2051,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:35.875Z",
+        "id": 2117,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:44.920Z",
+        "id": 2183,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:32.120Z",
+        "id": 2249,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:59.355Z",
+        "id": 2315,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:12.946Z",
+        "id": 2381,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:55.890Z",
+        "id": 2447,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:32.137Z",
+        "id": 2513,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:38.253Z",
+        "id": 2585,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:20:06.743Z",
+        "id": 2641,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:49.904Z",
+        "id": 2761,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:46:00.304Z",
+        "id": 2811,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:16.842Z",
+        "id": 2857,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.140Z",
+        "id": 3023,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:32:54.667Z",
+        "id": 1609,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:33:36.302Z",
+        "id": 1657,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:18:32.673Z",
+        "id": 1726,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:21:59.138Z",
+        "id": 1776,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:54:00.212Z",
+        "id": 1858,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:55:36.269Z",
+        "id": 1918,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:00:32.464Z",
+        "id": 1984,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:11:38.070Z",
+        "id": 2050,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:33.348Z",
+        "id": 2116,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:42.329Z",
+        "id": 2182,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:29.563Z",
+        "id": 2248,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:56.820Z",
+        "id": 2314,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:10.470Z",
+        "id": 2380,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:52.974Z",
+        "id": 2446,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:29.601Z",
+        "id": 2512,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:35.771Z",
+        "id": 2584,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:20:04.413Z",
+        "id": 2640,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:47.265Z",
+        "id": 2760,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:56.569Z",
+        "id": 2810,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T23:59:14.283Z",
+        "id": 2856,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:31.887Z",
+        "id": 3022,
+        "workflowId": "mVlQSfO4pb5lomdf",
+        "versionId": "99b5d0e0-02e2-444f-bfd2-a15c16a46ac6",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
+  }
 }

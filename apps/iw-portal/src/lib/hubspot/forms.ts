@@ -1,17 +1,8 @@
 import { HS_CO, HS_EMAIL } from '@/lib/change-order/hubspot-fields'
 import type { ChangeOrderPayloadInput } from '@/lib/change-order/schema'
+import { getHubSpotChangeOrderFormGuid, getHubSpotPortalId, getHubSpotPrivateAppToken } from '@/lib/hubspot/config'
 
 const HS_FORMS_BASE = 'https://api.hsforms.com'
-
-function portalId(): string | null {
-  const v = process.env.HUBSPOT_PORTAL_ID?.trim()
-  return v || null
-}
-
-function formGuid(): string | null {
-  const v = process.env.HUBSPOT_CHANGE_ORDER_FORM_GUID?.trim()
-  return v || null
-}
 
 const CONTACT_OBJECT_TYPE_ID = '0-1'
 
@@ -64,10 +55,14 @@ export async function submitChangeOrderHubSpotForm(params: {
   portalReference: string
   payload: ChangeOrderPayloadInput
 }): Promise<HubSpotFormSubmitResult> {
-  const pid = portalId()
-  const guid = formGuid()
+  const pid = getHubSpotPortalId()
+  const guid = getHubSpotChangeOrderFormGuid()
   if (!pid || !guid) {
-    return { ok: false, error: 'HUBSPOT_PORTAL_ID or HUBSPOT_CHANGE_ORDER_FORM_GUID not configured' }
+    return {
+      ok: false,
+      error:
+        'HubSpot form not configured: set HUBSPOT_PORTAL_ID (or NEXT_PUBLIC_HUBSPOT_ID) and HUBSPOT_CHANGE_ORDER_FORM_GUID (or HUBSPOT_FORM_GUID)',
+    }
   }
 
   const fields = changeOrderPayloadToHubSpotFields(
@@ -88,7 +83,7 @@ export async function submitChangeOrderHubSpotForm(params: {
 
   const url = `${HS_FORMS_BASE}/submissions/v3/integration/submit/${encodeURIComponent(pid)}/${encodeURIComponent(guid)}`
   const headers: HeadersInit = { 'content-type': 'application/json' }
-  const pat = process.env.HUBSPOT_PRIVATE_APP_TOKEN?.trim()
+  const pat = getHubSpotPrivateAppToken()
   if (pat) headers.Authorization = `Bearer ${pat}`
 
   let res: Response

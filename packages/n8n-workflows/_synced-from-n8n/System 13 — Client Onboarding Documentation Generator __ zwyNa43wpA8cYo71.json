@@ -1,0 +1,938 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:48:03.169Z",
+  "id": "zwyNa43wpA8cYo71",
+  "name": "System 13 — Client Onboarding Documentation Generator",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-onboarding-docs",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c47d8086-63cb-4e77-8994-0f27e399d7dc",
+      "name": "Webhook: Generate Onboarding Docs",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -640,
+        48
+      ],
+      "webhookId": "1f9fdc50-2203-4f2e-b628-6fe6438ac194"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$json.body.deal_id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c94a54a3-a652-4100-afb0-c469cd11b3ac",
+      "name": "HubSpot: Get Deal Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -432,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const deal = $input.first().json;\nconst body = $('Webhook: Generate Onboarding Docs').first().json.body;\nreturn [{\n  json: {\n    deal_id: body.deal_id,\n    client_name: body.client_name,\n    company_name: body.company_name,\n    industry: body.industry || deal.properties?.industry || 'general business',\n    tier: body.tier,\n    start_date: body.start_date,\n    deal_value: body.deal_value || deal.properties?.amount || '0',\n    pain_points: body.pain_points,\n    owner_phone: body.owner_phone,\n    owner_email: body.owner_email,\n    deal_name: deal.properties?.dealname || `${body.company_name} — ${body.tier}`,\n    deal_stage: deal.properties?.dealstage || 'projectstarted'\n  }\n}];"
+      },
+      "id": "474f0948-b6db-480e-b38f-fcad42f81647",
+      "name": "Code: Merge Deal Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 800,\n  \"system\": \"Write for IntraWeb Technologies. Direct, warm, specific tone. No em dashes. No template-sounding phrases. Return only the letter text as HTML (no JSON wrapper, just the HTML content string).\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a personalized welcome letter for {{$json.client_name}} at {{$json.company_name}}, a {{$json.industry}} business, joining IntraWeb on {{$json.start_date}} at the {{$json.tier}} tier. Reference their specific pain points: {{$json.pain_points}}. Mention what IntraWeb will specifically build for them based on the {{$json.tier}} tier. Include John's contact: john.schibelli@intrawebtech.com. Tone: warm, confident, specific.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "d72dba45-a75c-44df-93f1-a66028361aac",
+      "name": "Claude: Section 1 — Welcome Letter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1200,\n  \"system\": \"You are writing onboarding documentation for IntraWeb Technologies clients. Be clear, specific, and use numbered steps. No em dashes. Return only HTML content.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Generate a step-by-step credential collection guide for a {{$('Code: Merge Deal Data').first().json.tier}} tier IntraWeb client named {{$('Code: Merge Deal Data').first().json.client_name}} at {{$('Code: Merge Deal Data').first().json.company_name}}. Starter tier: Google Workspace, basic CRM access, website credentials. Growth tier: all Starter plus LinkedIn, Zapier/n8n, email marketing platform, invoicing tool. Ops tier: everything in Growth plus phone system, project management tool, additional SaaS tools, custom integrations. Include specific instructions for each credential type: what to share, how to share it securely, who needs access.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "5b0f6912-1751-4e03-b520-874cf6c2713c",
+      "name": "Claude: Section 2 — Credentials Guide",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1500,\n  \"system\": \"Write plain English automation descriptions for business owners. No technical jargon. Explain what triggers each automation, what happens, and what the client never has to do manually again. No em dashes. Return HTML content.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Describe every automation IntraWeb will build for {{$('Code: Merge Deal Data').first().json.client_name}} at {{$('Code: Merge Deal Data').first().json.company_name}} ({{$('Code: Merge Deal Data').first().json.industry}}) on the {{$('Code: Merge Deal Data').first().json.tier}} tier. For each automation: what triggers it, what it does step by step, what the client experiences, and what they never have to do manually again. Their pain points were: {{$('Code: Merge Deal Data').first().json.pain_points}}.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "d0daf211-2f51-4715-a5ee-ee35277be49e",
+      "name": "Claude: Section 3 — What We're Building",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 800,\n  \"system\": \"Write clear project timelines for clients. Use week-by-week format. Be specific about deliverables and client responsibilities. No em dashes. Return HTML content with a structured table or list.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a week-by-week project timeline starting from {{$('Code: Merge Deal Data').first().json.start_date}} for {{$('Code: Merge Deal Data').first().json.company_name}} on the {{$('Code: Merge Deal Data').first().json.tier}} tier. Include: what IntraWeb builds each week, what the client needs to provide, milestone checkpoints, and go-live dates for each automation. Be realistic and specific.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "170ef7ac-a858-42aa-b111-37beafb8833d",
+      "name": "Claude: Section 4 — Project Timeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 600,\n  \"system\": \"Write clear working relationship guidelines for clients. Professional but friendly. No em dashes. Return HTML content.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a 'How to Work With IntraWeb' section for {{$('Code: Merge Deal Data').first().json.company_name}}. Cover: primary communication channels (email: john.schibelli@intrawebtech.com, SMS for urgent), response times (same business day), how to request changes, what's in scope for the {{$('Code: Merge Deal Data').first().json.tier}} tier monthly retainer, what's out of scope, monthly reporting cadence, how to flag urgent issues.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "56560fe8-81bb-4b07-b6a3-ef9954a93718",
+      "name": "Claude: Section 5 — How to Work With IntraWeb",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 400,\n  \"system\": \"Write clear, professional billing terms. Direct and transparent. No em dashes. Return HTML content.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write billing and payment terms for {{$('Code: Merge Deal Data').first().json.company_name}} at the {{$('Code: Merge Deal Data').first().json.tier}} tier (deal value: ${{$('Code: Merge Deal Data').first().json.deal_value}}). Include: pricing for their tier, invoice schedule (monthly on the 1st), payment methods (ACH preferred, credit card accepted), payment due window (net 15), late payment policy (1.5% monthly after 30 days), cancellation policy (30 days written notice), and note that the client owns all automations built for them.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "bc9c0a00-b16a-4683-88fb-5e499c20a6cc",
+      "name": "Claude: Section 6 — Billing & Payment Terms",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 800,\n  \"system\": \"Write a practical FAQ for business clients. Answer real questions they will have. Honest and clear. No em dashes. Return HTML content with Q&A format.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a tailored FAQ for {{$('Code: Merge Deal Data').first().json.client_name}} at {{$('Code: Merge Deal Data').first().json.company_name}} ({{$('Code: Merge Deal Data').first().json.industry}}) on the {{$('Code: Merge Deal Data').first().json.tier}} tier. Cover: what happens if an automation breaks, how to report issues, adding a staff member, what happens if we cancel, can we request changes after build, how do we know automations are running, who owns the data, can we see reports. Make answers specific to their industry and tier.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "41aa924b-83fe-4835-a8ab-85c479f8474d",
+      "name": "Claude: Section 7 — FAQ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst clientData = $('Code: Merge Deal Data').first().json;\n\n// Extract text from each Claude response\nconst getSection = (nodeOutput) => {\n  try {\n    const content = nodeOutput.json.content[0].text;\n    return content;\n  } catch(e) {\n    return '<p>Section content unavailable.</p>';\n  }\n};\n\nconst sec1 = $('Claude: Section 1 — Welcome Letter').first().json.content[0].text;\nconst sec2 = $('Claude: Section 2 — Credentials Guide').first().json.content[0].text;\nconst sec3 = $('Claude: Section 3 — What We\\'re Building').first().json.content[0].text;\nconst sec4 = $('Claude: Section 4 — Project Timeline').first().json.content[0].text;\nconst sec5 = $('Claude: Section 5 — How to Work With IntraWeb').first().json.content[0].text;\nconst sec6 = $('Claude: Section 6 — Billing & Payment Terms').first().json.content[0].text;\nconst sec7 = $('Claude: Section 7 — FAQ').first().json.content[0].text;\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>IntraWeb Technologies — ${clientData.company_name} Onboarding Package</title>\n  <style>\n    * { box-sizing: border-box; margin: 0; padding: 0; }\n    body { font-family: 'Georgia', serif; color: #1a1a1a; background: #fff; font-size: 14px; line-height: 1.7; }\n    .header { background: #0a0a0a; color: #fff; padding: 40px 60px; border-bottom: 4px solid #3b82f6; }\n    .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }\n    .header p { color: #9ca3af; margin-top: 6px; font-size: 14px; }\n    .toc { background: #f8fafc; padding: 40px 60px; border-bottom: 1px solid #e5e7eb; }\n    .toc h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #0a0a0a; }\n    .toc ol { padding-left: 20px; }\n    .toc li { margin-bottom: 8px; color: #3b82f6; font-size: 13px; }\n    .section { padding: 50px 60px; border-bottom: 1px solid #e5e7eb; }\n    .section h2 { font-size: 22px; font-weight: 700; color: #0a0a0a; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 2px solid #3b82f6; }\n    .section h3 { font-size: 16px; font-weight: 700; color: #374151; margin: 20px 0 10px; }\n    .section p { margin-bottom: 14px; color: #374151; }\n    .section ul, .section ol { padding-left: 20px; margin-bottom: 14px; }\n    .section li { margin-bottom: 6px; color: #374151; }\n    .section table { width: 100%; border-collapse: collapse; margin: 20px 0; }\n    .section th { background: #0a0a0a; color: #fff; padding: 10px 14px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }\n    .section td { padding: 10px 14px; border-bottom: 1px solid #e5e7eb; }\n    .section tr:nth-child(even) td { background: #f9fafb; }\n    .section strong { color: #0a0a0a; }\n    .badge { display: inline-block; background: #3b82f6; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }\n    .footer { background: #0a0a0a; color: #9ca3af; padding: 30px 60px; text-align: center; font-size: 12px; }\n    .footer strong { color: #fff; }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <h1>IntraWeb Technologies</h1>\n    <p>Client Onboarding Package &nbsp;|&nbsp; ${clientData.company_name} &nbsp;|&nbsp; ${clientData.tier} Tier &nbsp;|&nbsp; ${clientData.start_date}</p>\n  </div>\n  <div class=\"toc\">\n    <h2>Table of Contents</h2>\n    <ol>\n      <li>Welcome Letter</li>\n      <li>Credentials &amp; Access Intake Guide</li>\n      <li>What We're Building For You</li>\n      <li>Project Timeline</li>\n      <li>How to Work With IntraWeb</li>\n      <li>Billing &amp; Payment Terms</li>\n      <li>Frequently Asked Questions</li>\n    </ol>\n  </div>\n  <div class=\"section\">\n    <span class=\"badge\">Section 1</span>\n    <h2>Welcome Letter</h2>\n    ${sec1}\n  </div>\n  <div class=\"section\">\n    <span class=\"badge\">Section 2</span>\n    <h2>Credentials &amp; Access Intake Guide</h2>\n    ${sec2}\n  </div>\n  <div class=\"section\">\n    <span class=\"badge\">Section 3</span>\n    <h2>What We're Building For You</h2>\n    ${sec3}\n  </div>\n  <div class=\"section\">\n    <span class=\"badge\">Section 4</span>\n    <h2>Project Timeline</h2>\n    ${sec4}\n  </div>\n  <div class=\"section\">\n    <span class=\"badge\">Section 5</span>\n    <h2>How to Work With IntraWeb</h2>\n    ${sec5}\n  </div>\n  <div class=\"section\">\n    <span class=\"badge\">Section 6</span>\n    <h2>Billing &amp; Payment Terms</h2>\n    ${sec6}\n  </div>\n  <div class=\"section\">\n    <span class=\"badge\">Section 7</span>\n    <h2>Frequently Asked Questions</h2>\n    ${sec7}\n  </div>\n  <div class=\"footer\">\n    <strong>IntraWeb Technologies LLC</strong> &nbsp;|&nbsp; john@intrawebtech.com &nbsp;|&nbsp; Generated ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}\n  </div>\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    html,\n    client_name: clientData.client_name,\n    company_name: clientData.company_name,\n    tier: clientData.tier,\n    deal_id: clientData.deal_id,\n    owner_email: clientData.owner_email,\n    owner_phone: clientData.owner_phone,\n    filename: `IntraWeb — ${clientData.company_name} — Onboarding Package.pdf`\n  }\n}];"
+      },
+      "id": "54da4588-41f1-448c-a8c3-286a04b30bf9",
+      "name": "Code: Assemble HTML Document",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const { html, filename, client_name, company_name, tier, deal_id, owner_email, owner_phone } = $input.first().json;\n\nlet pdfBase64;\ntry {\n  const puppeteer = require('puppeteer');\n  const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });\n  const page = await browser.newPage();\n  await page.setContent(html, { waitUntil: 'networkidle0' });\n  const pdf = await page.pdf({\n    format: 'A4',\n    margin: { top: '0.75in', right: '0in', bottom: '0.75in', left: '0in' },\n    printBackground: true\n  });\n  await browser.close();\n  pdfBase64 = pdf.toString('base64');\n} catch(e) {\n  // Fallback: return HTML as base64 if Puppeteer unavailable\n  pdfBase64 = Buffer.from(html).toString('base64');\n}\n\nreturn [{\n  json: {\n    pdf: pdfBase64,\n    filename,\n    client_name,\n    company_name,\n    tier,\n    deal_id,\n    owner_email,\n    owner_phone\n  }\n}];"
+      },
+      "id": "d60f5957-f1fe-4d57-a44a-c40f73cb286a",
+      "name": "Code: Generate PDF via Puppeteer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "metadata",
+              "value": "={\"name\": \"{{$json.filename}}\", \"parents\": [\"{{$env.GOOGLE_DRIVE_ONBOARDING_FOLDER_ID}}\"], \"mimeType\": \"application/pdf\"}"
+            },
+            {
+              "name": "file",
+              "value": "={{$json.pdf}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "31adbfb0-a19e-414e-8bde-3b94c93a1405",
+      "name": "Google Drive: Upload Onboarding PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const driveResponse = $input.first().json;\nconst pdfData = $('Code: Generate PDF via Puppeteer').first().json;\nconst fileId = driveResponse.id || '';\nconst driveLink = `https://drive.google.com/file/d/${fileId}/view`;\nreturn [{\n  json: {\n    file_id: fileId,\n    drive_link: driveLink,\n    pdf: pdfData.pdf,\n    filename: pdfData.filename,\n    client_name: pdfData.client_name,\n    company_name: pdfData.company_name,\n    tier: pdfData.tier,\n    deal_id: pdfData.deal_id,\n    owner_email: pdfData.owner_email,\n    owner_phone: pdfData.owner_phone\n  }\n}];"
+      },
+      "id": "e0169ca7-9f8f-4618-a55e-1ed3b58aecc6",
+      "name": "Code: Extract Drive Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.RESEND_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{$json.owner_email}}\"],\n  \"subject\": \"Your IntraWeb onboarding package — everything you need to get started\",\n  \"html\": \"<p>Hi {{$json.client_name}},</p><p>Your onboarding package is attached to this email. It covers everything you need to know as we get started — your project timeline, what we're building, how to share credentials securely, and how to reach me.</p><p>Take a look through it when you get a chance. If anything is unclear or you have questions, reply to this email or shoot me a text.</p><p>Looking forward to building with you.</p><p>John<br>IntraWeb Technologies<br>john@intrawebtech.com</p>\",\n  \"attachments\": [\n    {\n      \"filename\": \"{{$json.filename}}\",\n      \"content\": \"{{$json.pdf}}\",\n      \"type\": \"application/pdf\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "aff5ba7a-67de-44fa-b680-052577322a9d",
+      "name": "Resend: Send Onboarding Package Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_task_subject\": \"Confirm client received and reviewed onboarding docs — {{$json.company_name}}\",\n    \"hs_task_body\": \"Follow up with {{$json.client_name}} to confirm they received and reviewed the onboarding package sent on {{$now.format('MMMM d, yyyy')}}. Check: questions about timeline, credentials, or scope.\",\n    \"hs_timestamp\": \"{{$now.plus(2, 'days').toMillis()}}\",\n    \"hs_task_priority\": \"MEDIUM\",\n    \"hs_task_status\": \"NOT_STARTED\",\n    \"hs_task_type\": \"TODO\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\"id\": \"{{$json.deal_id}}\"},\n      \"types\": [{\"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 216}]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "9e43daf7-2898-483b-aca0-04fd75d03e5c",
+      "name": "HubSpot: Create Followup Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1568,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 24
+      },
+      "id": "ef20bd36-e91e-454a-868c-8e6c9ebff6ea",
+      "name": "Wait 24 Hours",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1776,
+        48
+      ],
+      "webhookId": "ef2dcbd7-b219-411c-b5b3-70bc4c42a327"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"email\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{$('Code: Extract Drive Link').first().json.owner_email}}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"email\", \"hs_email_open_date\", \"hs_email_last_send_date\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "1ca25ce3-841b-4978-85a3-ea457c7080fb",
+      "name": "HubSpot: Check Email Open Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst results = response.results || [];\nconst driveData = $('Code: Extract Drive Link').first().json;\nif (results.length === 0) {\n  return [{ json: { email_opened: false, ...driveData } }];\n}\nconst props = results[0].properties;\nconst openDate = props.hs_email_open_date ? new Date(props.hs_email_open_date) : null;\nconst twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);\nconst emailOpened = openDate && openDate > twentyFourHoursAgo;\nreturn [{ json: { email_opened: emailOpened, ...driveData } }];"
+      },
+      "id": "19a11f9a-063f-4a83-8842-6b57d7f024a2",
+      "name": "Code: Check If Email Opened",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "email-not-opened",
+              "leftValue": "={{$json.email_opened}}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "false"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "172ada51-71e3-4936-9352-81ee91151b8a",
+      "name": "If Not Opened: Send SMS",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2448,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$env.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.owner_phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$env.TWILIO_PHONE_NUMBER}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$json.client_name}}, just checking you received your onboarding package from us — check your inbox and let us know if you have any questions. — John, IntraWeb"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fe09000d-60d0-4741-9783-70e01ea69fa4",
+      "name": "Twilio: Onboarding Package SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2656,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations%20Log:append",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"range\": \"Automations Log\",\n  \"majorDimension\": \"ROWS\",\n  \"values\": [\n    [\n      \"{{$now.format('yyyy-MM-dd HH:mm:ss')}}\",\n      \"System 13\",\n      \"Onboarding Docs Generator\",\n      \"Onboarding package generated and sent for {{$('Code: Extract Drive Link').first().json.client_name}} at {{$('Code: Extract Drive Link').first().json.company_name}} — {{$('Code: Extract Drive Link').first().json.tier}} tier. Drive: {{$('Code: Extract Drive Link').first().json.drive_link}}\",\n      \"Success\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "8a003de3-9312-4489-b17b-9b918cf00ed0",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
+        48
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fc9fa705-fea3-4232-bac9-d6b3dac4ee6b",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"ERROR — System 13 Onboarding Docs Generator\\nNode: {{$json.execution.lastNodeExecuted}}\\nError: {{$json.error.message}}\\nTime: {{$now.format('yyyy-MM-dd HH:mm:ss')}}\"\n}",
+        "options": {}
+      },
+      "id": "c43c0772-c16b-480c-be2f-cb3e1509b329",
+      "name": "Google Chat: Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -432,
+        352
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Generate Onboarding Docs": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Get Deal Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Get Deal Details": {
+      "main": [
+        [
+          {
+            "node": "Code: Merge Deal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Merge Deal Data": {
+      "main": [
+        [
+          {
+            "node": "Claude: Section 1 — Welcome Letter",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Claude: Section 2 — Credentials Guide",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Claude: Section 3 — What We're Building",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Claude: Section 4 — Project Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Section 1 — Welcome Letter": {
+      "main": [
+        [
+          {
+            "node": "Claude: Section 5 — How to Work With IntraWeb",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Section 2 — Credentials Guide": {
+      "main": [
+        [
+          {
+            "node": "Claude: Section 6 — Billing & Payment Terms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Section 3 — What We're Building": {
+      "main": [
+        [
+          {
+            "node": "Claude: Section 7 — FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Section 4 — Project Timeline": {
+      "main": [
+        [
+          {
+            "node": "Code: Assemble HTML Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Section 5 — How to Work With IntraWeb": {
+      "main": [
+        [
+          {
+            "node": "Code: Assemble HTML Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Section 6 — Billing & Payment Terms": {
+      "main": [
+        [
+          {
+            "node": "Code: Assemble HTML Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Section 7 — FAQ": {
+      "main": [
+        [
+          {
+            "node": "Code: Assemble HTML Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Assemble HTML Document": {
+      "main": [
+        [
+          {
+            "node": "Code: Generate PDF via Puppeteer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Generate PDF via Puppeteer": {
+      "main": [
+        [
+          {
+            "node": "Google Drive: Upload Onboarding PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive: Upload Onboarding PDF": {
+      "main": [
+        [
+          {
+            "node": "Code: Extract Drive Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Extract Drive Link": {
+      "main": [
+        [
+          {
+            "node": "Resend: Send Onboarding Package Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Send Onboarding Package Email": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Create Followup Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Create Followup Task": {
+      "main": [
+        [
+          {
+            "node": "Wait 24 Hours",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 24 Hours": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Check Email Open Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Check Email Open Status": {
+      "main": [
+        [
+          {
+            "node": "Code: Check If Email Opened",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Check If Email Opened": {
+      "main": [
+        [
+          {
+            "node": "If Not Opened: Send SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Not Opened: Send SMS": {
+      "main": [
+        [
+          {
+            "node": "Twilio: Onboarding Package SMS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Twilio: Onboarding Package SMS": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "24a5c801-bf48-4fc4-acc6-5a27526359ef",
+  "activeVersionId": null,
+  "versionCounter": 6,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:48:03.172Z",
+      "createdAt": "2026-03-05T05:48:03.172Z",
+      "role": "workflow:owner",
+      "workflowId": "zwyNa43wpA8cYo71",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

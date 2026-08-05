@@ -145,6 +145,16 @@ function isoFromProps(p: Record<string, string | null | undefined>): string {
   return new Date().toISOString()
 }
 
+/** Prefer scheduled start time over logged-at (`hs_timestamp`) for meetings. */
+function isoFromMeetingProps(p: Record<string, string | null | undefined>): string {
+  const start = p.hs_meeting_start_time?.trim()
+  if (start) {
+    const ms = parseHubSpotTimeMs({ ...p, hs_timestamp: start })
+    if (!Number.isNaN(ms)) return new Date(ms).toISOString()
+  }
+  return isoFromProps(p)
+}
+
 const NOTE_PROPS = ['hs_note_body', 'hs_timestamp', 'hs_createdate'] as const
 const TASK_PROPS = ['hs_task_subject', 'hs_task_body', 'hs_timestamp', 'hs_createdate'] as const
 const CALL_PROPS = [
@@ -225,7 +235,7 @@ function mapMeeting(o: HubSpotCrmObject, projectId: string): ActivityFeedItem {
     type: 'hubspot_meeting',
     label: title,
     detail: body,
-    created_at: isoFromProps(p),
+    created_at: isoFromMeetingProps(p),
     source: 'hubspot',
   }
 }
@@ -302,4 +312,78 @@ export async function fetchHubSpotActivityFeed(opts: {
     if (!byId.has(item.id)) byId.set(item.id, item)
   }
   return [...byId.values()]
+}
+
+export type CreateHubSpotProposalApprovalNoteResult =
+  | { ok: true; noteId: string; associatedToDeal: boolean; associatedToContact: boolean }
+  | { ok: false; error: string }
+
+async function associateNoteDefault(
+  noteId: string,
+  toType: 'deals' | 'contacts',
+  toId: string,
+): Promise<boolean> {
+  const t = token()
+  if (!t || !noteId || !toId.trim()) return false
+  const encodedNote = encodeURIComponent(noteId)
+  const encodedTo = encodeURIComponent(toId.trim())
+  const res = await fetch(
+    `${HUBSPOT_API}/crm/v4/objects/notes/${encodedNote}/associations/default/${toType}/${encodedTo}`,
+    {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${t}` },
+      cache: 'no-store',
+    },
+  )
+  return res.ok
+}
+
+/** Creates a HubSpot note and links it to the approved deal (and contact when available). */
+export async function createHubSpotProposalApprovalNote(input: {
+  hubspotDealId: string
+  hubspotContactId?: string | null
+  body: string
+  occurredAtIso: string
+}): Promise<CreateHubSpotProposalApprovalNoteResult> {
+  const t = token()
+  const dealId = input.hubspotDealId.trim()
+  if (!t) return { ok: false, error: 'HubSpot token unavailable' }
+  if (!dealId) return { ok: false, error: 'Missing hubspotDealId' }
+
+  const timestampMs = Date.parse(input.occurredAtIso)
+  const hsTimestamp = Number.isNaN(timestampMs) ? Date.now() : timestampMs
+  const createRes = await fetch(`${HUBSPOT_API}/crm/v3/objects/notes`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${t}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      properties: {
+        hs_note_body: input.body,
+        hs_timestamp: String(hsTimestamp),
+      },
+    }),
+    cache: 'no-store',
+  })
+
+  if (!createRes.ok) {
+    return { ok: false, error: `HubSpot note create failed: ${createRes.status}` }
+  }
+
+  const created = (await createRes.json()) as { id?: string }
+  const noteId = created.id ? String(created.id) : ''
+  if (!noteId) return { ok: false, error: 'HubSpot note created without id' }
+
+  const associatedToDeal = await associateNoteDefault(noteId, 'deals', dealId)
+  const contactId = input.hubspotContactId?.trim()
+  const associatedToContact = contactId
+    ? await associateNoteDefault(noteId, 'contacts', contactId)
+    : false
+
+  if (!associatedToDeal) {
+    return { ok: false, error: 'HubSpot note created but failed deal association' }
+  }
+
+  return { ok: true, noteId, associatedToDeal, associatedToContact }
 }

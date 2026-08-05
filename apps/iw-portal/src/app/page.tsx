@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
 export default async function Home() {
-  const { userId } = await auth()
-  if (userId) redirect('/dashboard')
-  redirect('/sign-in')
+  const { userId, redirectToSignIn } = await auth()
+  if (userId) redirect('/post-auth')
+  return redirectToSignIn({ returnBackUrl: '/post-auth' })
 }

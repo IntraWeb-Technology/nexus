@@ -17,8 +17,8 @@ export function DashboardQuickLinks() {
         <Link href="/messages" className={linkClass}>
           <span className="text-center">Messages</span>
         </Link>
-        <Link href="/activity" className={linkClass}>
-          <span className="text-center">Activity</span>
+        <Link href="/notifications" className={linkClass}>
+          <span className="text-center">Notifications</span>
         </Link>
         <Link href="/documents" className={linkClass}>
           <span className="text-center">Documents</span>

@@ -1,0 +1,939 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:17:52.245Z",
+  "id": "0MdJQjBPFf1fFNHr",
+  "name": "System 4 — Client Onboarding Logistics",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deal-closed-won",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "582417e9-b380-4597-b35f-76e7c7a83cf4",
+      "name": "Webhook Deal Closed Won",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -4400,
+        128
+      ],
+      "webhookId": "deal-closed-won"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.body.deal_id || $json.deal_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "dealname,dealstage,amount,pipeline,description,closedate,hs_priority"
+            },
+            {
+              "name": "associations",
+              "value": "contacts,companies"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aa00541e-1aed-4ea9-8d5e-8ebaafcfe3d0",
+      "name": "Get Full Deal from HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -4176,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge webhook payload with HubSpot deal data\nconst webhookBody = $('Webhook Deal Closed Won').item.json.body || $('Webhook Deal Closed Won').item.json;\nconst dealData = $input.item.json;\n\nconst deal_id = webhookBody.deal_id || '';\nconst client_name = webhookBody.client_name || '';\nconst company_name = webhookBody.company_name || '';\nconst email = webhookBody.email || '';\nconst phone_raw = webhookBody.phone || '';\nconst tier = webhookBody.tier || 'Starter';\nconst deal_value = webhookBody.deal_value || dealData.properties?.amount || '0';\n\n// Normalize phone\nlet phone = phone_raw.replace(/[^0-9]/g, '');\nif (phone.length === 10) phone = '+1' + phone;\nelse if (phone.length === 11 && phone.startsWith('1')) phone = '+' + phone;\nelse phone = phone_raw;\n\n// Extract first name\nconst first_name = client_name.split(' ')[0] || client_name;\n\nreturn [{\n  json: {\n    deal_id,\n    client_name,\n    first_name,\n    company_name,\n    email,\n    phone,\n    phone_raw,\n    tier,\n    deal_value,\n    onboarding_start: new Date().toISOString(),\n    hubspot_deal_properties: dealData.properties || {}\n  }\n}];"
+      },
+      "id": "4dec78c4-f38b-4109-96f0-8afdf4c5cd8d",
+      "name": "Prepare Onboarding Variables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3968,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $json.email }}\"],\n  \"subject\": \"Welcome to IntraWeb — here's what happens next\",\n  \"html\": \"<h2>Welcome to IntraWeb Technologies, {{ $json.first_name }}!</h2><p>We're excited to start building with {{ $json.company_name }}.</p><h3>What happens next:</h3><ul><li><strong>Step 1:</strong> Schedule your kickoff call using the link below</li><li><strong>Step 2:</strong> Complete the credentials intake form (separate email incoming)</li><li><strong>Step 3:</strong> Week 1 — we map your current ops and identify the first three automations to build</li><li><strong>Step 4:</strong> Week 2-3 — first workflows delivered and tested</li><li><strong>Step 5:</strong> Training session so your team knows exactly how it all works</li></ul><h3>Book Your Kickoff Call</h3><p><a href='https://calendly.com/intrawebtech/kickoff' style='background:#0066cc;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;'>Schedule Kickoff Call</a></p><h3>Your Tier: {{ $json.tier }}</h3><p>Monthly Investment: ${{ $json.deal_value }}</p><hr><p>Questions? Reply to this email or text/call me directly.</p><p>John<br>IntraWeb Technologies<br>john@intrawebtech.com</p>\"\n}",
+        "options": {}
+      },
+      "id": "fcb64001-749e-42a3-9291-557e81a6302a",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3744,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $('Prepare Onboarding Variables').item.json.email }}\"],\n  \"subject\": \"Action required: IntraWeb credentials intake form\",\n  \"html\": \"<h2>Hi {{ $('Prepare Onboarding Variables').item.json.first_name }},</h2><p>To get started, we need a few credentials and account accesses. This allows us to begin building your automations right away.</p><p><strong>Please complete the form below within 48 hours so we can stay on schedule:</strong></p><p><a href='{{ $env.CREDENTIALS_INTAKE_FORM_URL }}' style='background:#0066cc;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;'>Complete Credentials Intake Form</a></p><p>The form takes about 10 minutes and covers: CRM access, email platform, any existing tools/software, and anything else relevant to your workflows.</p><p>If you have any questions about what we need or why, just reply to this email.</p><p>John<br>IntraWeb Technologies</p>\"\n}",
+        "options": {}
+      },
+      "id": "8a15bd6e-b3cd-4d0b-81ef-dfea736de3aa",
+      "name": "Send Credentials Intake Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3520,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_DRIVE_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"IntraWeb — {{ $('Prepare Onboarding Variables').item.json.company_name }}\",\n  \"mimeType\": \"application/vnd.google-apps.folder\",\n  \"parents\": [\"{{ $env.GOOGLE_DRIVE_ROOT_FOLDER_ID }}\"]\n}",
+        "options": {}
+      },
+      "id": "35a72c75-60d4-4467-a709-5fcc3103f78c",
+      "name": "Create Google Drive Client Folder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3296,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Store the parent folder ID and prepare subfolder creation list\nconst parentFolderId = $input.item.json.id;\nconst client = $('Prepare Onboarding Variables').item.json;\n\nconst subfolders = [\n  'Credentials',\n  'Deliverables',\n  'Meeting Notes',\n  'Contracts',\n  'Onboarding Docs'\n];\n\nreturn subfolders.map(name => ({\n  json: {\n    subfolder_name: name,\n    parent_folder_id: parentFolderId,\n    company_name: client.company_name,\n    client_name: client.client_name,\n    email: client.email,\n    phone: client.phone,\n    tier: client.tier,\n    deal_value: client.deal_value,\n    deal_id: client.deal_id,\n    first_name: client.first_name,\n    onboarding_start: client.onboarding_start\n  }\n}));"
+      },
+      "id": "a1f4305e-79e2-44b7-b120-8b5ffdabd3f1",
+      "name": "Prepare Subfolder List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3088,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "8263961e-ff0b-4463-b65c-26a67cd47aa2",
+      "name": "Split Subfolders",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2864,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/drive/v3/files",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_DRIVE_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.subfolder_name }}\",\n  \"mimeType\": \"application/vnd.google-apps.folder\",\n  \"parents\": [\"{{ $json.parent_folder_id }}\"]\n}",
+        "options": {}
+      },
+      "id": "4b0976ae-7131-4ec7-8a61-31e2e4b37cc5",
+      "name": "Create Subfolder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2640,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// After all subfolders created, prepare HubSpot tasks\nconst client = $('Prepare Onboarding Variables').item.json;\nconst parentFolderId = $('Create Google Drive Client Folder').item.json.id;\nconst folderUrl = 'https://drive.google.com/drive/folders/' + parentFolderId;\n\nconst tasks = [\n  { title: 'Credentials received', note: 'Confirm client credentials intake form has been completed and credentials stored in Drive /Credentials folder.' },\n  { title: 'Kickoff scheduled', note: 'Confirm kickoff call has been booked via Calendly.' },\n  { title: 'Kickoff complete', note: 'Kickoff call completed. Notes filed in Drive /Meeting Notes.' },\n  { title: 'First workflow delivered', note: 'First automation workflow built, tested, and delivered to client.' },\n  { title: 'Client trained', note: 'Client training session completed. Recording saved in Drive /Deliverables.' },\n  { title: 'Docs delivered', note: 'All documentation and SOPs delivered to client Drive /Onboarding Docs.' }\n];\n\nconst dueDate = new Date();\ndueDate.setDate(dueDate.getDate() + 7);\nconst dueDateMs = dueDate.getTime();\n\nreturn tasks.map(task => ({\n  json: {\n    task_title: task.title,\n    task_note: task.note,\n    due_date_ms: dueDateMs,\n    deal_id: client.deal_id,\n    company_name: client.company_name,\n    client_name: client.client_name,\n    email: client.email,\n    phone: client.phone,\n    tier: client.tier,\n    deal_value: client.deal_value,\n    first_name: client.first_name,\n    drive_folder_url: folderUrl,\n    parent_folder_id: parentFolderId,\n    onboarding_start: client.onboarding_start\n  }\n}));"
+      },
+      "id": "7f38e2a2-6f32-4405-9589-ae5c449d4820",
+      "name": "Prepare HubSpot Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2416,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "138cb869-c012-423b-abfa-2dc0498ee2d5",
+      "name": "Split Tasks",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2208,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_task_subject\": \"{{ $json.task_title }}\",\n    \"hs_task_body\": \"{{ $json.task_note }}\",\n    \"hs_timestamp\": \"{{ $json.due_date_ms }}\",\n    \"hs_task_status\": \"NOT_STARTED\",\n    \"hs_task_priority\": \"HIGH\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $json.deal_id }}\" },\n      \"types\": [{ \"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 216 }]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "a290ca6e-f289-4588-841b-702f15a3acbd",
+      "name": "Create HubSpot Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1984,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// After all tasks created, prepare for final steps\nconst client = $('Prepare Onboarding Variables').item.json;\nconst parentFolderId = $('Create Google Drive Client Folder').item.json.id;\nconst folderUrl = 'https://drive.google.com/drive/folders/' + parentFolderId;\n\nreturn [{\n  json: {\n    ...client,\n    drive_folder_url: folderUrl,\n    parent_folder_id: parentFolderId\n  }\n}];"
+      },
+      "id": "353d51ad-cff0-45c1-9c4f-bd4bbe11fe1a",
+      "name": "Merge After Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1760,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOOGLE_CHAT_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*New client: {{ $json.company_name }} — {{ $json.tier }} (${{ $json.deal_value }}/mo)*\\n\\nClient: {{ $json.client_name }}\\nEmail: {{ $json.email }}\\nPhone: {{ $json.phone }}\\nDeal ID: {{ $json.deal_id }}\\n\\nDrive folder created: {{ $json.drive_folder_url }}\\nCredentials form sent.\\nWelcome email sent.\\n6 HubSpot onboarding tasks created (due in 7 days).\\n\\nOnboarding started: {{ $json.onboarding_start }}\"\n}",
+        "options": {}
+      },
+      "id": "d7842c86-f58f-4049-a7d5-42f031f2693f",
+      "name": "Google Chat New Client Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1536,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Clients!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"{{ $json.client_name }}\",\n      \"{{ $json.company_name }}\",\n      \"{{ $json.email }}\",\n      \"{{ $json.phone }}\",\n      \"{{ $json.tier }}\",\n      \"{{ $json.deal_value }}\",\n      \"{{ $json.deal_id }}\",\n      \"{{ $json.drive_folder_url }}\",\n      \"Active\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "4c254154-e1e2-4033-8c09-7d5711bcd42e",
+      "name": "Append to Clients Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1328,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Automations Log!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"System 4 — Client Onboarding Logistics\",\n      \"Success\",\n      \"Onboarding initiated for {{ $json.company_name }} ({{ $json.tier }}, ${{ $json.deal_value }}/mo). Welcome email, credentials form, Drive folder, and 6 HubSpot tasks created.\",\n      \"Deal Closed Won webhook\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "e15f3e90-2d6b-4a93-a90a-4acafbcc93d1",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1104,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Onboarding initiated\", \"company\": \"{{ $('Prepare Onboarding Variables').item.json.company_name }}\" }",
+        "options": {}
+      },
+      "id": "2f29d3ea-0da2-4e6e-b0e8-b2cfdfac35fb",
+      "name": "Return 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -880,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 48,
+        "unit": "hours"
+      },
+      "id": "2e7f7256-d70d-40ce-986d-5d52eb813369",
+      "name": "Wait 48 Hours Credentials Check",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -656,
+        128
+      ],
+      "webhookId": "wait-48h-credentials-check"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tasks/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"hs_task_subject\",\n          \"operator\": \"EQ\",\n          \"value\": \"Credentials received\"\n        },\n        {\n          \"propertyName\": \"hs_task_status\",\n          \"operator\": \"EQ\",\n          \"value\": \"NOT_STARTED\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"hs_task_subject\", \"hs_task_status\", \"hs_timestamp\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "0d2f0841-7f9b-45a3-88c0-7d2f5b363496",
+      "name": "Check Credentials Task Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -448,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-task-open",
+              "leftValue": "={{ $json.total }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "81603bcd-61b6-4f79-a519-56153cbecb1e",
+      "name": "Credentials Still Open?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $('Prepare Onboarding Variables').item.json.email }}\"],\n  \"subject\": \"Reminder: credentials intake form still needed\",\n  \"html\": \"<h2>Hi {{ $('Prepare Onboarding Variables').item.json.first_name }},</h2><p>Just a quick reminder — we still need your credentials intake form to get started building your automations.</p><p>This is the only thing standing between us and getting your first workflow live.</p><p><a href='{{ $env.CREDENTIALS_INTAKE_FORM_URL }}' style='background:#0066cc;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;'>Complete Credentials Intake Form</a></p><p>Takes about 10 minutes. If you're stuck or have questions, reply here.</p><p>John<br>IntraWeb Technologies</p>\"\n}",
+        "options": {}
+      },
+      "id": "9fae58b6-ec77-46cf-be0f-2affb35b0bd4",
+      "name": "Send Credentials Reminder Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{ $('Prepare Onboarding Variables').item.json.phone }}"
+            },
+            {
+              "name": "From",
+              "value": "={{ $env.TWILIO_PHONE_NUMBER }}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{ $('Prepare Onboarding Variables').item.json.first_name }}, just sent you a reminder about the credentials form — it's the last thing needed before we can start building. Reply if you need help. — John, IntraWeb"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9fe908b8-2de1-4efd-95a6-5125e77126e2",
+      "name": "Send Credentials Reminder SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SYSTEM_13_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"deal_id\": \"{{ $('Prepare Onboarding Variables').item.json.deal_id }}\",\n  \"client_name\": \"{{ $('Prepare Onboarding Variables').item.json.client_name }}\",\n  \"company_name\": \"{{ $('Prepare Onboarding Variables').item.json.company_name }}\",\n  \"email\": \"{{ $('Prepare Onboarding Variables').item.json.email }}\",\n  \"tier\": \"{{ $('Prepare Onboarding Variables').item.json.tier }}\",\n  \"drive_folder_id\": \"{{ $('Create Google Drive Client Folder').item.json.id }}\",\n  \"onboarding_start\": \"{{ $('Prepare Onboarding Variables').item.json.onboarding_start }}\"\n}",
+        "options": {}
+      },
+      "id": "c5d94523-5da6-4e08-bf36-92dacb10bc88",
+      "name": "Trigger System 13 Onboarding Docs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        128
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a4e3578f-ec6f-44bb-bc87-9990b4a69116",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -4400,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOOGLE_CHAT_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*ERROR — System 4: Client Onboarding Logistics*\\n\\nWorkflow: {{ $json.workflow.name }}\\nNode: {{ $json.execution.lastNodeExecuted }}\\nError: {{ $json.execution.error.message }}\\nTime: {{ $now.toISO() }}\\n\\nImmediate attention required.\"\n}",
+        "options": {}
+      },
+      "id": "22515b3e-a7d2-4b7c-be54-96a48480bddd",
+      "name": "Error Alert Google Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -4176,
+        384
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1e21870c-b855-418d-bf6f-21a73802d802",
+      "name": "Credentials Already Received",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Deal Closed Won": {
+      "main": [
+        [
+          {
+            "node": "Get Full Deal from HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Deal from HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Prepare Onboarding Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Onboarding Variables": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Send Credentials Intake Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Credentials Intake Email": {
+      "main": [
+        [
+          {
+            "node": "Create Google Drive Client Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Google Drive Client Folder": {
+      "main": [
+        [
+          {
+            "node": "Prepare Subfolder List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Subfolder List": {
+      "main": [
+        [
+          {
+            "node": "Split Subfolders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Subfolders": {
+      "main": [
+        [
+          {
+            "node": "Create Subfolder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Subfolder": {
+      "main": [
+        [
+          {
+            "node": "Split Subfolders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare HubSpot Tasks": {
+      "main": [
+        [
+          {
+            "node": "Split Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Tasks": {
+      "main": [
+        [
+          {
+            "node": "Create HubSpot Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create HubSpot Task": {
+      "main": [
+        [
+          {
+            "node": "Split Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge After Tasks": {
+      "main": [
+        [
+          {
+            "node": "Google Chat New Client Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat New Client Alert": {
+      "main": [
+        [
+          {
+            "node": "Append to Clients Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Clients Sheet": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Automations Log": {
+      "main": [
+        [
+          {
+            "node": "Return 200 OK",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait 48 Hours Credentials Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 48 Hours Credentials Check": {
+      "main": [
+        [
+          {
+            "node": "Check Credentials Task Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Credentials Task Status": {
+      "main": [
+        [
+          {
+            "node": "Credentials Still Open?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Credentials Still Open?": {
+      "main": [
+        [
+          {
+            "node": "Send Credentials Reminder Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Credentials Already Received",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Credentials Reminder Email": {
+      "main": [
+        [
+          {
+            "node": "Send Credentials Reminder SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Credentials Reminder SMS": {
+      "main": [
+        [
+          {
+            "node": "Trigger System 13 Onboarding Docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Credentials Already Received": {
+      "main": [
+        [
+          {
+            "node": "Trigger System 13 Onboarding Docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Error Alert Google Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "5234f12e-0b0f-4a85-af8e-60ce81e67d52",
+  "activeVersionId": null,
+  "versionCounter": 6,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:17:52.248Z",
+      "createdAt": "2026-03-05T05:17:52.248Z",
+      "role": "workflow:owner",
+      "workflowId": "0MdJQjBPFf1fFNHr",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

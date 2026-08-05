@@ -1,7 +1,4 @@
-'use client'
-
 import Image from 'next/image'
-import { useTheme } from '@/contexts/theme-context'
 
 export function IwLogo({
   className = '',
@@ -10,18 +7,17 @@ export function IwLogo({
   className?: string
   height?: number
 }) {
-  const { theme } = useTheme()
-  const isDark = theme === 'dark'
+  const width = Math.round(height * 4.2)
 
   return (
     <Image
-      src={isDark ? '/intraweb-logo-black-inverted.png' : '/intraweb-logo-light.png'}
-      alt="IntraWeb Technologies"
+      src="/IW-logo-q2.png"
+      alt="IntraWeb."
       height={height}
-      width={Math.round(height * (870 / 216))}
+      width={width}
       className={className}
       priority
-      suppressHydrationWarning
+      style={{ height, width: 'auto', maxWidth: 'min(100%, 240px)', objectFit: 'contain' }}
     />
   )
 }

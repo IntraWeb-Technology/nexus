@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_blocks_media",
+  "info": {
+    "displayName": "Media",
+    "icon": "landscape",
+    "description": "Media block with caption"
+  },
+  "options": {},
+  "attributes": {
+    "media": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images", "videos", "files", "audios"]
+    },
+    "alt": {
+      "type": "string"
+    },
+    "caption": {
+      "type": "string"
+    }
+  }
+}

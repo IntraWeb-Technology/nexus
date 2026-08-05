@@ -1,0 +1,754 @@
+{
+  "updatedAt": "2026-04-18T22:45:41.382Z",
+  "createdAt": "2026-03-04T01:50:33.293Z",
+  "id": "X93DgWoUV1emSrlA",
+  "name": "09 — Invoice Payment Reminder Sequence",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invoice-sent-trigger",
+        "options": {}
+      },
+      "id": "9455d153-1a1e-401a-875e-0911fad08a0d",
+      "name": "Invoice Sent Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1680,
+        112
+      ],
+      "webhookId": "wh-09-invoice-sent",
+      "notes": "Trigger: HubSpot Workflow when deal stage = 'Invoice Sent'. POST deal + contact + invoice data to this URL."
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nconst dealId = body.objectId || body.deal_id || body.hs_object_id || '';\nconst dealStage = body.properties?.dealstage?.value || body.dealstage || '';\nconst dealName = body.properties?.dealname?.value || body.dealname || '';\nconst invoiceNumber = body.properties?.invoice_number?.value || body.invoice_number || 'INV-001';\nconst invoiceAmount = body.properties?.invoice_amount?.value || body.invoice_amount || '0';\nconst paymentLink = body.properties?.payment_link?.value || body.payment_link || $vars.PAYMENT_PORTAL_URL || 'https://pay.apexcomfort.com';\n\nconst contactId = body.associations?.contacts?.results?.[0]?.id || body.contact_id || '';\nconst firstname = body.contact_firstname || body.contact_name?.split(' ')[0] || 'there';\nlet contactPhone = body.contact_phone || '';\nconst contactEmail = body.contact_email || '';\n\nif (contactPhone && !contactPhone.startsWith('+')) {\n  contactPhone = '+1' + contactPhone.replace(/\\D/g, '');\n}\n\nreturn [{\n  json: {\n    dealId,\n    dealStage,\n    dealName,\n    invoiceNumber,\n    invoiceAmount,\n    paymentLink,\n    contactId,\n    firstname,\n    contactPhone,\n    contactEmail,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "cf28ea78-9c4f-43cb-98c8-a1119e24b6ee",
+      "name": "Parse Invoice Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1440,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.contactId}}?properties=firstname,phone_e164,phone,email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "27a7bbe9-d990-4447-8675-f0cfba99538f",
+      "name": "Get Contact Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1200,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const contact = $input.first().json;\nconst inv = $('Parse Invoice Data').item.json;\n\nconst firstname = contact.properties?.firstname?.value || inv.firstname || 'there';\nconst phone = contact.properties?.phone_e164?.value || contact.properties?.phone?.value || inv.contactPhone;\nconst email = contact.properties?.email?.value || inv.contactEmail;\n\nreturn [{\n  json: {\n    ...inv,\n    firstname,\n    phone,\n    email\n  }\n}];"
+      },
+      "id": "6615bd70-c658-432f-9d15-e9d6c0b9de4c",
+      "name": "Merge Invoice + Contact",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "id": "87ffaaea-044f-4b60-bbff-e6c7c5ff3223",
+      "name": "Wait 3 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        112
+      ],
+      "webhookId": "6ac17be3-ca7a-4204-97eb-6f1a0d6e4537"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Invoice Data').item.json.dealId}}?properties=dealstage,invoice_reminder_status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "b7a8a992-c90e-4fc5-bb7a-07bbe9410fc2",
+      "name": "Check Deal Stage (Day 3)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-not-paid-3",
+              "leftValue": "={{$json.properties.dealstage.value}}",
+              "rightValue": "={{$vars.HUBSPOT_STAGE_PAID}}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7e1bedbc-df6e-4219-bb7f-57bd19c085bb",
+      "name": "Not Paid at Day 3?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$('Merge Invoice + Contact').item.json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$('Merge Invoice + Contact').item.json.firstname}}, just a reminder that invoice #{{$('Merge Invoice + Contact').item.json.invoiceNumber}} for ${{$('Merge Invoice + Contact').item.json.invoiceAmount}} is due. Pay online: {{$('Merge Invoice + Contact').item.json.paymentLink}} — Apex Comfort"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e5b63c8f-27e5-4497-8c0f-3db97c4d6465",
+      "name": "Day 3 — SMS Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Invoice Data').item.json.dealId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"properties\": {\n    \"invoice_reminder_status\": \"day3_sent\"\n  }\n}",
+        "options": {}
+      },
+      "id": "13efac20-3ea6-4a38-8cbc-d19d14f2891e",
+      "name": "Update Status Day 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 4,
+        "unit": "days"
+      },
+      "id": "a50b2745-0a84-4bca-a99e-7b3f01fb850f",
+      "name": "Wait 4 More Days (Day 7)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        480,
+        112
+      ],
+      "webhookId": "272fcef0-65f9-4bec-82b3-75d01ec1936f"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Invoice Data').item.json.dealId}}?properties=dealstage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "ee72ceb7-54ba-4465-a9b8-4515c56b417b",
+      "name": "Check Deal Stage (Day 7)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-not-paid-7",
+              "leftValue": "={{$json.properties.dealstage.value}}",
+              "rightValue": "={{$vars.HUBSPOT_STAGE_PAID}}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "126d1249-30e1-480a-8a45-4b11c75b5b6b",
+      "name": "Not Paid at Day 7?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        960,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"{{$vars.FROM_NAME}} <{{$vars.FROM_EMAIL}}>\",\n  \"to\": [\"{{ $('Merge Invoice + Contact').item.json.email }}\"],\n  \"subject\": \"Invoice #{{ $('Merge Invoice + Contact').item.json.invoiceNumber }} — Payment Reminder\",\n  \"html\": \"<p>Hi {{ $('Merge Invoice + Contact').item.json.firstname }},</p><p>This is a friendly reminder that invoice #{{ $('Merge Invoice + Contact').item.json.invoiceNumber }} for <strong>${{ $('Merge Invoice + Contact').item.json.invoiceAmount }}</strong> is still outstanding.</p><p><strong>Invoice Details:</strong><br>Invoice: #{{ $('Merge Invoice + Contact').item.json.invoiceNumber }}<br>Amount Due: ${{ $('Merge Invoice + Contact').item.json.invoiceAmount }}<br>Service: {{ $('Merge Invoice + Contact').item.json.dealName }}</p><p><a href='{{ $('Merge Invoice + Contact').item.json.paymentLink }}' style='background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;'>Pay Invoice Online</a></p><p>If you have any questions about this invoice, please call us at {{$vars.COMPANY_PHONE}} or reply to this email.</p><p>Thank you for your business!<br>— The Apex Comfort Team</p>\"\n}",
+        "options": {}
+      },
+      "id": "8a1b3af2-af08-4f34-a335-20e2ffa2b404",
+      "name": "Day 7 — Email Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Invoice Data').item.json.dealId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"properties\": {\n    \"invoice_reminder_status\": \"day7_sent\"\n  }\n}",
+        "options": {}
+      },
+      "id": "6d0a066e-c1a7-435f-b0c9-05a27638e3e8",
+      "name": "Update Status Day 7",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 7,
+        "unit": "days"
+      },
+      "id": "66566b3b-9c12-484f-ab37-5b5137c20cc0",
+      "name": "Wait 7 More Days (Day 14)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        112
+      ],
+      "webhookId": "cb7d20d6-07b3-46fc-bdf0-43b32665429a"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Invoice Data').item.json.dealId}}?properties=dealstage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "0e57ded2-cd94-4456-abf6-ece52fac6c04",
+      "name": "Check Deal Stage (Day 14)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1920,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-not-paid-14",
+              "leftValue": "={{$json.properties.dealstage.value}}",
+              "rightValue": "={{$vars.HUBSPOT_STAGE_PAID}}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cb5a24ca-b331-4f62-8769-1adfc346f07a",
+      "name": "Not Paid at Day 14?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$('Merge Invoice + Contact').item.json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$('Merge Invoice + Contact').item.json.firstname}}, your invoice #{{$('Merge Invoice + Contact').item.json.invoiceNumber}} for ${{$('Merge Invoice + Contact').item.json.invoiceAmount}} is now overdue. Please contact us at {{$vars.COMPANY_PHONE}} to arrange payment. — Apex Comfort"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3d626caf-0dd8-41b8-9bec-fede3786f31a",
+      "name": "Day 14 — Final SMS Notice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2400,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$vars.CHAT_WEBHOOK}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"🔴 *Overdue Invoice Alert*\\n\\n*Customer:* {{ $('Merge Invoice + Contact').item.json.firstname }}\\n*Phone:* {{ $('Merge Invoice + Contact').item.json.phone }}\\n*Invoice:* #{{ $('Merge Invoice + Contact').item.json.invoiceNumber }}\\n*Amount:* ${{ $('Merge Invoice + Contact').item.json.invoiceAmount }}\\n*Status:* 14 days overdue — final notice sent\\n*Deal ID:* {{ $('Parse Invoice Data').item.json.dealId }}\"\n}",
+        "options": {}
+      },
+      "id": "a0f4fce4-ed39-4959-9832-acd67c3ef9ec",
+      "name": "Alert Owner — Overdue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{$('Parse Invoice Data').item.json.dealId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"properties\": {\n    \"invoice_reminder_status\": \"day14_sent\"\n  }\n}",
+        "options": {}
+      },
+      "id": "57b3ba6a-ce1b-47dc-aa52-77d9ec1f83ff",
+      "name": "Update Status Day 14",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Invoice Tracker",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{new Date().toISOString()}}",
+            "Contact Name": "={{$('Merge Invoice + Contact').item.json.firstname}}",
+            "Phone": "={{$('Merge Invoice + Contact').item.json.phone}}",
+            "Invoice Number": "={{$('Merge Invoice + Contact').item.json.invoiceNumber}}",
+            "Amount": "={{$('Merge Invoice + Contact').item.json.invoiceAmount}}",
+            "Day 3 SMS Sent": "={{$('Update Status Day 3').item.json.id ? new Date().toISOString() : ''}}",
+            "Day 7 Email Sent": "={{$('Update Status Day 7').item.json.id ? new Date().toISOString() : ''}}",
+            "Day 14 SMS Sent": "={{new Date().toISOString()}}",
+            "Paid Date": "",
+            "Status": "Overdue",
+            "Deal ID": "={{$('Parse Invoice Data').item.json.dealId}}"
+          }
+        },
+        "options": {}
+      },
+      "id": "fef2b633-0786-4802-8960-0ddcd73b6d2b",
+      "name": "Log to Invoice Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        3120,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Invoice Sent Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Invoice Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Invoice Data": {
+      "main": [
+        [
+          {
+            "node": "Get Contact Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contact Details": {
+      "main": [
+        [
+          {
+            "node": "Merge Invoice + Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Invoice + Contact": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage (Day 3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage (Day 3)": {
+      "main": [
+        [
+          {
+            "node": "Not Paid at Day 3?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Paid at Day 3?": {
+      "main": [
+        [
+          {
+            "node": "Day 3 — SMS Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Day 3 — SMS Reminder": {
+      "main": [
+        [
+          {
+            "node": "Update Status Day 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Day 3": {
+      "main": [
+        [
+          {
+            "node": "Wait 4 More Days (Day 7)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 4 More Days (Day 7)": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage (Day 7)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage (Day 7)": {
+      "main": [
+        [
+          {
+            "node": "Not Paid at Day 7?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Paid at Day 7?": {
+      "main": [
+        [
+          {
+            "node": "Day 7 — Email Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Day 7 — Email Reminder": {
+      "main": [
+        [
+          {
+            "node": "Update Status Day 7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Day 7": {
+      "main": [
+        [
+          {
+            "node": "Wait 7 More Days (Day 14)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 7 More Days (Day 14)": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage (Day 14)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage (Day 14)": {
+      "main": [
+        [
+          {
+            "node": "Not Paid at Day 14?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not Paid at Day 14?": {
+      "main": [
+        [
+          {
+            "node": "Day 14 — Final SMS Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Day 14 — Final SMS Notice": {
+      "main": [
+        [
+          {
+            "node": "Alert Owner — Overdue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Owner — Overdue": {
+      "main": [
+        [
+          {
+            "node": "Update Status Day 14",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Day 14": {
+      "main": [
+        [
+          {
+            "node": "Log to Invoice Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "dd3fefd5-f371-45a5-8368-a222e07dd8b5",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:50:33.298Z",
+      "createdAt": "2026-03-04T01:50:33.298Z",
+      "role": "workflow:owner",
+      "workflowId": "X93DgWoUV1emSrlA",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:34.370Z",
+      "createdAt": "2026-03-04T01:54:34.370Z",
+      "id": "6DOAorHv7f45HDuG",
+      "name": "sms"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:41.848Z",
+      "createdAt": "2026-03-04T01:54:41.848Z",
+      "id": "7EKVflTcA1YNQ6g8",
+      "name": "email"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    },
+    {
+      "updatedAt": "2026-03-04T01:55:50.907Z",
+      "createdAt": "2026-03-04T01:55:50.907Z",
+      "id": "nvEqFT1zTu7WuiHw",
+      "name": "billing"
+    },
+    {
+      "updatedAt": "2026-03-04T01:56:50.351Z",
+      "createdAt": "2026-03-04T01:56:50.351Z",
+      "id": "wl7ozMPEcHn8mstY",
+      "name": "collections"
+    }
+  ],
+  "activeVersion": null
+}

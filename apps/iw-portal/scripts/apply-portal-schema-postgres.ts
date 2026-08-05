@@ -4,6 +4,7 @@
  * - If `public.clients` does not exist, applies `001_initial.sql` (fresh project).
  * - Always applies incremental migrations through `007_change_orders_cancelled.sql`
  *   (idempotent — safe to re-run).
+ * - Applies `008_os_tables.sql` once when `public.os_deals_sheet` is missing.
  * - Optional demo `002_notes.sql` when PORTAL_APPLY_NOTES_DEMO=true.
  *
  * Requires in .env.local:
@@ -12,14 +13,14 @@
  * Run from `apps/iw-portal` or via `pnpm --filter @repo/iw-portal db:apply-schema`:
  *   pnpm exec tsx scripts/apply-portal-schema-postgres.ts
  */
-import path from 'node:path'
 import { config } from 'dotenv'
 import { readFileSync } from 'fs'
-import { join } from 'path'
+import { dirname, join } from 'path'
+import { fileURLToPath } from 'url'
 import { Client } from 'pg'
-import { resolveMonorepoRoot } from './lib/repo-root'
+import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
 
-config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
+config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 
 const conn =
   process.env.POSTGRES_URL_NON_POOLING ??
@@ -31,7 +32,8 @@ if (!conn) {
   process.exit(1)
 }
 
-const migrationsDir = join(process.cwd(), '..', 'supabase', 'migrations')
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const migrationsDir = join(__dirname, '..', 'supabase', 'migrations')
 
 function readMigration(filename: string): string {
   return readFileSync(join(migrationsDir, filename), 'utf8')
@@ -80,6 +82,15 @@ async function main() {
       console.log('Applying', name, '...')
       await client.query(readMigration(name))
       console.log('Applied:', name)
+    }
+
+    const { rows: osReg } = await client.query(`SELECT to_regclass('public.os_deals_sheet') AS t`)
+    if (!osReg[0]?.t) {
+      console.log('Applying 008_os_tables.sql (OS operational tables)...')
+      await client.query(readMigration('008_os_tables.sql'))
+      console.log('Applied: 008_os_tables.sql')
+    } else {
+      console.log('Skipping 008_os_tables.sql — public.os_deals_sheet already exists')
     }
 
     console.log('\nDone. Next steps:')

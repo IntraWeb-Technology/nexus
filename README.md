@@ -1,159 +1,120 @@
-# Turborepo starter
+# Nexus Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+Nexus is the IntraWeb Technologies pnpm + Turborepo monorepo for the client portal, marketing site, n8n workflow assets, and shared build configuration.
 
-## Using this example
+## Vercel (monorepo)
 
-Run the following command:
+There is **no** `vercel.json` at the repository root. Each Next app ships its own file so Vercel never mixes build/output paths between apps.
 
-```sh
-npx create-turbo@latest
-```
+| App | Vercel **Root Directory** | Config |
+| --- | --- | --- |
+| Client portal | **`apps/iw-portal`** | [`apps/iw-portal/vercel.json`](./apps/iw-portal/vercel.json) |
+| Marketing (`iw-site-q2`) | **`apps/iw-site-q2`** | [`apps/iw-site-q2/vercel.json`](./apps/iw-site-q2/vercel.json) |
 
-## What's inside?
+For each project, enable **Include files outside the root directory in the Build Step** (pnpm workspace + root lockfile). Details: [`apps/iw-portal/README.md`](./apps/iw-portal/README.md).
 
-This Turborepo includes the following packages/apps:
+**If the portal build succeeds but deploy fails** with `routes-manifest.json` or `.next` under **`apps/iw-site-q2`**, the portal Vercel project’s Root Directory is wrong (often still `apps/iw-site-q2`). Set it to **`apps/iw-portal`** and clear any custom **Output Directory** in project settings.
 
-### Apps and Packages
+## Active Apps
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- `apps/iw-portal` - client dashboard, built with Next.js 16, Clerk, Supabase, Stripe, Resend, and Tailwind CSS v4. Local dev port: `3002`.
+- `apps/iw-site-q2` - production marketing site, built with Next.js 16, reCAPTCHA Enterprise, Cal.com, Resend, Anthropic SDK, and Tailwind CSS v4. Local dev port: `3010`.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+Legacy `apps/iw-site` was removed from this monorepo (relocated elsewhere).
 
-### Utilities
+## Packages
 
-This Turborepo has some additional tools already setup for you:
+- `packages/n8n-workflows` - n8n workflow JSON and sync/push/pull scripts.
+- `packages/eslint-config` - shared ESLint configuration.
+- `packages/typescript-config` - shared TypeScript configuration.
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+## Documentation
 
-### Build
+| Area | Path |
+| --- | --- |
+| Architecture | [`docs/architecture/`](./docs/architecture/) |
+| Portal guides | [`docs/portal/`](./docs/portal/) |
+| n8n automations | [`docs/automations/`](./docs/automations/) |
+| Implementation audit | [`docs/audit/`](./docs/audit/) |
+| Portfolio case study (engineering) | [`docs/portfolio/intraweb-platform-case-study.md`](./docs/portfolio/intraweb-platform-case-study.md) |
 
-To build all apps and packages, run the following command:
+## Requirements
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+- Node.js `22.x`
+- pnpm `10.33.0`
 
-```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Install dependencies from the repository root:
 
 ```sh
-turbo build --filter=docs
+pnpm install
 ```
 
-Without global `turbo`:
+## Development
+
+Run all workspace dev tasks:
 
 ```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+pnpm dev
 ```
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Run a single app:
 
 ```sh
-cd my-turborepo
-turbo dev
+pnpm --filter @repo/iw-portal dev
+pnpm --filter @repo/iw-site-q2 dev
 ```
 
-Without global `turbo`, use your package manager:
+## Build and Checks
+
+Build all workspace projects:
 
 ```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+pnpm build
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Build the production apps:
 
 ```sh
-turbo dev --filter=web
+pnpm exec turbo run build --filter=@repo/iw-portal --filter=@repo/iw-site-q2
 ```
 
-Without global `turbo`:
+Run linting and type checks:
 
 ```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+pnpm lint
+pnpm check-types
 ```
 
-### Remote Caching
+## Useful App Commands
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Portal database and stack utilities:
 
 ```sh
-cd my-turborepo
-turbo login
+pnpm --filter @repo/iw-portal db:link
+pnpm --filter @repo/iw-portal db:push
+pnpm --filter @repo/iw-portal db:pull
+pnpm --filter @repo/iw-portal verify:stack
 ```
 
-Without global `turbo`, use your package manager:
+n8n workflow sync utilities:
 
 ```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+pnpm --filter @repo/n8n-workflows pull:n8n
+pnpm --filter @repo/n8n-workflows sync:n8n:package
+pnpm --filter @repo/n8n-workflows push:n8n:workflow
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+Use `packages/n8n-workflows/scripts` as the only source of truth.
+Operational runbook: `packages/n8n-workflows/RUNBOOK.md`.
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+## Workspace Notes
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+- `pnpm-workspace.yaml` includes `apps/*` and `packages/*` (see file for current excludes).
+- Turborepo uses `envMode: strict`; add build-time environment variables to `turbo.json` when app code reads them during build.
+- `@/` path aliases differ by app:
+  - `apps/iw-portal`: `@/*` resolves to `src/*`.
+  - `apps/iw-site-q2`: `@/*` resolves to the app root.
 
-```sh
-turbo link
-```
+## Deployment
 
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+The active Next.js apps are deployed through Vercel. Required service integrations include Clerk, Supabase, Stripe, Resend, HubSpot, n8n, Cal.com, Google reCAPTCHA Enterprise, and Anthropic.

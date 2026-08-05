@@ -8,7 +8,20 @@ export type ProjectStatus =
   | 'paused'
 export type MilestoneStatus = 'done' | 'active' | 'pending'
 export type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'void'
+export type BillingPhase = 'deposit' | 'build_qa' | 'handoff' | 'maintenance'
+export type BillingKind = 'project_milestone' | 'recurring_maintenance'
+export type ExternalInvoiceSource = 'hubspot' | 'stripe' | 'manual'
+export type SubscriptionStatus =
+  | 'active'
+  | 'trialing'
+  | 'past_due'
+  | 'canceled'
+  | 'unpaid'
+  | 'incomplete'
+  | 'incomplete_expired'
 export type SenderType = 'staff' | 'client'
+export type StaffRole = 'admin' | 'ops' | 'support' | 'viewer'
+export type ClientMemberRole = 'owner' | 'billing' | 'approver' | 'viewer'
 export type NotificationType =
   | 'action_required'
   | 'message'
@@ -38,6 +51,8 @@ export interface Project {
   start_date: string | null
   estimated_launch: string | null
   hubspot_deal_id: string | null
+  /** HubSpot deal property (HUBSPOT_DEAL_PORTAL_PLAN_PROPERTY); filters maintenance package plan_slugs. */
+  portal_plan_slug?: string | null
   created_at: string
 }
 
@@ -127,6 +142,41 @@ export interface Invoice {
   currency?: string
   /** When set, matches HubSpot CRM invoice id — used to dedupe merged billing view. */
   hubspot_invoice_id?: string | null
+  /** Canonical billing timeline phase semantics. */
+  billing_phase?: BillingPhase | null
+  /** Project milestone vs recurring maintenance. */
+  billing_kind?: BillingKind
+  /** Fixed timeline ordering for milestone cards (1..3). */
+  milestone_order?: 1 | 2 | 3 | null
+  /** External integration source for upsert idempotency. */
+  external_source?: ExternalInvoiceSource | null
+  /** Source object id (HubSpot invoice id, Stripe invoice id, etc.). */
+  external_object_id?: string | null
+  /** Recurring service period boundaries (maintenance history). */
+  service_period_start?: string | null
+  service_period_end?: string | null
+  /** Optional grouping key for recurring maintenance series. */
+  maintenance_group_key?: string | null
+}
+
+export interface SubscriptionRow {
+  id: string
+  project_id: string
+  client_id: string
+  stripe_subscription_id: string
+  stripe_customer_id: string | null
+  status: SubscriptionStatus
+  price_id: string | null
+  product_id: string | null
+  currency: string | null
+  current_period_start: string | null
+  current_period_end: string | null
+  cancel_at_period_end: boolean
+  canceled_at: string | null
+  latest_stripe_invoice_id: string | null
+  last_synced_at: string
+  created_at: string
+  updated_at: string
 }
 
 export interface ActivityLogRow {
@@ -157,3 +207,245 @@ export interface NotificationPreferences {
   document_uploads: boolean
   created_at: string
 }
+
+export interface StaffUser {
+  id: string
+  clerk_user_id: string
+  email: string
+  display_name: string | null
+  role: StaffRole
+  is_active: boolean
+  last_seen_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface StaffAuditLogRow {
+  id: string
+  actor_staff_id: string | null
+  action: string
+  resource_type: string
+  resource_id: string | null
+  metadata: Record<string, unknown>
+  ip: string | null
+  created_at: string
+}
+
+export interface ClientMemberRow {
+  id: string
+  client_id: string
+  clerk_user_id: string
+  email: string
+  display_name: string | null
+  role: ClientMemberRole
+  is_active: boolean
+  invited_by_staff_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProjectMemberRow {
+  id: string
+  project_id: string
+  clerk_user_id: string
+  role: ClientMemberRole
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface InternalNoteRow {
+  id: string
+  client_id?: string
+  project_id?: string
+  body: string
+  created_by_staff_id: string | null
+  created_at: string
+}
+
+export interface IntegrationEventRow {
+  id: string
+  provider: 'clerk' | 'hubspot' | 'stripe' | 'n8n' | 'system'
+  external_event_id: string | null
+  event_type: string
+  status: 'received' | 'processing' | 'processed' | 'failed' | 'replayed' | 'ignored'
+  payload: Record<string, unknown>
+  payload_hash: string | null
+  attempts: number
+  next_retry_at: string | null
+  last_error: string | null
+  processed_at: string | null
+  replayed_at: string | null
+  replayed_by_staff_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DataHealthCheckRow {
+  id: string
+  check_key: string
+  severity: 'info' | 'warning' | 'critical'
+  resource_type: string
+  resource_id: string | null
+  message: string
+  metadata: Record<string, unknown>
+  resolved_at: string | null
+  created_at: string
+}
+
+export interface FeatureFlagRow {
+  id: string
+  environment: string
+  flag_key: string
+  enabled: boolean
+  metadata: Record<string, unknown>
+  created_by_staff_id: string | null
+  updated_by_staff_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** Operational store (Supabase `public.os_*`) — n8n + internal APIs; not client RLS tables. */
+export interface OsAutomationLogRow {
+  id: string
+  logged_at: string
+  workflow_name: string
+  contact_name: string
+  phone: string
+  event_type: string
+  status: string
+  notes: string
+  hubspot_deal_id: string | null
+  hubspot_contact_id: string | null
+}
+
+export interface OsDealsSheetRow {
+  id: string
+  hubspot_deal_id: string | null
+  deal_name: string | null
+  company: string | null
+  industry: string | null
+  tier: string | null
+  lead_score: string | null
+  hubspot_contact_id: string | null
+  hubspot_company_id: string | null
+  sheet_timestamp: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OsLeadRow {
+  id: string
+  source_kind: string
+  occurred_at: string
+  name: string | null
+  company: string | null
+  industry: string | null
+  source: string | null
+  lead_score: number | null
+  status: string | null
+  place_id: string | null
+  website: string | null
+  email: string | null
+  phone: string | null
+  address: string | null
+  hubspot_contact_id: string | null
+  hubspot_deal_id: string | null
+}
+
+export interface OsContractsQueueRow {
+  id: string
+  queue_type: 'contract' | 'proposal'
+  hubspot_deal_id: string | null
+  queue_date: string | null
+  client_name: string | null
+  company: string | null
+  industry: string | null
+  deal_value: string | null
+  tier: string | null
+  contact_email: string | null
+  pain_points: string | null
+  drive_link: string | null
+  /** Supabase Storage path under bucket client-uploads (project_id prefix). */
+  pdf_storage_path: string | null
+  /** Registered portal documents row for authenticated download. */
+  proposal_document_id: string | null
+  status: string
+  proposal_status_detail: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OsClientSuccessClientRow {
+  id: string
+  hubspot_deal_id: string | null
+  client_name: string
+  tier: string | null
+  mrr: string | null
+  start_date: string | null
+  last_activity: string | null
+  health_score: string | null
+  updated_at: string
+}
+
+export interface OsPreCallIntakeRow {
+  id: string
+  email: string
+  payload: Record<string, unknown>
+  submitted_at: string
+}
+
+export type DataSubjectRequestType = 'delete_personal_data' | 'marketing_opt_out' | 'access_copy'
+
+export type DataSubjectRequestStatus =
+  | 'pending_verification'
+  | 'verified'
+  | 'processing'
+  | 'completed'
+  | 'partial'
+  | 'rejected'
+  | 'manual_review'
+
+export interface DataSubjectRequest {
+  id: string
+  email: string
+  request_type: DataSubjectRequestType
+  status: DataSubjectRequestStatus
+  note: string | null
+  verification_token_hash: string | null
+  verified_at: string | null
+  completed_at: string | null
+  execution_log: ExecutionLogEntry[]
+  retention_exceptions: string[]
+  source_ip: string | null
+  created_at: string
+}
+
+export interface ExecutionLogEntry {
+  step: string
+  status: 'ok' | 'skipped' | 'error'
+  detail?: string
+}
+
+/** HubSpot → Supabase mirror (`hubspot_crm_entities`); updated from `/api/webhook/hubspot` only. */
+export interface HubSpotCrmEntityRow {
+  object_type: 'contact' | 'deal' | 'company'
+  hubspot_id: string
+  properties: Record<string, unknown>
+  last_event: Record<string, unknown>
+  last_subscription_type: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type {
+  CanonicalContentRow,
+  PlatformPublicationRow,
+  ReviewItemRow,
+  ReviewActionRow,
+  OutboxEventRow,
+  ReviewItemStatus,
+  ReviewActionType,
+  ReviewRiskLevel,
+  PublicationStatus,
+} from '@/lib/social-ops/types'

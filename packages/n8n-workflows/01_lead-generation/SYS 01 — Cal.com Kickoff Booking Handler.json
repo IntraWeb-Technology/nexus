@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T03:42:43.062Z",
+  "updatedAt": "2026-04-20T15:46:11.169Z",
   "createdAt": "2026-04-02T02:04:39.521Z",
   "id": "jZSXHKgoMIQErTJ1",
   "name": "SYS 01 — Cal.com Kickoff Booking Handler",
@@ -185,7 +185,7 @@
           "conditions": [
             {
               "id": "has-contact-id",
-              "leftValue": "={{ $json.contactId }}",
+              "leftValue": "={{ String($json.contactId ?? '') }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -603,9 +603,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
-  "activeVersionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
-  "versionCounter": 30,
+  "versionId": "3e940d18-4da1-4b2f-897b-a03fa53c8d13",
+  "activeVersionId": "3e940d18-4da1-4b2f-897b-a03fa53c8d13",
+  "versionCounter": 105,
   "triggerCount": 1,
   "shared": [
     {
@@ -628,9 +628,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:42:43.063Z",
-    "createdAt": "2026-04-03T03:42:43.063Z",
-    "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+    "updatedAt": "2026-04-20T15:46:11.169Z",
+    "createdAt": "2026-04-20T15:46:11.169Z",
+    "versionId": "3e940d18-4da1-4b2f-897b-a03fa53c8d13",
     "workflowId": "jZSXHKgoMIQErTJ1",
     "nodes": [
       {
@@ -811,7 +811,7 @@
             "conditions": [
               {
                 "id": "has-contact-id",
-                "leftValue": "={{ $json.contactId }}",
+                "leftValue": "={{ String($json.contactId ?? '') }}",
                 "rightValue": "",
                 "operator": {
                   "type": "string",
@@ -1225,18 +1225,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T03:42:43.104Z",
-        "id": 1482,
+        "createdAt": "2026-04-20T15:46:11.258Z",
+        "id": 3097,
         "workflowId": "jZSXHKgoMIQErTJ1",
-        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "versionId": "3e940d18-4da1-4b2f-897b-a03fa53c8d13",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-03T03:42:43.093Z",
-        "id": 1481,
+        "createdAt": "2026-04-20T15:46:11.227Z",
+        "id": 3096,
         "workflowId": "jZSXHKgoMIQErTJ1",
-        "versionId": "e908fed1-f736-4906-ad04-c65bcaf28c77",
+        "versionId": "3e940d18-4da1-4b2f-897b-a03fa53c8d13",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }

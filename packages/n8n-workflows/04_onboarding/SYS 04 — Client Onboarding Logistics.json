@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T03:42:44.883Z",
+  "updatedAt": "2026-04-19T19:25:36.228Z",
   "createdAt": "2026-03-08T22:51:13.123Z",
   "id": "Nsu2htyjU8ZTidLN",
   "name": "SYS 04 — Client Onboarding Logistics",
@@ -98,7 +98,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Welcome to IntraWeb Technologies — let's get started`,\n    html: `<div style=\"font-family: 'DM Sans', Arial, sans-serif; max-width: 600px;\"><div style=\"background: #1a1f2e; padding: 30px; text-align: center;\"><h1 style=\"color: #3d8b8b; margin: 0;\">Welcome to IntraWeb</h1></div><div style=\"padding: 30px;\"><p>Hi ${d.contactFirstName || 'there'},</p><p>We're excited to officially kick things off. Here's what happens next:</p><h3>Week 1 Expectations</h3><ul><li>You'll receive a credentials intake form (next email) — fill this out so we can get access to the tools we need</li><li>We'll schedule a 30-minute kickoff call to align on priorities</li><li>Your dedicated Google Drive folder has been created for all project files</li></ul><p>If you have any questions at all, reply to this email or text me directly at ${d.config.owner.phone}.</p><p>Looking forward to building something great for ${d.clientName}.</p><p>— John<br/>${d.config.owner.companyName}</p></div></div>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
+        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Welcome to IntraWeb Technologies — let's get started`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>We're excited to officially kick things off. Here's what happens next:</p><h2 style=\"font-size:16px;margin:20px 0 8px;color:#0f1419;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;\">Week 1 expectations</h2><ul style=\"margin:8px 0;padding-left:20px;color:#0f1419;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;line-height:1.5;\"><li>You'll receive a credentials intake form (next email) — fill this out so we can get access to the tools we need</li><li>We'll schedule a 30-minute kickoff call to align on priorities</li><li>Your dedicated Google Drive folder has been created for all project files</li></ul><p>If you have any questions at all, reply to this email or text me directly at ${d.config.owner.phone}.</p><p>Looking forward to building something great for ${d.clientName}.</p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
       },
       "id": "sys04-welcome-prep",
       "name": "Prep Welcome Email",
@@ -143,7 +143,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `${d.clientName} — Credentials & Access Form`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>To get started, we need access credentials for the tools and platforms we'll be integrating.</p><p><strong><a href=\"https://forms.google.com/PLACEHOLDER_CREDENTIALS_FORM\">Fill out the credentials intake form here</a></strong></p><p>This typically takes 10-15 minutes. If you're unsure about any field, leave it blank and we'll walk through it on our kickoff call.</p><p>— John</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
+        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `${d.clientName} — Credentials & Access Form`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>To get started, we need access credentials for the tools and platforms we'll be integrating.</p><p><strong><a href=\"https://forms.google.com/PLACEHOLDER_CREDENTIALS_FORM\" style=\"color:#0d9488;text-decoration:none;\">Fill out the credentials intake form here</a></strong></p><p>This typically takes 10-15 minutes. If you're unsure about any field, leave it blank and we'll walk through it on our kickoff call.</p><p>— John</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
       },
       "id": "sys04-creds-prep",
       "name": "Prep Credentials Email",
@@ -212,9 +212,9 @@
         300
       ],
       "credentials": {
-        "googleApi": {
-          "id": "IJzDJS1jpbItegZD",
-          "name": "Google Sheets account 2"
+        "googleDriveOAuth2Api": {
+          "id": "oPioaF4sFaVsK13H",
+          "name": "Google Drive account 2"
         }
       }
     },
@@ -257,9 +257,9 @@
         300
       ],
       "credentials": {
-        "googleApi": {
-          "id": "IJzDJS1jpbItegZD",
-          "name": "Google Sheets account 2"
+        "googleDriveOAuth2Api": {
+          "id": "oPioaF4sFaVsK13H",
+          "name": "Google Drive account 2"
         }
       }
     },
@@ -361,7 +361,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Reminder: Credentials form for ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Just a quick reminder — we're ready to get started but need your credentials form completed first.</p><p><strong><a href=\"https://forms.google.com/PLACEHOLDER_CREDENTIALS_FORM\">Complete the form here</a></strong></p><p>Takes about 10 minutes. Once submitted, we'll schedule your kickoff call within 24 hours.</p><p>— John</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
+        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Reminder: Credentials form for ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Just a quick reminder — we're ready to get started but need your credentials form completed first.</p><p><strong><a href=\"https://forms.google.com/PLACEHOLDER_CREDENTIALS_FORM\" style=\"color:#0d9488;text-decoration:none;\">Complete the form here</a></strong></p><p>Takes about 10 minutes. Once submitted, we'll schedule your kickoff call within 24 hours.</p><p>— John</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
       },
       "id": "sys04-reminder-email-prep",
       "name": "Prep Reminder Email",
@@ -760,7 +760,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedMode": "dynamic",
     "errorWorkflow": "w9S9LovIY8CxchZm"
@@ -770,9 +770,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "cd4d8dfd-de7d-4c1a-8f50-a56846950b30",
-  "activeVersionId": "cd4d8dfd-de7d-4c1a-8f50-a56846950b30",
-  "versionCounter": 121,
+  "versionId": "861efaa8-ab18-4210-aa7f-54198f172570",
+  "activeVersionId": "861efaa8-ab18-4210-aa7f-54198f172570",
+  "versionCounter": 189,
   "triggerCount": 1,
   "shared": [
     {
@@ -795,9 +795,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:42:44.884Z",
-    "createdAt": "2026-04-03T03:42:44.884Z",
-    "versionId": "cd4d8dfd-de7d-4c1a-8f50-a56846950b30",
+    "updatedAt": "2026-04-19T19:25:36.229Z",
+    "createdAt": "2026-04-19T19:25:36.229Z",
+    "versionId": "861efaa8-ab18-4210-aa7f-54198f172570",
     "workflowId": "Nsu2htyjU8ZTidLN",
     "nodes": [
       {
@@ -891,7 +891,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Welcome to IntraWeb Technologies — let's get started`,\n    html: `<div style=\"font-family: 'DM Sans', Arial, sans-serif; max-width: 600px;\"><div style=\"background: #1a1f2e; padding: 30px; text-align: center;\"><h1 style=\"color: #3d8b8b; margin: 0;\">Welcome to IntraWeb</h1></div><div style=\"padding: 30px;\"><p>Hi ${d.contactFirstName || 'there'},</p><p>We're excited to officially kick things off. Here's what happens next:</p><h3>Week 1 Expectations</h3><ul><li>You'll receive a credentials intake form (next email) — fill this out so we can get access to the tools we need</li><li>We'll schedule a 30-minute kickoff call to align on priorities</li><li>Your dedicated Google Drive folder has been created for all project files</li></ul><p>If you have any questions at all, reply to this email or text me directly at ${d.config.owner.phone}.</p><p>Looking forward to building something great for ${d.clientName}.</p><p>— John<br/>${d.config.owner.companyName}</p></div></div>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
+          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Welcome to IntraWeb Technologies — let's get started`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>We're excited to officially kick things off. Here's what happens next:</p><h2 style=\"font-size:16px;margin:20px 0 8px;color:#0f1419;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;\">Week 1 expectations</h2><ul style=\"margin:8px 0;padding-left:20px;color:#0f1419;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;line-height:1.5;\"><li>You'll receive a credentials intake form (next email) — fill this out so we can get access to the tools we need</li><li>We'll schedule a 30-minute kickoff call to align on priorities</li><li>Your dedicated Google Drive folder has been created for all project files</li></ul><p>If you have any questions at all, reply to this email or text me directly at ${d.config.owner.phone}.</p><p>Looking forward to building something great for ${d.clientName}.</p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
         },
         "id": "sys04-welcome-prep",
         "name": "Prep Welcome Email",
@@ -936,7 +936,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `${d.clientName} — Credentials & Access Form`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>To get started, we need access credentials for the tools and platforms we'll be integrating.</p><p><strong><a href=\"https://forms.google.com/PLACEHOLDER_CREDENTIALS_FORM\">Fill out the credentials intake form here</a></strong></p><p>This typically takes 10-15 minutes. If you're unsure about any field, leave it blank and we'll walk through it on our kickoff call.</p><p>— John</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
+          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `${d.clientName} — Credentials & Access Form`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>To get started, we need access credentials for the tools and platforms we'll be integrating.</p><p><strong><a href=\"https://forms.google.com/PLACEHOLDER_CREDENTIALS_FORM\" style=\"color:#0d9488;text-decoration:none;\">Fill out the credentials intake form here</a></strong></p><p>This typically takes 10-15 minutes. If you're unsure about any field, leave it blank and we'll walk through it on our kickoff call.</p><p>— John</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
         },
         "id": "sys04-creds-prep",
         "name": "Prep Credentials Email",
@@ -1005,9 +1005,9 @@
           300
         ],
         "credentials": {
-          "googleApi": {
-            "id": "IJzDJS1jpbItegZD",
-            "name": "Google Sheets account 2"
+          "googleDriveOAuth2Api": {
+            "id": "oPioaF4sFaVsK13H",
+            "name": "Google Drive account 2"
           }
         }
       },
@@ -1050,9 +1050,9 @@
           300
         ],
         "credentials": {
-          "googleApi": {
-            "id": "IJzDJS1jpbItegZD",
-            "name": "Google Sheets account 2"
+          "googleDriveOAuth2Api": {
+            "id": "oPioaF4sFaVsK13H",
+            "name": "Google Drive account 2"
           }
         }
       },
@@ -1154,7 +1154,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Reminder: Credentials form for ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Just a quick reminder — we're ready to get started but need your credentials form completed first.</p><p><strong><a href=\"https://forms.google.com/PLACEHOLDER_CREDENTIALS_FORM\">Complete the form here</a></strong></p><p>Takes about 10 minutes. Once submitted, we'll schedule your kickoff call within 24 hours.</p><p>— John</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
+          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Reminder: Credentials form for ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Just a quick reminder — we're ready to get started but need your credentials form completed first.</p><p><strong><a href=\"https://forms.google.com/PLACEHOLDER_CREDENTIALS_FORM\" style=\"color:#0d9488;text-decoration:none;\">Complete the form here</a></strong></p><p>Takes about 10 minutes. Once submitted, we'll schedule your kickoff call within 24 hours.</p><p>— John</p>`,\n    workflowName: 'SYS 04 — Client Onboarding Logistics'\n  }\n}];"
         },
         "id": "sys04-reminder-email-prep",
         "name": "Prep Reminder Email",
@@ -1554,6 +1554,23 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-19T19:25:36.274Z",
+        "id": 3043,
+        "workflowId": "Nsu2htyjU8ZTidLN",
+        "versionId": "861efaa8-ab18-4210-aa7f-54198f172570",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:36.262Z",
+        "id": 3042,
+        "workflowId": "Nsu2htyjU8ZTidLN",
+        "versionId": "861efaa8-ab18-4210-aa7f-54198f172570",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
   }
 }

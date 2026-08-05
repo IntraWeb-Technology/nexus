@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
-type Variant = 'primary' | 'ghost'
+type Variant = 'primary' | 'ghost' | 'outline'
 
 function SpinnerIcon() {
   return (
@@ -37,9 +37,11 @@ export function Button({
     'inline-flex items-center justify-center rounded-[var(--iw-radius-control)] px-4 py-2 text-sm font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-300 disabled:pointer-events-none disabled:opacity-50 hover:-translate-y-px active:translate-y-0'
   const styles: Record<Variant, string> = {
     primary:
-      'bg-[var(--iw-teal)] text-white border border-[var(--iw-teal)] shadow-[var(--iw-shadow-1)] hover:bg-[var(--iw-teal-light)] hover:border-[var(--iw-teal-light)] hover:shadow-[var(--iw-shadow-2)]',
+      'bg-[var(--accent)] text-white border border-[var(--accent)] shadow-[var(--iw-shadow-1)] hover:bg-[var(--accent-bright)] hover:border-[var(--accent-bright)] hover:shadow-[var(--iw-shadow-2)]',
     ghost:
-      'bg-transparent text-[var(--iw-teal-light)] border border-[var(--iw-border-2)] hover:bg-[var(--iw-slate-3)] hover:shadow-[var(--iw-shadow-1)]',
+      'bg-[var(--surface)] text-[var(--accent-bright)] border border-[var(--hairline-2)] hover:bg-[var(--surface-2)] hover:shadow-[var(--iw-shadow-1)]',
+    outline:
+      'bg-transparent text-[var(--iw-text-primary)] border border-[var(--iw-border)] hover:bg-[var(--iw-surface)] hover:border-[var(--iw-border-2)]',
   }
   return (
     <button

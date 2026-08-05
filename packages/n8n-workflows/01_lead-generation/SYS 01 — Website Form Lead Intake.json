@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-04T05:14:41.048Z",
+  "updatedAt": "2026-04-20T15:46:10.637Z",
   "createdAt": "2026-03-21T17:17:54.963Z",
   "id": "JzghCkfPxT5CV1iT",
   "name": "SYS 01 — Website Form Lead Intake",
@@ -81,7 +81,7 @@
           "conditions": [
             {
               "id": "has-id",
-              "leftValue": "={{ $json.contactId }}",
+              "leftValue": "={{ String($json.contactId ?? '') }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -318,130 +318,27 @@
     },
     {
       "parameters": {
-        "operation": "appendOrUpdate",
-        "documentId": {
-          "__rl": true,
-          "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-          "mode": "list",
-          "cachedResultName": "IntraWeb OS — Master Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 493844058,
-          "mode": "list",
-          "cachedResultName": "Deals",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=493844058"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Timestamp",
-              "displayName": "Timestamp",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Deal Name",
-              "displayName": "Deal Name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Company",
-              "displayName": "Company",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Industry",
-              "displayName": "Industry",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Tier",
-              "displayName": "Tier",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Lead Score",
-              "displayName": "Lead Score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "HubSpot Deal ID",
-              "displayName": "HubSpot Deal ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "HubSpot Contact ID",
-              "displayName": "HubSpot Contact ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "HubSpot Company ID",
-              "displayName": "HubSpot Company ID",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO public.os_deals_sheet (hubspot_deal_id, deal_name, company, industry, tier, lead_score, hubspot_contact_id, hubspot_company_id, sheet_timestamp) VALUES ('\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.company||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.industry||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.tier||'').replace(/'/g,\"''\") + \"','','\" + String($('Build CRM Context').first().json.contactId||'').replace(/'/g,\"''\") + \"','', now()) ON CONFLICT (hubspot_deal_id) DO UPDATE SET deal_name = EXCLUDED.deal_name, company = EXCLUDED.company, industry = EXCLUDED.industry, tier = EXCLUDED.tier, lead_score = EXCLUDED.lead_score, hubspot_contact_id = EXCLUDED.hubspot_contact_id, hubspot_company_id = EXCLUDED.hubspot_company_id, sheet_timestamp = EXCLUDED.sheet_timestamp, updated_at = now();\" }}",
         "options": {}
       },
       "id": "f3a0249b-db16-4139-8c50-88eab2972251",
       "name": "Append or update row in sheet",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         2960,
         64
       ],
+      "credentials": {
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
+        }
+      },
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -454,11 +351,11 @@
           "conditions": [
             {
               "id": "has-deal-id",
-              "leftValue": "={{ Number($('Build CRM Context').first().json.dealId) || 0 }}",
-              "rightValue": 0,
+              "leftValue": "={{ String($('Build CRM Context').first().json.dealId ?? '').trim() }}",
+              "rightValue": "",
               "operator": {
-                "type": "number",
-                "operation": "gt"
+                "type": "string",
+                "operation": "notEquals"
               }
             }
           ],
@@ -477,45 +374,27 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-          "mode": "list",
-          "cachedResultName": "IntraWeb OS — Master Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "mode": "name",
-          "value": "Deals"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO public.os_deals_sheet (hubspot_deal_id, deal_name, company, industry, tier, lead_score, hubspot_contact_id, hubspot_company_id, sheet_timestamp) SELECT '\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.company||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.industry||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.tier||'').replace(/'/g,\"''\") + \"','','\" + String($('Build CRM Context').first().json.contactId||'').replace(/'/g,\"''\") + \"','', now() WHERE NOT EXISTS (SELECT 1 FROM public.os_deals_sheet d WHERE d.hubspot_deal_id = '\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"');\" }}",
         "options": {}
       },
       "id": "sys16-deals-sheet",
       "name": "Append to Deals Tab",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         3408,
         -16
       ],
+      "credentials": {
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
+        }
+      },
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000,
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
-        }
-      }
+      "waitBetweenTries": 5000
     },
     {
       "parameters": {
@@ -554,7 +433,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $('Build CRM Context').first().json;\nconst firstName = ctx.firstName || 'there';\nreturn [{\n  json: {\n    to: ctx.email,\n    subject: `${ctx.company || 'Your website project'} — intake confirmed`,\n    html: `<div style=\"font-family: DM Sans, Arial, sans-serif; max-width: 640px; color: #1f2937;\"><p>Hi ${firstName},</p><p>Thanks for submitting your website intake form. We received your project details and our team is already reviewing them.</p><p>If you booked your kickoff on the intake page, keep an eye out for your calendar confirmation and meeting details.</p><p>If you were not ready to schedule yet, no problem. We will send a follow-up reminder with your kickoff link so you can book when it fits your schedule.</p><p>We will use your intake answers to prepare for the conversation and map the right next steps for your build.</p><p>Talk soon,<br/>John Schibelli<br/>IntraWeb Technologies</p></div>`,\n    workflowName: 'SYS 01 — Website Form Lead Intake'\n  }\n}];"
+        "jsCode": "const ctx = $('Build CRM Context').first().json;\nconst firstName = ctx.firstName || 'there';\nreturn [{\n  json: {\n    to: ctx.email,\n    subject: `${ctx.company || 'Your website project'} — intake confirmed`,\n    html: `<p>Hi ${firstName},</p><p>Thanks for submitting your website intake form. We received your project details and our team is already reviewing them.</p><p>If you booked your kickoff on the intake page, keep an eye out for your calendar confirmation and meeting details.</p><p>If you were not ready to schedule yet, no problem. We will send a follow-up reminder with your kickoff link so you can book when it fits your schedule.</p><p>We will use your intake answers to prepare for the conversation and map the right next steps for your build.</p><p>Talk soon,<br/>John Schibelli<br/>IntraWeb Technologies</p>`,\n    workflowName: 'SYS 01 — Website Form Lead Intake'\n  }\n}];"
       },
       "id": "sys16-ack-email-prep",
       "name": "Prep Kickoff Ack Email",
@@ -704,7 +583,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const config = $('Get Config').first().json;\nconst contact = $('Check Booking Status').first().json.properties || {};\nconst ctx = $('Build CRM Context').first().json;\nconst firstName = String(contact.firstname || ctx.firstName || 'there').trim();\nconst company = String(contact.company || ctx.company || '').trim();\nconst title = `${company || `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim() || 'Website lead'} kickoff`;\nconst base = config.owner?.kickoffCalendarLink || config.calcom?.kickoffBookingUrl || config.owner?.calendarLink || 'https://cal.com/intraweb/website-discovery';\nlet kickoffLink = base;\ntry {\n  const url = new URL(base);\n  if (ctx.email) url.searchParams.set('email', ctx.email);\n  if (ctx.phone) url.searchParams.set('attendeePhoneNumber', ctx.phone);\n  const fullName = `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim();\n  if (fullName) url.searchParams.set('name', fullName);\n  if (title) url.searchParams.set('title', title);\n  kickoffLink = url.toString();\n} catch (error) {}\nreturn [{\n  json: {\n    to: contact.email || ctx.email,\n    subject: `${company || 'Your website project'} — reminder to book your kickoff call`,\n    html: `<div style=\"font-family: DM Sans, Arial, sans-serif; max-width: 640px; color: #1f2937;\"><p>Hi ${firstName},</p><p>We noticed you have not booked your kickoff call yet. Use the link below whenever you are ready so we can review your website project and next steps together.</p><p><a href=\"${kickoffLink}\" style=\"display: inline-block; background: #0f766e; color: #ffffff; padding: 12px 18px; border-radius: 8px; text-decoration: none; font-weight: 600;\">Schedule your kickoff call</a></p><p>If you already booked, you can ignore this email.</p><p>Thanks,<br/>John Schibelli<br/>IntraWeb Technologies</p></div>`,\n    workflowName: 'SYS 01 — Website Form Lead Intake'\n  }\n}];"
+        "jsCode": "const config = $('Get Config').first().json;\nconst contact = $('Check Booking Status').first().json.properties || {};\nconst ctx = $('Build CRM Context').first().json;\nconst firstName = String(contact.firstname || ctx.firstName || 'there').trim();\nconst company = String(contact.company || ctx.company || '').trim();\nconst title = `${company || `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim() || 'Website lead'} kickoff`;\nconst base = config.owner?.kickoffCalendarLink || config.calcom?.kickoffBookingUrl || config.owner?.calendarLink || 'https://cal.com/intraweb/website-discovery';\nlet kickoffLink = base;\ntry {\n  const url = new URL(base);\n  if (ctx.email) url.searchParams.set('email', ctx.email);\n  if (ctx.phone) url.searchParams.set('attendeePhoneNumber', ctx.phone);\n  const fullName = `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim();\n  if (fullName) url.searchParams.set('name', fullName);\n  if (title) url.searchParams.set('title', title);\n  kickoffLink = url.toString();\n} catch (error) {}\nreturn [{\n  json: {\n    to: contact.email || ctx.email,\n    subject: `${company || 'Your website project'} — reminder to book your kickoff call`,\n    html: `<p>Hi ${firstName},</p><p>We noticed you have not booked your kickoff call yet. Use the link below whenever you are ready so we can review your website project and next steps together.</p><p><a href=\"${kickoffLink}\" style=\"display:inline-block;background:#0d9488;color:#ffffff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:600;\">Schedule your kickoff call</a></p><p>If you already booked, you can ignore this email.</p><p>Thanks,<br/>John Schibelli<br/>IntraWeb Technologies</p>`,\n    workflowName: 'SYS 01 — Website Form Lead Intake'\n  }\n}];"
       },
       "id": "sys16-reminder-email-prep",
       "name": "Prep Kickoff Reminder Email",
@@ -1195,9 +1074,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-  "activeVersionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
-  "versionCounter": 440,
+  "versionId": "3774389a-385d-4430-9258-229c4fd36378",
+  "activeVersionId": "3774389a-385d-4430-9258-229c4fd36378",
+  "versionCounter": 516,
   "triggerCount": 1,
   "shared": [
     {
@@ -1220,9 +1099,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-04T05:18:44.000Z",
-    "createdAt": "2026-04-04T05:14:41.049Z",
-    "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
+    "updatedAt": "2026-04-20T15:46:10.639Z",
+    "createdAt": "2026-04-20T15:46:10.639Z",
+    "versionId": "3774389a-385d-4430-9258-229c4fd36378",
     "workflowId": "JzghCkfPxT5CV1iT",
     "nodes": [
       {
@@ -1299,7 +1178,7 @@
             "conditions": [
               {
                 "id": "has-id",
-                "leftValue": "={{ $json.contactId }}",
+                "leftValue": "={{ String($json.contactId ?? '') }}",
                 "rightValue": "",
                 "operator": {
                   "type": "string",
@@ -1536,130 +1415,27 @@
       },
       {
         "parameters": {
-          "operation": "appendOrUpdate",
-          "documentId": {
-            "__rl": true,
-            "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-            "mode": "list",
-            "cachedResultName": "IntraWeb OS — Master Data",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "__rl": true,
-            "value": 493844058,
-            "mode": "list",
-            "cachedResultName": "Deals",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=493844058"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [],
-            "schema": [
-              {
-                "id": "Timestamp",
-                "displayName": "Timestamp",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Deal Name",
-                "displayName": "Deal Name",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Company",
-                "displayName": "Company",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Industry",
-                "displayName": "Industry",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Tier",
-                "displayName": "Tier",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "Lead Score",
-                "displayName": "Lead Score",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "HubSpot Deal ID",
-                "displayName": "HubSpot Deal ID",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "HubSpot Contact ID",
-                "displayName": "HubSpot Contact ID",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              },
-              {
-                "id": "HubSpot Company ID",
-                "displayName": "HubSpot Company ID",
-                "required": false,
-                "defaultMatch": false,
-                "display": true,
-                "type": "string",
-                "canBeUsedToMatch": true
-              }
-            ],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"INSERT INTO public.os_deals_sheet (hubspot_deal_id, deal_name, company, industry, tier, lead_score, hubspot_contact_id, hubspot_company_id, sheet_timestamp) VALUES ('\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.company||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.industry||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.tier||'').replace(/'/g,\"''\") + \"','','\" + String($('Build CRM Context').first().json.contactId||'').replace(/'/g,\"''\") + \"','', now()) ON CONFLICT (hubspot_deal_id) DO UPDATE SET deal_name = EXCLUDED.deal_name, company = EXCLUDED.company, industry = EXCLUDED.industry, tier = EXCLUDED.tier, lead_score = EXCLUDED.lead_score, hubspot_contact_id = EXCLUDED.hubspot_contact_id, hubspot_company_id = EXCLUDED.hubspot_company_id, sheet_timestamp = EXCLUDED.sheet_timestamp, updated_at = now();\" }}",
           "options": {}
         },
         "id": "f3a0249b-db16-4139-8c50-88eab2972251",
         "name": "Append or update row in sheet",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.7,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           2960,
           64
         ],
+        "credentials": {
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
+          }
+        },
         "retryOnFail": true,
         "maxTries": 2,
-        "waitBetweenTries": 5000,
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
-          }
-        }
+        "waitBetweenTries": 5000
       },
       {
         "parameters": {
@@ -1672,11 +1448,11 @@
             "conditions": [
               {
                 "id": "has-deal-id",
-                "leftValue": "={{ Number($('Build CRM Context').first().json.dealId) || 0 }}",
-                "rightValue": 0,
+                "leftValue": "={{ String($('Build CRM Context').first().json.dealId ?? '').trim() }}",
+                "rightValue": "",
                 "operator": {
-                  "type": "number",
-                  "operation": "gt"
+                  "type": "string",
+                  "operation": "notEquals"
                 }
               }
             ],
@@ -1695,45 +1471,27 @@
       },
       {
         "parameters": {
-          "operation": "append",
-          "documentId": {
-            "__rl": true,
-            "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-            "mode": "list",
-            "cachedResultName": "IntraWeb OS — Master Data",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "Deals"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [],
-            "schema": [],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": false
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"INSERT INTO public.os_deals_sheet (hubspot_deal_id, deal_name, company, industry, tier, lead_score, hubspot_contact_id, hubspot_company_id, sheet_timestamp) SELECT '\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.dealName||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.company||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.industry||'').replace(/'/g,\"''\") + \"','\" + String($('Build CRM Context').first().json.tier||'').replace(/'/g,\"''\") + \"','','\" + String($('Build CRM Context').first().json.contactId||'').replace(/'/g,\"''\") + \"','', now() WHERE NOT EXISTS (SELECT 1 FROM public.os_deals_sheet d WHERE d.hubspot_deal_id = '\" + String($('Build CRM Context').first().json.dealId||'').replace(/'/g,\"''\") + \"');\" }}",
           "options": {}
         },
         "id": "sys16-deals-sheet",
         "name": "Append to Deals Tab",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           3408,
           -16
         ],
+        "credentials": {
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
+          }
+        },
         "retryOnFail": true,
         "maxTries": 2,
-        "waitBetweenTries": 5000,
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
-          }
-        }
+        "waitBetweenTries": 5000
       },
       {
         "parameters": {
@@ -1772,7 +1530,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const ctx = $('Build CRM Context').first().json;\nconst firstName = ctx.firstName || 'there';\nreturn [{\n  json: {\n    to: ctx.email,\n    subject: `${ctx.company || 'Your website project'} — intake confirmed`,\n    html: `<div style=\"font-family: DM Sans, Arial, sans-serif; max-width: 640px; color: #1f2937;\"><p>Hi ${firstName},</p><p>Thanks for submitting your website intake form. We received your project details and our team is already reviewing them.</p><p>If you booked your kickoff on the intake page, keep an eye out for your calendar confirmation and meeting details.</p><p>If you were not ready to schedule yet, no problem. We will send a follow-up reminder with your kickoff link so you can book when it fits your schedule.</p><p>We will use your intake answers to prepare for the conversation and map the right next steps for your build.</p><p>Talk soon,<br/>John Schibelli<br/>IntraWeb Technologies</p></div>`,\n    workflowName: 'SYS 01 — Website Form Lead Intake'\n  }\n}];"
+          "jsCode": "const ctx = $('Build CRM Context').first().json;\nconst firstName = ctx.firstName || 'there';\nreturn [{\n  json: {\n    to: ctx.email,\n    subject: `${ctx.company || 'Your website project'} — intake confirmed`,\n    html: `<p>Hi ${firstName},</p><p>Thanks for submitting your website intake form. We received your project details and our team is already reviewing them.</p><p>If you booked your kickoff on the intake page, keep an eye out for your calendar confirmation and meeting details.</p><p>If you were not ready to schedule yet, no problem. We will send a follow-up reminder with your kickoff link so you can book when it fits your schedule.</p><p>We will use your intake answers to prepare for the conversation and map the right next steps for your build.</p><p>Talk soon,<br/>John Schibelli<br/>IntraWeb Technologies</p>`,\n    workflowName: 'SYS 01 — Website Form Lead Intake'\n  }\n}];"
         },
         "id": "sys16-ack-email-prep",
         "name": "Prep Kickoff Ack Email",
@@ -1922,7 +1680,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const config = $('Get Config').first().json;\nconst contact = $('Check Booking Status').first().json.properties || {};\nconst ctx = $('Build CRM Context').first().json;\nconst firstName = String(contact.firstname || ctx.firstName || 'there').trim();\nconst company = String(contact.company || ctx.company || '').trim();\nconst title = `${company || `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim() || 'Website lead'} kickoff`;\nconst base = config.owner?.kickoffCalendarLink || config.calcom?.kickoffBookingUrl || config.owner?.calendarLink || 'https://cal.com/intraweb/website-discovery';\nlet kickoffLink = base;\ntry {\n  const url = new URL(base);\n  if (ctx.email) url.searchParams.set('email', ctx.email);\n  if (ctx.phone) url.searchParams.set('attendeePhoneNumber', ctx.phone);\n  const fullName = `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim();\n  if (fullName) url.searchParams.set('name', fullName);\n  if (title) url.searchParams.set('title', title);\n  kickoffLink = url.toString();\n} catch (error) {}\nreturn [{\n  json: {\n    to: contact.email || ctx.email,\n    subject: `${company || 'Your website project'} — reminder to book your kickoff call`,\n    html: `<div style=\"font-family: DM Sans, Arial, sans-serif; max-width: 640px; color: #1f2937;\"><p>Hi ${firstName},</p><p>We noticed you have not booked your kickoff call yet. Use the link below whenever you are ready so we can review your website project and next steps together.</p><p><a href=\"${kickoffLink}\" style=\"display: inline-block; background: #0f766e; color: #ffffff; padding: 12px 18px; border-radius: 8px; text-decoration: none; font-weight: 600;\">Schedule your kickoff call</a></p><p>If you already booked, you can ignore this email.</p><p>Thanks,<br/>John Schibelli<br/>IntraWeb Technologies</p></div>`,\n    workflowName: 'SYS 01 — Website Form Lead Intake'\n  }\n}];"
+          "jsCode": "const config = $('Get Config').first().json;\nconst contact = $('Check Booking Status').first().json.properties || {};\nconst ctx = $('Build CRM Context').first().json;\nconst firstName = String(contact.firstname || ctx.firstName || 'there').trim();\nconst company = String(contact.company || ctx.company || '').trim();\nconst title = `${company || `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim() || 'Website lead'} kickoff`;\nconst base = config.owner?.kickoffCalendarLink || config.calcom?.kickoffBookingUrl || config.owner?.calendarLink || 'https://cal.com/intraweb/website-discovery';\nlet kickoffLink = base;\ntry {\n  const url = new URL(base);\n  if (ctx.email) url.searchParams.set('email', ctx.email);\n  if (ctx.phone) url.searchParams.set('attendeePhoneNumber', ctx.phone);\n  const fullName = `${ctx.firstName || ''} ${ctx.lastName || ''}`.trim();\n  if (fullName) url.searchParams.set('name', fullName);\n  if (title) url.searchParams.set('title', title);\n  kickoffLink = url.toString();\n} catch (error) {}\nreturn [{\n  json: {\n    to: contact.email || ctx.email,\n    subject: `${company || 'Your website project'} — reminder to book your kickoff call`,\n    html: `<p>Hi ${firstName},</p><p>We noticed you have not booked your kickoff call yet. Use the link below whenever you are ready so we can review your website project and next steps together.</p><p><a href=\"${kickoffLink}\" style=\"display:inline-block;background:#0d9488;color:#ffffff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:600;\">Schedule your kickoff call</a></p><p>If you already booked, you can ignore this email.</p><p>Thanks,<br/>John Schibelli<br/>IntraWeb Technologies</p>`,\n    workflowName: 'SYS 01 — Website Form Lead Intake'\n  }\n}];"
         },
         "id": "sys16-reminder-email-prep",
         "name": "Prep Kickoff Reminder Email",
@@ -2400,16 +2158,40 @@
       }
     },
     "authors": "John Schibelli",
-    "name": "Version 20894ad5",
-    "description": "",
-    "autosaved": true,
+    "name": null,
+    "description": null,
+    "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-04T05:18:44.432Z",
-        "id": 1524,
+        "createdAt": "2026-04-20T15:46:10.800Z",
+        "id": 3095,
         "workflowId": "JzghCkfPxT5CV1iT",
-        "versionId": "20894ad5-1baf-4e7d-bf2f-144140d6591e",
+        "versionId": "3774389a-385d-4430-9258-229c4fd36378",
         "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-25T14:42:42.262Z",
+        "id": 3129,
+        "workflowId": "JzghCkfPxT5CV1iT",
+        "versionId": "3774389a-385d-4430-9258-229c4fd36378",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-20T15:46:10.772Z",
+        "id": 3094,
+        "workflowId": "JzghCkfPxT5CV1iT",
+        "versionId": "3774389a-385d-4430-9258-229c4fd36378",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-25T14:42:42.230Z",
+        "id": 3128,
+        "workflowId": "JzghCkfPxT5CV1iT",
+        "versionId": "3774389a-385d-4430-9258-229c4fd36378",
+        "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }
     ]

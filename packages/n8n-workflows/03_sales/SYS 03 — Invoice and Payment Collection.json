@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T03:42:44.639Z",
+  "updatedAt": "2026-04-19T19:25:35.533Z",
   "createdAt": "2026-03-08T22:49:23.624Z",
   "id": "8ZTesLyN6hpZojPh",
   "name": "SYS 03 — Invoice and Payment Collection",
@@ -59,7 +59,11 @@
     {
       "parameters": {
         "source": "database",
-        "workflowId": ""
+        "workflowId": {
+          "__rl": true,
+          "value": "1eTTVoSFSlSPvZV4",
+          "mode": "id"
+        }
       },
       "id": "sys06-config",
       "name": "Get Config",
@@ -154,7 +158,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Invoice reminder — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Just a quick reminder that your invoice for $${d.amount} is due.</p><p><a href=\"${d.paymentLink}\" style=\"display:inline-block;background:#3d8b8b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;\">Pay Now</a></p><p>If you've already sent payment, please disregard this message.</p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 03 — Invoice and Payment Collection'\n  }\n}];"
+        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Invoice reminder — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Just a quick reminder that your invoice for $${d.amount} is due.</p><p><a href=\"${d.paymentLink}\" style=\"display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;\">Pay Now</a></p><p>If you've already sent payment, please disregard this message.</p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 03 — Invoice and Payment Collection'\n  }\n}];"
       },
       "id": "sys06-reminder1-email-prep",
       "name": "Day 3: Prep Email",
@@ -167,8 +171,27 @@
     },
     {
       "parameters": {
-        "source": "parameter",
-        "workflowId": "REPLACE_WITH_SEND_EMAIL_WORKFLOW_ID"
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FF6VOLCcRxI4uNYD",
+          "mode": "id",
+          "cachedResultName": "SW: Send Email via Resend"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "subject": "={{ $json.subject }}",
+            "html": "={{ $json.html }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
       "id": "sys06-reminder1-email",
       "name": "Day 3: Send Email",
@@ -194,8 +217,26 @@
     },
     {
       "parameters": {
-        "source": "parameter",
-        "workflowId": "REPLACE_WITH_SEND_SMS_WORKFLOW_ID"
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "VzxtOFmmGEitVEQk",
+          "mode": "id",
+          "cachedResultName": "SW: Send SMS"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "body": "={{ $json.body }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
       "id": "sys06-reminder1-sms",
       "name": "Day 3: Send SMS",
@@ -277,7 +318,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Payment overdue — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your invoice for $${d.amount} is now overdue. Please process payment at your earliest convenience.</p><p><a href=\"${d.paymentLink}\">Pay Now</a></p><p>If there are any issues with the invoice or payment, reply to this email and we'll sort it out.</p><p>— John</p>`,\n    workflowName: 'SYS 03 — Invoice and Payment Collection'\n  }\n}];"
+        "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Payment overdue — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your invoice for $${d.amount} is now overdue. Please process payment at your earliest convenience.</p><p><a href=\"${d.paymentLink}\" style=\"display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:600;\">Pay Now</a></p><p>If there are any issues with the invoice or payment, reply to this email and we'll sort it out.</p><p>— John</p>`,\n    workflowName: 'SYS 03 — Invoice and Payment Collection'\n  }\n}];"
       },
       "id": "sys06-reminder2-prep",
       "name": "Day 7: Prep Email",
@@ -290,8 +331,27 @@
     },
     {
       "parameters": {
-        "source": "parameter",
-        "workflowId": "REPLACE_WITH_SEND_EMAIL_WORKFLOW_ID"
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FF6VOLCcRxI4uNYD",
+          "mode": "id",
+          "cachedResultName": "SW: Send Email via Resend"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "subject": "={{ $json.subject }}",
+            "html": "={{ $json.html }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
       "id": "sys06-reminder2",
       "name": "Day 7: Send Email",
@@ -386,8 +446,26 @@
     },
     {
       "parameters": {
-        "source": "parameter",
-        "workflowId": "REPLACE_WITH_SEND_SMS_WORKFLOW_ID"
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "VzxtOFmmGEitVEQk",
+          "mode": "id",
+          "cachedResultName": "SW: Send SMS"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "body": "={{ $json.body }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
       "id": "sys06-reminder3",
       "name": "Day 14: Send SMS",
@@ -482,8 +560,25 @@
     },
     {
       "parameters": {
-        "source": "parameter",
-        "workflowId": "REPLACE_WITH_SEND_GOOGLE_CHAT_ALERT_WORKFLOW_ID"
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "PGf6jPoWtxSPlr0h",
+          "mode": "id",
+          "cachedResultName": "SW: Send Google Chat Alert"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "={{ $json.message }}",
+            "priority": "={{ $json.priority }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
       "id": "sys06-escalate",
       "name": "Send Escalation Alert",
@@ -509,8 +604,29 @@
     },
     {
       "parameters": {
-        "source": "parameter",
-        "workflowId": "REPLACE_WITH_LOG_WORKFLOW_ID"
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1qQFLOSHZsS9JPKP",
+          "mode": "id",
+          "cachedResultName": "SW: Log to Automations Log Sheet"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowName": "={{ $json.workflowName }}",
+            "contactName": "={{ $json.contactName }}",
+            "phone": "={{ $json.phone }}",
+            "eventType": "={{ $json.eventType }}",
+            "status": "={{ $json.status }}",
+            "notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
       "id": "sys06-log",
       "name": "Log to Sheet",
@@ -536,8 +652,25 @@
     },
     {
       "parameters": {
-        "source": "parameter",
-        "workflowId": "REPLACE_WITH_SEND_GOOGLE_CHAT_ALERT_WORKFLOW_ID"
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "PGf6jPoWtxSPlr0h",
+          "mode": "id",
+          "cachedResultName": "SW: Send Google Chat Alert"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "={{ $json.message }}",
+            "priority": "={{ $json.priority }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
       "id": "sys06-paid-alert",
       "name": "Send Paid Alert",
@@ -925,7 +1058,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedMode": "fixed",
     "errorWorkflow": "w9S9LovIY8CxchZm"
@@ -933,9 +1066,9 @@
   "staticData": null,
   "meta": null,
   "pinData": {},
-  "versionId": "c1b4e9d8-7968-4cec-88b0-640f435e884f",
-  "activeVersionId": "c1b4e9d8-7968-4cec-88b0-640f435e884f",
-  "versionCounter": 42,
+  "versionId": "9b6ea062-2e23-4ff5-a56c-b8e36770a43f",
+  "activeVersionId": "9b6ea062-2e23-4ff5-a56c-b8e36770a43f",
+  "versionCounter": 109,
   "triggerCount": 1,
   "shared": [
     {
@@ -958,9 +1091,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:42:44.640Z",
-    "createdAt": "2026-04-03T03:42:44.640Z",
-    "versionId": "c1b4e9d8-7968-4cec-88b0-640f435e884f",
+    "updatedAt": "2026-04-19T19:25:35.534Z",
+    "createdAt": "2026-04-19T19:25:35.534Z",
+    "versionId": "9b6ea062-2e23-4ff5-a56c-b8e36770a43f",
     "workflowId": "8ZTesLyN6hpZojPh",
     "nodes": [
       {
@@ -1015,7 +1148,11 @@
       {
         "parameters": {
           "source": "database",
-          "workflowId": ""
+          "workflowId": {
+            "__rl": true,
+            "value": "1eTTVoSFSlSPvZV4",
+            "mode": "id"
+          }
         },
         "id": "sys06-config",
         "name": "Get Config",
@@ -1110,7 +1247,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Invoice reminder — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Just a quick reminder that your invoice for $${d.amount} is due.</p><p><a href=\"${d.paymentLink}\" style=\"display:inline-block;background:#3d8b8b;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;\">Pay Now</a></p><p>If you've already sent payment, please disregard this message.</p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 03 — Invoice and Payment Collection'\n  }\n}];"
+          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Invoice reminder — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Just a quick reminder that your invoice for $${d.amount} is due.</p><p><a href=\"${d.paymentLink}\" style=\"display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;text-decoration:none;border-radius:4px;\">Pay Now</a></p><p>If you've already sent payment, please disregard this message.</p><p>— John<br/>${d.config.owner.companyName}</p>`,\n    workflowName: 'SYS 03 — Invoice and Payment Collection'\n  }\n}];"
         },
         "id": "sys06-reminder1-email-prep",
         "name": "Day 3: Prep Email",
@@ -1123,8 +1260,27 @@
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_EMAIL_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "FF6VOLCcRxI4uNYD",
+            "mode": "id",
+            "cachedResultName": "SW: Send Email via Resend"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "subject": "={{ $json.subject }}",
+              "html": "={{ $json.html }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys06-reminder1-email",
         "name": "Day 3: Send Email",
@@ -1150,8 +1306,26 @@
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_SMS_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "VzxtOFmmGEitVEQk",
+            "mode": "id",
+            "cachedResultName": "SW: Send SMS"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "body": "={{ $json.body }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys06-reminder1-sms",
         "name": "Day 3: Send SMS",
@@ -1233,7 +1407,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Payment overdue — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your invoice for $${d.amount} is now overdue. Please process payment at your earliest convenience.</p><p><a href=\"${d.paymentLink}\">Pay Now</a></p><p>If there are any issues with the invoice or payment, reply to this email and we'll sort it out.</p><p>— John</p>`,\n    workflowName: 'SYS 03 — Invoice and Payment Collection'\n  }\n}];"
+          "jsCode": "const d = $('Extract Deal Data').first().json;\n\nreturn [{\n  json: {\n    to: d.contactEmail,\n    subject: `Payment overdue — ${d.clientName}`,\n    html: `<p>Hi ${d.contactFirstName || 'there'},</p><p>Your invoice for $${d.amount} is now overdue. Please process payment at your earliest convenience.</p><p><a href=\"${d.paymentLink}\" style=\"display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:600;\">Pay Now</a></p><p>If there are any issues with the invoice or payment, reply to this email and we'll sort it out.</p><p>— John</p>`,\n    workflowName: 'SYS 03 — Invoice and Payment Collection'\n  }\n}];"
         },
         "id": "sys06-reminder2-prep",
         "name": "Day 7: Prep Email",
@@ -1246,8 +1420,27 @@
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_EMAIL_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "FF6VOLCcRxI4uNYD",
+            "mode": "id",
+            "cachedResultName": "SW: Send Email via Resend"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "subject": "={{ $json.subject }}",
+              "html": "={{ $json.html }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys06-reminder2",
         "name": "Day 7: Send Email",
@@ -1342,8 +1535,26 @@
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_SMS_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "VzxtOFmmGEitVEQk",
+            "mode": "id",
+            "cachedResultName": "SW: Send SMS"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "body": "={{ $json.body }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys06-reminder3",
         "name": "Day 14: Send SMS",
@@ -1438,8 +1649,25 @@
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_GOOGLE_CHAT_ALERT_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "PGf6jPoWtxSPlr0h",
+            "mode": "id",
+            "cachedResultName": "SW: Send Google Chat Alert"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "message": "={{ $json.message }}",
+              "priority": "={{ $json.priority }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys06-escalate",
         "name": "Send Escalation Alert",
@@ -1465,8 +1693,29 @@
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_LOG_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "1qQFLOSHZsS9JPKP",
+            "mode": "id",
+            "cachedResultName": "SW: Log to Automations Log Sheet"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowName": "={{ $json.workflowName }}",
+              "contactName": "={{ $json.contactName }}",
+              "phone": "={{ $json.phone }}",
+              "eventType": "={{ $json.eventType }}",
+              "status": "={{ $json.status }}",
+              "notes": "={{ $json.notes }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys06-log",
         "name": "Log to Sheet",
@@ -1492,8 +1741,25 @@
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_GOOGLE_CHAT_ALERT_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "PGf6jPoWtxSPlr0h",
+            "mode": "id",
+            "cachedResultName": "SW: Send Google Chat Alert"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "message": "={{ $json.message }}",
+              "priority": "={{ $json.priority }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys06-paid-alert",
         "name": "Send Paid Alert",
@@ -1882,6 +2148,23 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-19T19:25:35.587Z",
+        "id": 3031,
+        "workflowId": "8ZTesLyN6hpZojPh",
+        "versionId": "9b6ea062-2e23-4ff5-a56c-b8e36770a43f",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.570Z",
+        "id": 3030,
+        "workflowId": "8ZTesLyN6hpZojPh",
+        "versionId": "9b6ea062-2e23-4ff5-a56c-b8e36770a43f",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
   }
 }

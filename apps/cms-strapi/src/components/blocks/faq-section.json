@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_blocks_faq_sections",
+  "info": {
+    "displayName": "FAQ Section",
+    "icon": "question",
+    "description": "FAQ section referencing FAQ items"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "items": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::faq-item.faq-item"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
+import { CommandButton } from '@/components/command/CommandButton'
 import { IwLogo } from '@/components/layout/IwLogo'
 import { ProjectSwitcher } from '@/components/portal/ProjectSwitcher'
 import { ThemeToggle } from '@/components/theme/ThemeToggle'
@@ -24,7 +25,7 @@ export function Topbar({
     .toUpperCase()
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-40 flex h-[var(--iw-topbar-height)] items-center justify-between border-b border-[var(--iw-border)] bg-[var(--iw-slate-2)] px-4 transition-[background-color,border-color] duration-300 md:left-[var(--iw-sidebar-width)]">
+    <header className="iw-topbar-glass fixed left-0 right-0 top-0 z-40 flex h-[var(--iw-topbar-height)] items-center justify-between border-b border-[var(--hairline)] px-4 transition-[background-color,border-color] duration-300 md:left-[var(--iw-sidebar-width)]">
       {/* Single-row layout on all screen sizes — prevents 2-row overflow in 64px header */}
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <div className="flex shrink-0 items-center gap-3">
@@ -39,7 +40,8 @@ export function Topbar({
           <ProjectSwitcher projects={projects} activeSlug={activeSlug} />
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        <CommandButton />
         <ThemeToggle />
         <Link
           href="/notifications"
@@ -64,9 +66,8 @@ export function Topbar({
             <span className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-[var(--iw-red)]" aria-hidden="true" />
           ) : null}
         </Link>
-        <div className="hidden text-right text-xs sm:block">
+        <div className="hidden max-w-[min(280px,40vw)] text-right text-xs sm:block">
           <p className="font-medium text-[var(--iw-text)]">{clientName}</p>
-          <p className="iw-mono text-[var(--iw-text-3)]">{activeSlug}</p>
         </div>
         <div className="flex h-8 w-8 items-center justify-center rounded border border-[var(--iw-border)] bg-[var(--iw-slate-3)] text-xs font-medium text-[var(--iw-text)] md:hidden">
           {initials}

@@ -1,0 +1,17 @@
+**/node_modules
+**/.turbo
+**/.next
+**/dist
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+**/coverage
+.tmp
+.tmp/**
+apps/_cms-strapi-build-check
+apps/personal-site
+apps/cms-strapi-docs
+apps/ai-ops
+**/*.md
+!apps/cms-strapi/README.md

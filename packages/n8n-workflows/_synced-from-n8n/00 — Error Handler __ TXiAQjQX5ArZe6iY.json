@@ -1,0 +1,226 @@
+{
+  "updatedAt": "2026-04-18T22:45:40.864Z",
+  "createdAt": "2026-03-04T01:41:13.145Z",
+  "id": "TXiAQjQX5ArZe6iY",
+  "name": "00 — Error Handler",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "581cb20d-b293-485f-b711-a1b1493e32c1",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const error = $input.first().json;\n\nconst workflowName = error.workflow?.name || 'Unknown Workflow';\nconst workflowId = error.workflow?.id || 'unknown';\nconst executionId = error.execution?.id || 'unknown';\nconst nodeName = error.execution?.lastNodeExecuted || 'unknown';\nconst errorMessage = error.execution?.error?.message || 'No error message';\nconst errorDescription = error.execution?.error?.description || '';\n\nconst timestamp = new Date().toISOString();\n\nconst smsBody = `⚠️ n8n ERROR\\nWorkflow: ${workflowName}\\nNode: ${nodeName}\\nError: ${errorMessage.substring(0, 100)}\\nTime: ${timestamp}\\nExec ID: ${executionId}`;\n\nreturn [{\n  json: {\n    workflowName,\n    workflowId,\n    executionId,\n    nodeName,\n    errorMessage,\n    errorDescription,\n    timestamp,\n    smsBody\n  }\n}];"
+      },
+      "id": "48699b70-9c49-40b3-b368-4396516ae6f4",
+      "name": "Format Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$vars.OWNER_PHONE}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "={{$json.smsBody}}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {}
+          }
+        }
+      },
+      "id": "040c5191-7974-4f04-adcd-3ca29aa6b017",
+      "name": "SMS Alert to Owner",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$vars.CHAT_WEBHOOK}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"🚨 *n8n Workflow Error*\\n\\n*Workflow:* {{ $json.workflowName }}\\n*Node:* {{ $json.nodeName }}\\n*Error:* {{ $json.errorMessage }}\\n*Description:* {{ $json.errorDescription }}\\n*Execution ID:* {{ $json.executionId }}\\n*Time:* {{ $json.timestamp }}\"\n}",
+        "options": {}
+      },
+      "id": "a2016a51-6ffb-4b6f-a8df-fbc1bed15efd",
+      "name": "Google Chat Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$json.timestamp}}",
+            "Workflow Name": "={{$json.workflowName}}",
+            "Event Type": "WORKFLOW_ERROR",
+            "Contact Name": "",
+            "Phone": "",
+            "Email": "",
+            "Deal ID": "",
+            "Contact ID": "",
+            "Status": "FAILED",
+            "Notes": "={{$json.errorMessage}} | Node: {{$json.nodeName}}",
+            "Workflow Run ID": "={{$json.executionId}}",
+            "Deal Stage": "",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "dbbb7486-9e29-4f28-9536-bda9863fa7cc",
+      "name": "Log Error to Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        240,
+        112
+      ]
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Format Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Error": {
+      "main": [
+        [
+          {
+            "node": "SMS Alert to Owner",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Chat Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SMS Alert to Owner": {
+      "main": [
+        [
+          {
+            "node": "Log Error to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "1a01aa6f-a01f-4ff0-b716-28c5dde0a595",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:41:13.153Z",
+      "createdAt": "2026-03-04T01:41:13.153Z",
+      "role": "workflow:owner",
+      "workflowId": "TXiAQjQX5ArZe6iY",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:57:58.789Z",
+      "createdAt": "2026-03-04T01:57:58.789Z",
+      "id": "Ahd1OBacPZdtcTPI",
+      "name": "system"
+    },
+    {
+      "updatedAt": "2026-03-04T01:57:34.427Z",
+      "createdAt": "2026-03-04T01:57:34.427Z",
+      "id": "KP1vOsfC2eXZnNni",
+      "name": "alerts"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    }
+  ],
+  "activeVersion": null
+}

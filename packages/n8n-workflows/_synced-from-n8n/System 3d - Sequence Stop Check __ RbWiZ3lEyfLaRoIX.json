@@ -1,0 +1,140 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T04:56:22.203Z",
+  "id": "RbWiZ3lEyfLaRoIX",
+  "name": "System 3d - Sequence Stop Check",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## README\nChecks HubSpot contact property `sequence_stop` and returns `should_stop`.\n\nThe orchestrator calls this before Touch 2, 3, 4, and 5.\n\nUse this to pause outreach without deactivating the whole system.",
+        "height": 200,
+        "width": 390,
+        "color": 5
+      },
+      "id": "a912e9ab-752a-474a-bba8-d92ca0cdaccd",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "38b745e3-4281-4bfc-b174-ac0d5c23d624",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.contact_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "sequence_stop"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "95133c07-9b26-4c79-b749-9e36e4c5e8bc",
+      "name": "Check Sequence Stop in HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Execute Workflow Trigger').first().json;\nconst props = $input.first().json.properties || {};\nconst rawStop = props.sequence_stop?.value ?? props.sequence_stop ?? false;\nconst shouldStop = rawStop === true || rawStop === 'true' || rawStop === 'TRUE' || rawStop === '1';\n\nreturn [{\n  json: {\n    ...input,\n    should_stop: shouldStop,\n    sequence_stop_value: rawStop\n  }\n}];"
+      },
+      "id": "2ee9da98-7703-46aa-ae42-f76da9376c27",
+      "name": "Return Stop Check Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        288
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Sequence Stop in HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sequence Stop in HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Return Stop Check Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "13960121-a779-477b-96aa-2770bb73b0b8",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T04:56:22.210Z",
+      "createdAt": "2026-03-06T04:56:22.210Z",
+      "role": "workflow:owner",
+      "workflowId": "RbWiZ3lEyfLaRoIX",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

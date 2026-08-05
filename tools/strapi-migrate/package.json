@@ -1,0 +1,32 @@
+{
+  "name": "@intraweb/strapi-migrate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Multi-site Strapi content migration tooling (portfolio-os, Hashnode, IntraWeb)",
+  "scripts": {
+    "migrate:content:dry-run": "tsx src/cli.ts dry-run",
+    "migrate:content": "tsx src/cli.ts migrate",
+    "migrate:content:validate": "tsx src/cli.ts validate",
+    "migrate:content:rollback": "tsx src/cli.ts rollback",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}

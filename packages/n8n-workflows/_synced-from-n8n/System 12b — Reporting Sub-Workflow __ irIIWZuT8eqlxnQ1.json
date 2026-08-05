@@ -1,0 +1,799 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T02:38:29.346Z",
+  "id": "irIIWZuT8eqlxnQ1",
+  "name": "System 12b — Reporting Sub-Workflow",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c44fa45c-de84-446c-8fd0-13a4b969a697",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "leads_this_week",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "leads_this_week"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "pipeline_status",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pipeline_status"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "overdue_invoices",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "overdue_invoices"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "client_health",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "client_health"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "whats_due",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "whats_due"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "revenue_this_month",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "revenue_this_month"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "4199b6b8-74d6-4634-991a-efeb9da9811c",
+      "name": "Switch: Which Report?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -256,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"createdate\",\n          \"operator\": \"GT\",\n          \"value\": \"{{$now.minus(7, 'days').toMillis()}}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"email\", \"company\", \"createdate\", \"hs_lead_status\", \"hubspotscore\"],\n  \"sorts\": [{\"propertyName\": \"hubspotscore\", \"direction\": \"DESCENDING\"}],\n  \"limit\": 20\n}",
+        "options": {}
+      },
+      "id": "6087513e-35fc-46c0-9f93-9e5c49225b94",
+      "name": "HubSpot: Get Leads This Week",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $input.first().json.results || [];\nconst top3 = results.slice(0, 3);\nconst lines = top3.map((c, i) => {\n  const p = c.properties;\n  const name = `${p.firstname || ''} ${p.lastname || ''}`.trim() || 'Unknown';\n  const score = p.hubspotscore || 'N/A';\n  const company = p.company || 'N/A';\n  return `${i + 1}. ${name} — ${company} | Score: ${score} | Status: ${p.hs_lead_status || 'N/A'}`;\n});\nconst total = $input.first().json.total || results.length;\nreturn [{\n  json: {\n    message: `*Leads This Week (${total} total)*\\n\\nTop by lead score:\\n${lines.join('\\n') || 'No leads this week'}`\n  }\n}];"
+      },
+      "id": "8d802e93-570a-4fa4-a3b5-b3c1493a43ec",
+      "name": "Code: Format Leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"{{$json.message}}\"}",
+        "options": {}
+      },
+      "id": "b7bf175c-cf1c-492c-8b30-922c8657a254",
+      "name": "Google Chat: Send Leads Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.hubapi.com/crm/v3/objects/deals",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f7bc9e26-f95c-4887-b1d9-000556dee7d8",
+      "name": "HubSpot: Get All Deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const deals = ($input.first().json.results || []);\nconst stageMap = {};\ndeals.forEach(d => {\n  const stage = d.properties.dealstage || 'unknown';\n  const amount = parseFloat(d.properties.amount || 0);\n  if (!stageMap[stage]) stageMap[stage] = { count: 0, total: 0 };\n  stageMap[stage].count++;\n  stageMap[stage].total += amount;\n});\nconst lines = Object.entries(stageMap).map(([stage, data]) => {\n  return `• ${stage}: ${data.count} deal(s) — $${data.total.toLocaleString()}`;\n});\nconst grandTotal = deals.reduce((sum, d) => sum + parseFloat(d.properties.amount || 0), 0);\nreturn [{\n  json: {\n    message: `*Pipeline Status*\\n\\n${lines.join('\\n')}\\n\\n*Total Pipeline Value: $${grandTotal.toLocaleString()}*`\n  }\n}];"
+      },
+      "id": "efe4672b-ba0f-4119-9d9e-fe4a7440bb9a",
+      "name": "Code: Format Pipeline",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"{{$json.message}}\"}",
+        "options": {}
+      },
+      "id": "f5657f72-70c3-4b54-a8ee-222d60f4f49c",
+      "name": "Google Chat: Send Pipeline Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/deals/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"dealstage\",\n          \"operator\": \"EQ\",\n          \"value\": \"invoicesent\"\n        },\n        {\n          \"propertyName\": \"hs_lastmodifieddate\",\n          \"operator\": \"LT\",\n          \"value\": \"{{$now.minus(30, 'days').toMillis()}}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"dealname\", \"amount\", \"dealstage\", \"hs_lastmodifieddate\", \"closedate\"],\n  \"limit\": 50\n}",
+        "options": {}
+      },
+      "id": "58ff91a7-46b8-4298-b9c6-bc42f9fd9b0f",
+      "name": "HubSpot: Get Overdue Invoices",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const deals = $input.first().json.results || [];\nif (deals.length === 0) {\n  return [{ json: { message: '*Overdue Invoices*\\n\\nNo overdue invoices found.' } }];\n}\nconst now = Date.now();\nconst lines = deals.map(d => {\n  const p = d.properties;\n  const modDate = new Date(p.hs_lastmodifieddate);\n  const daysOverdue = Math.floor((now - modDate.getTime()) / (1000 * 60 * 60 * 24));\n  const amount = parseFloat(p.amount || 0);\n  return `• ${p.dealname} — $${amount.toLocaleString()} — ${daysOverdue} days overdue`;\n});\nreturn [{\n  json: {\n    message: `*Overdue Invoices (${deals.length})*\\n\\n${lines.join('\\n')}`\n  }\n}];"
+      },
+      "id": "b034191b-639f-4f3e-bcb4-c8c89772760f",
+      "name": "Code: Format Overdue Invoices",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"{{$json.message}}\"}",
+        "options": {}
+      },
+      "id": "c0340148-41b1-4b52-a348-e086ac8fcca1",
+      "name": "Google Chat: Send Invoices Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.hubapi.com/crm/v3/objects/deals",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fd8d1620-d9c5-432e-9229-daec4bd21cf9",
+      "name": "HubSpot: Get Client Health",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const deals = $input.first().json.results || [];\nconst withScores = deals.filter(d => d.properties.client_health_score);\nif (withScores.length === 0) {\n  return [{ json: { message: '*Client Health Scores*\\n\\nNo health scores found. Make sure client_health_score property is populated in HubSpot.' } }];\n}\nconst sorted = withScores.sort((a, b) => parseFloat(a.properties.client_health_score) - parseFloat(b.properties.client_health_score));\nconst lines = sorted.map(d => {\n  const p = d.properties;\n  const score = parseFloat(p.client_health_score);\n  const emoji = score >= 8 ? 'green' : score >= 5 ? 'yellow' : 'red';\n  return `• [${emoji.toUpperCase()}] ${p.dealname} — Score: ${score}/10`;\n});\nreturn [{\n  json: {\n    message: `*Client Health Scores (${withScores.length} clients)*\\n\\n${lines.join('\\n')}`\n  }\n}];"
+      },
+      "id": "f546e00e-f3ed-4e5d-81d1-50be73e6be3a",
+      "name": "Code: Format Health Scores",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"{{$json.message}}\"}",
+        "options": {}
+      },
+      "id": "6325da4f-dac7-42a6-a0f3-4f3980bf980e",
+      "name": "Google Chat: Send Health Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/tasks/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"hs_task_status\",\n          \"operator\": \"EQ\",\n          \"value\": \"NOT_STARTED\"\n        },\n        {\n          \"propertyName\": \"hs_timestamp\",\n          \"operator\": \"LT\",\n          \"value\": \"{{$now.plus(7, 'days').toMillis()}}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"hs_task_subject\", \"hs_task_body\", \"hs_timestamp\", \"hs_task_priority\", \"hs_task_status\"],\n  \"sorts\": [{\"propertyName\": \"hs_timestamp\", \"direction\": \"ASCENDING\"}],\n  \"limit\": 20\n}",
+        "options": {}
+      },
+      "id": "f4e7a351-4f6a-4f35-a2c2-d4ec6cb2a0b0",
+      "name": "HubSpot: Get Due Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const tasks = $input.first().json.results || [];\nif (tasks.length === 0) {\n  return [{ json: { message: '*Tasks Due This Week*\\n\\nNo open tasks due in the next 7 days.' } }];\n}\nconst lines = tasks.map(t => {\n  const p = t.properties;\n  const due = p.hs_timestamp ? new Date(p.hs_timestamp).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'No date';\n  const priority = p.hs_task_priority || 'NONE';\n  return `• [${priority}] ${p.hs_task_subject} — Due: ${due}`;\n});\nreturn [{\n  json: {\n    message: `*Tasks Due This Week (${tasks.length})*\\n\\n${lines.join('\\n')}`\n  }\n}];"
+      },
+      "id": "cb0cefa3-cdb2-4090-8b8e-cd4173c2ecdd",
+      "name": "Code: Format Task List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"{{$json.message}}\"}",
+        "options": {}
+      },
+      "id": "70841604-56b7-4652-94b8-0d732f43b490",
+      "name": "Google Chat: Send Tasks Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Revenue",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "12a9550c-9849-480d-ab59-bdcdbee70ac2",
+      "name": "Sheets: Get Revenue Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.first().json.values || [];\nif (rows.length < 2) {\n  return [{ json: { message: '*Revenue This Month*\\n\\nNo revenue data found in the Revenue sheet.' } }];\n}\nconst now = new Date();\nconst currentMonth = now.getMonth();\nconst currentYear = now.getFullYear();\nconst headers = rows[0];\nconst dataRows = rows.slice(1);\nconst monthRows = dataRows.filter(row => {\n  const dateStr = row[0];\n  if (!dateStr) return false;\n  const d = new Date(dateStr);\n  return d.getMonth() === currentMonth && d.getFullYear() === currentYear;\n});\nlet totalInvoiced = 0;\nlet totalCollected = 0;\nmonthRows.forEach(row => {\n  totalInvoiced += parseFloat(row[1] || 0);\n  totalCollected += parseFloat(row[2] || 0);\n});\nreturn [{\n  json: {\n    message: `*Revenue This Month*\\n\\nInvoiced: $${totalInvoiced.toLocaleString()}\\nCollected: $${totalCollected.toLocaleString()}\\nOutstanding: $${(totalInvoiced - totalCollected).toLocaleString()}\\n\\nTransactions this month: ${monthRows.length}`\n  }\n}];"
+      },
+      "id": "dc68e545-2216-4236-9600-4776bcc011d6",
+      "name": "Code: Format Revenue Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        816
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"{{$json.message}}\"}",
+        "options": {}
+      },
+      "id": "24e34265-28b8-4a32-a280-5e2a87a96825",
+      "name": "Google Chat: Send Revenue Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        816
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch: Which Report?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Which Report?": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Get Leads This Week",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HubSpot: Get All Deals",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HubSpot: Get Overdue Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HubSpot: Get Client Health",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HubSpot: Get Due Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheets: Get Revenue Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Get Leads This Week": {
+      "main": [
+        [
+          {
+            "node": "Code: Format Leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format Leads": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Send Leads Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Get All Deals": {
+      "main": [
+        [
+          {
+            "node": "Code: Format Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Send Pipeline Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Get Overdue Invoices": {
+      "main": [
+        [
+          {
+            "node": "Code: Format Overdue Invoices",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format Overdue Invoices": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Send Invoices Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Get Client Health": {
+      "main": [
+        [
+          {
+            "node": "Code: Format Health Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format Health Scores": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Send Health Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Get Due Tasks": {
+      "main": [
+        [
+          {
+            "node": "Code: Format Task List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format Task List": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Send Tasks Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Get Revenue Data": {
+      "main": [
+        [
+          {
+            "node": "Code: Format Revenue Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Format Revenue Data": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Send Revenue Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "e004848c-339e-4418-a726-b29c90ab3669",
+  "activeVersionId": null,
+  "versionCounter": 9,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T02:38:29.350Z",
+      "createdAt": "2026-03-06T02:38:29.350Z",
+      "role": "workflow:owner",
+      "workflowId": "irIIWZuT8eqlxnQ1",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

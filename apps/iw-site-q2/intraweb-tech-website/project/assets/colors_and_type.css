@@ -1,0 +1,181 @@
+/* ============================================================
+   IntraWeb Technologies — Colors & Type
+   Source: iw-site (Next.js), tailwind.config.js, app/globals.css
+   ============================================================ */
+
+/* Google Fonts — brand typefaces */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
+
+:root {
+  /* -------- BRAND CORE -------- */
+  /* The three canonical brand colors from iw-site README / tailwind */
+  --iw-midnight-navy: #0B1F36;   /* Primary brand, headings on light, page chrome on dark */
+  --iw-teal: #15B8A1;            /* Secondary — eyebrows, accents, icon badges */
+  --iw-orange: #F59E0B;          /* Primary CTA. NOTE: Tailwind overrides use #F97316 */
+
+  /* Extended brand hues used throughout the codebase */
+  --iw-teal-400: #2DD4BF;        /* Lighter teal — used for H2s on dark bg (.text-teal-400) */
+  --iw-teal-500: #15B8A1;        /* Canonical teal */
+  --iw-teal-600: #0D9488;        /* Pressed / hovered teal */
+  --iw-orange-500: #F97316;      /* Tailwind orange-500 — real CTA fill */
+  --iw-orange-600: #EA580C;      /* CTA hover */
+  --iw-orange-400: #FB923C;      /* AI Engineering page CTA + links */
+
+  /* -------- NEUTRAL / CHARCOAL RAMP -------- */
+  /* From tailwind.config.js `charcoal` palette */
+  --iw-charcoal-50:  #F8F9FA;
+  --iw-charcoal-100: #E9ECEF;
+  --iw-charcoal-200: #DEE2E6;
+  --iw-charcoal-300: #CED4DA;
+  --iw-charcoal-400: #ADB5BD;
+  --iw-charcoal-500: #6C757D;
+  --iw-charcoal-600: #495057;
+  --iw-charcoal-700: #343A40;    /* Footer bg (.bg-gray-700) */
+  --iw-charcoal-800: #212529;
+  --iw-charcoal-900: #0B1F36;    /* Midnight Navy, aliased */
+
+  /* Dark-surface palette (from globals.css home / AI-Engineering pages) */
+  --iw-bg-deep:     #0A2236;     /* Primary page bg (home, AI Eng) */
+  --iw-bg-alt:      #0D2B42;     /* Alternating dark band */
+  --iw-bg-divider:  #13293D;     /* Hairline / separator tone */
+  --iw-bg-card:     #181F2A;     /* Card bg on dark */
+  --iw-bg-gray-900: #111827;     /* Services / Problem section bg */
+  --iw-bg-gray-800: #1F2937;     /* Differentiators bg */
+  --iw-border-dark: #1E3A5F;     /* Job / feature card borders */
+
+  /* -------- SEMANTIC FG/BG -------- */
+  --iw-fg:          #FFFFFF;     /* Default on dark */
+  --iw-fg-1:        #E0E0E0;     /* Body text on dark */
+  --iw-fg-2:        #D0D0D0;     /* Muted body on dark */
+  --iw-fg-3:        #D1D5DB;     /* Legal prose secondary */
+  --iw-fg-onlight:  #0B1F36;     /* Default on light */
+  --iw-fg-onlight-2:#171717;     /* Secondary on light */
+
+  --iw-surface:     #FFFFFF;
+  --iw-surface-alt: #F8F9FA;
+
+  /* Accent-linked semantics */
+  --iw-accent:      var(--iw-teal-500);
+  --iw-accent-weak: rgba(20, 184, 166, 0.05);
+  --iw-accent-line: rgba(20, 184, 166, 0.2);
+
+  --iw-cta:         var(--iw-orange-500);
+  --iw-cta-hover:   var(--iw-teal-500);  /* Distinctive brand swap: orange→teal on hover */
+
+  --iw-success:     var(--iw-teal-500);
+  --iw-warning:     var(--iw-orange-500);
+  --iw-danger:      #F87171;              /* Differentiators "X" (text-red-400) */
+
+  /* -------- RADII / SHADOWS / SPACING -------- */
+  --iw-radius-xs: 4px;     /* Buttons, small cards (AI Eng capability cards) */
+  --iw-radius-sm: 6px;
+  --iw-radius-md: 8px;     /* Career job cards */
+  --iw-radius-lg: 12px;    /* Services / scenario cards (rounded-xl) */
+  --iw-radius-pill: 9999px;
+
+  --iw-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --iw-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10);
+  --iw-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --iw-shadow-glow-teal: 0 8px 32px 0 rgba(21, 184, 161, 0.18);
+  --iw-shadow-inner-top: inset 0 16px 32px -8px rgba(0, 0, 0, 0.5);
+  --iw-shadow-inner-bot: inset 0 -16px 32px -8px rgba(0, 0, 0, 0.5);
+
+  /* -------- TYPOGRAPHY -------- */
+  --iw-font-heading: 'Montserrat', Arial, Helvetica, sans-serif;
+  --iw-font-body:    'Roboto', Arial, Helvetica, sans-serif;
+
+  /* Heading scale — from globals.css .page-hero-heading, .ai-eng-page-title, etc. */
+  --iw-h1-size:   clamp(2.25rem, 6vw, 3.75rem);  /* 36→60px */
+  --iw-h1-weight: 700;
+  --iw-h1-lh:     1.1;
+
+  --iw-h2-size:   clamp(1.875rem, 4vw, 2.5rem);  /* 30→40px */
+  --iw-h2-weight: 700;
+  --iw-h2-lh:     1.15;
+
+  --iw-h3-size:   1.5rem;   /* 24px */
+  --iw-h3-weight: 600;
+  --iw-h3-lh:     1.3;
+
+  --iw-h4-size:   1.25rem;  /* 20px */
+  --iw-h4-weight: 600;
+
+  --iw-lead-size: clamp(1.125rem, 2vw, 1.375rem);  /* 18→22px */
+  --iw-lead-lh:   1.7;
+
+  --iw-body-size: 1.0625rem;  /* 17px */
+  --iw-body-lh:   1.75;
+
+  --iw-small-size: 0.875rem;  /* 14px */
+  --iw-xs-size:    0.75rem;   /* 12px */
+
+  --iw-eyebrow-tracking: 0.2em;
+
+  /* -------- MOTION -------- */
+  --iw-ease:       cubic-bezier(0.22, 1, 0.36, 1);
+  --iw-dur-fast:   180ms;
+  --iw-dur-base:   260ms;
+  --iw-dur-slow:   520ms;
+}
+
+/* ============================================================
+   SEMANTIC ELEMENTS — drop-in defaults
+   ============================================================ */
+
+html, body {
+  font-family: var(--iw-font-body);
+  color: var(--iw-fg-onlight);
+  background: var(--iw-surface);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--iw-font-heading);
+  color: var(--iw-fg-onlight);
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: var(--iw-h1-size); font-weight: var(--iw-h1-weight); line-height: var(--iw-h1-lh); margin: 0 0 1.5rem; }
+h2 { font-size: var(--iw-h2-size); font-weight: var(--iw-h2-weight); line-height: var(--iw-h2-lh); margin: 0 0 1rem; }
+h3 { font-size: var(--iw-h3-size); font-weight: var(--iw-h3-weight); line-height: var(--iw-h3-lh); margin: 0 0 0.75rem; }
+h4 { font-size: var(--iw-h4-size); font-weight: var(--iw-h4-weight); margin: 0 0 0.5rem; }
+
+p { font-size: var(--iw-body-size); line-height: var(--iw-body-lh); margin: 0 0 1rem; }
+
+.iw-lead {
+  font-size: var(--iw-lead-size);
+  line-height: var(--iw-lead-lh);
+  color: var(--iw-fg-1);
+}
+
+.iw-eyebrow {
+  font-family: var(--iw-font-heading);
+  font-size: var(--iw-small-size);
+  font-weight: 600;
+  letter-spacing: var(--iw-eyebrow-tracking);
+  text-transform: uppercase;
+  color: var(--iw-teal-400);
+}
+
+.iw-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+/* Dark-surface helper — applies dark-context fg/bg vars */
+.iw-on-dark {
+  background: var(--iw-bg-deep);
+  color: var(--iw-fg);
+}
+.iw-on-dark h1,
+.iw-on-dark h2,
+.iw-on-dark h3,
+.iw-on-dark h4 { color: var(--iw-fg); }
+.iw-on-dark p  { color: var(--iw-fg-1); }
+
+/* ============================================================
+   PATTERN BACKGROUNDS — from brand library
+   ============================================================ */
+.iw-bg-circuit  { background-color: var(--iw-bg-deep); background-image: url('assets/patterns/circuit-pattern.svg'); background-repeat: repeat; }
+.iw-bg-hexagon  { background-color: var(--iw-bg-deep); background-image: url('assets/patterns/hexagon-pattern.svg'); background-repeat: repeat; }
+.iw-bg-pentagon { background-color: var(--iw-bg-deep); background-image: url('assets/patterns/pentagon-pattern.svg'); background-repeat: repeat; }
+.iw-bg-neural   { background-color: var(--iw-bg-deep); background-image: url('assets/patterns/neural-network-pattern.svg'); background-repeat: repeat; }
+.iw-bg-web      { background-color: var(--iw-bg-gray-800); background-image: url('assets/patterns/web-structure.svg'); background-repeat: repeat; background-size: 360px 190px; }

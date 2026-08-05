@@ -1,0 +1,861 @@
+{
+  "updatedAt": "2026-04-22T01:24:13.067Z",
+  "createdAt": "2026-03-08T22:44:07.701Z",
+  "id": "FF6VOLCcRxI4uNYD",
+  "name": "SW: Send Email via Resend",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** This trigger declares `to`, `subject`, `html`, and optional fields so the parent's **Execute Sub-workflow** node lists them for mapping (data is not inferred from the previous node by default).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.\n\n**Branding:** `html` should be a **body fragment** (paragraphs, lists, links). **Prepare Email** wraps it in the IntraWeb email shell (logo from `config.branding.logoUrl` in CONFIG — HTTPS image URL; wordmark fallback if empty). Pass `skipBranding: true` to send raw HTML (full documents, rare internal sends). If `html` already contains `data-iw-email-shell=\"1\"` or starts with `<!DOCTYPE` / `<html`, wrapping is skipped.",
+        "height": 280,
+        "width": 420,
+        "color": 5
+      },
+      "id": "9082e780-217a-490f-a66c-d80d9fdaf800",
+      "name": "Note — About this workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "workflowInputs",
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "to",
+              "type": "string"
+            },
+            {
+              "name": "subject",
+              "type": "string"
+            },
+            {
+              "name": "html",
+              "type": "string"
+            },
+            {
+              "name": "attachments",
+              "type": "array"
+            },
+            {
+              "name": "skipBranding",
+              "type": "boolean"
+            },
+            {
+              "name": "workflowName",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "c9dbe382-aecb-4dca-a8e3-d30cdd86771d",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        176,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "function flattenWorkflowInputs(j) {\n  if (!j || typeof j !== 'object' || Array.isArray(j)) return {}\n  const out = { ...j }\n  const wi = out.workflowInputs\n  if (wi && typeof wi === 'object' && !Array.isArray(wi)) {\n    Object.assign(out, wi)\n    delete out.workflowInputs\n  }\n  return out\n}\nreturn $input.all().map((item) => ({ json: flattenWorkflowInputs(item.json || {}) }))"
+      },
+      "id": "f4a1c9e2-8b3d-4f1a-9c2e-7d6b5a403918",
+      "name": "Pass workflow inputs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "e3b8f7a6-5c4d-43e2-8d91-0a1b2c3d4e5f",
+      "name": "Merge trigger and config",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        540,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\r\n * n8n Code node: SW — Send Email via Resend → \"Prepare Email\"\r\n * Input is **Merge trigger and config** output: flat merge of workflow inputs + CONFIG (n8n 2.14+\r\n * task runner: avoid $('…') to other nodes — use $input only).\r\n * Keep hex values in sync with apps/iw-portal/src/lib/email/design-tokens.ts\r\n */\r\nconst EMAIL_KEYS = new Set([\r\n  'to',\r\n  'subject',\r\n  'html',\r\n  'attachments',\r\n  'skipBranding',\r\n  'workflowName',\r\n])\r\n\r\nfunction flattenSubworkflowPayload(obj) {\r\n  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {}\r\n  const out = { ...obj }\r\n  const wi = out.workflowInputs\r\n  if (wi && typeof wi === 'object' && !Array.isArray(wi)) {\r\n    Object.assign(out, wi)\r\n    delete out.workflowInputs\r\n  }\r\n  return out\r\n}\r\n\r\nfunction safeFirstJson(nodeName) {\r\n  try {\r\n    return $(nodeName).first()?.json\r\n  } catch {\r\n    return null\r\n  }\r\n}\r\n\r\n/** CONFIG from merge + email fields (merge can be CONFIG-only; n8n may nest inputs under workflowInputs). */\r\nfunction buildMergedItem() {\r\n  const fromMerge = flattenSubworkflowPayload($input.first()?.json)\r\n  const fromPass = flattenSubworkflowPayload(safeFirstJson('Pass workflow inputs'))\r\n  const fromTrig = flattenSubworkflowPayload(safeFirstJson('Execute Workflow Trigger'))\r\n  const out = { ...fromMerge }\r\n  for (const k of EMAIL_KEYS) {\r\n    const v = fromMerge[k] ?? fromPass[k] ?? fromTrig[k]\r\n    if (v !== undefined) out[k] = v\r\n  }\r\n  return out\r\n}\r\n\r\nconst m = buildMergedItem()\r\n\r\nconst input = {}\r\nconst config = {}\r\nfor (const [k, v] of Object.entries(m)) {\r\n  if (EMAIL_KEYS.has(k)) input[k] = v\r\n  else config[k] = v\r\n}\r\n\r\nif (!input.to) {\r\n  const keys =\r\n    input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input)\r\n  throw new Error(\r\n    'Missing required field \"to\". In the **parent** workflow, open the Execute Sub-workflow node → **Workflow Inputs** and map `to`, `subject`, and `html` (expressions or fixed values). n8n does not pass the previous node\\'s fields automatically. Expected { to, subject, html }. Merged keys: ' +\r\n      Object.keys(m).join(', ') +\r\n      ' (email fields picked: ' +\r\n      keys +\r\n      ')',\r\n  )\r\n}\r\nif (!input.subject) {\r\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.')\r\n}\r\nif (!input.html) {\r\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.')\r\n}\r\nif (!config.owner) {\r\n  throw new Error(\r\n    'Missing CONFIG on merged item (no owner). Ensure Get CONFIG ran and Merge combines trigger + CONFIG outputs.',\r\n  )\r\n}\r\n\r\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`\r\n\r\nconst E = {\r\n  bg: '#f8fafc',\r\n  card: '#ffffff',\r\n  border: '#e2e8f0',\r\n  text: '#0f1419',\r\n  muted: '#475569',\r\n  teal: '#0d9488',\r\n  link: '#0d9488',\r\n}\r\n\r\nfunction escapeHtml(s) {\r\n  return String(s ?? '')\r\n    .replace(/&/g, '&amp;')\r\n    .replace(/</g, '&lt;')\r\n    .replace(/>/g, '&gt;')\r\n    .replace(/\"/g, '&quot;')\r\n}\r\n\r\nfunction wrapEmail(innerHtml) {\r\n  const owner = config.owner || {}\r\n  // Served from apps/iw-site/public/branding/ (deploy iw-site so URLs return 200).\r\n  const DEFAULT_LOGO = 'https://www.intrawebtech.com/IW-logo-q2.png'\r\n  const DEFAULT_LOGO_DARK =\r\n    'https://www.intrawebtech.com/IW-logo-q2.png'\r\n  let logoUrl = String(config.branding?.logoUrl || '').trim()\r\n  if (!logoUrl || (logoUrl.includes('intraweb-logo-black') && !logoUrl.includes('inverted'))) {\r\n    logoUrl = DEFAULT_LOGO\r\n  } else if (\r\n    logoUrl.includes('intrawebtech.com') &&\r\n    logoUrl.includes('/intraweb-logo-light.png') &&\r\n    !logoUrl.includes('/branding/')\r\n  ) {\r\n    logoUrl = DEFAULT_LOGO\r\n  }\r\n  let logoUrlDark = String(config.branding?.logoUrlDark || '').trim()\r\n  if (!logoUrlDark) {\r\n    logoUrlDark = DEFAULT_LOGO_DARK\r\n  }\r\n  const company = escapeHtml(owner.companyName || 'IntraWeb Technologies LLC')\r\n  const supportEmail = String(owner.email || '').trim()\r\n  const calendarLink = String(owner.calendarLink || '').trim()\r\n\r\n  const imgStyle =\r\n    'display:block;max-width:280px;width:100%;height:auto;border:0;margin:0;'\r\n  const tagline = `<p class=\"iw-email-tagline\" style=\"margin:14px 0 0;font-family:Montserrat,Segoe UI,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${E.teal};\">Systems &amp; automation for growing teams</p>`\r\n\r\n  let logoBlock\r\n  if (logoUrl) {\r\n    logoBlock =\r\n      `<div class=\"iw-email-logo\">` +\r\n      `<img class=\"iw-email-logo-light\" src=\"${escapeHtml(logoUrl)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\r\n      `<img class=\"iw-email-logo-dark\" src=\"${escapeHtml(logoUrlDark)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\r\n      `</div>${tagline}`\r\n  } else {\r\n    logoBlock = `<div class=\"iw-email-logo iw-email-wordmark\" style=\"font-family:Montserrat,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${E.text};letter-spacing:-0.02em;\">IntraWeb</div>${tagline}`\r\n  }\r\n\r\n  const footerBits = []\r\n  if (supportEmail) {\r\n    const e = escapeHtml(supportEmail)\r\n    footerBits.push(\r\n      `<a href=\"mailto:${e}\" style=\"color:${E.link};text-decoration:none;\">${e}</a>`,\r\n    )\r\n  }\r\n  if (calendarLink) {\r\n    footerBits.push(\r\n      `<a href=\"${escapeHtml(calendarLink)}\" style=\"color:${E.link};text-decoration:none;\">Schedule time</a>`,\r\n    )\r\n  }\r\n  const footerLine2 = footerBits.length ? `<p style=\"margin:0;\">${footerBits.join(' · ')}</p>` : ''\r\n\r\n  const headStyles = `<style type=\"text/css\">\r\n.iw-email-body table { width:100% !important; max-width:100%; border-collapse:collapse; }\r\n.iw-email-body img { max-width:100%; height:auto; }\r\n.iw-email-logo-light { display:block !important; }\r\n.iw-email-logo-dark { display:none !important; }\r\n@media (prefers-color-scheme: dark) {\r\n  .iw-email-logo-light { display:none !important; }\r\n  .iw-email-logo-dark { display:block !important; }\r\n  .iw-email-tagline { color:#5eead4 !important; }\r\n  .iw-email-wordmark { color:#f8fafc !important; }\r\n}\r\n</style>`\r\n\r\n  return `<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\" />\r\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\r\n<meta name=\"color-scheme\" content=\"light dark\" />\r\n<link href=\"https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap\" rel=\"stylesheet\" />\r\n${headStyles}\r\n</head>\r\n<body style=\"margin:0;padding:0;background:${E.bg};\">\r\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:${E.bg};padding:32px 0;\">\r\n  <tr><td align=\"center\">\r\n  <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:600px;width:100%;background:${E.card};border-radius:12px;border:1px solid ${E.border};overflow:hidden;\" data-iw-email-shell=\"1\">\r\n    <tr><td style=\"padding:0;height:4px;background:${E.teal};font-size:0;line-height:4px;\">&nbsp;</td></tr>\r\n    <tr><td style=\"padding:28px 20px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;\">\r\n      ${logoBlock}\r\n    </td></tr>\r\n    <tr><td style=\"padding:8px 20px 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};\">\r\n      <div class=\"iw-email-body\" style=\"min-height:72px;\">${innerHtml}</div>\r\n    </td></tr>\r\n    <tr><td style=\"padding:20px 20px 28px;border-top:1px solid ${E.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};\">\r\n      <p style=\"margin:0 0 8px;\">${company}</p>\r\n      ${footerLine2}\r\n    </td></tr>\r\n  </table>\r\n  </td></tr>\r\n</table>\r\n</body>\r\n</html>`\r\n}\r\n\r\nconst rawHtml = String(input.html || '').trim()\r\nconst skip =\r\n  input.skipBranding === true ||\r\n  rawHtml.includes('data-iw-email-shell=\"1\"') ||\r\n  /^<(!DOCTYPE|html)\\b/i.test(rawHtml)\r\n\r\nconst finalHtml = skip ? String(input.html) : wrapEmail(String(input.html))\r\n\r\nconst payload = {\r\n  from,\r\n  to: [input.to],\r\n  subject: input.subject,\r\n  html: finalHtml,\r\n}\r\n\r\nif (input.attachments) {\r\n  payload.attachments = input.attachments\r\n}\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      payload,\r\n      workflowName: input.workflowName || 'SW: Send Email via Resend',\r\n      to: input.to,\r\n    },\r\n  },\r\n]\r\n"
+      },
+      "id": "15a1d2ab-3522-4836-9edc-ba822d26f4d3",
+      "name": "Prepare Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "id": "61bc2b6b-a00b-4ccc-906c-4a4f8fa9cd1d",
+      "name": "Send via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        832,
+        224
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5a3lBUTq9SU0ADbQ",
+          "name": "Resend API"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Prepare Email').first().json;\n\nreturn [{\n  json: {\n    workflowName: prep.workflowName,\n    contactName: '',\n    phone: '',\n    eventType: 'email_sent',\n    status: 'success',\n    notes: `Email sent to ${prep.to}`\n  }\n}];"
+      },
+      "id": "1afa681f-864e-4549-9bd4-e62aef44f4d5",
+      "name": "Prepare Log Entry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "1qQFLOSHZsS9JPKP",
+          "mode": "id",
+          "cachedResultName": "SW: Log to Automations Log Sheet"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "02016c3d-ba96-47a7-9c06-a9cd01e184ac",
+      "name": "Log to Sheet",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $('Send via Resend').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    data: { sent: true, emailId: response.id || null, to: $('Prepare Email').first().json.to },\n    error: null\n  }\n}];"
+      },
+      "id": "839042ad-fe8a-4a6b-a15d-4eb59d03c2c1",
+      "name": "Return Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prep = $('Prepare Email').first().json;\n\nreturn [{\n  json: {\n    message: `Email send failed to ${prep.to} — workflow: ${prep.workflowName}`,\n    priority: 'error'\n  }\n}];"
+      },
+      "id": "a38c9dce-359a-4a2e-9269-b465cca32803",
+      "name": "Prepare Error Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PGf6jPoWtxSPlr0h",
+          "mode": "id",
+          "cachedResultName": "SW: Send Google Chat Alert"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "c05259ed-d9a5-4e34-96b6-05fb4be787c0",
+      "name": "Alert on Error",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: false,\n    data: null,\n    error: 'Email send failed'\n  }\n}];"
+      },
+      "id": "7600cc4c-7e4b-4783-bf02-d3c8f771d220",
+      "name": "Return Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "1eTTVoSFSlSPvZV4",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+          "cachedResultName": "CONFIG — Global Settings"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        224
+      ],
+      "id": "95edbf69-3783-463c-bef3-4edc9e5393d2",
+      "name": "Get CONFIG"
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Pass workflow inputs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get CONFIG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email": {
+      "main": [
+        [
+          {
+            "node": "Send via Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send via Resend": {
+      "main": [
+        [
+          {
+            "node": "Prepare Log Entry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Log Entry": {
+      "main": [
+        [
+          {
+            "node": "Log to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Return Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Error Alert": {
+      "main": [
+        [
+          {
+            "node": "Alert on Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert on Error": {
+      "main": [
+        [
+          {
+            "node": "Return Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pass workflow inputs": {
+      "main": [
+        [
+          {
+            "node": "Merge trigger and config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get CONFIG": {
+      "main": [
+        [
+          {
+            "node": "Merge trigger and config",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge trigger and config": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
+  "activeVersionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
+  "versionCounter": 376,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-08T22:44:07.704Z",
+      "createdAt": "2026-03-08T22:44:07.704Z",
+      "role": "workflow:owner",
+      "workflowId": "FF6VOLCcRxI4uNYD",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-22T01:24:13.068Z",
+    "createdAt": "2026-04-22T01:24:13.068Z",
+    "versionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
+    "workflowId": "FF6VOLCcRxI4uNYD",
+    "nodes": [
+      {
+        "parameters": {
+          "content": "## SW: Send Email via Resend\n\n**Subworkflow.** Sends a single transactional email via the Resend API. From address comes from CONFIG; used for outreach, onboarding, invoices, weekly updates, and referrals.\n\n**Input (full payload):** `to` (required), `subject` (required), `html` (required), `attachments` (optional, array of `{ filename, content }` base64), `workflowName` (optional, for logging). **n8n 2.x:** This trigger declares `to`, `subject`, `html`, and optional fields so the parent's **Execute Sub-workflow** node lists them for mapping (data is not inferred from the previous node by default).\n\n**Output:** `{ success, data: { sent, emailId, to }, error }`. Logs to Automations Log and alerts on failure.\n\n**Branding:** `html` should be a **body fragment** (paragraphs, lists, links). **Prepare Email** wraps it in the IntraWeb email shell (logo from `config.branding.logoUrl` in CONFIG — HTTPS image URL; wordmark fallback if empty). Pass `skipBranding: true` to send raw HTML (full documents, rare internal sends). If `html` already contains `data-iw-email-shell=\"1\"` or starts with `<!DOCTYPE` / `<html`, wrapping is skipped.",
+          "height": 280,
+          "width": 420,
+          "color": 5
+        },
+        "id": "9082e780-217a-490f-a66c-d80d9fdaf800",
+        "name": "Note — About this workflow",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1.3,
+        "position": [
+          176,
+          -96
+        ]
+      },
+      {
+        "parameters": {
+          "inputSource": "workflowInputs",
+          "workflowInputs": {
+            "values": [
+              {
+                "name": "to",
+                "type": "string"
+              },
+              {
+                "name": "subject",
+                "type": "string"
+              },
+              {
+                "name": "html",
+                "type": "string"
+              },
+              {
+                "name": "attachments",
+                "type": "array"
+              },
+              {
+                "name": "skipBranding",
+                "type": "boolean"
+              },
+              {
+                "name": "workflowName",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "id": "c9dbe382-aecb-4dca-a8e3-d30cdd86771d",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1.3,
+        "position": [
+          176,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "function flattenWorkflowInputs(j) {\n  if (!j || typeof j !== 'object' || Array.isArray(j)) return {}\n  const out = { ...j }\n  const wi = out.workflowInputs\n  if (wi && typeof wi === 'object' && !Array.isArray(wi)) {\n    Object.assign(out, wi)\n    delete out.workflowInputs\n  }\n  return out\n}\nreturn $input.all().map((item) => ({ json: flattenWorkflowInputs(item.json || {}) }))"
+        },
+        "id": "f4a1c9e2-8b3d-4f1a-9c2e-7d6b5a403918",
+        "name": "Pass workflow inputs",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          360,
+          120
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineByPosition",
+          "options": {}
+        },
+        "id": "e3b8f7a6-5c4d-43e2-8d91-0a1b2c3d4e5f",
+        "name": "Merge trigger and config",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          540,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "/**\r\n * n8n Code node: SW — Send Email via Resend → \"Prepare Email\"\r\n * Input is **Merge trigger and config** output: flat merge of workflow inputs + CONFIG (n8n 2.14+\r\n * task runner: avoid $('…') to other nodes — use $input only).\r\n * Keep hex values in sync with apps/iw-portal/src/lib/email/design-tokens.ts\r\n */\r\nconst EMAIL_KEYS = new Set([\r\n  'to',\r\n  'subject',\r\n  'html',\r\n  'attachments',\r\n  'skipBranding',\r\n  'workflowName',\r\n])\r\n\r\nfunction flattenSubworkflowPayload(obj) {\r\n  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return {}\r\n  const out = { ...obj }\r\n  const wi = out.workflowInputs\r\n  if (wi && typeof wi === 'object' && !Array.isArray(wi)) {\r\n    Object.assign(out, wi)\r\n    delete out.workflowInputs\r\n  }\r\n  return out\r\n}\r\n\r\nfunction safeFirstJson(nodeName) {\r\n  try {\r\n    return $(nodeName).first()?.json\r\n  } catch {\r\n    return null\r\n  }\r\n}\r\n\r\n/** CONFIG from merge + email fields (merge can be CONFIG-only; n8n may nest inputs under workflowInputs). */\r\nfunction buildMergedItem() {\r\n  const fromMerge = flattenSubworkflowPayload($input.first()?.json)\r\n  const fromPass = flattenSubworkflowPayload(safeFirstJson('Pass workflow inputs'))\r\n  const fromTrig = flattenSubworkflowPayload(safeFirstJson('Execute Workflow Trigger'))\r\n  const out = { ...fromMerge }\r\n  for (const k of EMAIL_KEYS) {\r\n    const v = fromMerge[k] ?? fromPass[k] ?? fromTrig[k]\r\n    if (v !== undefined) out[k] = v\r\n  }\r\n  return out\r\n}\r\n\r\nconst m = buildMergedItem()\r\n\r\nconst input = {}\r\nconst config = {}\r\nfor (const [k, v] of Object.entries(m)) {\r\n  if (EMAIL_KEYS.has(k)) input[k] = v\r\n  else config[k] = v\r\n}\r\n\r\nif (!input.to) {\r\n  const keys =\r\n    input && typeof input === 'object' ? Object.keys(input).join(', ') : String(input)\r\n  throw new Error(\r\n    'Missing required field \"to\". In the **parent** workflow, open the Execute Sub-workflow node → **Workflow Inputs** and map `to`, `subject`, and `html` (expressions or fixed values). n8n does not pass the previous node\\'s fields automatically. Expected { to, subject, html }. Merged keys: ' +\r\n      Object.keys(m).join(', ') +\r\n      ' (email fields picked: ' +\r\n      keys +\r\n      ')',\r\n  )\r\n}\r\nif (!input.subject) {\r\n  throw new Error('Missing required field \"subject\". The calling workflow must pass { to, subject, html }.')\r\n}\r\nif (!input.html) {\r\n  throw new Error('Missing required field \"html\". The calling workflow must pass { to, subject, html }.')\r\n}\r\nif (!config.owner) {\r\n  throw new Error(\r\n    'Missing CONFIG on merged item (no owner). Ensure Get CONFIG ran and Merge combines trigger + CONFIG outputs.',\r\n  )\r\n}\r\n\r\nconst from = `${config.owner.fromName} <${config.owner.fromEmail}>`\r\n\r\nconst E = {\r\n  bg: '#f8fafc',\r\n  card: '#ffffff',\r\n  border: '#e2e8f0',\r\n  text: '#0f1419',\r\n  muted: '#475569',\r\n  teal: '#0d9488',\r\n  link: '#0d9488',\r\n}\r\n\r\nfunction escapeHtml(s) {\r\n  return String(s ?? '')\r\n    .replace(/&/g, '&amp;')\r\n    .replace(/</g, '&lt;')\r\n    .replace(/>/g, '&gt;')\r\n    .replace(/\"/g, '&quot;')\r\n}\r\n\r\nfunction wrapEmail(innerHtml) {\r\n  const owner = config.owner || {}\r\n  // Served from apps/iw-site/public/branding/ (deploy iw-site so URLs return 200).\r\n  const DEFAULT_LOGO = 'https://www.intrawebtech.com/IW-logo-q2.png'\r\n  const DEFAULT_LOGO_DARK =\r\n    'https://www.intrawebtech.com/IW-logo-q2.png'\r\n  let logoUrl = String(config.branding?.logoUrl || '').trim()\r\n  if (!logoUrl || (logoUrl.includes('intraweb-logo-black') && !logoUrl.includes('inverted'))) {\r\n    logoUrl = DEFAULT_LOGO\r\n  } else if (\r\n    logoUrl.includes('intrawebtech.com') &&\r\n    logoUrl.includes('/intraweb-logo-light.png') &&\r\n    !logoUrl.includes('/branding/')\r\n  ) {\r\n    logoUrl = DEFAULT_LOGO\r\n  }\r\n  let logoUrlDark = String(config.branding?.logoUrlDark || '').trim()\r\n  if (!logoUrlDark) {\r\n    logoUrlDark = DEFAULT_LOGO_DARK\r\n  }\r\n  const company = escapeHtml(owner.companyName || 'IntraWeb Technologies LLC')\r\n  const supportEmail = String(owner.email || '').trim()\r\n  const calendarLink = String(owner.calendarLink || '').trim()\r\n\r\n  const imgStyle =\r\n    'display:block;max-width:280px;width:100%;height:auto;border:0;margin:0;'\r\n  const tagline = `<p class=\"iw-email-tagline\" style=\"margin:14px 0 0;font-family:Montserrat,Segoe UI,Helvetica,Arial,sans-serif;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:${E.teal};\">Systems &amp; automation for growing teams</p>`\r\n\r\n  let logoBlock\r\n  if (logoUrl) {\r\n    logoBlock =\r\n      `<div class=\"iw-email-logo\">` +\r\n      `<img class=\"iw-email-logo-light\" src=\"${escapeHtml(logoUrl)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\r\n      `<img class=\"iw-email-logo-dark\" src=\"${escapeHtml(logoUrlDark)}\" width=\"280\" alt=\"${company}\" style=\"${imgStyle}\" />` +\r\n      `</div>${tagline}`\r\n  } else {\r\n    logoBlock = `<div class=\"iw-email-logo iw-email-wordmark\" style=\"font-family:Montserrat,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:${E.text};letter-spacing:-0.02em;\">IntraWeb</div>${tagline}`\r\n  }\r\n\r\n  const footerBits = []\r\n  if (supportEmail) {\r\n    const e = escapeHtml(supportEmail)\r\n    footerBits.push(\r\n      `<a href=\"mailto:${e}\" style=\"color:${E.link};text-decoration:none;\">${e}</a>`,\r\n    )\r\n  }\r\n  if (calendarLink) {\r\n    footerBits.push(\r\n      `<a href=\"${escapeHtml(calendarLink)}\" style=\"color:${E.link};text-decoration:none;\">Schedule time</a>`,\r\n    )\r\n  }\r\n  const footerLine2 = footerBits.length ? `<p style=\"margin:0;\">${footerBits.join(' · ')}</p>` : ''\r\n\r\n  const headStyles = `<style type=\"text/css\">\r\n.iw-email-body table { width:100% !important; max-width:100%; border-collapse:collapse; }\r\n.iw-email-body img { max-width:100%; height:auto; }\r\n.iw-email-logo-light { display:block !important; }\r\n.iw-email-logo-dark { display:none !important; }\r\n@media (prefers-color-scheme: dark) {\r\n  .iw-email-logo-light { display:none !important; }\r\n  .iw-email-logo-dark { display:block !important; }\r\n  .iw-email-tagline { color:#5eead4 !important; }\r\n  .iw-email-wordmark { color:#f8fafc !important; }\r\n}\r\n</style>`\r\n\r\n  return `<!DOCTYPE html>\r\n<html lang=\"en\">\r\n<head>\r\n<meta charset=\"utf-8\" />\r\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\r\n<meta name=\"color-scheme\" content=\"light dark\" />\r\n<link href=\"https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap\" rel=\"stylesheet\" />\r\n${headStyles}\r\n</head>\r\n<body style=\"margin:0;padding:0;background:${E.bg};\">\r\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:${E.bg};padding:32px 0;\">\r\n  <tr><td align=\"center\">\r\n  <table role=\"presentation\" width=\"600\" cellspacing=\"0\" cellpadding=\"0\" style=\"max-width:600px;width:100%;background:${E.card};border-radius:12px;border:1px solid ${E.border};overflow:hidden;\" data-iw-email-shell=\"1\">\r\n    <tr><td style=\"padding:0;height:4px;background:${E.teal};font-size:0;line-height:4px;\">&nbsp;</td></tr>\r\n    <tr><td style=\"padding:28px 20px 12px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;\">\r\n      ${logoBlock}\r\n    </td></tr>\r\n    <tr><td style=\"padding:8px 20px 40px;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.65;color:${E.text};\">\r\n      <div class=\"iw-email-body\" style=\"min-height:72px;\">${innerHtml}</div>\r\n    </td></tr>\r\n    <tr><td style=\"padding:20px 20px 28px;border-top:1px solid ${E.border};background:#fafbfc;font-family:Roboto,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;line-height:1.55;color:${E.muted};\">\r\n      <p style=\"margin:0 0 8px;\">${company}</p>\r\n      ${footerLine2}\r\n    </td></tr>\r\n  </table>\r\n  </td></tr>\r\n</table>\r\n</body>\r\n</html>`\r\n}\r\n\r\nconst rawHtml = String(input.html || '').trim()\r\nconst skip =\r\n  input.skipBranding === true ||\r\n  rawHtml.includes('data-iw-email-shell=\"1\"') ||\r\n  /^<(!DOCTYPE|html)\\b/i.test(rawHtml)\r\n\r\nconst finalHtml = skip ? String(input.html) : wrapEmail(String(input.html))\r\n\r\nconst payload = {\r\n  from,\r\n  to: [input.to],\r\n  subject: input.subject,\r\n  html: finalHtml,\r\n}\r\n\r\nif (input.attachments) {\r\n  payload.attachments = input.attachments\r\n}\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      payload,\r\n      workflowName: input.workflowName || 'SW: Send Email via Resend',\r\n      to: input.to,\r\n    },\r\n  },\r\n]\r\n"
+        },
+        "id": "15a1d2ab-3522-4836-9edc-ba822d26f4d3",
+        "name": "Prepare Email",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          624,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.resend.com/emails",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.payload) }}",
+          "options": {}
+        },
+        "id": "61bc2b6b-a00b-4ccc-906c-4a4f8fa9cd1d",
+        "name": "Send via Resend",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4,
+        "position": [
+          832,
+          224
+        ],
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "5a3lBUTq9SU0ADbQ",
+            "name": "Resend API"
+          }
+        },
+        "onError": "continueErrorOutput"
+      },
+      {
+        "parameters": {
+          "jsCode": "const prep = $('Prepare Email').first().json;\n\nreturn [{\n  json: {\n    workflowName: prep.workflowName,\n    contactName: '',\n    phone: '',\n    eventType: 'email_sent',\n    status: 'success',\n    notes: `Email sent to ${prep.to}`\n  }\n}];"
+        },
+        "id": "1afa681f-864e-4549-9bd4-e62aef44f4d5",
+        "name": "Prepare Log Entry",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1056,
+          176
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "1qQFLOSHZsS9JPKP",
+            "mode": "id",
+            "cachedResultName": "SW: Log to Automations Log Sheet"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "02016c3d-ba96-47a7-9c06-a9cd01e184ac",
+        "name": "Log to Sheet",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          1280,
+          176
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const response = $('Send via Resend').first().json;\n\nreturn [{\n  json: {\n    success: true,\n    data: { sent: true, emailId: response.id || null, to: $('Prepare Email').first().json.to },\n    error: null\n  }\n}];"
+        },
+        "id": "839042ad-fe8a-4a6b-a15d-4eb59d03c2c1",
+        "name": "Return Success",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1504,
+          176
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const prep = $('Prepare Email').first().json;\n\nreturn [{\n  json: {\n    message: `Email send failed to ${prep.to} — workflow: ${prep.workflowName}`,\n    priority: 'error'\n  }\n}];"
+        },
+        "id": "a38c9dce-359a-4a2e-9269-b465cca32803",
+        "name": "Prepare Error Alert",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1056,
+          384
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "PGf6jPoWtxSPlr0h",
+            "mode": "id",
+            "cachedResultName": "SW: Send Google Chat Alert"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "c05259ed-d9a5-4e34-96b6-05fb4be787c0",
+        "name": "Alert on Error",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          1280,
+          384
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    success: false,\n    data: null,\n    error: 'Email send failed'\n  }\n}];"
+        },
+        "id": "7600cc4c-7e4b-4783-bf02-d3c8f771d220",
+        "name": "Return Error",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1504,
+          384
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "1eTTVoSFSlSPvZV4",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+            "cachedResultName": "CONFIG — Global Settings"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          400,
+          224
+        ],
+        "id": "95edbf69-3783-463c-bef3-4edc9e5393d2",
+        "name": "Get CONFIG"
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Pass workflow inputs",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get CONFIG",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Email": {
+        "main": [
+          [
+            {
+              "node": "Send via Resend",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send via Resend": {
+        "main": [
+          [
+            {
+              "node": "Prepare Log Entry",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Prepare Error Alert",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Log Entry": {
+        "main": [
+          [
+            {
+              "node": "Log to Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Log to Sheet": {
+        "main": [
+          [
+            {
+              "node": "Return Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Error Alert": {
+        "main": [
+          [
+            {
+              "node": "Alert on Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Alert on Error": {
+        "main": [
+          [
+            {
+              "node": "Return Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Pass workflow inputs": {
+        "main": [
+          [
+            {
+              "node": "Merge trigger and config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get CONFIG": {
+        "main": [
+          [
+            {
+              "node": "Merge trigger and config",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Merge trigger and config": {
+        "main": [
+          [
+            {
+              "node": "Prepare Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "John Schibelli",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-22T01:24:13.134Z",
+        "id": 3125,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-22T01:24:13.118Z",
+        "id": 3124,
+        "workflowId": "FF6VOLCcRxI4uNYD",
+        "versionId": "9022b063-a764-4635-b537-3e7b5a70a25b",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
+  }
+}

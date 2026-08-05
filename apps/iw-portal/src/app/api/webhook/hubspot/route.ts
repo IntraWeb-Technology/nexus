@@ -1,7 +1,16 @@
+import { hubspotDealPortalPlanPropertyName } from '@/lib/hubspot/portal-plan-slug'
+import { syncPortalPlanSlugFromHubSpotDeal } from '@/lib/hubspot/sync-portal-plan-slug'
 import { mapDealStageToPortal } from '@/lib/hubspot/stageMap'
+import {
+  mergeHubSpotWebhookIntoCrmMirror,
+  mergeNormalizedHubSpotPayloadIntoCrmMirror,
+} from '@/lib/integrations/hubspot-crm-mirror'
+import { recordIntegrationEvent } from '@/lib/integrations/events'
 import { createServiceSupabase } from '@/lib/supabase/server'
 import { validateIntrawebSecret } from '@/lib/webhooks/secret'
 import { NextResponse } from 'next/server'
+
+export const maxDuration = 60
 
 type HubSpotEvent = {
   eventId?: number
@@ -23,12 +32,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
+  await recordIntegrationEvent({
+    provider: 'hubspot',
+    eventType: Array.isArray(raw) ? 'batch' : String((raw as { action?: unknown })?.action ?? 'normalized'),
+    status: 'received',
+    payload: raw,
+  })
+
   try {
     const supabase = createServiceSupabase()
 
     if (raw && typeof raw === 'object' && !Array.isArray(raw) && 'action' in raw) {
       const o = raw as Record<string, unknown>
       const action = String(o.action ?? '')
+      await mergeNormalizedHubSpotPayloadIntoCrmMirror(supabase, o)
+
       if (action === 'deal_property_change' || action === 'hubspot_deal_stage') {
         const objectId = o.objectId ?? o.dealId
         const propertyValue = o.propertyValue ?? o.stage ?? o.dealstage
@@ -42,6 +60,17 @@ export async function POST(request: Request) {
           })
         }
       }
+
+      const planProp = hubspotDealPortalPlanPropertyName()
+      if (
+        typeof o.propertyName === 'string' &&
+        o.propertyName.toLowerCase() === planProp.toLowerCase()
+      ) {
+        const dealId = o.dealId ?? o.objectId
+        if (dealId != null) {
+          await syncPortalPlanSlugFromHubSpotDeal(supabase, String(dealId), o.propertyValue as string | undefined)
+        }
+      }
       return NextResponse.json({ ok: true })
     }
 
@@ -51,6 +80,15 @@ export async function POST(request: Request) {
     }
 
     for (const ev of events) {
+      const evRecord = ev as unknown as Record<string, unknown>
+      await mergeHubSpotWebhookIntoCrmMirror(supabase, {
+        subscriptionType: ev.subscriptionType,
+        objectId: ev.objectId,
+        propertyName: ev.propertyName,
+        propertyValue: ev.propertyValue,
+        raw: evRecord,
+      })
+
       if (ev.subscriptionType === 'contact.creation') {
         console.log('[hubspot] contact.creation', ev)
         continue
@@ -58,10 +96,27 @@ export async function POST(request: Request) {
       if (ev.subscriptionType === 'deal.propertyChange' && ev.propertyName === 'dealstage') {
         await handleDealStageChange(supabase, ev)
       }
+
+      const planProp = hubspotDealPortalPlanPropertyName()
+      if (
+        ev.subscriptionType === 'deal.propertyChange' &&
+        typeof ev.propertyName === 'string' &&
+        ev.propertyName.toLowerCase() === planProp.toLowerCase() &&
+        ev.objectId != null
+      ) {
+        await syncPortalPlanSlugFromHubSpotDeal(supabase, String(ev.objectId), ev.propertyValue)
+      }
     }
 
     return NextResponse.json({ ok: true })
   } catch (e) {
+    await recordIntegrationEvent({
+      provider: 'hubspot',
+      eventType: Array.isArray(raw) ? 'batch' : String((raw as { action?: unknown })?.action ?? 'normalized'),
+      status: 'failed',
+      payload: raw,
+      lastError: e instanceof Error ? e.message : 'HubSpot webhook failed',
+    })
     console.error('[webhook/hubspot]', e)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

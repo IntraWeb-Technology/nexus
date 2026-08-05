@@ -17,6 +17,11 @@ The app POSTs JSON to paths under `N8N_BASE_URL` with optional headers:
 
 - `x-intrawebtech-secret: <WEBHOOK_SECRET>` (omitted if `WEBHOOK_SECRET` is unset — not recommended in production)
 
+Delivery semantics:
+
+- `portal-login`, `portal-invoice-paid`, and `portal-stripe-catalog-payment` are dispatched as critical events (server awaits response with timeout + one retry).
+- Other outbound webhook calls remain best-effort fire-and-forget.
+
 Implemented webhooks (see `src/lib/n8n/client.ts`):
 
 | Path | Trigger |
@@ -178,7 +183,59 @@ After a successful call, the client sees the new **status** badge on **Change or
 - `Content-Type: application/json`
 - `x-intrawebtech-secret: <WEBHOOK_SECRET>` — required; validated by `validateIntrawebSecret` in `src/lib/webhooks/secret.ts`
 
-**Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `add_invoice`, `update_milestone`, `update_change_order`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
+**Body:** JSON matching `N8nInboundPayload` in `src/lib/n8n/webhooks.ts`. Actions include `provision_client`, `link_portal_clerk_user`, `add_invoice`, `attach_project_document`, `update_milestone`, `update_change_order`, `log_activity`, and others handled in `src/app/api/webhook/n8n/route.ts`.
+
+### Proposal / contract PDF: `attach_project_document` (portal-first storage)
+
+Deliver generated PDFs to **Supabase Storage** (`client-uploads`), register a **`documents`** row, and link **`os_contracts_queue`** (`pdf_storage_path`, `proposal_document_id`) so clients open the file via **`/api/documents/download`** or **`/api/os-queue/pdf`** instead of relying on Google Drive.
+
+**Rollout:** Keep populating **`drive_link`** from n8n (Google Drive) until you verify Storage end-to-end; the client **Proposal review** card prefers portal PDF when present and falls back to Drive.
+
+**n8n environment**
+
+| Variable | Purpose |
+|----------|---------|
+| `PORTAL_WEBHOOK_URL` | Full URL to `POST /api/webhook/n8n`, e.g. `https://<portal-host>/api/webhook/n8n` (no trailing slash required; nodes may trim it). |
+| `WEBHOOK_SECRET` | Same value as portal `WEBHOOK_SECRET`; sent as header **`x-intrawebtech-secret`**. |
+
+**Contract**
+
+- Top-level **`hubspot_deal_id`** or **`project_slug`** resolves the portal project (same as `add_invoice`).
+- **`data.hubspot_deal_id`** must match **`projects.hubspot_deal_id`** for that project.
+- Supply **`data.base64`** (PDF) **or** **`data.storage_path`** (existing object under `client-uploads` scoped to the project).
+- **`data.queue_type`:** `proposal` | `contract`
+- **`data.name`:** filename ending in `.pdf`
+- Optional **`data.drive_link`:** preserved on **insert** when no queue row exists yet; when the queue row already exists (typical: **SYS 03** runs Postgres upsert first), Drive remains whatever the SQL step wrote.
+
+**Example (HubSpot deal id)**
+
+```json
+{
+  "action": "attach_project_document",
+  "hubspot_deal_id": "320346410735",
+  "data": {
+    "queue_type": "proposal",
+    "hubspot_deal_id": "320346410735",
+    "name": "Proposal-acme.pdf",
+    "base64": "<base64 or data URL>",
+    "drive_link": "https://drive.google.com/file/d/....../view",
+    "client_name": "Jane Doe",
+    "company": "Acme",
+    "tier": "growth",
+    "deal_value": "13125",
+    "contact_email": "jane@example.com"
+  }
+}
+```
+
+**Checked-in workflow:** [`packages/n8n-workflows/03_sales/SYS 03 — Proposal and Contract Delivery.json`](../../../packages/n8n-workflows/03_sales/SYS%2003%20%E2%80%94%20Proposal%20and%20Contract%20Delivery.json) chains **`Ensure PDF Item`** → **`Extract PDF Base64`** → **`Upload to Drive`** (serialized so base64 exists before Drive + Postgres), then **`Add to Proposals Queue`** → **`Build Portal Attach Payload`** → **`POST Portal attach PDF`** → **`Prep Alert`**. Set **`PORTAL_WEBHOOK_URL`** (must include `/api/webhook/n8n`) and **`WEBHOOK_SECRET`** on the n8n host before activating.
+
+**If the portal still only shows Google Drive:** In Supabase, open **`os_contracts_queue`** for that deal — **`pdf_storage_path`** / **`proposal_document_id`** should be non-null after a successful run. If they are null, check the n8n execution for **`POST Portal attach PDF`** (`401` = wrong secret, **`404` project not found** = `projects.hubspot_deal_id` missing or mismatched, **`400`** = body validation). Re-import the workflow JSON after pulling so these nodes match production.
+
+### Webhook auth model by route
+
+- Shared secret (`x-intrawebtech-secret`): `/api/webhook/n8n`, `/api/webhook/hubspot`, internal OS automation routes.
+- Provider signature verification: `/api/webhook/stripe` (Stripe signature), `/api/webhook/clerk` (Svix headers + Clerk secret).
 
 ### Example: HubSpot → `provision_client`
 
@@ -195,16 +252,76 @@ After a deal is qualified in HubSpot, an n8n workflow can create the portal clie
     "hubspot_contact_id": "12345",
     "hubspot_deal_id": "67890",
     "plan": "growth",
-    "start_date": "2026-04-01"
+    "start_date": "2026-04-01",
+    "engagement_phase": "qualified",
+    "seed_template_invoices": false
   }
 }
 ```
 
 Use your real `project_slug` pattern and IDs from HubSpot properties.
 
+**`data.seed_template_invoices`:** when **`false`**, the portal does **not** insert `invoicesForPlan` rows (static list prices). Create payable rows with **`add_invoice`**, with `amount_cents` derived from the HubSpot deal/line items (after discounts). When **omitted** or **`true`**, the legacy template invoice seeds are still inserted (same as before this flag existed).
+
+Optional **`data.engagement_phase`:** `"qualified"`** selects the **pre-contract** milestone template (shorter “qualification” track). Any other value or omission uses the standard delivery milestones for `data.plan`.
+
+### Qualified to buy (SYS 00 → n8n → portal + Clerk)
+
+When HubSpot sends a **`deal.propertyChange`** for **`dealstage`** into **`SYS 00 — HubSpot Events Router`**, the router treats **Qualified to buy** as a dedicated branch when the new stage is:
+
+- HubSpot’s built-in token **`qualifiedtobuy`**, and/or
+- listed in CONFIG **`hubspot.dealStageIds.qualifiedToBuy`** (comma-separated internal IDs), and/or
+- listed in CONFIG **`hubspot.dealStageIds.leadQualified`** (unioned with the above for pipelines that map “qualified” to that custom stage).
+
+SYS 00 then forwards to **`POST {n8nBaseUrl}/webhook/hubspot-deal-qualified-portal`** with the same **`{ id, properties }`** deal payload used for other deal webhooks.
+
+### Marketing intake vs Qualified (stage gating)
+
+- **`iw-site`** posts **`SYS 01`** payloads with an **early** deal stage (default HubSpot builtin **`appointmentscheduled`**, overridable with **`N8N_CONTACT_DEAL_STAGE`**). That keeps **Qualified to buy** as the explicit gate for this `provision_client` path.
+- Align **CONFIG — Global Settings** in n8n: **`hubspot.dealStageIds.discoveryCallRequested`** for first-touch deals created inside n8n, and **`hubspot.dealStageIds.qualifiedToBuy` / `leadQualified`** so SYS 00’s union matches your live pipeline ids. See repo **[`packages/n8n-workflows/STAGES.md`](../../../packages/n8n-workflows/STAGES.md)**.
+
+**Checked-in workflow (import in n8n):** [`packages/n8n-workflows/03_sales/SYS 03 — Qualified to Buy → Portal + Clerk.json`](../../../packages/n8n-workflows/03_sales/SYS%2003%20%E2%80%94%20Qualified%20to%20Buy%20%E2%86%92%20Portal%20+%20Clerk.json). After import, attach **HubSpot** credentials on **Fetch Deal From HubSpot** (or swap the node to your private-app pattern), activate the workflow, and set n8n **environment** variables **`WEBHOOK_SECRET`**, **`CLERK_SECRET_KEY`**, **`PORTAL_WEBHOOK_URL`** (unless CONFIG **`owner.portalN8nWebhookUrl`** is populated), and **`PORTAL_SIGNUP_REDIRECT_URL`** (unless CONFIG **`owner.portalSignUpUrl`** is populated). The flow calls **`provision_client`** with **`engagement_phase: "qualified"`** so the portal seeds pre-contract milestones (`src/lib/milestones-templates.ts`).
+
+**Clerk checklist:** invitations use **`POST https://api.clerk.com/v1/invitations`** with the **same email** as `provision_client`. The workflow **lists users by email** first and skips creating an invitation if a user already exists; if the portal returns **`idempotent: true`** for the deal, it skips Clerk as well.
+
+**Invoices:** checked-in **SYS 03** sends **`seed_template_invoices: false`**, then POSTs **`add_invoice`** in the “After portal response” Code node using the deal’s HubSpot **`amount`** (full discounted deal value in one pending row). Split deposits/balance with **additional** `add_invoice` calls in n8n (or replace that step) using line-item math from HubSpot. For legacy list-price template seeds, set **`seed_template_invoices: true`** or omit the field.
+
+**Idempotency (deal continuity)** — If `data.hubspot_deal_id` is already stored on a `projects` row, the portal responds with `200` and `{ client_id, project_id, idempotent: true }` instead of inserting again. HubSpot/n8n retries therefore keep a single Supabase client + project tied to that deal.
+
+### Continuity: Supabase ↔ HubSpot ↔ Clerk
+
+Typical chain:
+
+1. **HubSpot** (deal stage, workflow, or n8n HubSpot trigger) fires when a client is ready for the portal.
+2. **n8n** calls `POST /api/webhook/n8n` with **`provision_client`**. That inserts `clients` (with `hubspot_contact_id`) and `projects` (with `hubspot_deal_id`). If `clerk_user_id` is omitted, the app stores a placeholder: `provision:hs:<hubspot_contact_id>`.
+3. **Clerk** — You send an invite to the **same email** as in step 2. When the user is created, the portal’s **`user.created` Clerk webhook** tries **`link_portal_clerk_user` logic by email**: if a placeholder client row matches that email, `clerk_user_id` is replaced with the real `user_…` id. No duplicate client row is needed.
+4. If the invite email differs from HubSpot (aliases, Google vs work), the automatic link may not run. Then **n8n** should call **`link_portal_clerk_user`** once you know the Clerk user id (Clerk API “list users” / search by email).
+
+**`link_portal_clerk_user` (n8n → portal)** — `POST /api/webhook/n8n` with the same `x-intrawebtech-secret` header. No `project_slug` on the envelope.
+
+```json
+{
+  "action": "link_portal_clerk_user",
+  "data": {
+    "clerk_user_id": "user_2abc…",
+    "hubspot_contact_id": "12345"
+  }
+}
+```
+
+Either `hubspot_contact_id` or `email` (matching the provisioned `clients.email`) is required together with `clerk_user_id`. Responses: `200` + `{ ok: true, result: "linked" | "noop_already" }`, `404` if no placeholder row matched, `409` on update conflict.
+
+**HubSpot-backed UI** — After `hubspot_deal_id` and `hubspot_contact_id` are set, configure **`HUBSPOT_PRIVATE_APP_TOKEN`** on the portal host so billing/activity/deal widgets can read CRM data (see `src/lib/hubspot/config.ts`).
+
+**Future (optional CRM cache)** — If the dashboard must show a large, stable snapshot of HubSpot contact fields without a round-trip on every request, add a narrow sync (HubSpot workflow or n8n on `contact.propertyChange`) that POSTs a small JSON blob into Supabase keyed by `hubspot_contact_id`. Today the portal reads CRM slices on demand via the HubSpot API using ids stored on `clients` / `projects`.
+
+**Reference workflow (import in n8n)** — Skeleton: [`docs/n8n-workflows/portal-hubspot-deal-provision.workflow.ts`](n8n-workflows/portal-hubspot-deal-provision.workflow.ts). Set `PORTAL_WEBHOOK_URL` on the n8n host to your portal’s `/api/webhook/n8n` URL (or edit the Code node default).
+
 ### HubSpot → n8n → `add_invoice` (portal billing)
 
-Billing reads **Supabase** only. When you create or update an invoice in HubSpot, n8n should POST to the portal so a row appears under **Billing**.
+**On-demand sync (no n8n required):** When a signed-in user opens **Billing** or the **Dashboard**, the portal loads HubSpot CRM invoices via the API, **upserts** matching rows into Supabase (service role) with `hubspot_invoice_id` set, then reads `invoices` with the user client so Stripe and reconciliation use the same rows even if n8n did not fire.
+
+**n8n (optional, earlier sync):** When you create or update an invoice in HubSpot, a workflow can still POST to the portal so a row exists **before** the client next loads the app.
 
 **Prerequisites**
 
@@ -229,12 +346,61 @@ Billing reads **Supabase** only. When you create or update an invoice in HubSpot
     "description": "Website build — deposit",
     "amount_cents": 1500000,
     "status": "pending",
-    "due_date": "2026-05-01"
+    "due_date": "2026-05-01",
+    "hubspot_invoice_id": "98765432109",
+    "currency": "usd"
   }
 }
 ```
 
 `amount_cents` is an integer (e.g. `$1,500.00` → `150000`). `status` is one of: `paid`, `pending`, `overdue`, `void`.
+
+Optional fields on `data` (supported by [`applyAddInvoice`](../src/lib/n8n/apply-add-invoice.ts)):
+
+| Field | Type | Purpose |
+|--------|------|---------|
+| `currency` | string | Three-letter code (stored lowercase), e.g. `usd`. |
+| `paid_at` | ISO 8601 string | When the invoice was paid outside Stripe (HubSpot). Only written when `status` is `paid` and the value parses as a date. Example pair: `"status": "paid", "paid_at": "2026-04-20T15:00:00.000Z"`. |
+
+**`hubspot_invoice_id` (optional):** HubSpot CRM `invoices` object id. When n8n sends the **same** id on a later sync, the portal **updates** the existing Supabase row (amount, number, status, description, `project_id`) instead of inserting again. This keeps **Supabase as the billing source of truth** while **deduplicating** the merged client view: rows with a matching `hubspot_invoice_id` are not double-listed with HubSpot-fetched invoices in `mergeBillingRows`. **Omit** for portal-only invoices with no HubSpot invoice record.
+
+**Always send `hubspot_invoice_id` when the row comes from HubSpot CRM** so n8n retries and status changes update the same Supabase row instead of inserting duplicates (until the next Billing page CRM sync dedupes).
+
+### HubSpot CRM invoice → `data` field matrix
+
+Use this when building the JSON in a HubSpot workflow, n8n **Set** node, or Code node before calling the portal. Property names follow HubSpot CRM invoices (see [`mapInvoiceObject`](../src/lib/hubspot/invoices.ts) for how the portal reads the same object from the API).
+
+| HubSpot property (typical) | `add_invoice` `data` field | Supabase column | Notes |
+|-----------------------------|----------------------------|-------------------|--------|
+| Object `id` | `hubspot_invoice_id` | `hubspot_invoice_id` | **Strongly recommended** for upserts. |
+| `hs_invoice_number` or `hs_number` | `invoice_number` | `invoice_number` | |
+| `hs_title`, `hs_comments` (or your composed line-item text) | `description` | `description` | Shown in billing table, invoice detail, PDF. |
+| Balance / total (you choose rule; see portal `pickAmountCents`) | `amount_cents` | `amount_cents` | Integer cents. |
+| `hs_invoice_status` (mapped) | `status` | `status` | Map HubSpot to portal: `paid` → `paid`, `voided` → `void`, `open` / `draft` → `pending`, else `pending` or `overdue` if past due. |
+| `hs_due_date` | `due_date` | `due_date` | `YYYY-MM-DD` preferred. |
+| `hs_currency` | `currency` | `currency` | Optional. |
+| Payment / close date | `paid_at` | `paid_at` | Optional; use when `status` is `paid` and Stripe did not set it. |
+| Deal association | Top-level `hubspot_deal_id` on the request (not inside `data`) | `project_id` (resolved) | Must match `projects.hubspot_deal_id`. |
+
+### SYS 03 workflow: `portal-add-invoice` (repo export)
+
+The synced workflow [`packages/n8n-workflows/_synced-from-n8n/SYS 03 — Portal — HubSpot invoice → add_invoice __ isYyC3wLTBiGPhJS.json`](../../packages/n8n-workflows/_synced-from-n8n/SYS%2003%20%E2%80%94%20Portal%20%E2%80%94%20HubSpot%20invoice%20%E2%86%92%20add_invoice%20__%20isYyC3wLTBiGPhJS.json) exposes webhook path **`portal-add-invoice`**. Its **Build add_invoice payload** Code node normalizes inbound JSON for operators:
+
+- Copies **`hubspot_invoice_id`** from `hubspot_invoice_id`, `hs_invoice_id`, or `invoice_id`.
+- **`due_date`**: accepts `due_date` or `hs_due_date`, normalizes ISO timestamps to `YYYY-MM-DD`.
+- **`description`**: uses `description`, else `hs_title`, `hs_comments`, `name`, `subject`, else the literal `Invoice`.
+- Forwards optional **`currency`** and **`paid_at`** into `data` when present.
+
+Point your **upstream** HubSpot automation at this n8n webhook URL (or chain HubSpot → n8n Set fields → this workflow) so the POST body includes at least `hubspot_deal_id` **or** `project_slug`, plus invoice fields aligned with the table above.
+
+### Upstream mapping checklist (HubSpot → n8n → portal)
+
+1. **Deal** — Include `hubspot_deal_id` (string) on the webhook payload unless you use `project_slug` instead.
+2. **Invoice id** — Include the HubSpot CRM invoice object id as `hubspot_invoice_id` (or alias `hs_invoice_id` / `invoice_id` for SYS 03).
+3. **Amount** — Compute `amount_cents` as integer cents (never floats).
+4. **Status** — Map HubSpot `hs_invoice_status` to one of `paid`, `pending`, `overdue`, `void`.
+5. **Description** — Prefer a human-readable string (title + line items); avoid empty strings so the portal billing UI is not blank.
+6. **Paid HubSpot invoices** — Set `status: "paid"` and optional `paid_at` ISO so Supabase matches reality when Stripe is not in the loop.
 
 **Example body (by portal slug)**
 
@@ -269,7 +435,7 @@ Billing reads **Supabase** only. When you create or update an invoice in HubSpot
      - `x-intrawebtech-secret: {{ $env.WEBHOOK_SECRET }}` (or n8n credential)  
    - **Body:** JSON from step 2.
 
-4. **Idempotency** — If HubSpot retries, you may create duplicate portal invoices. Optionally branch on HubSpot invoice ID in n8n (store last-synced IDs) or add app logic later.
+4. **Idempotency** — Send `hubspot_invoice_id` on every sync so [`applyAddInvoice`](../src/lib/n8n/apply-add-invoice.ts) updates the same row. Without it, HubSpot retries can insert duplicate Supabase rows until the next CRM merge on the Billing page.
 
 **Quick test (curl)**
 
@@ -277,10 +443,10 @@ Billing reads **Supabase** only. When you create or update an invoice in HubSpot
 curl -sS -X POST "https://<your-portal-host>/api/webhook/n8n" \
   -H "Content-Type: application/json" \
   -H "x-intrawebtech-secret: <WEBHOOK_SECRET>" \
-  -d '{"action":"add_invoice","hubspot_deal_id":"<DEAL_ID>","data":{"invoice_number":"TEST-1","description":"Test","amount_cents":5000,"status":"pending"}}'
+  -d '{"action":"add_invoice","hubspot_deal_id":"<DEAL_ID>","data":{"invoice_number":"TEST-1","description":"Test","amount_cents":5000,"status":"pending","hubspot_invoice_id":"<HS_INVOICE_OBJECT_ID>"}}'
 ```
 
-Expect `{"ok":true}`. The client should see the invoice on `/billing` after refresh.
+Expect `{"ok":true,"result":"inserted"}` or `{"ok":true,"result":"updated"}` when the same `hubspot_invoice_id` is sent again. The client should see the invoice on `/billing` after refresh.
 
 ### Example: post-payment branch (Stripe)
 
@@ -297,7 +463,16 @@ The portal updates invoices on `POST /api/webhook/stripe` (Stripe signing secret
 
 In n8n, listen on that webhook to send Slack/email, update HubSpot deal stage, or call other systems. **Do not** duplicate invoice state updates here if the portal webhook is already authoritative for “paid” in Supabase.
 
+Portal **invoice** Checkout sessions (created in [`src/app/api/billing/create-checkout-session/route.ts`](../src/app/api/billing/create-checkout-session/route.ts)) also copy Stripe **`metadata`** keys **`hubspot_deal_id`** and **`project_slug`** when present on the project, so monitoring and downstream automations can correlate payment to HubSpot and the portal without relying only on Supabase UUIDs.
+
 For **catalog** Payment Links (and subscription links with `sku` / `type` / `payment_link`), the same Stripe webhook handler notifies **`/webhook/portal-stripe-catalog-payment`** — see [Catalog Payment Links](#catalog-payment-links-portal-stripe-catalog-payment) above.
+
+## Pre-contract visibility, contracts, and RLS (checklist)
+
+Use this as a **runbook** for product and compliance; avoid shipping new database policies until owners explicitly approve exposure rules.
+
+- **Contract capture:** choose one primary path (external e-sign, HubSpot quotes/contracts, or portal-native documents) and document it for engineering and legal.
+- **RLS / visibility:** audit `apps/iw-portal/supabase/migrations` for what a **qualified** (pre-close) client should see versus staff-only rows; if needed, add **`project.status`**-aware policies (for example hiding certain document types until a contract is recorded).
 
 ## Related routes
 

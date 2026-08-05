@@ -48,6 +48,7 @@ async function loadSnapshot(dealId: string | null, contactId: string | null): Pr
     return { ok: true, deal, contact }
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Unable to load account details'
+    console.error('[hubspot/snapshot]', message)
     return { ok: false, reason: 'error', message }
   }
 }

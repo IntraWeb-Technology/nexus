@@ -1,0 +1,414 @@
+{
+  "updatedAt": "2026-04-19T00:00:14.663Z",
+  "createdAt": "2026-04-05T05:00:08.792Z",
+  "id": "isYyC3wLTBiGPhJS",
+  "name": "SYS 03 — Portal — HubSpot invoice → add_invoice",
+  "description": "POST JSON to webhook; forwards to client portal /api/webhook/n8n with action add_invoice. Needs Header Auth credential matching WEBHOOK_SECRET.",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "portal-add-invoice",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "2347dfe5-14df-495b-b811-79fc7a29d4f0",
+      "name": "Invoice to Portal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        400
+      ],
+      "webhookId": "7b28f195-7985-4271-b25e-e0ce329812ce"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nlet b = item.body ?? item;\nif (typeof b === 'string') {\n  try { b = JSON.parse(b); } catch (e) {\n    throw new Error('Webhook body must be valid JSON');\n  }\n}\nconst dealId = b.hubspot_deal_id ?? b.deal_id;\nconst slug = b.project_slug;\nif (!dealId && !slug) { throw new Error('hubspot_deal_id or project_slug required'); }\n\nfunction normDue(d) {\n  if (d == null || d === '') return undefined;\n  const s = String(d).trim();\n  if (!s) return undefined;\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return s;\n  const t = Date.parse(s);\n  if (Number.isNaN(t)) return s;\n  return new Date(t).toISOString().slice(0, 10);\n}\n\nconst descRaw =\n  (b.description && String(b.description).trim()) ||\n  (b.hs_title && String(b.hs_title).trim()) ||\n  (b.hs_comments && String(b.hs_comments).trim()) ||\n  (b.name && String(b.name).trim()) ||\n  (b.subject && String(b.subject).trim()) ||\n  'Invoice';\n\nconst data = {\n  invoice_number: String(b.invoice_number ?? ''),\n  description: descRaw,\n  amount_cents: Math.round(Number(b.amount_cents ?? b.amountCents ?? 0)),\n  status: b.status || 'pending',\n};\nconst allowed = ['paid', 'pending', 'overdue', 'void'];\nif (allowed.indexOf(data.status) === -1) data.status = 'pending';\nif (b.sku) data.sku = String(b.sku);\nconst nd = normDue(b.due_date ?? b.hs_due_date);\nif (nd) data.due_date = nd;\n\nconst hsInvId = b.hubspot_invoice_id ?? b.hs_invoice_id ?? b.invoice_id;\nif (hsInvId) data.hubspot_invoice_id = String(hsInvId);\n\nif (b.currency) { const cur = String(b.currency).toLowerCase().replace(/[^a-z]/g, '').slice(0, 3); if (cur) data.currency = cur; }\nif (b.paid_at) data.paid_at = String(b.paid_at);\n\nfunction normBillingPhase(v) {\n  if (v == null || v === '') return undefined;\n  const t = String(v).trim().toLowerCase();\n  if (!t) return undefined;\n  const c = t.replace(/[\\s\\-+]/g, '_').replace(/_+/g, '_');\n  if (c === 'deposit' || t.includes('deposit')) return 'deposit';\n  if (c === 'build_qa' || c === 'buildqa' || (t.includes('build') && t.includes('qa'))) return 'build_qa';\n  if (c === 'handoff' || c === 'hand_off' || t.includes('handoff') || t.includes('hand off')) return 'handoff';\n  if (c === 'maintenance' || t.includes('maintenance') || t.includes('retainer')) return 'maintenance';\n  return undefined;\n}\nfunction normBillingKind(v, phase) {\n  if (v != null && v !== '') {\n    const t = String(v).trim().toLowerCase();\n    if (t.includes('recurring')) return 'recurring_maintenance';\n    if (t.includes('project') && t.includes('milestone')) return 'project_milestone';\n    if (t === 'recurring_maintenance' || t === 'project_milestone') return t;\n  }\n  if (phase === 'maintenance') return 'recurring_maintenance';\n  return 'project_milestone';\n}\nconst phaseRaw = b.billing_phase ?? b.iw_billing_phase ?? b.properties?.iw_billing_phase;\nconst kindRaw = b.billing_kind ?? b.iw_billing_kind ?? b.properties?.iw_billing_kind;\nconst phase = normBillingPhase(phaseRaw);\nif (phase) data.billing_phase = phase;\nconst kind = normBillingKind(kindRaw, phase);\ndata.billing_kind = kind;\nif (b.milestone_order === 1 || b.milestone_order === 2 || b.milestone_order === 3) data.milestone_order = b.milestone_order;\nconst sp0 = normDue(b.service_period_start ?? b.iw_service_period_start ?? b.properties?.iw_service_period_start);\nconst sp1 = normDue(b.service_period_end ?? b.iw_service_period_end ?? b.properties?.iw_service_period_end);\nif (sp0) data.service_period_start = sp0;\nif (sp1) data.service_period_end = sp1;\nconst mgk = b.maintenance_group_key ?? b.iw_maintenance_group_key ?? b.properties?.iw_maintenance_group_key;\nif (mgk) data.maintenance_group_key = String(mgk).trim();\ndata.external_source = 'hubspot';\nconst extId = b.external_object_id ?? b.hubspot_invoice_id ?? b.hs_invoice_id ?? b.invoice_id;\nif (extId) data.external_object_id = String(extId);\n\nconst base = { action: 'add_invoice', data };\nif (dealId) base.hubspot_deal_id = String(dealId);\nelse base.project_slug = String(slug);\nreturn [{ json: { portalPayload: base } }];"
+      },
+      "id": "ce3de446-66ee-4c77-a1ef-229b131eaad8",
+      "name": "Build add_invoice payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://portal.intrawebtech.com/api/webhook/n8n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-intrawebtech-secret",
+              "value": "n8n.intrawebtech.com/webhook/hubspot-events"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.portalPayload) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "b04e43d8-9992-4db9-8ffe-8e83e202ccd2",
+      "name": "POST Portal /api/webhook/n8n",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        736,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "73e38b67-2206-415a-8803-659434387cc0",
+      "name": "Respond JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $input.first().json;\nconst statusCode = j.statusCode ?? j.status ?? 0;\nconst raw = j.body !== undefined && j.body !== null ? j.body : (j.data !== undefined ? j.data : '');\nconst str = typeof raw === 'string' ? raw : (typeof raw === 'object' ? JSON.stringify(raw) : String(raw));\nconst t = str.trim();\nif (!t) {\n  return [{ json: { ok: false, statusCode, error: 'empty_response' } }];\n}\ntry {\n  const parsed = JSON.parse(t);\n  return [{ json: typeof parsed === 'object' && parsed !== null ? { ...parsed, statusCode } : { result: parsed, statusCode } }];\n} catch (e) {\n  return [{ json: { ok: false, statusCode, error: 'response_not_json', message: e.message, rawPreview: t.slice(0, 4000) } }];\n}"
+      },
+      "id": "f8a2c1e0-9b3d-4a1e-8f2c-0d1e2f3a4b5c",
+      "name": "Parse portal response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Invoice to Portal Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build add_invoice payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build add_invoice payload": {
+      "main": [
+        [
+          {
+            "node": "POST Portal /api/webhook/n8n",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Portal /api/webhook/n8n": {
+      "main": [
+        [
+          {
+            "node": "Parse portal response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse portal response": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "aiBuilderAssisted": true
+  },
+  "pinData": {},
+  "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+  "activeVersionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+  "versionCounter": 50,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-04-05T05:00:08.802Z",
+      "createdAt": "2026-04-05T05:00:08.802Z",
+      "role": "workflow:owner",
+      "workflowId": "isYyC3wLTBiGPhJS",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-05T05:28:22.000Z",
+    "createdAt": "2026-04-05T05:28:07.563Z",
+    "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+    "workflowId": "isYyC3wLTBiGPhJS",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "portal-add-invoice",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "2347dfe5-14df-495b-b811-79fc7a29d4f0",
+        "name": "Invoice to Portal Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          240,
+          400
+        ],
+        "webhookId": "7b28f195-7985-4271-b25e-e0ce329812ce"
+      },
+      {
+        "parameters": {
+          "jsCode": "const item = $input.first().json;\nlet b = item.body ?? item;\nif (typeof b === 'string') {\n  try { b = JSON.parse(b); } catch (e) {\n    throw new Error('Webhook body must be valid JSON');\n  }\n}\nconst dealId = b.hubspot_deal_id ?? b.deal_id;\nconst slug = b.project_slug;\nif (!dealId && !slug) { throw new Error('hubspot_deal_id or project_slug required'); }\n\nfunction normDue(d) {\n  if (d == null || d === '') return undefined;\n  const s = String(d).trim();\n  if (!s) return undefined;\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return s;\n  const t = Date.parse(s);\n  if (Number.isNaN(t)) return s;\n  return new Date(t).toISOString().slice(0, 10);\n}\n\nconst descRaw =\n  (b.description && String(b.description).trim()) ||\n  (b.hs_title && String(b.hs_title).trim()) ||\n  (b.hs_comments && String(b.hs_comments).trim()) ||\n  (b.name && String(b.name).trim()) ||\n  (b.subject && String(b.subject).trim()) ||\n  'Invoice';\n\nconst data = {\n  invoice_number: String(b.invoice_number ?? ''),\n  description: descRaw,\n  amount_cents: Math.round(Number(b.amount_cents ?? b.amountCents ?? 0)),\n  status: b.status || 'pending',\n};\nconst allowed = ['paid', 'pending', 'overdue', 'void'];\nif (allowed.indexOf(data.status) === -1) data.status = 'pending';\nif (b.sku) data.sku = String(b.sku);\nconst nd = normDue(b.due_date ?? b.hs_due_date);\nif (nd) data.due_date = nd;\n\nconst hsInvId = b.hubspot_invoice_id ?? b.hs_invoice_id ?? b.invoice_id;\nif (hsInvId) data.hubspot_invoice_id = String(hsInvId);\n\nif (b.currency) { const cur = String(b.currency).toLowerCase().replace(/[^a-z]/g, '').slice(0, 3); if (cur) data.currency = cur; }\nif (b.paid_at) data.paid_at = String(b.paid_at);\n\nfunction normBillingPhase(v) {\n  if (v == null || v === '') return undefined;\n  const t = String(v).trim().toLowerCase();\n  if (!t) return undefined;\n  const c = t.replace(/[\\s\\-+]/g, '_').replace(/_+/g, '_');\n  if (c === 'deposit' || t.includes('deposit')) return 'deposit';\n  if (c === 'build_qa' || c === 'buildqa' || (t.includes('build') && t.includes('qa'))) return 'build_qa';\n  if (c === 'handoff' || c === 'hand_off' || t.includes('handoff') || t.includes('hand off')) return 'handoff';\n  if (c === 'maintenance' || t.includes('maintenance') || t.includes('retainer')) return 'maintenance';\n  return undefined;\n}\nfunction normBillingKind(v, phase) {\n  if (v != null && v !== '') {\n    const t = String(v).trim().toLowerCase();\n    if (t.includes('recurring')) return 'recurring_maintenance';\n    if (t.includes('project') && t.includes('milestone')) return 'project_milestone';\n    if (t === 'recurring_maintenance' || t === 'project_milestone') return t;\n  }\n  if (phase === 'maintenance') return 'recurring_maintenance';\n  return 'project_milestone';\n}\nconst phaseRaw = b.billing_phase ?? b.iw_billing_phase ?? b.properties?.iw_billing_phase;\nconst kindRaw = b.billing_kind ?? b.iw_billing_kind ?? b.properties?.iw_billing_kind;\nconst phase = normBillingPhase(phaseRaw);\nif (phase) data.billing_phase = phase;\nconst kind = normBillingKind(kindRaw, phase);\ndata.billing_kind = kind;\nif (b.milestone_order === 1 || b.milestone_order === 2 || b.milestone_order === 3) data.milestone_order = b.milestone_order;\nconst sp0 = normDue(b.service_period_start ?? b.iw_service_period_start ?? b.properties?.iw_service_period_start);\nconst sp1 = normDue(b.service_period_end ?? b.iw_service_period_end ?? b.properties?.iw_service_period_end);\nif (sp0) data.service_period_start = sp0;\nif (sp1) data.service_period_end = sp1;\nconst mgk = b.maintenance_group_key ?? b.iw_maintenance_group_key ?? b.properties?.iw_maintenance_group_key;\nif (mgk) data.maintenance_group_key = String(mgk).trim();\ndata.external_source = 'hubspot';\nconst extId = b.external_object_id ?? b.hubspot_invoice_id ?? b.hs_invoice_id ?? b.invoice_id;\nif (extId) data.external_object_id = String(extId);\n\nconst base = { action: 'add_invoice', data };\nif (dealId) base.hubspot_deal_id = String(dealId);\nelse base.project_slug = String(slug);\nreturn [{ json: { portalPayload: base } }];"
+        },
+        "id": "ce3de446-66ee-4c77-a1ef-229b131eaad8",
+        "name": "Build add_invoice payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          528,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "https://portal.intrawebtech.com/api/webhook/n8n",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "x-intrawebtech-secret",
+                "value": "n8n.intrawebtech.com/webhook/hubspot-events"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "={{ JSON.stringify($json.portalPayload) }}",
+          "options": {
+            "response": {
+              "response": {
+                "fullResponse": true,
+                "neverError": true,
+                "responseFormat": "text"
+              }
+            }
+          }
+        },
+        "id": "b04e43d8-9992-4db9-8ffe-8e83e202ccd2",
+        "name": "POST Portal /api/webhook/n8n",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          736,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "73e38b67-2206-415a-8803-659434387cc0",
+        "name": "Respond JSON",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.3,
+        "position": [
+          1168,
+          400
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const j = $input.first().json;\nconst statusCode = j.statusCode ?? j.status ?? 0;\nconst raw = j.body !== undefined && j.body !== null ? j.body : (j.data !== undefined ? j.data : '');\nconst str = typeof raw === 'string' ? raw : (typeof raw === 'object' ? JSON.stringify(raw) : String(raw));\nconst t = str.trim();\nif (!t) {\n  return [{ json: { ok: false, statusCode, error: 'empty_response' } }];\n}\ntry {\n  const parsed = JSON.parse(t);\n  return [{ json: typeof parsed === 'object' && parsed !== null ? { ...parsed, statusCode } : { result: parsed, statusCode } }];\n} catch (e) {\n  return [{ json: { ok: false, statusCode, error: 'response_not_json', message: e.message, rawPreview: t.slice(0, 4000) } }];\n}"
+        },
+        "id": "f8a2c1e0-9b3d-4a1e-8f2c-0d1e2f3a4b5c",
+        "name": "Parse portal response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          928,
+          400
+        ]
+      }
+    ],
+    "connections": {
+      "Invoice to Portal Webhook": {
+        "main": [
+          [
+            {
+              "node": "Build add_invoice payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build add_invoice payload": {
+        "main": [
+          [
+            {
+              "node": "POST Portal /api/webhook/n8n",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "POST Portal /api/webhook/n8n": {
+        "main": [
+          [
+            {
+              "node": "Parse portal response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse portal response": {
+        "main": [
+          [
+            {
+              "node": "Respond JSON",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "John Schibelli",
+    "name": "Version fb0eb47d",
+    "description": "",
+    "autosaved": true,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-05T05:28:22.322Z",
+        "id": 1537,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:35:45.014Z",
+        "id": 1678,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:35:47.908Z",
+        "id": 1680,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:50.653Z",
+        "id": 2771,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:00:14.781Z",
+        "id": 2867,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:35:44.998Z",
+        "id": 1677,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-13T23:35:47.899Z",
+        "id": 1679,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:50.640Z",
+        "id": 2770,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:00:14.701Z",
+        "id": 2866,
+        "workflowId": "isYyC3wLTBiGPhJS",
+        "versionId": "fb0eb47d-d0d4-4647-bcbb-09157d8ed800",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
+  }
+}

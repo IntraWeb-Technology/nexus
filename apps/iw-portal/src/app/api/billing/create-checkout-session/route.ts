@@ -1,16 +1,14 @@
-import { auth } from '@clerk/nextjs/server'
+import { billingAppOrigin } from '@/lib/billing/app-origin'
+import { ensureStripeCustomerForPortalClient } from '@/lib/stripe/ensure-stripe-customer'
 import { getStripe } from '@/lib/stripe/server'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
-import type { Invoice } from '@/lib/supabase/types'
+import type { Client, Invoice } from '@/lib/supabase/types'
+import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
-const MIN_AMOUNT_CENTS = 50
+export const maxDuration = 60
 
-function appOrigin(): string {
-  const u = process.env.NEXT_PUBLIC_APP_URL
-  if (u) return u.replace(/\/$/, '')
-  return 'http://localhost:3000'
-}
+const MIN_AMOUNT_CENTS = 50
 
 export async function POST(request: Request) {
   let invoiceId: string | undefined
@@ -37,12 +35,13 @@ export async function POST(request: Request) {
   const supabase = await createServerSupabaseForUser()
   if (!supabase) return NextResponse.json({ error: 'Supabase not configured' }, { status: 503 })
 
-  const { data: client, error: cErr } = await supabase
+  const { data: clientRow, error: cErr } = await supabase
     .from('clients')
     .select('*')
     .eq('clerk_user_id', userId)
     .maybeSingle()
-  if (cErr || !client) return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+  if (cErr || !clientRow) return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+  const client = clientRow as Client
 
   const { data: project, error: pErr } = await supabase
     .from('projects')
@@ -70,7 +69,7 @@ export async function POST(request: Request) {
   }
 
   const currency = (invoice.currency ?? 'usd').toLowerCase()
-  const base = appOrigin()
+  const base = billingAppOrigin()
 
   const sessionParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
     mode: 'payment',
@@ -92,16 +91,21 @@ export async function POST(request: Request) {
       project_id: project.id,
       client_id: client.id,
       invoice_number: invoice.invoice_number,
+      project_slug: project.slug,
+      hubspot_deal_id: project.hubspot_deal_id ?? '',
     },
     success_url: `${base}/billing?paid=1&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${base}/billing?canceled=1`,
   }
 
-  if (client.stripe_customer_id) {
-    sessionParams.customer = client.stripe_customer_id
-  } else {
-    sessionParams.customer_email = client.email
+  let stripeCustomerId: string
+  try {
+    ;({ stripeCustomerId } = await ensureStripeCustomerForPortalClient(stripe, supabase, client))
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Could not set up Stripe billing profile'
+    return NextResponse.json({ error: msg }, { status: 502 })
   }
+  sessionParams.customer = stripeCustomerId
 
   const session = await stripe.checkout.sessions.create(sessionParams)
 

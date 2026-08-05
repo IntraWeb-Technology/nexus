@@ -1,0 +1,47 @@
+{
+  "name": "@repo/iw-site-q2",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "next dev --port 3010",
+    "build": "next build",
+    "start": "next start --port 3010",
+    "lint": "eslint",
+    "check-types": "tsc --noEmit",
+    "test": "pnpm exec tsx --test lib/data-deletion.test.ts lib/strapi.test.ts lib/strapi-secrets.test.ts"
+  },
+  "dependencies": {
+    "@repo/strapi-client": "workspace:*",
+    "@anthropic-ai/sdk": "^0.54.0",
+    "@calcom/embed-react": "^1.5.3",
+    "clsx": "^2.1.1",
+    "@google-cloud/recaptcha-enterprise": "^6.1.0",
+    "@hookform/resolvers": "^5.0.1",
+    "@supabase/supabase-js": "^2.101.1",
+    "lucide-react": "^0.510.0",
+    "luxon": "^3.5.0",
+    "next": "16.2.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.56.3",
+    "resend": "^6.10.0",
+    "tailwind-merge": "^3.3.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@tailwindcss/postcss": "^4.1.11",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.2",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^4.1.11",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}

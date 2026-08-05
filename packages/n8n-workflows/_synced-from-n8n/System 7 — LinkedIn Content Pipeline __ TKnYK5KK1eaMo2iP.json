@@ -1,0 +1,784 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:33:50.408Z",
+  "id": "TKnYK5KK1eaMo2iP",
+  "name": "System 7 — LinkedIn Content Pipeline",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a2061317-657b-482e-a35e-0006f2adc43f",
+      "name": "Daily 6AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "cd9fd125-51e4-4f7d-adbe-7deb70041c4f",
+      "name": "Fetch TechCrunch RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://venturebeat.com/feed/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "8e865f66-68c6-40a0-8e68-51820e56e1fc",
+      "name": "Fetch VentureBeat RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.theverge.com/rss/index.xml",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "b5ee415c-c0d2-4bcc-8c4a-ca5f49c19d2a",
+      "name": "Fetch The Verge RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://hnrss.org/frontpage",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "bb7330e8-a349-4cec-b357-0870807c67ba",
+      "name": "Fetch Hacker News RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "options": {}
+      },
+      "id": "c3604baf-dd41-4e99-aef0-56299d18338c",
+      "name": "Merge RSS Feeds",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        240,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse all RSS XML feeds and extract top 5 AI/business automation stories from past 24 hours\nconst items = $input.all();\nconst now = new Date();\nconst oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);\n\nconst aiKeywords = [\n  'ai', 'artificial intelligence', 'machine learning', 'automation', 'llm',\n  'gpt', 'claude', 'gemini', 'openai', 'anthropic', 'chatbot', 'neural',\n  'robotics', 'saas', 'workflow', 'productivity', 'software', 'startup',\n  'business', 'revenue', 'growth', 'enterprise', 'agent', 'generative'\n];\n\nconst parseRSSItem = (xmlText, sourceName) => {\n  const results = [];\n  if (!xmlText) return results;\n\n  // Extract <item> or <entry> blocks\n  const itemRegex = /<(?:item|entry)[^>]*>([\\s\\S]*?)<\\/(?:item|entry)>/gi;\n  let match;\n\n  while ((match = itemRegex.exec(xmlText)) !== null) {\n    const block = match[1];\n\n    const getTag = (tag) => {\n      const m = block.match(new RegExp(`<${tag}[^>]*><!\\\\[CDATA\\\\[([\\\\s\\\\S]*?)\\\\]\\\\]><\\/${tag}>`, 'i'))\n        || block.match(new RegExp(`<${tag}[^>]*>([\\\\s\\\\S]*?)<\\/${tag}>`, 'i'));\n      return m ? m[1].trim().replace(/<[^>]+>/g, '') : '';\n    };\n\n    const title = getTag('title');\n    const description = getTag('description') || getTag('summary') || getTag('content');\n    const link = getTag('link') || (block.match(/<link[^>]*href=[\"']([^\"']+)[\"']/i) || [])[1] || '';\n    const pubDate = getTag('pubDate') || getTag('published') || getTag('updated') || '';\n\n    let publishedAt;\n    try {\n      publishedAt = pubDate ? new Date(pubDate) : null;\n    } catch (e) {\n      publishedAt = null;\n    }\n\n    const isRecent = publishedAt ? publishedAt >= oneDayAgo : true;\n    const text = (title + ' ' + description).toLowerCase();\n    const isRelevant = aiKeywords.some(kw => text.includes(kw));\n\n    if (title && isRecent && isRelevant) {\n      results.push({\n        title,\n        description: description.substring(0, 400),\n        link,\n        publishedAt: publishedAt ? publishedAt.toISOString() : now.toISOString(),\n        source: sourceName\n      });\n    }\n  }\n  return results;\n};\n\nlet allStories = [];\nconst sources = ['TechCrunch', 'VentureBeat', 'The Verge', 'Hacker News'];\n\nitems.forEach((item, idx) => {\n  const xmlText = item.json.data || item.json.body || '';\n  const source = sources[idx] || 'Unknown';\n  const parsed = parseRSSItem(xmlText, source);\n  allStories = allStories.concat(parsed);\n});\n\n// Sort by published date desc, take top 5\nallStories.sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));\nconst top5 = allStories.slice(0, 5);\n\nif (top5.length === 0) {\n  // Fallback: return at least 1 placeholder so workflow doesn't break\n  return [{\n    json: {\n      title: 'AI automation continues to reshape business operations',\n      description: 'Companies are increasingly adopting AI-driven workflows to reduce manual work and accelerate growth.',\n      link: 'https://techcrunch.com',\n      publishedAt: now.toISOString(),\n      source: 'TechCrunch'\n    }\n  }];\n}\n\nreturn top5.map(story => ({ json: story }));\n"
+      },
+      "id": "9974c0b6-24d3-4891-aaf6-82e7b0e10bc1",
+      "name": "Parse RSS and Filter Top 5 Stories",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6f97a8d6-9b5d-4a90-88ec-9781c718be60",
+      "name": "Split Stories Into Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        688,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "{{$env.ANTHROPIC_API_KEY}}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "73afd1d9-2159-48c3-a5b2-11b9489c1f83",
+      "name": "Claude Generate LinkedIn Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        912,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude's JSON response and prepare Sheets row\nconst response = $input.first().json;\nconst story = $('Split Stories Into Batches').item.json;\n\nlet parsedPost;\ntry {\n  const content = response.content[0].text;\n  // Extract JSON from response (handle markdown code blocks if present)\n  const jsonMatch = content.match(/```json\\n?([\\s\\S]*?)\\n?```/) || content.match(/(\\{[\\s\\S]*\\})/);\n  const jsonStr = jsonMatch ? jsonMatch[1] : content;\n  parsedPost = JSON.parse(jsonStr);\n} catch (e) {\n  parsedPost = {\n    hook: story.title.substring(0, 120),\n    full_post: response.content?.[0]?.text || 'Post generation failed',\n    hashtags: ['#AI', '#Automation', '#Business'],\n    suggested_link: story.link,\n    news_source: story.source\n  };\n}\n\nconst now = new Date().toISOString();\nconst hashtagStr = Array.isArray(parsedPost.hashtags) ? parsedPost.hashtags.join(' ') : parsedPost.hashtags;\n\nreturn [{\n  json: {\n    dateGenerated: now,\n    newsHook: parsedPost.hook || '',\n    fullPost: parsedPost.full_post || '',\n    hashtags: hashtagStr || '',\n    suggestedLink: parsedPost.suggested_link || story.link,\n    status: 'Pending Review',\n    scheduledTime: '',\n    postNotes: '',\n    newsSource: parsedPost.news_source || story.source,\n    originalTitle: story.title\n  }\n}];\n"
+      },
+      "id": "0f189014-1644-49c7-8d9f-2a5ba731dbcb",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/LinkedIn!A:Z:append?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "9de2af84-6d72-4801-a7a0-0d542a6b8961",
+      "name": "Append to LinkedIn Sheets Tab",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1344,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "f68c4f64-45c7-450c-b0b5-fe1f73158ad4",
+      "name": "Google Chat Drafts Ready Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1568,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations Log!A:Z:append?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "17f8d7a9-a277-411e-ba03-578cf01e2420",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1792,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "c617bd0b-cb5a-41fd-a557-5bd2697ff2fe",
+      "name": "Hourly Approval Polling Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/LinkedIn!A:Z",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1405d2da-129c-4456-8cb8-99ee5c282879",
+      "name": "Read LinkedIn Tab from Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Find rows where Status = 'Approved' and Scheduled Time is due\nconst sheetData = $input.first().json;\nconst rows = sheetData.values || [];\nif (rows.length < 2) return [];\n\nconst headers = rows[0];\n// Expected columns: Date Generated, News Hook, Full Post, Hashtags, Suggested Link, Status, Scheduled Time, Post Notes, News Source\nconst dateIdx = 0;\nconst hookIdx = 1;\nconst postIdx = 2;\nconst hashtagsIdx = 3;\nconst linkIdx = 4;\nconst statusIdx = 5;\nconst scheduledIdx = 6;\nconst notesIdx = 7;\n\nconst now = new Date();\nconst duePosts = [];\n\nrows.slice(1).forEach((row, rowIndex) => {\n  const status = row[statusIdx] || '';\n  const scheduledTime = row[scheduledIdx] || '';\n\n  if (status.toLowerCase() === 'approved') {\n    let isDue = false;\n    if (scheduledTime) {\n      try {\n        const scheduledDate = new Date(scheduledTime);\n        isDue = scheduledDate <= now;\n      } catch (e) {\n        isDue = true; // If can't parse, treat as due\n      }\n    } else {\n      isDue = true; // No scheduled time = post now\n    }\n\n    if (isDue) {\n      duePosts.push({\n        rowIndex: rowIndex + 2, // 1-indexed with header offset\n        dateGenerated: row[dateIdx] || '',\n        hook: row[hookIdx] || '',\n        fullPost: row[postIdx] || '',\n        hashtags: row[hashtagsIdx] || '',\n        suggestedLink: row[linkIdx] || '',\n        scheduledTime: scheduledTime,\n        notes: row[notesIdx] || ''\n      });\n    }\n  }\n});\n\nif (duePosts.length === 0) return [];\nreturn duePosts.map(p => ({ json: p }));\n"
+      },
+      "id": "c9aa1c49-3e14-4af2-95cc-fc89718f1a1a",
+      "name": "Find Approved and Due Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s07-cond-01",
+              "leftValue": "={{$json.hook}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f1e616ad-6313-4ac6-99be-f0c25938c880",
+      "name": "If Posts Are Due",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "025a1ad5-2ae8-4577-b4ab-23a9176cedc7",
+      "name": "Split Due Posts",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        768,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "1020be6a-3c8f-44f9-85bc-7fbd39d6c7b3",
+      "name": "Google Chat Post Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        976,
+        496
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "56fc0134-13b5-44b0-9257-de093d164ede",
+      "name": "Wait 3 Minutes",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1200,
+        496
+      ],
+      "webhookId": "4baabeba-0fd9-4297-84d4-53dc306a7583"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "4895b7d2-d203-4457-9197-88d778b9678f",
+      "name": "Google Chat First Comment Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1424,
+        496
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/LinkedIn!F{{$('Split Due Posts').item.json.rowIndex}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "43965abc-7f9d-433a-a94e-f9b669e1cc66",
+      "name": "Update Row Status to Posted",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1648,
+        496
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "4183b027-0df4-4e0f-8473-df16df2b83c2",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "26bd9d8c-c44c-4260-b6f4-aaf5a77ee8ac",
+      "name": "Google Chat Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        832
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 6AM Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch TechCrunch RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch VentureBeat RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch The Verge RSS",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Hacker News RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch TechCrunch RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch VentureBeat RSS": {
+      "main": [
+        [
+          {
+            "node": "Merge RSS Feeds",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge RSS Feeds": {
+      "main": [
+        [
+          {
+            "node": "Parse RSS and Filter Top 5 Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse RSS and Filter Top 5 Stories": {
+      "main": [
+        [
+          {
+            "node": "Split Stories Into Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Stories Into Batches": {
+      "main": [
+        [
+          {
+            "node": "Claude Generate LinkedIn Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Generate LinkedIn Post": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Claude Response": {
+      "main": [
+        [
+          {
+            "node": "Append to LinkedIn Sheets Tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to LinkedIn Sheets Tab": {
+      "main": [
+        [
+          {
+            "node": "Split Stories Into Batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Drafts Ready Alert": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hourly Approval Polling Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read LinkedIn Tab from Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read LinkedIn Tab from Sheets": {
+      "main": [
+        [
+          {
+            "node": "Find Approved and Due Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find Approved and Due Posts": {
+      "main": [
+        [
+          {
+            "node": "If Posts Are Due",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Posts Are Due": {
+      "main": [
+        [
+          {
+            "node": "Split Due Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Due Posts": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Post Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Post Reminder": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Minutes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Google Chat First Comment Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat First Comment Reminder": {
+      "main": [
+        [
+          {
+            "node": "Update Row Status to Posted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Row Status to Posted": {
+      "main": [
+        [
+          {
+            "node": "Split Due Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch The Verge RSS": {
+      "main": [
+        []
+      ]
+    },
+    "Fetch Hacker News RSS": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "4275dd4f-8c02-42e1-ba2b-dc0968763665",
+  "activeVersionId": null,
+  "versionCounter": 9,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:33:50.411Z",
+      "createdAt": "2026-03-05T05:33:50.411Z",
+      "role": "workflow:owner",
+      "workflowId": "TKnYK5KK1eaMo2iP",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

@@ -1,15 +1,9 @@
 import { Card } from '@/components/ui/Card'
 
-function planLabel(plan: string): string {
-  if (plan === 'growth') return 'Growth'
-  if (plan === 'starter') return 'Starter'
-  return 'Custom'
-}
-
 /** Client-facing snapshot for the active project only — no internal system IDs. */
 export function PortalLiveDataCard(props: {
-  projectSlug: string
-  plan: string
+  projectName: string
+  tier: string | null
   milestoneCount: number
   invoiceCount: number
   notificationCount: number
@@ -26,11 +20,11 @@ export function PortalLiveDataCard(props: {
       <div className="text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--iw-slate-2)]/60 px-3 py-2.5">
           <span className="text-[var(--iw-text-3)]">Project</span>
-          <span className="iw-mono font-medium text-[var(--iw-text)]">{props.projectSlug}</span>
+          <span className="font-medium text-[var(--iw-text)]">{props.projectName}</span>
         </div>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--iw-slate-2)]/60 px-3 py-2.5">
-          <span className="text-[var(--iw-text-3)]">Plan</span>
-          <span className="font-medium text-[var(--iw-text)]">{planLabel(props.plan)}</span>
+          <span className="text-[var(--iw-text-3)]">Tier</span>
+          <span className="font-medium text-[var(--iw-text)]">{props.tier?.trim() || 'Not set'}</span>
         </div>
         <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[var(--iw-border)] pt-4">
           <div className="rounded-lg border border-[var(--iw-border)] bg-[var(--iw-slate-2)]/40 px-2 py-3 text-center transition-colors duration-200 hover:border-[var(--iw-border-2)]">

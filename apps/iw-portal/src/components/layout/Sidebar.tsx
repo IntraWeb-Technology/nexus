@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { NavItem } from '@/components/layout/NavItem'
+import { portalNavGroups } from '@/components/layout/portal-nav'
 import { ProjectSwitcher } from '@/components/portal/ProjectSwitcher'
-import { Badge } from '@/components/ui/Badge'
 import { IwLogo } from '@/components/layout/IwLogo'
 import type { Project } from '@/lib/supabase/types'
 import type { ReactNode } from 'react'
@@ -32,14 +32,6 @@ const icons = {
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
         <path d="M1 11l3.5-4 3 2 3.5-5 3 3" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M1 13.5h13" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-      </svg>
-    </Icon>
-  ),
-  activity: (
-    <Icon>
-      <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-        <circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="1.25" />
-        <path d="M7.5 4v3.5L10 9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </Icon>
   ),
@@ -111,62 +103,66 @@ const icons = {
   ),
 }
 
+const iconByHref: Record<string, ReactNode> = {
+  '/dashboard': icons.dashboard,
+  '/progress': icons.progress,
+  '/messages': icons.messages,
+  '/notifications': icons.notifications,
+  '/documents': icons.documents,
+  '/change-orders': icons.changeOrders,
+  '/scope': icons.scope,
+  '/billing': icons.billing,
+  '/settings': icons.settings,
+  '/help': icons.help,
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function Sidebar({
   projects,
   activeSlug,
-  planLabel,
   unreadMessages,
   unreadNotifications,
 }: {
   projects: Project[]
   activeSlug: string
-  planLabel: string
   unreadMessages: number
   unreadNotifications: number
 }) {
   return (
-    <aside className="fixed bottom-0 left-0 top-0 z-30 hidden w-[var(--iw-sidebar-width)] flex-col border-r border-[var(--iw-border)] bg-[var(--iw-slate-2)] transition-[background-color,border-color] duration-300 md:flex">
+    <aside className="fixed bottom-0 left-0 top-0 z-30 hidden w-[var(--iw-sidebar-width)] flex-col border-r border-[var(--hairline)] bg-[var(--bg-1)] transition-[background-color,border-color] duration-300 md:flex">
       {/* Logo header — fills the same height as the topbar, aligned with it */}
-      <div className="flex h-[var(--iw-topbar-height)] shrink-0 items-center border-b border-[var(--iw-border)] px-4">
+      <div className="flex h-[var(--iw-topbar-height)] shrink-0 items-center border-b border-[var(--hairline)] px-4">
         <IwLogo height={26} />
       </div>
-      <div className="border-b border-[var(--iw-border)] p-4">
-        <p className="iw-mono text-sm font-medium text-[var(--iw-text)]">{activeSlug}</p>
+      <div className="border-b border-[var(--hairline)] p-4">
         <div className="mt-2">
           <ProjectSwitcher projects={projects} activeSlug={activeSlug} />
         </div>
-        <div className="mt-2">
-          <Badge variant="teal">{planLabel}</Badge>
-        </div>
       </div>
       <nav className="flex-1 space-y-6 overflow-y-auto p-3 text-sm">
-        <div>
-          <p className="iw-label mb-2 px-2">Overview</p>
-          <NavItem href="/dashboard" icon={icons.dashboard} label="Dashboard" />
-          <NavItem href="/progress" icon={icons.progress} label="Project Progress" />
-          <NavItem href="/activity" icon={icons.activity} label="Activity Log" />
-        </div>
-        <div>
-          <p className="iw-label mb-2 px-2">Communication</p>
-          <NavItem href="/messages" icon={icons.messages} label="Messages" badge={unreadMessages} />
-          <NavItem href="/notifications" icon={icons.notifications} label="Notifications" badge={unreadNotifications} />
-        </div>
-        <div>
-          <p className="iw-label mb-2 px-2">Project</p>
-          <NavItem href="/documents" icon={icons.documents} label="Documents" />
-          <NavItem href="/change-orders" icon={icons.changeOrders} label="Scope changes" />
-          <NavItem href="/scope" icon={icons.scope} label="Scope of Work" />
-        </div>
-        <div>
-          <p className="iw-label mb-2 px-2">Account</p>
-          <NavItem href="/billing" icon={icons.billing} label="Billing" />
-          <NavItem href="/settings" icon={icons.settings} label="Settings" />
-          <NavItem href="/help" icon={icons.help} label="Help & FAQ" />
-        </div>
+        {portalNavGroups.map((group) => (
+          <div key={group.label}>
+            <p className="iw-label mb-2 px-2">{group.label}</p>
+            {group.items.map((item) => (
+              <NavItem
+                key={item.href}
+                href={item.href}
+                icon={iconByHref[item.href]}
+                label={item.label}
+                badge={
+                  item.href === '/messages'
+                    ? unreadMessages
+                    : item.href === '/notifications'
+                      ? unreadNotifications
+                      : undefined
+                }
+              />
+            ))}
+          </div>
+        ))}
       </nav>
-      <div className="border-t border-[var(--iw-border)] p-3">
+      <div className="border-t border-[var(--hairline)] p-3">
         <Link
           href="mailto:john.schibelli@intrawebtech.com"
           className="text-xs text-[var(--iw-teal-light)] transition-colors duration-200 hover:text-[var(--iw-teal)] hover:underline"

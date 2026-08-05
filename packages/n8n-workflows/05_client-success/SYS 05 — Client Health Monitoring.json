@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T15:09:17.273Z",
+  "updatedAt": "2026-04-19T19:25:36.347Z",
   "createdAt": "2026-03-08T22:52:36.783Z",
   "id": "oMCQFip422ufnvMN",
   "name": "SYS 05 — Client Health Monitoring",
@@ -40,6 +40,7 @@
     },
     {
       "parameters": {
+        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
@@ -47,7 +48,11 @@
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
-          "value": {}
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
         },
         "options": {}
       },
@@ -135,7 +140,24 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "PGf6jPoWtxSPlr0h",
+          "mode": "id",
+          "cachedResultName": "SW: Send Google Chat Alert"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "={{ $json.message }}",
+            "priority": "={{ $json.priority }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys10-warn",
@@ -162,7 +184,26 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "FF6VOLCcRxI4uNYD",
+          "mode": "id",
+          "cachedResultName": "SW: Send Email via Resend"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "to": "={{ $json.to }}",
+            "subject": "={{ $json.subject }}",
+            "html": "={{ $json.html }}",
+            "workflowName": "={{ $json.workflowName }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys10-checkin",
@@ -189,7 +230,28 @@
     },
     {
       "parameters": {
-        "source": "parameter",
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1qQFLOSHZsS9JPKP",
+          "mode": "id",
+          "cachedResultName": "SW: Log to Automations Log Sheet"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "workflowName": "={{ $json.workflowName }}",
+            "contactName": "={{ $json.contactName }}",
+            "phone": "={{ $json.phone }}",
+            "eventType": "={{ $json.eventType }}",
+            "status": "={{ $json.status }}",
+            "notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
         "options": {}
       },
       "id": "sys10-log",
@@ -239,98 +301,22 @@
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE",
-          "mode": "list",
-          "cachedResultName": "IntraWeb OS — Master Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 1242959944,
-          "mode": "list",
-          "cachedResultName": "Clients",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/11mUg_0EKtW45lg735vOKnvPNm0AVEmZXxiLClKiCRtE/edit#gid=1242959944"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Client Name",
-              "displayName": "Client Name",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Tier",
-              "displayName": "Tier",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "MRR",
-              "displayName": "MRR",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Start Date",
-              "displayName": "Start Date",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Last Activity",
-              "displayName": "Last Activity",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Health Score",
-              "displayName": "Health Score",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
+        "operation": "executeQuery",
+        "query": "={{ \"INSERT INTO public.os_client_success_clients (hubspot_deal_id, client_name, tier, mrr, start_date, last_activity, health_score) VALUES ('\" + String($json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($json.clientName||'').replace(/'/g,\"''\") + \"','\" + String($json.tier||'').replace(/'/g,\"''\") + \"','','','\" + String($json.lastContactDate||'').replace(/'/g,\"''\") + \"','\" + String($json.healthScore??'').replace(/'/g,\"''\") + \"') ON CONFLICT (hubspot_deal_id) DO UPDATE SET client_name = EXCLUDED.client_name, tier = EXCLUDED.tier, last_activity = EXCLUDED.last_activity, health_score = EXCLUDED.health_score, updated_at = now();\" }}",
         "options": {}
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.7,
+      "id": "936dcd4e-9f47-4896-a5d2-8f751cd37542",
+      "name": "Update Clients Tab",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         2704,
         288
       ],
-      "id": "936dcd4e-9f47-4896-a5d2-8f751cd37542",
-      "name": "Update Clients Tab",
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
@@ -517,7 +503,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "timezone": "America/New_York",
     "callerPolicy": "workflowsFromSameOwner",
     "timeSavedMode": "fixed",
@@ -532,9 +518,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "05bb6d93-c8c4-4715-94c2-3f2f00867c07",
-  "activeVersionId": "ec12e107-4eda-4388-805a-062140366731",
-  "versionCounter": 150,
+  "versionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
+  "activeVersionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
+  "versionCounter": 221,
   "triggerCount": 1,
   "shared": [
     {
@@ -557,18 +543,13 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:05:40.492Z",
-    "createdAt": "2026-04-03T03:05:40.492Z",
-    "versionId": "ec12e107-4eda-4388-805a-062140366731",
+    "updatedAt": "2026-04-19T19:25:36.348Z",
+    "createdAt": "2026-04-19T19:25:36.348Z",
+    "versionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
     "workflowId": "oMCQFip422ufnvMN",
     "nodes": [
       {
-        "parameters": {
-          "content": "## SYS 05 — Client Health Monitoring\n\n**Trigger:** Every Monday 8AM EST (cron).\n\n**What it does:** Fetches active clients (closed_won, invoice_sent, paid), computes a health score from recency of contact and invoice status, writes the score to the HubSpot deal property `client_health_score`. If score is below CONFIG's health warning threshold, sends a Google Chat alert so the team can follow up. Keeps at-risk clients visible.\n\n**Dependencies:** CONFIG, HubSpot, Send Google Chat Alert, Log.",
-          "height": 300,
-          "width": 460,
-          "color": 5
-        },
+        "parameters": {},
         "id": "note-sys10",
         "name": "Note — About this workflow",
         "type": "n8n-nodes-base.stickyNote",
@@ -594,8 +575,8 @@
         "type": "n8n-nodes-base.scheduleTrigger",
         "typeVersion": 1.3,
         "position": [
-          250,
-          300
+          256,
+          288
         ]
       },
       {
@@ -605,58 +586,25 @@
             "__rl": true,
             "value": "1eTTVoSFSlSPvZV4",
             "mode": "id"
-          }
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys10-config",
         "name": "Get Config",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          470,
-          300
+          480,
+          288
         ]
-      },
-      {
-        "parameters": {
-          "resource": "deal",
-          "operation": "getAll",
-          "filters": {
-            "values": [
-              {
-                "propertyName": "dealstage",
-                "operator": "IN",
-                "value": "closed_won,invoice_sent,paid"
-              }
-            ]
-          },
-          "limit": 100,
-          "options": {
-            "properties": [
-              "dealname",
-              "dealstage",
-              "tier",
-              "contact_email",
-              "contact_firstname",
-              "last_activity_date",
-              "client_health_score",
-              "monthly_retainer"
-            ]
-          }
-        },
-        "id": "sys10-get-clients",
-        "name": "Get Active Clients",
-        "type": "n8n-nodes-base.hubspot",
-        "typeVersion": 2,
-        "position": [
-          690,
-          300
-        ],
-        "credentials": {
-          "hubspotApi": {
-            "id": "volH6pGD5psvPC7a",
-            "name": "HubSpot App Token"
-          }
-        }
       },
       {
         "parameters": {
@@ -669,8 +617,8 @@
         "type": "n8n-nodes-base.merge",
         "typeVersion": 3,
         "position": [
-          800,
-          300
+          928,
+          288
         ]
       },
       {
@@ -682,41 +630,9 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          910,
-          300
+          1152,
+          288
         ]
-      },
-      {
-        "parameters": {
-          "resource": "deal",
-          "operation": "update",
-          "dealId": "={{ $json.dealId }}",
-          "updateFields": {
-            "customPropertiesUi": {
-              "customPropertiesValues": [
-                {
-                  "property": "client_health_score",
-                  "value": "={{ $json.healthScore }}"
-                }
-              ]
-            }
-          },
-          "options": {}
-        },
-        "id": "sys10-update-hs",
-        "name": "Update HubSpot Score",
-        "type": "n8n-nodes-base.hubspot",
-        "typeVersion": 2,
-        "position": [
-          1130,
-          300
-        ],
-        "credentials": {
-          "hubspotApi": {
-            "id": "volH6pGD5psvPC7a",
-            "name": "HubSpot App Token"
-          }
-        }
       },
       {
         "parameters": {
@@ -746,8 +662,8 @@
         "type": "n8n-nodes-base.if",
         "typeVersion": 2,
         "position": [
-          1350,
-          300
+          1600,
+          288
         ]
       },
       {
@@ -759,22 +675,39 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1570,
-          200
+          1824,
+          208
         ]
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_GOOGLE_CHAT_ALERT_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "PGf6jPoWtxSPlr0h",
+            "mode": "id",
+            "cachedResultName": "SW: Send Google Chat Alert"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "message": "={{ $json.message }}",
+              "priority": "={{ $json.priority }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys10-warn",
         "name": "Send Warning",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          1790,
-          200
+          2048,
+          208
         ]
       },
       {
@@ -786,62 +719,42 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          2010,
-          200
+          2272,
+          208
         ]
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_SEND_EMAIL_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "FF6VOLCcRxI4uNYD",
+            "mode": "id",
+            "cachedResultName": "SW: Send Email via Resend"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "to": "={{ $json.to }}",
+              "subject": "={{ $json.subject }}",
+              "html": "={{ $json.html }}",
+              "workflowName": "={{ $json.workflowName }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys10-checkin",
         "name": "Send Check-in",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2230,
-          200
+          2496,
+          208
         ]
-      },
-      {
-        "parameters": {
-          "operation": "append",
-          "documentId": {
-            "mode": "id",
-            "value": "={{ $json.config.google.masterSheetId }}"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "Clients"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "Client Name": "={{ $json.clientName }}",
-              "Tier": "={{ $json.tier }}",
-              "MRR": "=0",
-              "Start Date": "",
-              "Last Activity": "={{ $json.lastContactDate }}",
-              "Health Score": "={{ $json.healthScore }}"
-            }
-          },
-          "options": {}
-        },
-        "id": "sys10-sheets",
-        "name": "Update Clients Tab",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
-        "position": [
-          1570,
-          450
-        ],
-        "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "IJzDJS1jpbItegZD",
-            "name": "Google Sheets account 2"
-          }
-        }
       },
       {
         "parameters": {
@@ -852,23 +765,123 @@
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
         "position": [
-          1790,
-          450
+          2944,
+          288
         ]
       },
       {
         "parameters": {
-          "source": "parameter",
-          "workflowId": "REPLACE_WITH_LOG_WORKFLOW_ID"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "1qQFLOSHZsS9JPKP",
+            "mode": "id",
+            "cachedResultName": "SW: Log to Automations Log Sheet"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "workflowName": "={{ $json.workflowName }}",
+              "contactName": "={{ $json.contactName }}",
+              "phone": "={{ $json.phone }}",
+              "eventType": "={{ $json.eventType }}",
+              "status": "={{ $json.status }}",
+              "notes": "={{ $json.notes }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
         },
         "id": "sys10-log",
         "name": "Log to Sheet",
         "type": "n8n-nodes-base.executeWorkflow",
         "typeVersion": 1.3,
         "position": [
-          2010,
-          450
+          3168,
+          288
         ]
+      },
+      {
+        "parameters": {
+          "authentication": "appToken",
+          "resource": "deal",
+          "operation": "update",
+          "dealId": {
+            "__rl": true,
+            "value": "=",
+            "mode": "id"
+          },
+          "updateFields": {
+            "customPropertiesUi": {
+              "customPropertiesValues": [
+                {
+                  "property": "={{ $('Get Active Clients').item.json.dealId }}",
+                  "value": "={{ $json.healthScore }}"
+                }
+              ]
+            }
+          }
+        },
+        "type": "n8n-nodes-base.hubspot",
+        "typeVersion": 2.2,
+        "position": [
+          1360,
+          288
+        ],
+        "id": "767dfc62-a165-4cd1-ba4b-d86ff4baaa62",
+        "name": "Update HubSpot Score",
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "={{ \"INSERT INTO public.os_client_success_clients (hubspot_deal_id, client_name, tier, mrr, start_date, last_activity, health_score) VALUES ('\" + String($json.dealId||'').replace(/'/g,\"''\") + \"','\" + String($json.clientName||'').replace(/'/g,\"''\") + \"','\" + String($json.tier||'').replace(/'/g,\"''\") + \"','','','\" + String($json.lastContactDate||'').replace(/'/g,\"''\") + \"','\" + String($json.healthScore??'').replace(/'/g,\"''\") + \"') ON CONFLICT (hubspot_deal_id) DO UPDATE SET client_name = EXCLUDED.client_name, tier = EXCLUDED.tier, last_activity = EXCLUDED.last_activity, health_score = EXCLUDED.health_score, updated_at = now();\" }}",
+          "options": {}
+        },
+        "id": "936dcd4e-9f47-4896-a5d2-8f751cd37542",
+        "name": "Update Clients Tab",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
+        "position": [
+          2704,
+          288
+        ],
+        "credentials": {
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "authentication": "appToken",
+          "resource": "deal",
+          "operation": "getAll",
+          "filters": {}
+        },
+        "type": "n8n-nodes-base.hubspot",
+        "typeVersion": 2.2,
+        "position": [
+          672,
+          224
+        ],
+        "id": "f4aaad30-d974-4f96-ac49-54f3cac91265",
+        "name": "Get Active Clients",
+        "credentials": {
+          "hubspotAppToken": {
+            "id": "volH6pGD5psvPC7a",
+            "name": "HubSpot App Token account"
+          }
+        }
       }
     ],
     "connections": {
@@ -887,23 +900,12 @@
         "main": [
           [
             {
-              "node": "Get Active Clients",
-              "type": "main",
-              "index": 0
-            },
-            {
               "node": "Merge Deals + Config",
               "type": "main",
               "index": 1
-            }
-          ]
-        ]
-      },
-      "Get Active Clients": {
-        "main": [
-          [
+            },
             {
-              "node": "Merge Deals + Config",
+              "node": "Get Active Clients",
               "type": "main",
               "index": 0
             }
@@ -926,17 +928,6 @@
           [
             {
               "node": "Update HubSpot Score",
-              "type": "main",
-              "index": 0
-            }
-          ]
-        ]
-      },
-      "Update HubSpot Score": {
-        "main": [
-          [
-            {
-              "node": "Below Threshold?",
               "type": "main",
               "index": 0
             }
@@ -1005,6 +996,28 @@
           ]
         ]
       },
+      "Prep Log": {
+        "main": [
+          [
+            {
+              "node": "Log to Sheet",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update HubSpot Score": {
+        "main": [
+          [
+            {
+              "node": "Below Threshold?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
       "Update Clients Tab": {
         "main": [
           [
@@ -1016,11 +1029,11 @@
           ]
         ]
       },
-      "Prep Log": {
+      "Get Active Clients": {
         "main": [
           [
             {
-              "node": "Log to Sheet",
+              "node": "Merge Deals + Config",
               "type": "main",
               "index": 0
             }
@@ -1034,50 +1047,18 @@
     "autosaved": false,
     "workflowPublishHistory": [
       {
-        "createdAt": "2026-04-03T03:05:40.534Z",
-        "id": 1384,
+        "createdAt": "2026-04-19T19:25:36.401Z",
+        "id": 3045,
         "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "ec12e107-4eda-4388-805a-062140366731",
+        "versionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
         "event": "activated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       },
       {
-        "createdAt": "2026-04-03T03:06:02.095Z",
-        "id": 1444,
+        "createdAt": "2026-04-19T19:25:36.383Z",
+        "id": 3044,
         "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "ec12e107-4eda-4388-805a-062140366731",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:42:44.021Z",
-        "id": 1492,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "ec12e107-4eda-4388-805a-062140366731",
-        "event": "activated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:05:40.521Z",
-        "id": 1383,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "ec12e107-4eda-4388-805a-062140366731",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:06:02.076Z",
-        "id": 1443,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "ec12e107-4eda-4388-805a-062140366731",
-        "event": "deactivated",
-        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
-      },
-      {
-        "createdAt": "2026-04-03T03:42:44.009Z",
-        "id": 1491,
-        "workflowId": "oMCQFip422ufnvMN",
-        "versionId": "ec12e107-4eda-4388-805a-062140366731",
+        "versionId": "8157893a-05b4-401e-ba50-ee49e32e7528",
         "event": "deactivated",
         "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
       }

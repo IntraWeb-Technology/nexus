@@ -1,6 +1,8 @@
 import { PortalDataUnavailable } from '@/components/portal/PortalDataUnavailable'
 import { Card } from '@/components/ui/Card'
 import { getPortalBundle } from '@/lib/data/portal'
+import { fetchDeal } from '@/lib/hubspot/client'
+import { isHubSpotConfigured } from '@/lib/hubspot/config'
 import { createServerSupabaseForUser } from '@/lib/supabase/server'
 import type { NotificationPreferences } from '@/lib/supabase/types'
 import { SettingsPreferences } from './preferences'
@@ -14,6 +16,30 @@ function AccountRow({ label, children }: { label: string; children: React.ReactN
   )
 }
 
+function firstNonEmpty(...values: Array<string | null | undefined>): string | null {
+  for (const value of values) {
+    const next = value?.trim()
+    if (next) return next
+  }
+  return null
+}
+
+function readableProjectName(slug: string): string {
+  if (slug.startsWith('cl-')) return 'Your project'
+  return slug.replace(/[-_]+/g, ' ').trim() || 'Your project'
+}
+
+function formatMetadataDate(value: string | null): string {
+  if (!value) return 'Not set'
+  const ms = Date.parse(value)
+  if (Number.isNaN(ms)) return value
+  return new Date(ms).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 export default async function SettingsPage() {
   const bundle = await getPortalBundle()
   const supabase = await createServerSupabaseForUser()
@@ -25,6 +51,32 @@ export default async function SettingsPage() {
     .maybeSingle()
 
   const p = (prefs ?? null) as NotificationPreferences | null
+  const hubspotDeal = isHubSpotConfigured() && bundle.project.hubspot_deal_id
+    ? await fetchDeal(bundle.project.hubspot_deal_id, [
+        'dealname',
+        'status_for_projects',
+        'pipeline_stage_for_projects',
+        'target_due_date_for_projects',
+        'tier',
+        'deal_tier',
+        'project_tier',
+        'service_tier',
+      ]).catch(() => null)
+    : null
+
+  const dealProps = hubspotDeal?.properties ?? {}
+  const projectName =
+    firstNonEmpty(dealProps.dealname, bundle.client.company, readableProjectName(bundle.project.slug)) ??
+    'Your project'
+  const status = firstNonEmpty(dealProps.status_for_projects)
+  const stage = firstNonEmpty(dealProps.pipeline_stage_for_projects)
+  const dueDate = firstNonEmpty(dealProps.target_due_date_for_projects)
+  const tier = firstNonEmpty(
+    dealProps.tier,
+    dealProps.deal_tier,
+    dealProps.project_tier,
+    dealProps.service_tier,
+  )
 
   return (
     <div className="iw-animate-slide-up space-y-6">
@@ -45,18 +97,21 @@ export default async function SettingsPage() {
           <AccountRow label="Email">{bundle.client.email}</AccountRow>
           <AccountRow label="Phone">{bundle.client.phone ?? '—'}</AccountRow>
           <AccountRow label="Project">
-            <span className="iw-mono">{bundle.project.slug}</span>
+            {projectName}
           </AccountRow>
-          <AccountRow label="Contact ref">
-            <span className="iw-mono break-all text-xs text-[var(--iw-text-2)]">
-              {bundle.client.hubspot_contact_id ?? '—'}
-            </span>
-          </AccountRow>
-          <AccountRow label="Engagement ref">
-            <span className="iw-mono break-all text-xs text-[var(--iw-text-2)]">
-              {bundle.project.hubspot_deal_id ?? '—'}
-            </span>
-          </AccountRow>
+        </dl>
+      </Card>
+
+      <Card>
+        <p className="iw-label mb-1">Engagement metadata</p>
+        <p className="mb-3 text-xs text-[var(--iw-text-3)]">
+          Project metadata synced from HubSpot.
+        </p>
+        <dl>
+          <AccountRow label="Status">{status ?? 'Not set'}</AccountRow>
+          <AccountRow label="Stage">{stage ?? 'Not set'}</AccountRow>
+          <AccountRow label="Due date">{formatMetadataDate(dueDate)}</AccountRow>
+          <AccountRow label="Tier">{tier ?? 'Not set'}</AccountRow>
         </dl>
       </Card>
 

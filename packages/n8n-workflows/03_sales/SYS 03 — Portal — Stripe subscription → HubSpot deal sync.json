@@ -1,0 +1,175 @@
+{
+  "name": "SYS 03 — Portal — Stripe subscription → HubSpot deal sync",
+  "description": "Receives canonical Stripe subscription sync payload from portal and patches HubSpot deal subscription mirror properties.",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "portal-stripe-subscription-sync",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1bece0f-26de-4b8f-9972-7542deadc001",
+      "name": "Subscription Sync Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const root = $input.first().json ?? {};\nconst body = root.body && typeof root.body === 'object' && !Array.isArray(root.body) ? root.body : root;\nconst dealId = body.hubspot_deal_id ? String(body.hubspot_deal_id) : '';\nif (!dealId) {\n  return [{ json: { skip: true, reason: 'missing_hubspot_deal_id', received: root } }];\n}\nconst status = body.status ? String(body.status) : 'incomplete';\nconst amount = Number.isFinite(Number(body.amount_cents)) ? String(Math.round(Number(body.amount_cents)) / 100) : '';\nconst payload = {\n  properties: {\n    stripe_subscription_id: body.stripe_subscription_id ? String(body.stripe_subscription_id) : '',\n    iw_subscription_status: status,\n    iw_current_period_start: body.current_period_start ? String(body.current_period_start) : '',\n    iw_current_period_end: body.current_period_end ? String(body.current_period_end) : '',\n    iw_cancel_at_period_end: body.cancel_at_period_end ? 'true' : 'false',\n    iw_latest_invoice_id: body.latest_invoice_id ? String(body.latest_invoice_id) : '',\n    iw_last_invoice_status: status,\n    iw_last_invoice_amount: amount,\n    iw_next_billing_date: body.current_period_end ? String(body.current_period_end) : ''\n  }\n};\nreturn [{ json: { skip: false, dealId, payload } }];"
+      },
+      "id": "a1bece0f-26de-4b8f-9972-7542deadc002",
+      "name": "Build Deal Patch Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        470,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "56042f0e-53a8-41de-95a8-27fddcdeb001",
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1bece0f-26de-4b8f-9972-7542deadc003",
+      "name": "Missing Deal ID?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        700,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ `https://api.hubapi.com/crm/v3/objects/deals/${$json.dealId}` }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "hubspotAppToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "a1bece0f-26de-4b8f-9972-7542deadc004",
+      "name": "PATCH HubSpot Deal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        360
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "volH6pGD5psvPC7a",
+          "name": "HubSpot App Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a1bece0f-26de-4b8f-9972-7542deadc005",
+      "name": "Respond JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.3,
+      "position": [
+        1180,
+        280
+      ]
+    }
+  ],
+  "connections": {
+    "Subscription Sync Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Deal Patch Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Deal Patch Payload": {
+      "main": [
+        [
+          {
+            "node": "Missing Deal ID?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Missing Deal ID?": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "PATCH HubSpot Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PATCH HubSpot Deal": {
+      "main": [
+        [
+          {
+            "node": "Respond JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

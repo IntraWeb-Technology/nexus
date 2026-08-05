@@ -1,0 +1,479 @@
+{
+  "updatedAt": "2026-04-18T22:45:41.160Z",
+  "createdAt": "2026-03-04T01:48:24.122Z",
+  "id": "MgZCelFpf2uOuSzS",
+  "name": "06 — Post-Job Review Request",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "job-complete-trigger",
+        "options": {}
+      },
+      "id": "49138b52-551c-407f-addc-203843e142dc",
+      "name": "Job Complete Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1200,
+        208
+      ],
+      "webhookId": "wh-06-job-complete",
+      "notes": "Trigger: HubSpot Workflow when deal stage = 'Job Complete'. POST contact and deal data to this URL."
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nconst dealId = body.objectId || body.deal_id || body.hs_object_id || '';\nconst dealStage = body.properties?.dealstage?.value || body.dealstage || '';\nconst dealName = body.properties?.dealname?.value || body.dealname || '';\nconst contactId = body.associations?.contacts?.results?.[0]?.id || body.contact_id || '';\n\n// Validate stage\nconst isJobComplete = dealStage.includes('job_complete') || dealStage.includes('complete');\n\nlet contactPhone = body.contact_phone || '';\nif (contactPhone && !contactPhone.startsWith('+')) {\n  contactPhone = '+1' + contactPhone.replace(/\\D/g, '');\n}\n\nconst firstname = body.contact_firstname || body.contact_name?.split(' ')[0] || 'there';\n\nreturn [{\n  json: {\n    isJobComplete,\n    dealId,\n    dealStage,\n    dealName,\n    contactId,\n    contactPhone,\n    firstname,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "7b08d719-3197-44a8-acb4-bd97107bcf6b",
+      "name": "Parse Job Complete Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-job-complete",
+              "leftValue": "={{$json.isJobComplete}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            },
+            {
+              "id": "cond-has-contact",
+              "leftValue": "={{$json.contactId}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1686cf04-7ce0-4a01-bf74-90cfe2dc72cb",
+      "name": "Is Job Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.contactId}}?properties=firstname,lastname,phone_e164,phone,review_request_sent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "9595cc81-5428-451b-8d8b-d715bdec007e",
+      "name": "Get Contact Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -480,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-no-review-sent",
+              "leftValue": "={{$json.properties.review_request_sent.value}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "d283430d-3bac-486b-93f5-c136a7d76651",
+      "name": "Review Already Sent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "d765a016-6dfe-4bff-9e1d-14c8d25de058",
+      "name": "Wait 1 Hour",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "16598e96-c012-4f98-97c8-8a069a23566e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const contact = $input.first().json;\nconst jobData = $('Parse Job Complete Data').item.json;\n\nconst firstname = contact.properties?.firstname?.value || jobData.firstname || 'there';\nconst phone = contact.properties?.phone_e164?.value || contact.properties?.phone?.value || jobData.contactPhone;\nconst reviewLink = $vars.GOOGLE_REVIEW_LINK || 'https://g.page/r/YOUR_GOOGLE_REVIEW_LINK';\n\nreturn [{\n  json: {\n    ...jobData,\n    firstname,\n    phone,\n    reviewLink,\n    sentAt: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "3afdd42b-0874-4153-9337-f8f89cd6d853",
+      "name": "Build Review SMS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{$vars.TWILIO_ACCOUNT_SID}}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{$json.phone}}"
+            },
+            {
+              "name": "From",
+              "value": "={{$vars.TWILIO_FROM}}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{$json.firstname}}, thanks for choosing Apex Comfort! If we did a great job today, we'd love a quick Google review — it means the world to us: {{$json.reviewLink}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2054a654-7ee6-43fa-939f-69407bbed5df",
+      "name": "Send Review Request SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$('Parse Job Complete Data').item.json.contactId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"review_request_sent\": \"{{ $('Build Review SMS').item.json.sentAt }}\",\n    \"last_job_date\": \"{{ new Date().toISOString().split('T')[0] }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "67a62dfe-a532-408c-acc3-5effd2973bf4",
+      "name": "Update Contact — Log Review Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$('Parse Job Complete Data').item.json.contactId}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"lifecyclestage\": \"customer\",\n    \"last_job_date\": \"{{ new Date().toISOString().split('T')[0] }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "8809338c-8d5e-45f7-b65d-57db110dafeb",
+      "name": "Update Lifecycle to Customer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$('Build Review SMS').item.json.sentAt}}",
+            "Workflow Name": "06-Post-Job-Review",
+            "Event Type": "REVIEW_REQUEST_SENT",
+            "Contact Name": "={{$('Build Review SMS').item.json.firstname}}",
+            "Phone": "={{$('Build Review SMS').item.json.phone}}",
+            "Email": "",
+            "Deal ID": "={{$('Parse Job Complete Data').item.json.dealId}}",
+            "Contact ID": "={{$('Parse Job Complete Data').item.json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "=Google review SMS sent 1hr after Job Complete. Deal: {{$('Parse Job Complete Data').item.json.dealName}}",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "Job Complete",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "de17e0cb-032a-4166-9765-89ecccd41157",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "cad04bbc-26e1-4848-9551-8df6035debb8",
+      "name": "Not Job Complete Stage",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        432
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "433ba606-9647-4245-996e-7b94e564f39e",
+      "name": "Review Already Sent — Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ]
+    }
+  ],
+  "connections": {
+    "Job Complete Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse Job Complete Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Job Complete Data": {
+      "main": [
+        [
+          {
+            "node": "Is Job Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Job Complete?": {
+      "main": [
+        [
+          {
+            "node": "Get Contact Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Not Job Complete Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contact Details": {
+      "main": [
+        [
+          {
+            "node": "Review Already Sent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Already Sent?": {
+      "main": [
+        [
+          {
+            "node": "Wait 1 Hour",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Review Already Sent — Skip",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 1 Hour": {
+      "main": [
+        [
+          {
+            "node": "Build Review SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Review SMS": {
+      "main": [
+        [
+          {
+            "node": "Send Review Request SMS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Review Request SMS": {
+      "main": [
+        [
+          {
+            "node": "Update Contact — Log Review Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Contact — Log Review Sent": {
+      "main": [
+        [
+          {
+            "node": "Update Lifecycle to Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lifecycle to Customer": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "2da15a68-cc71-4e5e-8848-031dbb5bce5f",
+  "activeVersionId": null,
+  "versionCounter": 6,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:48:24.131Z",
+      "createdAt": "2026-03-04T01:48:24.131Z",
+      "role": "workflow:owner",
+      "workflowId": "MgZCelFpf2uOuSzS",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:34.370Z",
+      "createdAt": "2026-03-04T01:54:34.370Z",
+      "id": "6DOAorHv7f45HDuG",
+      "name": "sms"
+    },
+    {
+      "updatedAt": "2026-03-04T01:56:59.672Z",
+      "createdAt": "2026-03-04T01:56:59.672Z",
+      "id": "XizbPkijbvUU9hEY",
+      "name": "reviews"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    },
+    {
+      "updatedAt": "2026-03-04T01:55:23.935Z",
+      "createdAt": "2026-03-04T01:55:23.935Z",
+      "id": "q23CJPNcCiuRKcaa",
+      "name": "retention"
+    }
+  ],
+  "activeVersion": null
+}

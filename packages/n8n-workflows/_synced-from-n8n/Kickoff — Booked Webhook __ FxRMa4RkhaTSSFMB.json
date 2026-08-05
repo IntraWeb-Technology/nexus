@@ -1,0 +1,113 @@
+{
+  "updatedAt": "2026-04-19T19:25:29.614Z",
+  "createdAt": "2026-04-13T23:33:34.350Z",
+  "id": "FxRMa4RkhaTSSFMB",
+  "name": "Kickoff — Booked Webhook",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kickoff-booked",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "kickoff-booked-webhook",
+      "name": "Kickoff Booked Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "kickoff-booked-placeholder"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Incoming body is in $json (or $json.body depending on n8n version).\nconst root = $input.first().json;\nconst body = root.body && typeof root.body === 'object' && !Array.isArray(root.body) ? root.body : root;\nreturn [{ json: { received: true, payload: body } }];"
+      },
+      "id": "kickoff-booked-parse",
+      "name": "Parse payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, received: $json.received } }}",
+        "options": {}
+      },
+      "id": "kickoff-booked-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Kickoff Booked Webhook": {
+      "main": [
+        [
+          {
+            "node": "Parse payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse payload": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": true
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "bdb12db6-45fe-492c-8b8a-23d261b8d91c",
+  "activeVersionId": null,
+  "versionCounter": 18,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-13T23:33:34.355Z",
+      "createdAt": "2026-04-13T23:33:34.355Z",
+      "role": "workflow:owner",
+      "workflowId": "FxRMa4RkhaTSSFMB",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

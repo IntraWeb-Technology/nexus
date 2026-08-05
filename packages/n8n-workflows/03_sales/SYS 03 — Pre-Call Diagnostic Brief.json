@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T03:42:44.707Z",
+  "updatedAt": "2026-04-21T02:56:25.301Z",
   "createdAt": "2026-02-23T02:02:11.116Z",
   "id": "mH67fjS4eC9amV4n",
   "name": "SYS 03 — Pre-Call Diagnostic Brief",
@@ -22,7 +22,8 @@
       ],
       "id": "3282c553-1e85-47d0-90b7-17ce74b48559",
       "name": "📅 Cal.com Booking Webhook",
-      "webhookId": "7a169507-88e1-432e-a657-16dd7b80dc02"
+      "webhookId": "7a169507-88e1-432e-a657-16dd7b80dc02",
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -41,7 +42,35 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst payload = input.payload || input.body || input;\n\n// Cal.com sends attendees as an array\nconst attendee = payload?.attendees?.[0] || {};\nconst organizer = payload?.organizer || {};\n\nconst firstName = attendee.name?.split(' ')[0] || attendee.firstName || '';\nconst lastName = attendee.name?.split(' ').slice(1).join(' ') || attendee.lastName || '';\nconst email = attendee.email || '';\nconst timezone = attendee.timeZone || 'US/Eastern';\nconst eventTitle = payload.title || payload.type || 'Discovery Call';\nconst startTime = payload.startTime || '';\nconst endTime = payload.endTime || '';\nconst meetingUrl = payload.metadata?.videoCallUrl || payload.videoCallUrl || '';\nconst bookingUid = payload.uid || '';\n\n// Format date nicely\nlet formattedDate = '';\ntry {\n  const d = new Date(startTime);\n  formattedDate = d.toLocaleDateString('en-US', { \n    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',\n    hour: '2-digit', minute: '2-digit', timeZone: timezone\n  });\n} catch(e) {\n  formattedDate = startTime;\n}\n\nreturn [{\n  json: {\n    firstName,\n    lastName,\n    fullName: `${firstName} ${lastName}`.trim(),\n    email,\n    timezone,\n    eventTitle,\n    startTime,\n    formattedDate,\n    meetingUrl,\n    bookingUid\n  }\n}];"
+        "workflowId": {
+          "__rl": true,
+          "value": "1eTTVoSFSlSPvZV4",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+          "cachedResultName": "CONFIG — Global Settings"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "c2f4a8e1-9d3b-4c7a-9f11-0b7ec9a1f001",
+      "name": "GetConfig",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        -2032,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('📅 Cal.com Booking Webhook').first().json;\nconst payload = input.payload || input.body || input;\n\n// Cal.com sends attendees as an array\nconst attendee = payload?.attendees?.[0] || {};\nconst organizer = payload?.organizer || {};\n\nconst firstName = attendee.name?.split(' ')[0] || attendee.firstName || '';\nconst lastName = attendee.name?.split(' ').slice(1).join(' ') || attendee.lastName || '';\nconst email = attendee.email || '';\nconst timezone = attendee.timeZone || 'US/Eastern';\nconst eventTitle = payload.title || payload.type || 'Discovery Call';\nconst startTime = payload.startTime || '';\nconst endTime = payload.endTime || '';\nconst meetingUrl = payload.metadata?.videoCallUrl || payload.videoCallUrl || '';\nconst bookingUid = payload.uid || '';\n\n// Format date nicely\nlet formattedDate = '';\ntry {\n  const d = new Date(startTime);\n  formattedDate = d.toLocaleDateString('en-US', { \n    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',\n    hour: '2-digit', minute: '2-digit', timeZone: timezone\n  });\n} catch(e) {\n  formattedDate = startTime;\n}\n\nreturn [{\n  json: {\n    firstName,\n    lastName,\n    fullName: `${firstName} ${lastName}`.trim(),\n    email,\n    timezone,\n    eventTitle,\n    startTime,\n    formattedDate,\n    meetingUrl,\n    bookingUid\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -55,8 +84,8 @@
     {
       "parameters": {
         "sendTo": "={{ $json.email }}",
-        "subject": "Quick prep for our call, {{ $json.firstName }} (takes 3 min)",
-        "message": "<p>Hi {{ $json.firstName }},</p>\n\n<p>Looking forward to our call on <strong>{{ $json.formattedDate }}</strong>.</p>\n\n<p>To make sure we use the time well, I put together 6 quick questions. Your answers help me walk in with specific ideas for your situation — not a generic pitch.</p>\n\n<p><strong>It takes about 3 minutes:</strong></p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your pre-call prep here</a></p>\n\n<p>If you'd rather just talk through it live, no worries — we'll cover it on the call.</p>\n\n<p>See you soon,<br>John Schibelli<br>Founder, IntraWeb Technologies<br><a href=\"https://intrawebtech.com\">intrawebtech.com</a></p>",
+        "subject": "=Quick prep for our call, {{ $json.firstName }} (takes 3 min)",
+        "message": "=<p>Hi {{ $json.firstName }},</p>\n\n<p>Looking forward to our call on <strong>{{ $json.formattedDate }}</strong>.</p>\n\n<p>To make sure we use the time well, I put together 6 quick questions. Your answers help me walk in with specific ideas for your situation — not a generic pitch.</p>\n\n<p><strong>It takes about 3 minutes:</strong></p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your pre-call prep here</a></p>\n\n<p>If you'd rather just talk through it live, no worries — we'll cover it on the call.</p>\n\n<p>See you soon,<br>John Schibelli<br>Founder, IntraWeb Technologies<br><a href=\"https://intrawebtech.com\">intrawebtech.com</a></p>",
         "options": {
           "replyTo": "john.schibelli@intrawebtech.com"
         }
@@ -94,27 +123,22 @@
     },
     {
       "parameters": {
-        "operation": "getAll",
-        "documentId": {
-          "__rl": true,
-          "value": "1045Srb-IOkEU_qHjvGzJD_C42m2_a_0ffd_8HwIZrjs",
-          "mode": "list",
-          "cachedResultName": "IntraWeb — Pre-Call Diagnostic Brief",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1045Srb-IOkEU_qHjvGzJD_C42m2_a_0ffd_8HwIZrjs/edit?usp=drivesdk"
-        }
+        "operation": "executeQuery",
+        "query": "{{ \"SELECT COALESCE((SELECT email FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '') AS email, COALESCE((SELECT payload FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '{}'::jsonb) AS payload;\" }}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
+      "id": "2a854935-32da-48b3-b604-8c1ab9268349",
+      "name": "🔍 Check Form Submitted",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
         -1248,
         192
       ],
-      "id": "2a854935-32da-48b3-b604-8c1ab9268349",
-      "name": "🔍 Check Form Submitted",
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "pKS06498CxELp8nS",
-          "name": "Google Sheets account"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
@@ -123,16 +147,18 @@
         "conditions": {
           "options": {
             "caseSensitive": false,
-            "typeValidation": "loose"
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
           },
           "conditions": [
             {
               "id": "form-check",
               "leftValue": "={{ $json.email }}",
-              "rightValue": "",
               "operator": {
                 "type": "string",
-                "operation": "notEmpty"
+                "operation": "notEmpty",
+                "singleValue": true
               }
             }
           ],
@@ -152,8 +178,8 @@
     {
       "parameters": {
         "sendTo": "={{ $('📋 Parse Booking Data').first().json.email }}",
-        "subject": "One quick thing before our call, {{ $('📋 Parse Booking Data').first().json.firstName }}",
-        "message": "<p>Hi {{ $('📋 Parse Booking Data').first().json.firstName }},</p>\n\n<p>Just a quick nudge — our call is coming up and I want to make sure I have enough context to be genuinely useful to you.</p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your 3-minute prep form here</a></p>\n\n<p>No pressure if you'd rather just wing it — I'll see you on the call either way.</p>\n\n<p>John</p>",
+        "subject": "=One quick thing before our call, {{ $('📋 Parse Booking Data').first().json.firstName }}",
+        "message": "=<p>Hi {{ $('📋 Parse Booking Data').first().json.firstName }},</p>\n\n<p>Just a quick nudge — our call is coming up and I want to make sure I have enough context to be genuinely useful to you.</p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your 3-minute prep form here</a></p>\n\n<p>No pressure if you'd rather just wing it — I'll see you on the call either way.</p>\n\n<p>John</p>",
         "options": {
           "replyTo": "john@intrawebtech.com"
         }
@@ -189,7 +215,7 @@
               "role": "system"
             },
             {
-              "content": "=Generate a pre-call diagnostic brief for this prospect:\n\nName: {{ $('📋 Parse Booking Data').first().json.fullName }}\nCall time: {{ $('📋 Parse Booking Data').first().json.formattedDate }}\n\nIntake Form Responses:\n- Revenue model: {{ $json['What is your company revenue model?'] || 'Not provided' }}\n- Team size: {{ $json['How many employees or contractors are on your team?'] || 'Not provided' }}\n- Biggest time drain: {{ $json['Where does your team lose the most time each week?'] || 'Not provided' }}\n- AI experience: {{ $json['Have you tried AI tools before? What happened?'] || 'Not provided' }}\n- 90-day win: {{ $json['What would a win look like 90 days from now?'] || 'Not provided' }}\n- Tech stack: {{ $json['What is your current tech stack?'] || 'Not provided' }}\n\nGenerate a brief with these exact sections:\n\n## Company Snapshot\n(2-3 sentences on what you know about their situation based on responses)\n\n## Primary Pain Points\n(Rank top 3 by ROI impact with a one-line explanation each)\n\n## Quick Wins (30 Days)\n(2-3 specific workflows IntraWeb could automate immediately)\n\n## Diagnostic Focus Areas\n(What the $10K assessment would investigate for this company)\n\n## Cost of Inaction\n(Specific framing of what staying the same costs them — time, money, competitive position)\n\n## Suggested Talking Points\n(3-4 specific questions John should ask on this call to qualify and advance the deal)\n\nBe direct and specific. No fluff."
+              "content": "=Generate a pre-call diagnostic brief for this prospect:\n\nName: {{ $('📋 Parse Booking Data').first().json.fullName }}\nCall time: {{ $('📋 Parse Booking Data').first().json.formattedDate }}\n\nIntake Form Responses:\n- Revenue model: {{ ($json.payload && $json.payload['What is your company revenue model?']) || 'Not provided' }}\n- Team size: {{ ($json.payload && $json.payload['How many employees or contractors are on your team?']) || 'Not provided' }}\n- Biggest time drain: {{ ($json.payload && $json.payload['Where does your team lose the most time each week?']) || 'Not provided' }}\n- AI experience: {{ ($json.payload && $json.payload['Have you tried AI tools before? What happened?']) || 'Not provided' }}\n- 90-day win: {{ ($json.payload && $json.payload['What would a win look like 90 days from now?']) || 'Not provided' }}\n- Tech stack: {{ ($json.payload && $json.payload['What is your current tech stack?']) || 'Not provided' }}\n\nGenerate a brief with these exact sections:\n\n## Company Snapshot\n(2-3 sentences on what you know about their situation based on responses)\n\n## Primary Pain Points\n(Rank top 3 by ROI impact with a one-line explanation each)\n\n## Quick Wins (30 Days)\n(2-3 specific workflows IntraWeb could automate immediately)\n\n## Diagnostic Focus Areas\n(What the $10K assessment would investigate for this company)\n\n## Cost of Inaction\n(Specific framing of what staying the same costs them — time, money, competitive position)\n\n## Suggested Talking Points\n(3-4 specific questions John should ask on this call to qualify and advance the deal)\n\nBe direct and specific. No fluff."
             }
           ]
         },
@@ -198,8 +224,8 @@
       "type": "@n8n/n8n-nodes-langchain.openAi",
       "typeVersion": 1.8,
       "position": [
-        -800,
-        96
+        -832,
+        64
       ],
       "id": "89e7046f-eb68-40bf-ab36-221198187230",
       "name": "🤖 Generate Diagnostic Brief",
@@ -212,7 +238,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const booking = $('📋 Parse Booking Data').first().json;\nconst formData = $('🔍 Check Form Submitted').first().json;\nconst aiResponse = $input.first().json;\n\n// Extract the brief text from OpenAI response\nconst briefText = aiResponse?.message?.content \n  || aiResponse?.text \n  || aiResponse?.choices?.[0]?.message?.content\n  || 'Brief generation failed — please generate manually.';\n\nconst docTitle = `${booking.fullName} — Pre-Call Diagnostic Brief — ${new Date().toLocaleDateString('en-US')}`;\n\nreturn [{\n  json: {\n    ...booking,\n    briefText,\n    docTitle,\n    formSubmitted: !!formData.email,\n    formData\n  }\n}];"
+        "jsCode": "const booking = $('📋 Parse Booking Data').first().json;\nconst raw = $('🔍 Check Form Submitted').first().json;\nconst p = raw && raw.payload && typeof raw.payload === 'object' ? raw.payload : {};\nconst formData = { ...raw, ...p };\nconst aiResponse = $input.first().json;\n\n// Extract the brief text from OpenAI response\nconst briefText = aiResponse?.message?.content \n  || aiResponse?.text \n  || aiResponse?.choices?.[0]?.message?.content\n  || 'Brief generation failed — please generate manually.';\n\nconst docTitle = `${booking.fullName} — Pre-Call Diagnostic Brief — ${new Date().toLocaleDateString('en-US')}`;\n\nreturn [{\n  json: {\n    ...booking,\n    briefText,\n    docTitle,\n    formSubmitted: !!(raw && String(raw.email || '').trim()),\n    formData\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -246,8 +272,8 @@
     {
       "parameters": {
         "sendTo": "john.schibelli@intrawebtech.com",
-        "subject": "🔥 Pre-Call Brief Ready: {{ $('📋 Parse Booking Data').first().json.fullName }} — {{ $('📋 Parse Booking Data').first().json.formattedDate }}",
-        "message": "<p><strong>Your pre-call diagnostic brief is ready.</strong></p>\n\n<table style='border-collapse:collapse;width:100%;margin-bottom:16px'>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold;width:140px'>Prospect</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.fullName }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Email</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.email }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Call Time</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.formattedDate }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Form Submitted</td><td style='padding:8px'>{{ $('📄 Assemble Brief').first().json.formSubmitted ? '✅ Yes' : '⚠️ No — brief generated from booking data only' }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Meeting Link</td><td style='padding:8px'><a href='{{ $('📋 Parse Booking Data').first().json.meetingUrl }}'>{{ $('📋 Parse Booking Data').first().json.meetingUrl }}</a></td></tr>\n</table>\n\n<p>📄 <strong><a href='{{ $json.webViewLink }}'>Open Full Diagnostic Brief in Google Docs</a></strong></p>\n\n<hr>\n\n<div style='background:#f9f9f9;padding:16px;border-left:4px solid #333;white-space:pre-wrap;font-family:monospace;font-size:13px'>{{ $('📄 Assemble Brief').first().json.briefText }}</div>\n\n<hr>\n<p style='color:#999;font-size:12px'>Generated by IntraWeb n8n automation</p>",
+        "subject": "=🔥 Pre-Call Brief Ready: {{ $('📋 Parse Booking Data').first().json.fullName }} — {{ $('📋 Parse Booking Data').first().json.formattedDate }}",
+        "message": "=<p><strong>Your pre-call diagnostic brief is ready.</strong></p>\n\n<table style='border-collapse:collapse;width:100%;margin-bottom:16px'>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold;width:140px'>Prospect</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.fullName }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Email</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.email }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Call Time</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.formattedDate }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Form Submitted</td><td style='padding:8px'>{{ $('📄 Assemble Brief').first().json.formSubmitted ? '✅ Yes' : '⚠️ No — brief generated from booking data only' }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Meeting Link</td><td style='padding:8px'><a href='{{ $('📋 Parse Booking Data').first().json.meetingUrl }}'>{{ $('📋 Parse Booking Data').first().json.meetingUrl }}</a></td></tr>\n</table>\n\n<p>📄 <strong><a href='{{ $json.webViewLink }}'>Open Full Diagnostic Brief in Google Docs</a></strong></p>\n\n<hr>\n\n<div style='background:#f9f9f9;padding:16px;border-left:4px solid #333;white-space:pre-wrap;font-family:monospace;font-size:13px'>{{ $('📄 Assemble Brief').first().json.briefText }}</div>\n\n<hr>\n<p style='color:#999;font-size:12px'>Generated by IntraWeb n8n automation</p>",
         "options": {
           "replyTo": "john@intrawebtech.com"
         }
@@ -288,7 +314,7 @@
     },
     {
       "parameters": {
-        "content": "## SYS 03 — Pre-Call Diagnostic Brief\n\n**Webhook:** POST https://n8n.intrawebtech.com/webhook/intraweb-cal-booking\n\n**Trigger:** Cal.com fires when prospect books a Discovery Call.\n\n**Flow:**\n1. Parse booking data (name, email, time, meeting link)\n2. Upsert HubSpot contact (SW — Create or Update HubSpot Contact)\n3. Send intake form email to prospect\n4. Wait 24hrs for form response\n5. Check Google Sheets for submission\n6. Branch:\n   - Form submitted: Generate AI brief (GPT-4o) -> Google Doc -> Email + Chat alert -> Log\n   - No response: Send nudge email -> Log\n\n**Downstream handoffs:**\n- HubSpot upsert: SW — Create or Update HubSpot Contact (email, firstName, lastName)\n- Logging: SW — Log to Automations Log Sheet (brief_generated / nudge_sent)\n- Google Chat: inline alert to team space\n\n**System position:**\n- Upstream: SYS 02 — ElevenLabs Post-Call Handler booked branch (Cal.com booking auto-triggers this)\n- Downstream: SYS 03 — Proposal and Contract Delivery (after discovery call)\n- CRM: HubSpot contact created/updated on booking\n\n**Before activating:**\n1. Replace YOUR_TYPEFORM_URL in both email nodes\n2. Connect Google Sheets (set spreadsheet ID for form responses)\n3. Set Cal.com webhook to POST to this workflow's production URL\n4. Connect Google Docs credentials",
+        "content": "## SYS 03 — Pre-Call Diagnostic Brief\n\n**Webhook:** POST https://n8n.intrawebtech.com/webhook/intraweb-cal-booking\n\n**Trigger:** Cal.com fires when prospect books a Discovery Call.\n\n**Flow:**\n1. Parse booking data (name, email, time, meeting link)\n2. Upsert HubSpot contact (SW — Create or Update HubSpot Contact)\n3. Send intake form email to prospect\n4. Wait 24hrs for form response\n5. Check Google Sheets for submission\n6. Branch:\n   - Form submitted: Generate AI brief (GPT-4o) -> Google Doc -> Email + Chat alert -> Log\n   - No response: Send nudge email -> Log\n\n**Downstream handoffs:**\n- HubSpot upsert: SW — Create or Update HubSpot Contact (email, firstName, lastName)\n- Logging: SW — Log to Automations Log Sheet (brief_generated / nudge_sent)\n- Google Chat: inline alert to team space\n\n**System position:**\n- Upstream: SYS 02 — ElevenLabs Post-Call Handler booked branch (Cal.com booking auto-triggers this)\n- Downstream: SYS 03 — Proposal and Contract Delivery (after discovery call)\n- CRM: HubSpot contact created/updated on booking\n\n**Before activating:**\n1. Replace YOUR_TYPEFORM_URL in both email nodes\n2. In CONFIG — Global Settings, set google.preCallIntakeSheetTab to your intake sheet tab name (default Sheet1) and google.preCallIntakeEmailColumn to the email column header (default Email).\n3. Set Cal.com webhook to POST to this workflow's production URL\n4. Connect Google Docs credentials",
         "height": 560,
         "width": 540,
         "color": 4
@@ -304,10 +330,9 @@
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "sw-create-update-hubspot-contact",
+          "value": "HbPxMMcf5tGERxEr",
           "mode": "id",
           "cachedResultName": "SW: Create or Update HubSpot Contact"
         },
@@ -339,10 +364,9 @@
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "sw-log-automations-log-sheet",
+          "value": "1qQFLOSHZsS9JPKP",
           "mode": "id",
           "cachedResultName": "SW: Log to Automations Log Sheet"
         },
@@ -374,10 +398,9 @@
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "sw-log-automations-log-sheet",
+          "value": "1qQFLOSHZsS9JPKP",
           "mode": "id",
           "cachedResultName": "SW: Log to Automations Log Sheet"
         },
@@ -529,6 +552,17 @@
       "main": [
         [
           {
+            "node": "GetConfig",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetConfig": {
+      "main": [
+        [
+          {
             "node": "📋 Parse Booking Data",
             "type": "main",
             "index": 0
@@ -562,7 +596,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "timeSavedMode": "dynamic",
     "callerPolicy": "workflowsFromSameOwner"
   },
@@ -571,9 +605,9 @@
     "templateCredsSetupCompleted": true
   },
   "pinData": {},
-  "versionId": "3bb0f8cf-b257-475a-bb75-a4a49bfb634f",
-  "activeVersionId": "3bb0f8cf-b257-475a-bb75-a4a49bfb634f",
-  "versionCounter": 115,
+  "versionId": "cdfda9da-3098-4fc5-98ac-d348706b2cc5",
+  "activeVersionId": "361eb467-9793-4f71-83b4-c4505aab6210",
+  "versionCounter": 184,
   "triggerCount": 1,
   "shared": [
     {
@@ -596,9 +630,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:42:44.708Z",
-    "createdAt": "2026-04-03T03:42:44.708Z",
-    "versionId": "3bb0f8cf-b257-475a-bb75-a4a49bfb634f",
+    "updatedAt": "2026-04-19T19:25:35.636Z",
+    "createdAt": "2026-04-19T19:25:35.636Z",
+    "versionId": "361eb467-9793-4f71-83b4-c4505aab6210",
     "workflowId": "mH67fjS4eC9amV4n",
     "nodes": [
       {
@@ -616,7 +650,8 @@
         ],
         "id": "3282c553-1e85-47d0-90b7-17ce74b48559",
         "name": "📅 Cal.com Booking Webhook",
-        "webhookId": "7a169507-88e1-432e-a657-16dd7b80dc02"
+        "webhookId": "7a169507-88e1-432e-a657-16dd7b80dc02",
+        "onError": "continueRegularOutput"
       },
       {
         "parameters": {
@@ -635,7 +670,36 @@
       },
       {
         "parameters": {
-          "jsCode": "const input = $input.first().json;\nconst payload = input.payload || input.body || input;\n\n// Cal.com sends attendees as an array\nconst attendee = payload?.attendees?.[0] || {};\nconst organizer = payload?.organizer || {};\n\nconst firstName = attendee.name?.split(' ')[0] || attendee.firstName || '';\nconst lastName = attendee.name?.split(' ').slice(1).join(' ') || attendee.lastName || '';\nconst email = attendee.email || '';\nconst timezone = attendee.timeZone || 'US/Eastern';\nconst eventTitle = payload.title || payload.type || 'Discovery Call';\nconst startTime = payload.startTime || '';\nconst endTime = payload.endTime || '';\nconst meetingUrl = payload.metadata?.videoCallUrl || payload.videoCallUrl || '';\nconst bookingUid = payload.uid || '';\n\n// Format date nicely\nlet formattedDate = '';\ntry {\n  const d = new Date(startTime);\n  formattedDate = d.toLocaleDateString('en-US', { \n    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',\n    hour: '2-digit', minute: '2-digit', timeZone: timezone\n  });\n} catch(e) {\n  formattedDate = startTime;\n}\n\nreturn [{\n  json: {\n    firstName,\n    lastName,\n    fullName: `${firstName} ${lastName}`.trim(),\n    email,\n    timezone,\n    eventTitle,\n    startTime,\n    formattedDate,\n    meetingUrl,\n    bookingUid\n  }\n}];"
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "1eTTVoSFSlSPvZV4",
+            "mode": "list",
+            "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+            "cachedResultName": "CONFIG — Global Settings"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "c2f4a8e1-9d3b-4c7a-9f11-0b7ec9a1f001",
+        "name": "GetConfig",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          -2032,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $('📅 Cal.com Booking Webhook').first().json;\nconst payload = input.payload || input.body || input;\n\n// Cal.com sends attendees as an array\nconst attendee = payload?.attendees?.[0] || {};\nconst organizer = payload?.organizer || {};\n\nconst firstName = attendee.name?.split(' ')[0] || attendee.firstName || '';\nconst lastName = attendee.name?.split(' ').slice(1).join(' ') || attendee.lastName || '';\nconst email = attendee.email || '';\nconst timezone = attendee.timeZone || 'US/Eastern';\nconst eventTitle = payload.title || payload.type || 'Discovery Call';\nconst startTime = payload.startTime || '';\nconst endTime = payload.endTime || '';\nconst meetingUrl = payload.metadata?.videoCallUrl || payload.videoCallUrl || '';\nconst bookingUid = payload.uid || '';\n\n// Format date nicely\nlet formattedDate = '';\ntry {\n  const d = new Date(startTime);\n  formattedDate = d.toLocaleDateString('en-US', { \n    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',\n    hour: '2-digit', minute: '2-digit', timeZone: timezone\n  });\n} catch(e) {\n  formattedDate = startTime;\n}\n\nreturn [{\n  json: {\n    firstName,\n    lastName,\n    fullName: `${firstName} ${lastName}`.trim(),\n    email,\n    timezone,\n    eventTitle,\n    startTime,\n    formattedDate,\n    meetingUrl,\n    bookingUid\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -648,9 +712,12 @@
       },
       {
         "parameters": {
+          "resource": "message",
+          "operation": "send",
           "sendTo": "={{ $json.email }}",
-          "subject": "Quick prep for our call, {{ $json.firstName }} (takes 3 min)",
-          "message": "<p>Hi {{ $json.firstName }},</p>\n\n<p>Looking forward to our call on <strong>{{ $json.formattedDate }}</strong>.</p>\n\n<p>To make sure we use the time well, I put together 6 quick questions. Your answers help me walk in with specific ideas for your situation — not a generic pitch.</p>\n\n<p><strong>It takes about 3 minutes:</strong></p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your pre-call prep here</a></p>\n\n<p>If you'd rather just talk through it live, no worries — we'll cover it on the call.</p>\n\n<p>See you soon,<br>John Schibelli<br>Founder, IntraWeb Technologies<br><a href=\"https://intrawebtech.com\">intrawebtech.com</a></p>",
+          "subject": "=Quick prep for our call, {{ $json.firstName }} (takes 3 min)",
+          "emailType": "html",
+          "message": "=<p>Hi {{ $json.firstName }},</p>\n\n<p>Looking forward to our call on <strong>{{ $json.formattedDate }}</strong>.</p>\n\n<p>To make sure we use the time well, I put together 6 quick questions. Your answers help me walk in with specific ideas for your situation — not a generic pitch.</p>\n\n<p><strong>It takes about 3 minutes:</strong></p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your pre-call prep here</a></p>\n\n<p>If you'd rather just talk through it live, no worries — we'll cover it on the call.</p>\n\n<p>See you soon,<br>John Schibelli<br>Founder, IntraWeb Technologies<br><a href=\"https://intrawebtech.com\">intrawebtech.com</a></p>",
           "options": {
             "replyTo": "john.schibelli@intrawebtech.com"
           }
@@ -688,27 +755,22 @@
       },
       {
         "parameters": {
-          "operation": "getAll",
-          "documentId": {
-            "__rl": true,
-            "value": "1045Srb-IOkEU_qHjvGzJD_C42m2_a_0ffd_8HwIZrjs",
-            "mode": "list",
-            "cachedResultName": "IntraWeb — Pre-Call Diagnostic Brief",
-            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1045Srb-IOkEU_qHjvGzJD_C42m2_a_0ffd_8HwIZrjs/edit?usp=drivesdk"
-          }
+          "operation": "executeQuery",
+          "query": "={{ \"SELECT COALESCE((SELECT email FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '') AS email, COALESCE((SELECT payload FROM public.os_pre_call_intake WHERE lower(trim(email)) = lower(trim('\" + String($('📋 Parse Booking Data').first().json.email||'').replace(/'/g,\"''\") + \"')) ORDER BY submitted_at DESC LIMIT 1), '{}'::jsonb) AS payload;\" }}",
+          "options": {}
         },
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4.5,
+        "id": "2a854935-32da-48b3-b604-8c1ab9268349",
+        "name": "🔍 Check Form Submitted",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           -1248,
           192
         ],
-        "id": "2a854935-32da-48b3-b604-8c1ab9268349",
-        "name": "🔍 Check Form Submitted",
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "pKS06498CxELp8nS",
-            "name": "Google Sheets account"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       },
@@ -717,16 +779,18 @@
           "conditions": {
             "options": {
               "caseSensitive": false,
-              "typeValidation": "loose"
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 2
             },
             "conditions": [
               {
                 "id": "form-check",
                 "leftValue": "={{ $json.email }}",
-                "rightValue": "",
                 "operator": {
                   "type": "string",
-                  "operation": "notEmpty"
+                  "operation": "notEmpty",
+                  "singleValue": true
                 }
               }
             ],
@@ -745,9 +809,12 @@
       },
       {
         "parameters": {
+          "resource": "message",
+          "operation": "send",
           "sendTo": "={{ $('📋 Parse Booking Data').first().json.email }}",
-          "subject": "One quick thing before our call, {{ $('📋 Parse Booking Data').first().json.firstName }}",
-          "message": "<p>Hi {{ $('📋 Parse Booking Data').first().json.firstName }},</p>\n\n<p>Just a quick nudge — our call is coming up and I want to make sure I have enough context to be genuinely useful to you.</p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your 3-minute prep form here</a></p>\n\n<p>No pressure if you'd rather just wing it — I'll see you on the call either way.</p>\n\n<p>John</p>",
+          "subject": "=One quick thing before our call, {{ $('📋 Parse Booking Data').first().json.firstName }}",
+          "emailType": "html",
+          "message": "=<p>Hi {{ $('📋 Parse Booking Data').first().json.firstName }},</p>\n\n<p>Just a quick nudge — our call is coming up and I want to make sure I have enough context to be genuinely useful to you.</p>\n\n<p>👉 <a href=\"https://YOUR_TYPEFORM_URL\">Complete your 3-minute prep form here</a></p>\n\n<p>No pressure if you'd rather just wing it — I'll see you on the call either way.</p>\n\n<p>John</p>",
           "options": {
             "replyTo": "john@intrawebtech.com"
           }
@@ -783,7 +850,7 @@
                 "role": "system"
               },
               {
-                "content": "=Generate a pre-call diagnostic brief for this prospect:\n\nName: {{ $('📋 Parse Booking Data').first().json.fullName }}\nCall time: {{ $('📋 Parse Booking Data').first().json.formattedDate }}\n\nIntake Form Responses:\n- Revenue model: {{ $json['What is your company revenue model?'] || 'Not provided' }}\n- Team size: {{ $json['How many employees or contractors are on your team?'] || 'Not provided' }}\n- Biggest time drain: {{ $json['Where does your team lose the most time each week?'] || 'Not provided' }}\n- AI experience: {{ $json['Have you tried AI tools before? What happened?'] || 'Not provided' }}\n- 90-day win: {{ $json['What would a win look like 90 days from now?'] || 'Not provided' }}\n- Tech stack: {{ $json['What is your current tech stack?'] || 'Not provided' }}\n\nGenerate a brief with these exact sections:\n\n## Company Snapshot\n(2-3 sentences on what you know about their situation based on responses)\n\n## Primary Pain Points\n(Rank top 3 by ROI impact with a one-line explanation each)\n\n## Quick Wins (30 Days)\n(2-3 specific workflows IntraWeb could automate immediately)\n\n## Diagnostic Focus Areas\n(What the $10K assessment would investigate for this company)\n\n## Cost of Inaction\n(Specific framing of what staying the same costs them — time, money, competitive position)\n\n## Suggested Talking Points\n(3-4 specific questions John should ask on this call to qualify and advance the deal)\n\nBe direct and specific. No fluff."
+                "content": "=Generate a pre-call diagnostic brief for this prospect:\n\nName: {{ $('📋 Parse Booking Data').first().json.fullName }}\nCall time: {{ $('📋 Parse Booking Data').first().json.formattedDate }}\n\nIntake Form Responses:\n- Revenue model: {{ ($json.payload && $json.payload['What is your company revenue model?']) || 'Not provided' }}\n- Team size: {{ ($json.payload && $json.payload['How many employees or contractors are on your team?']) || 'Not provided' }}\n- Biggest time drain: {{ ($json.payload && $json.payload['Where does your team lose the most time each week?']) || 'Not provided' }}\n- AI experience: {{ ($json.payload && $json.payload['Have you tried AI tools before? What happened?']) || 'Not provided' }}\n- 90-day win: {{ ($json.payload && $json.payload['What would a win look like 90 days from now?']) || 'Not provided' }}\n- Tech stack: {{ ($json.payload && $json.payload['What is your current tech stack?']) || 'Not provided' }}\n\nGenerate a brief with these exact sections:\n\n## Company Snapshot\n(2-3 sentences on what you know about their situation based on responses)\n\n## Primary Pain Points\n(Rank top 3 by ROI impact with a one-line explanation each)\n\n## Quick Wins (30 Days)\n(2-3 specific workflows IntraWeb could automate immediately)\n\n## Diagnostic Focus Areas\n(What the $10K assessment would investigate for this company)\n\n## Cost of Inaction\n(Specific framing of what staying the same costs them — time, money, competitive position)\n\n## Suggested Talking Points\n(3-4 specific questions John should ask on this call to qualify and advance the deal)\n\nBe direct and specific. No fluff."
               }
             ]
           },
@@ -806,7 +873,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const booking = $('📋 Parse Booking Data').first().json;\nconst formData = $('🔍 Check Form Submitted').first().json;\nconst aiResponse = $input.first().json;\n\n// Extract the brief text from OpenAI response\nconst briefText = aiResponse?.message?.content \n  || aiResponse?.text \n  || aiResponse?.choices?.[0]?.message?.content\n  || 'Brief generation failed — please generate manually.';\n\nconst docTitle = `${booking.fullName} — Pre-Call Diagnostic Brief — ${new Date().toLocaleDateString('en-US')}`;\n\nreturn [{\n  json: {\n    ...booking,\n    briefText,\n    docTitle,\n    formSubmitted: !!formData.email,\n    formData\n  }\n}];"
+          "jsCode": "const booking = $('📋 Parse Booking Data').first().json;\nconst raw = $('🔍 Check Form Submitted').first().json;\nconst p = raw && raw.payload && typeof raw.payload === 'object' ? raw.payload : {};\nconst formData = { ...raw, ...p };\nconst aiResponse = $input.first().json;\n\n// Extract the brief text from OpenAI response\nconst briefText = aiResponse?.message?.content \n  || aiResponse?.text \n  || aiResponse?.choices?.[0]?.message?.content\n  || 'Brief generation failed — please generate manually.';\n\nconst docTitle = `${booking.fullName} — Pre-Call Diagnostic Brief — ${new Date().toLocaleDateString('en-US')}`;\n\nreturn [{\n  json: {\n    ...booking,\n    briefText,\n    docTitle,\n    formSubmitted: !!(raw && String(raw.email || '').trim()),\n    formData\n  }\n}];"
         },
         "type": "n8n-nodes-base.code",
         "typeVersion": 2,
@@ -839,9 +906,12 @@
       },
       {
         "parameters": {
+          "resource": "message",
+          "operation": "send",
           "sendTo": "john.schibelli@intrawebtech.com",
-          "subject": "🔥 Pre-Call Brief Ready: {{ $('📋 Parse Booking Data').first().json.fullName }} — {{ $('📋 Parse Booking Data').first().json.formattedDate }}",
-          "message": "<p><strong>Your pre-call diagnostic brief is ready.</strong></p>\n\n<table style='border-collapse:collapse;width:100%;margin-bottom:16px'>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold;width:140px'>Prospect</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.fullName }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Email</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.email }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Call Time</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.formattedDate }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Form Submitted</td><td style='padding:8px'>{{ $('📄 Assemble Brief').first().json.formSubmitted ? '✅ Yes' : '⚠️ No — brief generated from booking data only' }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Meeting Link</td><td style='padding:8px'><a href='{{ $('📋 Parse Booking Data').first().json.meetingUrl }}'>{{ $('📋 Parse Booking Data').first().json.meetingUrl }}</a></td></tr>\n</table>\n\n<p>📄 <strong><a href='{{ $json.webViewLink }}'>Open Full Diagnostic Brief in Google Docs</a></strong></p>\n\n<hr>\n\n<div style='background:#f9f9f9;padding:16px;border-left:4px solid #333;white-space:pre-wrap;font-family:monospace;font-size:13px'>{{ $('📄 Assemble Brief').first().json.briefText }}</div>\n\n<hr>\n<p style='color:#999;font-size:12px'>Generated by IntraWeb n8n automation</p>",
+          "subject": "=🔥 Pre-Call Brief Ready: {{ $('📋 Parse Booking Data').first().json.fullName }} — {{ $('📋 Parse Booking Data').first().json.formattedDate }}",
+          "emailType": "html",
+          "message": "=<p><strong>Your pre-call diagnostic brief is ready.</strong></p>\n\n<table style='border-collapse:collapse;width:100%;margin-bottom:16px'>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold;width:140px'>Prospect</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.fullName }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Email</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.email }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Call Time</td><td style='padding:8px'>{{ $('📋 Parse Booking Data').first().json.formattedDate }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Form Submitted</td><td style='padding:8px'>{{ $('📄 Assemble Brief').first().json.formSubmitted ? '✅ Yes' : '⚠️ No — brief generated from booking data only' }}</td></tr>\n  <tr><td style='padding:8px;background:#f5f5f5;font-weight:bold'>Meeting Link</td><td style='padding:8px'><a href='{{ $('📋 Parse Booking Data').first().json.meetingUrl }}'>{{ $('📋 Parse Booking Data').first().json.meetingUrl }}</a></td></tr>\n</table>\n\n<p>📄 <strong><a href='{{ $json.webViewLink }}'>Open Full Diagnostic Brief in Google Docs</a></strong></p>\n\n<hr>\n\n<div style='background:#f9f9f9;padding:16px;border-left:4px solid #333;white-space:pre-wrap;font-family:monospace;font-size:13px'>{{ $('📄 Assemble Brief').first().json.briefText }}</div>\n\n<hr>\n<p style='color:#999;font-size:12px'>Generated by IntraWeb n8n automation</p>",
           "options": {
             "replyTo": "john@intrawebtech.com"
           }
@@ -882,7 +952,7 @@
       },
       {
         "parameters": {
-          "content": "## SYS 03 — Pre-Call Diagnostic Brief\n\n**Webhook:** POST https://n8n.intrawebtech.com/webhook/intraweb-cal-booking\n\n**Trigger:** Cal.com fires when prospect books a Discovery Call.\n\n**Flow:**\n1. Parse booking data (name, email, time, meeting link)\n2. Upsert HubSpot contact (SW — Create or Update HubSpot Contact)\n3. Send intake form email to prospect\n4. Wait 24hrs for form response\n5. Check Google Sheets for submission\n6. Branch:\n   - Form submitted: Generate AI brief (GPT-4o) -> Google Doc -> Email + Chat alert -> Log\n   - No response: Send nudge email -> Log\n\n**Downstream handoffs:**\n- HubSpot upsert: SW — Create or Update HubSpot Contact (email, firstName, lastName)\n- Logging: SW — Log to Automations Log Sheet (brief_generated / nudge_sent)\n- Google Chat: inline alert to team space\n\n**System position:**\n- Upstream: SYS 02 — ElevenLabs Post-Call Handler booked branch (Cal.com booking auto-triggers this)\n- Downstream: SYS 03 — Proposal and Contract Delivery (after discovery call)\n- CRM: HubSpot contact created/updated on booking\n\n**Before activating:**\n1. Replace YOUR_TYPEFORM_URL in both email nodes\n2. Connect Google Sheets (set spreadsheet ID for form responses)\n3. Set Cal.com webhook to POST to this workflow's production URL\n4. Connect Google Docs credentials",
+          "content": "## SYS 03 — Pre-Call Diagnostic Brief\n\n**Webhook:** POST https://n8n.intrawebtech.com/webhook/intraweb-cal-booking\n\n**Trigger:** Cal.com fires when prospect books a Discovery Call.\n\n**Flow:**\n1. Parse booking data (name, email, time, meeting link)\n2. Upsert HubSpot contact (SW — Create or Update HubSpot Contact)\n3. Send intake form email to prospect\n4. Wait 24hrs for form response\n5. Check Google Sheets for submission\n6. Branch:\n   - Form submitted: Generate AI brief (GPT-4o) -> Google Doc -> Email + Chat alert -> Log\n   - No response: Send nudge email -> Log\n\n**Downstream handoffs:**\n- HubSpot upsert: SW — Create or Update HubSpot Contact (email, firstName, lastName)\n- Logging: SW — Log to Automations Log Sheet (brief_generated / nudge_sent)\n- Google Chat: inline alert to team space\n\n**System position:**\n- Upstream: SYS 02 — ElevenLabs Post-Call Handler booked branch (Cal.com booking auto-triggers this)\n- Downstream: SYS 03 — Proposal and Contract Delivery (after discovery call)\n- CRM: HubSpot contact created/updated on booking\n\n**Before activating:**\n1. Replace YOUR_TYPEFORM_URL in both email nodes\n2. In CONFIG — Global Settings, set google.preCallIntakeSheetTab to your intake sheet tab name (default Sheet1) and google.preCallIntakeEmailColumn to the email column header (default Email).\n3. Set Cal.com webhook to POST to this workflow's production URL\n4. Connect Google Docs credentials",
           "height": 560,
           "width": 540,
           "color": 4
@@ -901,7 +971,7 @@
           "source": "database",
           "workflowId": {
             "__rl": true,
-            "value": "sw-create-update-hubspot-contact",
+            "value": "HbPxMMcf5tGERxEr",
             "mode": "id",
             "cachedResultName": "SW: Create or Update HubSpot Contact"
           },
@@ -936,7 +1006,7 @@
           "source": "database",
           "workflowId": {
             "__rl": true,
-            "value": "sw-log-automations-log-sheet",
+            "value": "1qQFLOSHZsS9JPKP",
             "mode": "id",
             "cachedResultName": "SW: Log to Automations Log Sheet"
           },
@@ -971,7 +1041,7 @@
           "source": "database",
           "workflowId": {
             "__rl": true,
-            "value": "sw-log-automations-log-sheet",
+            "value": "1qQFLOSHZsS9JPKP",
             "mode": "id",
             "cachedResultName": "SW: Log to Automations Log Sheet"
           },
@@ -1123,6 +1193,17 @@
         "main": [
           [
             {
+              "node": "GetConfig",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "GetConfig": {
+        "main": [
+          [
+            {
               "node": "📋 Parse Booking Data",
               "type": "main",
               "index": 0
@@ -1157,6 +1238,23 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-19T19:25:35.683Z",
+        "id": 3033,
+        "workflowId": "mH67fjS4eC9amV4n",
+        "versionId": "361eb467-9793-4f71-83b4-c4505aab6210",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.668Z",
+        "id": 3032,
+        "workflowId": "mH67fjS4eC9amV4n",
+        "versionId": "361eb467-9793-4f71-83b4-c4505aab6210",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
   }
 }

@@ -1,0 +1,373 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T02:31:22.413Z",
+  "id": "caSoveCfJUog2T2S",
+  "name": "System 12d  —  Actions Sub-Workflow",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "208e2516-6cd2-4297-967b-9ec9b88084eb",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "post_approved",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "post_approved"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "regenerate_manual",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "regenerate_manual"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.command}}",
+                    "rightValue": "unknown",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "help"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none"
+        }
+      },
+      "id": "b48887d7-12b2-4928-a387-10408ac30fd7",
+      "name": "Switch: Which Action?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        144,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/LinkedIn Posts!A{{$('Execute Workflow Trigger').first().json.params.row_number}}:Z{{$('Execute Workflow Trigger').first().json.params.row_number}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d0e94649-1beb-4936-a29b-038e3d1df19f",
+      "name": "Sheets: Get LinkedIn Post Row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/LinkedIn Posts!F{{$('Execute Workflow Trigger').first().json.params.row_number}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_ACCESS_TOKEN}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"range\": \"LinkedIn Posts!F{{$('Execute Workflow Trigger').first().json.params.row_number}}\",\n  \"majorDimension\": \"ROWS\",\n  \"values\": [[\"Approved\"]]\n}",
+        "options": {}
+      },
+      "id": "46e033b4-48de-457e-b1ee-8bd6cce2c1fb",
+      "name": "Sheets: Update Post Status Approved",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"LinkedIn post row {{$('Execute Workflow Trigger').first().json.params.row_number}} approved and scheduled.\"}",
+        "options": {}
+      },
+      "id": "5c8ac9a4-4395-4d8f-ab58-e2a6f3f69f2f",
+      "name": "Google Chat: Post Approved Confirm",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        848,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.N8N_BASE_URL}}/webhook/generate-owners-manual",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"triggered_by\": \"command_center\", \"user\": \"{{$('Execute Workflow Trigger').first().json.user_name}}\", \"timestamp\": \"{{$now.toISO()}}\"}",
+        "options": {}
+      },
+      "id": "7c4cf055-c887-404c-a3e6-f0d475b8c2f2",
+      "name": "POST: Trigger Manual Regeneration",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"Owner's manual regeneration triggered — you'll receive a notification when complete.\"}",
+        "options": {}
+      },
+      "id": "820b3825-4f56-4fd3-b268-842d053dfd2a",
+      "name": "Google Chat: Manual Regen Confirm",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        624,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"text\": \"*IntraWeb Command Center — Available Commands*\\n\\n• `leads this week` — Top new leads with scores\\n• `pipeline status` — All deals grouped by stage with totals\\n• `overdue invoices` — Invoice Sent deals >30 days\\n• `client health` — Health scores for all active clients\\n• `post approved [row #]` — Approve a LinkedIn post by row number\\n• `send followup [name]` — Send email + SMS follow-up to a contact\\n• `whats due` — Tasks due in the next 7 days\\n• `revenue this month` — Invoiced vs collected for current month\\n• `regenerate manual` — Trigger Owner's Manual PDF regeneration\"}",
+        "options": {}
+      },
+      "id": "211bfaa3-d223-47ac-896d-ce52df2ab4fe",
+      "name": "Google Chat: Send Help Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        592
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch: Which Action?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Which Action?": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Get LinkedIn Post Row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "POST: Trigger Manual Regeneration",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Google Chat: Send Help Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Get LinkedIn Post Row": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Update Post Status Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Update Post Status Approved": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Post Approved Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST: Trigger Manual Regeneration": {
+      "main": [
+        [
+          {
+            "node": "Google Chat: Manual Regen Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "b90e9c5d-b2d7-48ba-aef3-34c0a48793d0",
+  "activeVersionId": null,
+  "versionCounter": 7,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T02:31:22.419Z",
+      "createdAt": "2026-03-06T02:31:22.419Z",
+      "role": "workflow:owner",
+      "workflowId": "caSoveCfJUog2T2S",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

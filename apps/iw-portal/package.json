@@ -3,22 +3,33 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3002",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3002",
     "lint": "eslint",
+    "check-types": "tsc --noEmit",
     "seed": "tsx scripts/seed.ts",
     "seed:test": "tsx scripts/seed-test-client.ts",
     "upsert:jschibelli": "tsx scripts/upsert-jschibelli-portal.ts",
     "db:apply-schema": "tsx scripts/apply-portal-schema-postgres.ts",
-    "db:link": "pnpm exec supabase link",
+    "db:link": "pnpm exec supabase link --project-ref wvjwibsomjecolcigjgr",
     "db:push": "pnpm exec supabase db push",
+    "db:pull": "pnpm exec supabase db pull",
+    "db:push:self-hosted": "tsx scripts/self-host/db-push-self-hosted.ts",
+    "self-host:bootstrap-docs": "echo Run bootstrap-supabase-vps.sh ON the Hostinger VPS — see docs/architecture/supabase-self-host-hostinger.md",
     "hubspot:ensure-co-properties": "tsx scripts/hubspot/ensure-change-order-properties.ts",
+    "hubspot:ensure-reactivation-contact-properties": "tsx scripts/hubspot/ensure-reactivation-contact-properties.ts",
+    "hubspot:ensure-subscription-deal-properties": "tsx scripts/hubspot/ensure-subscription-deal-properties.ts",
     "hubspot:ensure-co-form": "tsx scripts/hubspot/ensure-change-order-form.ts",
-    "hubspot:update-co-form": "tsx scripts/hubspot/update-change-order-form.ts"
+    "hubspot:update-co-form": "tsx scripts/hubspot/update-change-order-form.ts",
+    "stripe:setup-maintenance-products": "tsx scripts/setup-maintenance-products.ts",
+    "test": "tsx --test src/lib/webhooks/provision-client-idempotency.test.ts src/lib/privacy/classify-deletion-tier.test.ts src/lib/social-ops/social-ops.test.ts",
+    "verify:stack": "pnpm --filter @repo/ops diagnostics:verify-stack",
+    "vercel:align-env": "pnpm --filter @repo/ops vercel:align-env",
+    "vercel:prune-dev-env": "pnpm --filter @repo/ops vercel:prune-dev-env"
   },
   "dependencies": {
     "@clerk/backend": "^3.2.4",
@@ -35,6 +46,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@repo/env": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pdfkit": "^0.17.5",

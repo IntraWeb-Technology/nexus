@@ -1,0 +1,1660 @@
+{
+  "updatedAt": "2026-04-19T19:25:37.117Z",
+  "createdAt": "2026-02-23T02:01:07.646Z",
+  "id": "Lj9OHbsMMK6m5c6i",
+  "name": "Automated workflow backup — Google Drive (alerts)",
+  "description": "Runs every 12 hours to export all n8n workflows as JSON files, backs them up to Google Drive and GitHub, and sends alerts on completion or failure.",
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fb0dac5f-8705-4800-aff9-1b3275c03a41",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -112,
+        0
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "1eTTVoSFSlSPvZV4",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+          "cachedResultName": "CONFIG — Global Settings"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "f8a1b2c3-d4e5-4016-a789-000000000001",
+      "name": "Call CONFIG — Global Settings",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const cfg = $input.first().json || {};\nconst wb = cfg.workflowBackup || {};\nconst pad = (n) => String(n).padStart(2, '0');\nconst now = new Date();\nconst backup_timestamp =\n  now.getFullYear() +\n  '-' +\n  pad(now.getMonth() + 1) +\n  '-' +\n  pad(now.getDate()) +\n  '_' +\n  pad(now.getHours()) +\n  '-' +\n  pad(now.getMinutes()) +\n  '-' +\n  pad(now.getSeconds());\nconst m = wb.minutesPerWorkflowManual;\nconst minutes_per_workflow_manual = typeof m === 'number' && !Number.isNaN(m) ? m : 5;\nconst backup_folder_name = 'wfBackup - ' + backup_timestamp;\n\nreturn [{\n  json: {\n    gdrive_folder_id: wb.gdriveParentFolderId || '1Re6nTdYldLFZdWk346KqN-cFCJkynEG1',\n    gdrive_shared_drive_id: wb.gdriveSharedDriveId || '0AFmBrzlxIst5Uk9PVA',\n    gdrive_shared_drive_cached_name: wb.gdriveSharedDriveName || 'Internal-Ops',\n    backup_timestamp,\n    backup_folder_name,\n    minutes_per_workflow_manual,\n    execution_start_time: now.toISOString(),\n    execution_start_timestamp: now.getTime()\n  }\n}];"
+      },
+      "id": "0144056b-75cc-458c-8f1b-ebc6d2acd215",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        272,
+        96
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $json.backup_folder_name }}",
+        "driveId": {
+          "__rl": true,
+          "value": "={{ $json.gdrive_shared_drive_id }}",
+          "mode": "list",
+          "cachedResultName": "={{ $json.gdrive_shared_drive_cached_name }}",
+          "cachedResultUrl": "={{ 'https://drive.google.com/drive/folders/' + $json.gdrive_shared_drive_id }}"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.gdrive_folder_id }}"
+        },
+        "options": {}
+      },
+      "id": "f43e40c9-d76b-42a2-8535-a3224de519a1",
+      "name": "Create GDrive Folder",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        464,
+        96
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "oPioaF4sFaVsK13H",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "filters": {
+          "activeWorkflows": true
+        },
+        "requestOptions": {}
+      },
+      "id": "eeda6f4b-548f-4750-83fc-254797efa54e",
+      "name": "Get All Workflows",
+      "type": "n8n-nodes-base.n8n",
+      "position": [
+        672,
+        96
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "n8nApi": {
+          "id": "eKgtOnL1UgxJ2bUG",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// n8n API: active=true => published only (activeVersionId set). Still include archived rows; drop those here.\nconst rows = $input.all();\nreturn rows\n  .filter(({ json }) => json.isArchived !== true)\n  .map((item) => ({ json: item.json, pairedItem: item.pairedItem }));"
+      },
+      "id": "b8f2c0a1-7e4d-4c9b-8f1a-2c0d4e6e8a00",
+      "name": "Published workflows only",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        816,
+        96
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "223e87cd-616d-4298-b53e-51eec2964cd5",
+      "name": "Loop Over Workflows",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [
+        960,
+        160
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "mode": "each",
+        "binaryPropertyName": "data",
+        "options": {
+          "format": true,
+          "fileName": "={{ $json.backup_file_base }}.json"
+        }
+      },
+      "id": "bf71fb08-7595-4a04-9818-ed82b6648a2a",
+      "name": "Convert to JSON File",
+      "type": "n8n-nodes-base.convertToFile",
+      "position": [
+        1648,
+        256
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "jsCode": "const workflow = $json;\n\nif (!workflow.name && workflow.total_workflows) {\n  throw new Error('Receiving baseline tracking data instead of workflow object. Check wiring from Loop Over Workflows.');\n}\n\nconst date = new Date();\nconst year = date.getFullYear();\nconst month = String(date.getMonth() + 1).padStart(2, '0');\nconst wfId = workflow.id != null ? String(workflow.id) : 'unknown';\nconst rawName = String(workflow.name || 'unnamed');\n\nconst sysMatch = rawName.match(/^SYS\\s*(\\d+)(?:\\.(\\d+))?\\s*[—\\-]?\\s*/i);\nlet prefix;\nif (sysMatch) {\n  const major = String(parseInt(sysMatch[1], 10)).padStart(2, '0');\n  if (sysMatch[2] != null && sysMatch[2] !== '') {\n    const minor = String(parseInt(sysMatch[2], 10));\n    prefix = 'SYS_' + major + '_' + minor;\n  } else {\n    prefix = 'SYS_' + major;\n  }\n} else {\n  prefix = 'WORKFLOW';\n}\n\nlet title = rawName;\nif (sysMatch) {\n  title = rawName.slice(sysMatch[0].length).trim();\n}\nconst nameSlug = title\n  .replace(/[^a-zA-Z0-9\\s-_]/g, '')\n  .replace(/\\s+/g, '_')\n  .replace(/_+/g, '_')\n  .replace(/^_|_$/g, '')\n  .slice(0, 80);\nconst safeSlug = nameSlug || 'unnamed';\n\nconst backup_file_base = prefix + '_' + safeSlug + '_' + wfId;\n\nconst drive_relative_path = year + '/' + month + '/' + backup_file_base + '.json';\n\nconst orderJsonKeys = (jsonObj) => {\n  const ordered = {};\n  Object.keys(jsonObj).sort().forEach((key) => {\n    ordered[key] = jsonObj[key];\n  });\n  return ordered;\n};\n\nconst orderedWorkflow = orderJsonKeys(workflow);\nconst workflowJson = JSON.stringify(orderedWorkflow, null, 2);\n\nreturn {\n  ...workflow,\n  drive_relative_path,\n  workflow_json: workflowJson,\n  year,\n  month,\n  sanitized_name: safeSlug,\n  backup_file_base,\n};\n"
+      },
+      "id": "0fd6de64-848e-419d-aa3f-b2f2b5aed464",
+      "name": "Prepare Backup Data",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1216,
+        256
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "file",
+        "operation": "upload",
+        "inputDataFieldName": "data",
+        "name": "={{ $('Prepare Backup Data').item.json.backup_file_base }}.json",
+        "driveId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Config').first().json.gdrive_shared_drive_id }}"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $('Create GDrive Folder').first().json.id }}"
+        },
+        "options": {}
+      },
+      "id": "0b9e2d8c-cd3c-4d42-a6a3-75fe5f38f79a",
+      "name": "Upload to Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        1872,
+        256
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "oPioaF4sFaVsK13H",
+          "name": "Google Drive account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "backup_complete",
+              "name": "backup_complete",
+              "type": "boolean",
+              "value": true
+            },
+            {
+              "id": "workflow_name",
+              "name": "workflow_name",
+              "type": "string",
+              "value": "All Workflows"
+            },
+            {
+              "id": "workflow_id",
+              "name": "workflow_id",
+              "type": "string",
+              "value": "batch"
+            },
+            {
+              "id": "gdrive_backup",
+              "name": "gdrive_backup",
+              "type": "boolean",
+              "value": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2df0bf8f-077b-4c35-acba-77b6cb7eca44",
+      "name": "Mark Complete",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1920,
+        64
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "total_workflows",
+              "name": "total_workflows",
+              "type": "number",
+              "value": "={{ $('Published workflows only').all().length }}"
+            },
+            {
+              "id": "backup_timestamp",
+              "name": "backup_timestamp",
+              "type": "string",
+              "value": "={{ $('Config').first().json.backup_timestamp }}"
+            },
+            {
+              "id": "gdrive_folder",
+              "name": "gdrive_folder",
+              "type": "string",
+              "value": "={{ $('Create GDrive Folder').first().json.name }}"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "type": "string",
+              "value": "Backup completed successfully"
+            },
+            {
+              "id": "3e469485-254e-499f-a711-f9d08ec5726a",
+              "name": "minutes_saved",
+              "value": "={{ $('Calculate Accurate Time Saved').first().json.actual_time_saved_minutes }}",
+              "type": "string"
+            },
+            {
+              "id": "2657505b-5fd1-4937-a8a7-859fa662b32d",
+              "name": "execution_duration",
+              "value": "={{ $('Calculate Accurate Time Saved').first().json.execution_duration_minutes }} minutes",
+              "type": "string"
+            },
+            {
+              "id": "04226b38-d799-48cc-ad98-12a99f7cbd4b",
+              "name": "time_saved",
+              "value": "={{ $('Calculate Accurate Time Saved').first().json.time_saved_display }}",
+              "type": "string"
+            },
+            {
+              "id": "2ec5b0e3-e41b-4359-accf-b4aa2b155efb",
+              "name": "efficiency",
+              "value": "={{ $('Calculate Accurate Time Saved').first().json.efficiency_display }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2c8b3e90-abb6-4be5-9b66-6a402ceb5e52",
+      "name": "Final Summary",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1392,
+        64
+      ],
+      "executeOnce": true,
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "content": "## n8n Workflow Backup (IntraWeb OS)\n\n**Credentials:** n8n API, Google Drive OAuth2.\n\n**Alerts:** On success, posts to Google Chat via **SW — Send Google Chat Alert** (webhook from CONFIG secrets).\n\n**Config:** Drive paths come from **CONFIG — Global Settings** → `workflowBackup`.\n\n**Schedule:** Every 12 hours (+ Manual).",
+        "height": 640,
+        "width": 448,
+        "color": 5
+      },
+      "id": "b042b474-2e6b-44d0-91a0-061ea0c25286",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        384,
+        368
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## Flow\n1. **Call CONFIG** → **Config** (merges `workflowBackup` + timestamps)\n2. **Create GDrive Folder** → **Get All Workflows** (published only) → **Published workflows only** (drop archived) → loop → **Upload to Google Drive**\n3. **Final Summary** → **Prep backup complete Chat** → **Send backup complete Chat**\n\n**Scope:** Published, not archived.\n\n**File names:** `SYS_NN_{title-slug}_{workflowId}.json` for `SYS NN — …`. For `SYS NN.M — …`, use prefix `SYS_NN_M` (M is not zero-padded, e.g. `SYS_01_5`). Otherwise `WORKFLOW_{title-slug}_{workflowId}.json`. Title is the part after the SYS prefix, sanitized. Logs / data table use `YYYY/MM/{same}.json`.",
+        "height": 640,
+        "width": 448,
+        "color": 5
+      },
+      "id": "7e2c0b21-e37b-485b-99bc-a2956e1362cc",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        368
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "AOYQQ701mIr3JvFA",
+          "mode": "list",
+          "cachedResultName": "n8n_workflow_backup",
+          "cachedResultUrl": "/projects/o5dYIcHW2mxs82d6/datatables/AOYQQ701mIr3JvFA"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "run_id": "={{$execution.id}}",
+            "workflow_id": "={{ $json.workflow_id }}\n",
+            "workflow_name": "={{ $json.workflow_name }}",
+            "backup_status": "success",
+            "file_updated": "true",
+            "run_timestamp": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "run_id",
+              "displayName": "run_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "workflow_id",
+              "displayName": "workflow_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "github_path",
+              "displayName": "github_path",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "backup_status",
+              "displayName": "backup_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "file_updated",
+              "displayName": "file_updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "run_timestamp",
+              "displayName": "run_timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        832
+      ],
+      "id": "e0600f3a-a36f-45de-a7a2-da700653943a",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "06f436ee-3a8b-4055-8610-a27944f656a8",
+              "name": "workflow_id",
+              "value": "={{ $('Loop Over Workflows').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "9b220ae7-12d9-452a-8bf5-1213d489f9ea",
+              "name": "workflow_name",
+              "value": "={{ $('Loop Over Workflows').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "41094fb8-22fb-40d8-b39f-fc3c62125cb5",
+              "name": "backup_status",
+              "value": "success",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1232,
+        832
+      ],
+      "id": "5ad80cb7-5421-4ea0-9bf1-ac26bb1b2dc2",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json || {};\nconst config = $('Config').first().json;\nconst workflows = $('Published workflows only').all();\nconst totalWorkflows = workflows.length;\nconst minutesPerWorkflow = config.minutes_per_workflow_manual || 5;\nconst totalManualMinutes = totalWorkflows * minutesPerWorkflow;\n\nreturn {\n  ...input,\n  total_workflows: totalWorkflows,\n  minutes_per_workflow_manual: minutesPerWorkflow,\n  total_manual_minutes_estimate: totalManualMinutes,\n  execution_start_time: config.execution_start_time,\n  execution_start_timestamp: config.execution_start_timestamp,\n  tracking_initialized: true\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        256
+      ],
+      "id": "a6355886-8c3b-400c-8e41-78a74b14a12f",
+      "name": "Calculate Time Tracking Baseline"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get execution data\nconst config = $('Config').first().json;\nconst trackingBaseline = $('Calculate Time Tracking Baseline').first().json;\nconst executionEndTimestamp = Date.now();\n\n// Calculate actual execution duration\nconst executionStartTimestamp = trackingBaseline.execution_start_timestamp;\nconst executionDurationMs = executionEndTimestamp - executionStartTimestamp;\nconst executionDurationMinutes = Math.round(executionDurationMs / 60000 * 100) / 100;\n\n// Calculate time saved\nconst manualTimeMinutes = trackingBaseline.total_manual_minutes_estimate;\nconst actualTimeSaved = manualTimeMinutes - executionDurationMinutes;\nconst efficiencyPercent = Math.round((actualTimeSaved / manualTimeMinutes) * 100);\n\n// Prepare comprehensive time tracking data\nreturn {\n  // Baseline data\n  total_workflows_backed_up: trackingBaseline.total_workflows,\n  minutes_per_workflow_manual: trackingBaseline.minutes_per_workflow_manual,\n  \n  // Execution metrics\n  execution_start_time: trackingBaseline.execution_start_time,\n  execution_end_time: new Date(executionEndTimestamp).toISOString(),\n  execution_duration_minutes: executionDurationMinutes,\n  execution_duration_seconds: Math.round(executionDurationMs / 1000),\n  \n  // Time savings calculation\n  estimated_manual_time_minutes: manualTimeMinutes,\n  actual_time_saved_minutes: actualTimeSaved,\n  efficiency_percent: efficiencyPercent,\n  \n  // Human-readable summary\n  time_saved_display: `${Math.floor(actualTimeSaved)} minutes ${Math.round((actualTimeSaved % 1) * 60)} seconds`,\n  efficiency_display: `${efficiencyPercent}% faster than manual`,\n  \n  // For n8n Time Saved widget compatibility\n  minutesSaved: Math.round(actualTimeSaved)\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        64
+      ],
+      "id": "f1f27774-cf9a-4d39-a954-896f21b97827",
+      "name": "Calculate Accurate Time Saved"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "id": "d1257472-e930-4a05-86a8-6131074c0ab1",
+      "name": "Schedule Every 12 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        -112,
+        192
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json || {};\nconst nl = String.fromCharCode(10);\nconst lines = [\n  '*n8n workflow backup complete*',\n  `Status: ${d.status ?? ''}`,\n  `Total workflows: ${d.total_workflows ?? ''}`,\n  `Timestamp: ${d.backup_timestamp ?? ''}`,\n  `Drive folder: ${d.gdrive_folder ?? ''}`,\n  `Execution: ${d.execution_duration ?? ''}`,\n  `Time saved: ${d.time_saved ?? ''}`,\n  `Efficiency: ${d.efficiency ?? ''}`,\n  `Minutes saved (est.): ${d.minutes_saved ?? ''}`\n];\nreturn [{ json: { message: lines.join(nl), priority: 'info' } }];"
+      },
+      "id": "f8a1b2c3-d4e5-4016-a789-000000000002",
+      "name": "Prep backup complete Chat",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "PGf6jPoWtxSPlr0h",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/PGf6jPoWtxSPlr0h",
+          "cachedResultName": "SW: Send Google Chat Alert"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "={{ $json.message }}",
+            "priority": "={{ $json.priority }}"
+          },
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "f8a1b2c3-d4e5-4016-a789-000000000003",
+      "name": "Send backup complete Chat",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1760,
+        64
+      ]
+    }
+  ],
+  "connections": {
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Create GDrive Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final Summary": {
+      "main": [
+        [
+          {
+            "node": "Prep backup complete Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call CONFIG — Global Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Workflows": {
+      "main": [
+        [
+          {
+            "node": "Published workflows only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Published workflows only": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Workflows": {
+      "main": [
+        [
+          {
+            "node": "Calculate Accurate Time Saved",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Backup Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to JSON File": {
+      "main": [
+        [
+          {
+            "node": "Upload to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create GDrive Folder": {
+      "main": [
+        [
+          {
+            "node": "Get All Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Time Tracking Baseline": {
+      "main": [
+        [
+          {
+            "node": "Convert to JSON File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Accurate Time Saved": {
+      "main": [
+        [
+          {
+            "node": "Final Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Every 12 Hours": {
+      "main": [
+        [
+          {
+            "node": "Call CONFIG — Global Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call CONFIG — Global Settings": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep backup complete Chat": {
+      "main": [
+        [
+          {
+            "node": "Send backup complete Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send backup complete Chat": {
+      "main": [
+        [
+          {
+            "node": "Mark Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Backup Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Time Tracking Baseline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "w9S9LovIY8CxchZm"
+  },
+  "staticData": {
+    "node:Schedule Every 12 Hours": {
+      "recurrenceRules": [
+        0
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {},
+  "versionId": "b4f9e429-bb2e-4a0e-91a1-ed25f7f2a967",
+  "activeVersionId": "b4f9e429-bb2e-4a0e-91a1-ed25f7f2a967",
+  "versionCounter": 307,
+  "triggerCount": 1,
+  "shared": [
+    {
+      "updatedAt": "2026-02-23T02:01:07.650Z",
+      "createdAt": "2026-02-23T02:01:07.650Z",
+      "role": "workflow:owner",
+      "workflowId": "Lj9OHbsMMK6m5c6i",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": {
+    "updatedAt": "2026-04-19T19:25:37.118Z",
+    "createdAt": "2026-04-19T19:25:37.118Z",
+    "versionId": "b4f9e429-bb2e-4a0e-91a1-ed25f7f2a967",
+    "workflowId": "Lj9OHbsMMK6m5c6i",
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "fb0dac5f-8705-4800-aff9-1b3275c03a41",
+        "name": "Manual Trigger",
+        "type": "n8n-nodes-base.manualTrigger",
+        "position": [
+          -112,
+          0
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "1eTTVoSFSlSPvZV4",
+            "mode": "id",
+            "cachedResultUrl": "/workflow/1eTTVoSFSlSPvZV4",
+            "cachedResultName": "CONFIG — Global Settings"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {},
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "f8a1b2c3-d4e5-4016-a789-000000000001",
+        "name": "Call CONFIG — Global Settings",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          80,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const cfg = $input.first().json || {};\nconst wb = cfg.workflowBackup || {};\nconst pad = (n) => String(n).padStart(2, '0');\nconst now = new Date();\nconst backup_timestamp =\n  now.getFullYear() +\n  '-' +\n  pad(now.getMonth() + 1) +\n  '-' +\n  pad(now.getDate()) +\n  '_' +\n  pad(now.getHours()) +\n  '-' +\n  pad(now.getMinutes()) +\n  '-' +\n  pad(now.getSeconds());\nconst m = wb.minutesPerWorkflowManual;\nconst minutes_per_workflow_manual = typeof m === 'number' && !Number.isNaN(m) ? m : 5;\nconst backup_folder_name = 'wfBackup - ' + backup_timestamp;\n\nreturn [{\n  json: {\n    gdrive_folder_id: wb.gdriveParentFolderId || '1Re6nTdYldLFZdWk346KqN-cFCJkynEG1',\n    gdrive_shared_drive_id: wb.gdriveSharedDriveId || '0AFmBrzlxIst5Uk9PVA',\n    gdrive_shared_drive_cached_name: wb.gdriveSharedDriveName || 'Internal-Ops',\n    backup_timestamp,\n    backup_folder_name,\n    minutes_per_workflow_manual,\n    execution_start_time: now.toISOString(),\n    execution_start_timestamp: now.getTime()\n  }\n}];"
+        },
+        "id": "0144056b-75cc-458c-8f1b-ebc6d2acd215",
+        "name": "Config",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          272,
+          96
+        ],
+        "typeVersion": 2
+      },
+      {
+        "parameters": {
+          "resource": "folder",
+          "name": "={{ $json.backup_folder_name }}",
+          "driveId": {
+            "__rl": true,
+            "value": "={{ $json.gdrive_shared_drive_id }}",
+            "mode": "list",
+            "cachedResultName": "={{ $json.gdrive_shared_drive_cached_name }}",
+            "cachedResultUrl": "={{ 'https://drive.google.com/drive/folders/' + $json.gdrive_shared_drive_id }}"
+          },
+          "folderId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $json.gdrive_folder_id }}"
+          },
+          "options": {}
+        },
+        "id": "f43e40c9-d76b-42a2-8535-a3224de519a1",
+        "name": "Create GDrive Folder",
+        "type": "n8n-nodes-base.googleDrive",
+        "position": [
+          464,
+          96
+        ],
+        "typeVersion": 3,
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "oPioaF4sFaVsK13H",
+            "name": "Google Drive account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "filters": {
+            "activeWorkflows": true
+          },
+          "requestOptions": {}
+        },
+        "id": "eeda6f4b-548f-4750-83fc-254797efa54e",
+        "name": "Get All Workflows",
+        "type": "n8n-nodes-base.n8n",
+        "position": [
+          672,
+          96
+        ],
+        "typeVersion": 1,
+        "credentials": {
+          "n8nApi": {
+            "id": "eKgtOnL1UgxJ2bUG",
+            "name": "n8n account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "language": "javaScript",
+          "jsCode": "// n8n API: active=true => published only (activeVersionId set). Still include archived rows; drop those here.\nconst rows = $input.all();\nreturn rows\n  .filter(({ json }) => json.isArchived !== true)\n  .map((item) => ({ json: item.json, pairedItem: item.pairedItem }));"
+        },
+        "id": "b8f2c0a1-7e4d-4c9b-8f1a-2c0d4e6e8a00",
+        "name": "Published workflows only",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          816,
+          96
+        ],
+        "typeVersion": 2
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "223e87cd-616d-4298-b53e-51eec2964cd5",
+        "name": "Loop Over Workflows",
+        "type": "n8n-nodes-base.splitInBatches",
+        "position": [
+          960,
+          160
+        ],
+        "typeVersion": 3
+      },
+      {
+        "parameters": {
+          "operation": "toJson",
+          "mode": "each",
+          "binaryPropertyName": "data",
+          "options": {
+            "format": true,
+            "fileName": "={{ $json.backup_file_base }}.json"
+          }
+        },
+        "id": "bf71fb08-7595-4a04-9818-ed82b6648a2a",
+        "name": "Convert to JSON File",
+        "type": "n8n-nodes-base.convertToFile",
+        "position": [
+          1648,
+          256
+        ],
+        "typeVersion": 1.1
+      },
+      {
+        "parameters": {
+          "jsCode": "const workflow = $json;\n\nif (!workflow.name && workflow.total_workflows) {\n  throw new Error('Receiving baseline tracking data instead of workflow object. Check wiring from Loop Over Workflows.');\n}\n\nconst date = new Date();\nconst year = date.getFullYear();\nconst month = String(date.getMonth() + 1).padStart(2, '0');\nconst wfId = workflow.id != null ? String(workflow.id) : 'unknown';\nconst rawName = String(workflow.name || 'unnamed');\n\nconst sysMatch = rawName.match(/^SYS\\s*(\\d+)(?:\\.(\\d+))?\\s*[—\\-]?\\s*/i);\nlet prefix;\nif (sysMatch) {\n  const major = String(parseInt(sysMatch[1], 10)).padStart(2, '0');\n  if (sysMatch[2] != null && sysMatch[2] !== '') {\n    const minor = String(parseInt(sysMatch[2], 10));\n    prefix = 'SYS_' + major + '_' + minor;\n  } else {\n    prefix = 'SYS_' + major;\n  }\n} else {\n  prefix = 'WORKFLOW';\n}\n\nlet title = rawName;\nif (sysMatch) {\n  title = rawName.slice(sysMatch[0].length).trim();\n}\nconst nameSlug = title\n  .replace(/[^a-zA-Z0-9\\s-_]/g, '')\n  .replace(/\\s+/g, '_')\n  .replace(/_+/g, '_')\n  .replace(/^_|_$/g, '')\n  .slice(0, 80);\nconst safeSlug = nameSlug || 'unnamed';\n\nconst backup_file_base = prefix + '_' + safeSlug + '_' + wfId;\n\nconst drive_relative_path = year + '/' + month + '/' + backup_file_base + '.json';\n\nconst orderJsonKeys = (jsonObj) => {\n  const ordered = {};\n  Object.keys(jsonObj).sort().forEach((key) => {\n    ordered[key] = jsonObj[key];\n  });\n  return ordered;\n};\n\nconst orderedWorkflow = orderJsonKeys(workflow);\nconst workflowJson = JSON.stringify(orderedWorkflow, null, 2);\n\nreturn {\n  ...workflow,\n  drive_relative_path,\n  workflow_json: workflowJson,\n  year,\n  month,\n  sanitized_name: safeSlug,\n  backup_file_base,\n};\n"
+        },
+        "id": "0fd6de64-848e-419d-aa3f-b2f2b5aed464",
+        "name": "Prepare Backup Data",
+        "type": "n8n-nodes-base.code",
+        "position": [
+          1216,
+          256
+        ],
+        "typeVersion": 2
+      },
+      {
+        "parameters": {
+          "authentication": "oAuth2",
+          "resource": "file",
+          "operation": "upload",
+          "inputDataFieldName": "data",
+          "name": "={{ $('Prepare Backup Data').item.json.backup_file_base }}.json",
+          "driveId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Config').first().json.gdrive_shared_drive_id }}"
+          },
+          "folderId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $('Create GDrive Folder').first().json.id }}"
+          },
+          "options": {}
+        },
+        "id": "0b9e2d8c-cd3c-4d42-a6a3-75fe5f38f79a",
+        "name": "Upload to Google Drive",
+        "type": "n8n-nodes-base.googleDrive",
+        "position": [
+          1872,
+          256
+        ],
+        "typeVersion": 3,
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "oPioaF4sFaVsK13H",
+            "name": "Google Drive account 2"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "backup_complete",
+                "name": "backup_complete",
+                "type": "boolean",
+                "value": true
+              },
+              {
+                "id": "workflow_name",
+                "name": "workflow_name",
+                "type": "string",
+                "value": "All Workflows"
+              },
+              {
+                "id": "workflow_id",
+                "name": "workflow_id",
+                "type": "string",
+                "value": "batch"
+              },
+              {
+                "id": "gdrive_backup",
+                "name": "gdrive_backup",
+                "type": "boolean",
+                "value": true
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "2df0bf8f-077b-4c35-acba-77b6cb7eca44",
+        "name": "Mark Complete",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          1920,
+          64
+        ],
+        "typeVersion": 3.4
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "total_workflows",
+                "name": "total_workflows",
+                "type": "number",
+                "value": "={{ $('Published workflows only').all().length }}"
+              },
+              {
+                "id": "backup_timestamp",
+                "name": "backup_timestamp",
+                "type": "string",
+                "value": "={{ $('Config').first().json.backup_timestamp }}"
+              },
+              {
+                "id": "gdrive_folder",
+                "name": "gdrive_folder",
+                "type": "string",
+                "value": "={{ $('Create GDrive Folder').first().json.name }}"
+              },
+              {
+                "id": "status",
+                "name": "status",
+                "type": "string",
+                "value": "Backup completed successfully"
+              },
+              {
+                "id": "3e469485-254e-499f-a711-f9d08ec5726a",
+                "name": "minutes_saved",
+                "value": "={{ $('Calculate Accurate Time Saved').first().json.actual_time_saved_minutes }}",
+                "type": "string"
+              },
+              {
+                "id": "2657505b-5fd1-4937-a8a7-859fa662b32d",
+                "name": "execution_duration",
+                "value": "={{ $('Calculate Accurate Time Saved').first().json.execution_duration_minutes }} minutes",
+                "type": "string"
+              },
+              {
+                "id": "04226b38-d799-48cc-ad98-12a99f7cbd4b",
+                "name": "time_saved",
+                "value": "={{ $('Calculate Accurate Time Saved').first().json.time_saved_display }}",
+                "type": "string"
+              },
+              {
+                "id": "2ec5b0e3-e41b-4359-accf-b4aa2b155efb",
+                "name": "efficiency",
+                "value": "={{ $('Calculate Accurate Time Saved').first().json.efficiency_display }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "2c8b3e90-abb6-4be5-9b66-6a402ceb5e52",
+        "name": "Final Summary",
+        "type": "n8n-nodes-base.set",
+        "position": [
+          1392,
+          64
+        ],
+        "executeOnce": true,
+        "typeVersion": 3.4
+      },
+      {
+        "parameters": {
+          "content": "## n8n Workflow Backup (IntraWeb OS)\n\n**Credentials:** n8n API, Google Drive OAuth2.\n\n**Alerts:** On success, posts to Google Chat via **SW — Send Google Chat Alert** (webhook from CONFIG secrets).\n\n**Config:** Drive paths come from **CONFIG — Global Settings** → `workflowBackup`.\n\n**Schedule:** Every 12 hours (+ Manual).",
+          "height": 640,
+          "width": 448,
+          "color": 5
+        },
+        "id": "b042b474-2e6b-44d0-91a0-061ea0c25286",
+        "name": "Sticky Note",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          384,
+          368
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "content": "## Flow\n1. **Call CONFIG** → **Config** (merges `workflowBackup` + timestamps)\n2. **Create GDrive Folder** → **Get All Workflows** (published only) → **Published workflows only** (drop archived) → loop → **Upload to Google Drive**\n3. **Final Summary** → **Prep backup complete Chat** → **Send backup complete Chat**\n\n**Scope:** Published, not archived.\n\n**File names:** `SYS_NN_{title-slug}_{workflowId}.json` for `SYS NN — …`. For `SYS NN.M — …`, use prefix `SYS_NN_M` (M is not zero-padded, e.g. `SYS_01_5`). Otherwise `WORKFLOW_{title-slug}_{workflowId}.json`. Title is the part after the SYS prefix, sanitized. Logs / data table use `YYYY/MM/{same}.json`.",
+          "height": 640,
+          "width": 448,
+          "color": 5
+        },
+        "id": "7e2c0b21-e37b-485b-99bc-a2956e1362cc",
+        "name": "Sticky Note1",
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -80,
+          368
+        ],
+        "typeVersion": 1
+      },
+      {
+        "parameters": {
+          "dataTableId": {
+            "__rl": true,
+            "value": "AOYQQ701mIr3JvFA",
+            "mode": "list",
+            "cachedResultName": "n8n_workflow_backup",
+            "cachedResultUrl": "/projects/o5dYIcHW2mxs82d6/datatables/AOYQQ701mIr3JvFA"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "run_id": "={{$execution.id}}",
+              "workflow_id": "={{ $json.workflow_id }}\n",
+              "workflow_name": "={{ $json.workflow_name }}",
+              "backup_status": "success",
+              "file_updated": "true",
+              "run_timestamp": "={{ $now }}"
+            },
+            "matchingColumns": [],
+            "schema": [
+              {
+                "id": "run_id",
+                "displayName": "run_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "workflow_id",
+                "displayName": "workflow_id",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "workflow_name",
+                "displayName": "workflow_name",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "github_path",
+                "displayName": "github_path",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": true
+              },
+              {
+                "id": "backup_status",
+                "displayName": "backup_status",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "file_updated",
+                "displayName": "file_updated",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "run_timestamp",
+                "displayName": "run_timestamp",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              },
+              {
+                "id": "error_message",
+                "displayName": "error_message",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "readOnly": false,
+                "removed": false
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.dataTable",
+        "typeVersion": 1.1,
+        "position": [
+          1440,
+          832
+        ],
+        "id": "e0600f3a-a36f-45de-a7a2-da700653943a",
+        "name": "Insert row"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "06f436ee-3a8b-4055-8610-a27944f656a8",
+                "name": "workflow_id",
+                "value": "={{ $('Loop Over Workflows').item.json.id }}",
+                "type": "string"
+              },
+              {
+                "id": "9b220ae7-12d9-452a-8bf5-1213d489f9ea",
+                "name": "workflow_name",
+                "value": "={{ $('Loop Over Workflows').item.json.name }}",
+                "type": "string"
+              },
+              {
+                "id": "41094fb8-22fb-40d8-b39f-fc3c62125cb5",
+                "name": "backup_status",
+                "value": "success",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1232,
+          832
+        ],
+        "id": "5ad80cb7-5421-4ea0-9bf1-ac26bb1b2dc2",
+        "name": "Edit Fields1"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json || {};\nconst config = $('Config').first().json;\nconst workflows = $('Published workflows only').all();\nconst totalWorkflows = workflows.length;\nconst minutesPerWorkflow = config.minutes_per_workflow_manual || 5;\nconst totalManualMinutes = totalWorkflows * minutesPerWorkflow;\n\nreturn {\n  ...input,\n  total_workflows: totalWorkflows,\n  minutes_per_workflow_manual: minutesPerWorkflow,\n  total_manual_minutes_estimate: totalManualMinutes,\n  execution_start_time: config.execution_start_time,\n  execution_start_timestamp: config.execution_start_timestamp,\n  tracking_initialized: true\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1456,
+          256
+        ],
+        "id": "a6355886-8c3b-400c-8e41-78a74b14a12f",
+        "name": "Calculate Time Tracking Baseline"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Get execution data\nconst config = $('Config').first().json;\nconst trackingBaseline = $('Calculate Time Tracking Baseline').first().json;\nconst executionEndTimestamp = Date.now();\n\n// Calculate actual execution duration\nconst executionStartTimestamp = trackingBaseline.execution_start_timestamp;\nconst executionDurationMs = executionEndTimestamp - executionStartTimestamp;\nconst executionDurationMinutes = Math.round(executionDurationMs / 60000 * 100) / 100;\n\n// Calculate time saved\nconst manualTimeMinutes = trackingBaseline.total_manual_minutes_estimate;\nconst actualTimeSaved = manualTimeMinutes - executionDurationMinutes;\nconst efficiencyPercent = Math.round((actualTimeSaved / manualTimeMinutes) * 100);\n\n// Prepare comprehensive time tracking data\nreturn {\n  // Baseline data\n  total_workflows_backed_up: trackingBaseline.total_workflows,\n  minutes_per_workflow_manual: trackingBaseline.minutes_per_workflow_manual,\n  \n  // Execution metrics\n  execution_start_time: trackingBaseline.execution_start_time,\n  execution_end_time: new Date(executionEndTimestamp).toISOString(),\n  execution_duration_minutes: executionDurationMinutes,\n  execution_duration_seconds: Math.round(executionDurationMs / 1000),\n  \n  // Time savings calculation\n  estimated_manual_time_minutes: manualTimeMinutes,\n  actual_time_saved_minutes: actualTimeSaved,\n  efficiency_percent: efficiencyPercent,\n  \n  // Human-readable summary\n  time_saved_display: `${Math.floor(actualTimeSaved)} minutes ${Math.round((actualTimeSaved % 1) * 60)} seconds`,\n  efficiency_display: `${efficiencyPercent}% faster than manual`,\n  \n  // For n8n Time Saved widget compatibility\n  minutesSaved: Math.round(actualTimeSaved)\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1216,
+          64
+        ],
+        "id": "f1f27774-cf9a-4d39-a954-896f21b97827",
+        "name": "Calculate Accurate Time Saved"
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours",
+                "hoursInterval": 12
+              }
+            ]
+          }
+        },
+        "id": "d1257472-e930-4a05-86a8-6131074c0ab1",
+        "name": "Schedule Every 12 Hours",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "position": [
+          -112,
+          192
+        ],
+        "typeVersion": 1.2
+      },
+      {
+        "parameters": {
+          "jsCode": "const d = $input.first().json || {};\nconst nl = String.fromCharCode(10);\nconst lines = [\n  '*n8n workflow backup complete*',\n  `Status: ${d.status ?? ''}`,\n  `Total workflows: ${d.total_workflows ?? ''}`,\n  `Timestamp: ${d.backup_timestamp ?? ''}`,\n  `Drive folder: ${d.gdrive_folder ?? ''}`,\n  `Execution: ${d.execution_duration ?? ''}`,\n  `Time saved: ${d.time_saved ?? ''}`,\n  `Efficiency: ${d.efficiency ?? ''}`,\n  `Minutes saved (est.): ${d.minutes_saved ?? ''}`\n];\nreturn [{ json: { message: lines.join(nl), priority: 'info' } }];"
+        },
+        "id": "f8a1b2c3-d4e5-4016-a789-000000000002",
+        "name": "Prep backup complete Chat",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1584,
+          64
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "__rl": true,
+            "value": "PGf6jPoWtxSPlr0h",
+            "mode": "id",
+            "cachedResultUrl": "/workflow/PGf6jPoWtxSPlr0h",
+            "cachedResultName": "SW: Send Google Chat Alert"
+          },
+          "workflowInputs": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "message": "={{ $json.message }}",
+              "priority": "={{ $json.priority }}"
+            },
+            "matchingColumns": [],
+            "schema": [],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": true
+          },
+          "options": {}
+        },
+        "id": "f8a1b2c3-d4e5-4016-a789-000000000003",
+        "name": "Send backup complete Chat",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1.3,
+        "position": [
+          1760,
+          64
+        ]
+      }
+    ],
+    "connections": {
+      "Config": {
+        "main": [
+          [
+            {
+              "node": "Create GDrive Folder",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Final Summary": {
+        "main": [
+          [
+            {
+              "node": "Prep backup complete Chat",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Manual Trigger": {
+        "main": [
+          [
+            {
+              "node": "Call CONFIG — Global Settings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get All Workflows": {
+        "main": [
+          [
+            {
+              "node": "Published workflows only",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Published workflows only": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Workflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Workflows": {
+        "main": [
+          [
+            {
+              "node": "Calculate Accurate Time Saved",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Prepare Backup Data",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Convert to JSON File": {
+        "main": [
+          [
+            {
+              "node": "Upload to Google Drive",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create GDrive Folder": {
+        "main": [
+          [
+            {
+              "node": "Get All Workflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upload to Google Drive": {
+        "main": [
+          [
+            {
+              "node": "Edit Fields1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert row": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Workflows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Edit Fields1": {
+        "main": [
+          [
+            {
+              "node": "Insert row",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calculate Time Tracking Baseline": {
+        "main": [
+          [
+            {
+              "node": "Convert to JSON File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calculate Accurate Time Saved": {
+        "main": [
+          [
+            {
+              "node": "Final Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Schedule Every 12 Hours": {
+        "main": [
+          [
+            {
+              "node": "Call CONFIG — Global Settings",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Call CONFIG — Global Settings": {
+        "main": [
+          [
+            {
+              "node": "Config",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prep backup complete Chat": {
+        "main": [
+          [
+            {
+              "node": "Send backup complete Chat",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send backup complete Chat": {
+        "main": [
+          [
+            {
+              "node": "Mark Complete",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Prepare Backup Data": {
+        "main": [
+          [
+            {
+              "node": "Calculate Time Tracking Baseline",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "authors": "John Schibelli",
+    "name": null,
+    "description": null,
+    "autosaved": false,
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-19T19:25:37.168Z",
+        "id": 3057,
+        "workflowId": "Lj9OHbsMMK6m5c6i",
+        "versionId": "b4f9e429-bb2e-4a0e-91a1-ed25f7f2a967",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:37.151Z",
+        "id": 3056,
+        "workflowId": "Lj9OHbsMMK6m5c6i",
+        "versionId": "b4f9e429-bb2e-4a0e-91a1-ed25f7f2a967",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
+  }
+}

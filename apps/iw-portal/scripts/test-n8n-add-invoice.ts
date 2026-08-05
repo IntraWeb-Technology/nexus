@@ -5,21 +5,31 @@
  *
  *   pnpm exec tsx scripts/test-n8n-add-invoice.ts
  */
-import path from 'node:path'
 import { config } from 'dotenv'
 import { createClient } from '@supabase/supabase-js'
-import { resolveMonorepoRoot } from './lib/repo-root'
+import { applyIwPortalEnvValidation } from './lib/iw-portal-env-check'
+import { iwPortalEnvLocalPath, resolveMonorepoRoot } from './lib/repo-root'
+import { resolveSupabaseScriptEnv } from '@repo/env/supabase-script-env'
 
-config({ path: path.join(resolveMonorepoRoot(import.meta.url), '.env.local') })
+config({ path: iwPortalEnvLocalPath(resolveMonorepoRoot(import.meta.url)) })
 config()
+applyIwPortalEnvValidation('report', 'test-n8n-add-invoice')
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+let url: string
+let key: string
+try {
+  const env = resolveSupabaseScriptEnv()
+  url = env.url
+  key = env.serviceRoleKey
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error))
+  process.exit(1)
+}
 const secret = process.env.WEBHOOK_SECRET
 
 async function main() {
   if (!url || !key || !secret) {
-    console.error('Missing NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or WEBHOOK_SECRET in .env.local')
+    console.error('Missing WEBHOOK_SECRET in .env.local')
     process.exit(1)
   }
 
@@ -46,6 +56,8 @@ async function main() {
         description: 'Automated n8n add_invoice test (hubspot_deal_id)',
         amount_cents: 5000,
         status: 'pending',
+        hubspot_invoice_id: `n8n-e2e-${Date.now()}`,
+        currency: 'usd',
       },
     }
     console.log('Target: hubspot_deal_id → project slug', byDeal.slug)

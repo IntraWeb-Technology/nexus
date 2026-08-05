@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-04-03T03:42:44.473Z",
+  "updatedAt": "2026-04-19T19:25:29.519Z",
   "createdAt": "2026-03-08T22:44:52.798Z",
   "id": "VzxtOFmmGEitVEQk",
   "name": "SW: Send SMS",
@@ -22,21 +22,13 @@
     },
     {
       "parameters": {
+        "source": "database",
         "workflowId": {
           "__rl": true,
-          "value": "sw-send-google-chat-alert",
+          "value": "PGf6jPoWtxSPlr0h",
           "mode": "id",
           "cachedResultName": "SW: Send Google Chat Alert"
-        },
-        "workflowInputs": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": [],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": true
-        },
-        "options": {}
+        }
       },
       "id": "62f03fdf-5311-40ff-8679-1f200a52920d",
       "name": "Alert on Error",
@@ -75,8 +67,13 @@
     },
     {
       "parameters": {
-        "source": "parameter",
-        "options": {}
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1qQFLOSHZsS9JPKP",
+          "mode": "id",
+          "cachedResultName": "SW: Log to Automations Log Sheet"
+        }
       },
       "id": "36d3990a-6a5c-427c-a6d8-42e6f344a7be",
       "name": "Log to Sheet",
@@ -125,7 +122,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Config from previous node (Get Config) to avoid 'Referenced node doesn't exist'\nconst config = $input.first().json;\nlet input;\ntry {\n  input = $('Execute Workflow Trigger').first().json;\n} catch (e) {\n  input = $('When executed by another node').first().json;\n}\n\nreturn [{\n  json: {\n    to: input.to,\n    body: input.body,\n    from: config.owner.phone,\n    workflowName: input.workflowName || 'SW: Send SMS'\n  }\n}];"
+        "jsCode": "// Config from previous node (Get Config) to avoid 'Referenced node doesn't exist'\nconst config = $input.first().json;\nlet input;\ntry {\n  input = $('Execute Workflow Trigger').first().json;\n} catch (e) {\n  input = $('When executed by another node').first().json;\n}\n\nconst twilioFrom = String(config.twilio?.fromNumber || '').trim();\nif (!twilioFrom) {\n  throw new Error('CONFIG.twilio.fromNumber is empty — set your Twilio Messaging E.164 sender in CONFIG (Return Config). Do not use owner.phone as From; Twilio rejects non-Twilio numbers.');\n}\n\nreturn [{\n  json: {\n    to: input.to,\n    body: input.body,\n    from: twilioFrom,\n    workflowName: input.workflowName || 'SW: Send SMS'\n  }\n}];"
       },
       "id": "55f91a1e-abdf-45c4-9e16-31295345a0cb",
       "name": "Prepare SMS",
@@ -294,7 +291,7 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "callerPolicy": "workflowsFromSameOwner"
   },
   "staticData": null,
@@ -312,9 +309,9 @@
       }
     ]
   },
-  "versionId": "3db87dd6-d106-4140-ad31-28154547d6c9",
-  "activeVersionId": "3db87dd6-d106-4140-ad31-28154547d6c9",
-  "versionCounter": 114,
+  "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+  "activeVersionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+  "versionCounter": 186,
   "triggerCount": 0,
   "shared": [
     {
@@ -337,9 +334,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:05:41.685Z",
-    "createdAt": "2026-04-03T03:05:41.685Z",
-    "versionId": "3db87dd6-d106-4140-ad31-28154547d6c9",
+    "updatedAt": "2026-04-14T02:53:58.008Z",
+    "createdAt": "2026-04-14T02:53:58.008Z",
+    "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
     "workflowId": "VzxtOFmmGEitVEQk",
     "nodes": [
       {
@@ -357,21 +354,13 @@
       },
       {
         "parameters": {
+          "source": "database",
           "workflowId": {
             "__rl": true,
-            "value": "sw-send-google-chat-alert",
+            "value": "PGf6jPoWtxSPlr0h",
             "mode": "id",
             "cachedResultName": "SW: Send Google Chat Alert"
-          },
-          "workflowInputs": {
-            "mappingMode": "defineBelow",
-            "value": {},
-            "matchingColumns": [],
-            "schema": [],
-            "attemptToConvertTypes": false,
-            "convertFieldsToString": true
-          },
-          "options": {}
+          }
         },
         "id": "62f03fdf-5311-40ff-8679-1f200a52920d",
         "name": "Alert on Error",
@@ -410,8 +399,13 @@
       },
       {
         "parameters": {
-          "source": "parameter",
-          "options": {}
+          "source": "database",
+          "workflowId": {
+            "__rl": true,
+            "value": "1qQFLOSHZsS9JPKP",
+            "mode": "id",
+            "cachedResultName": "SW: Log to Automations Log Sheet"
+          }
         },
         "id": "36d3990a-6a5c-427c-a6d8-42e6f344a7be",
         "name": "Log to Sheet",
@@ -460,7 +454,7 @@
       },
       {
         "parameters": {
-          "jsCode": "// Config from previous node (Get Config) to avoid 'Referenced node doesn't exist'\nconst config = $input.first().json;\nlet input;\ntry {\n  input = $('Execute Workflow Trigger').first().json;\n} catch (e) {\n  input = $('When executed by another node').first().json;\n}\n\nreturn [{\n  json: {\n    to: input.to,\n    body: input.body,\n    from: config.owner.phone,\n    workflowName: input.workflowName || 'SW: Send SMS'\n  }\n}];"
+          "jsCode": "// Config from previous node (Get Config) to avoid 'Referenced node doesn't exist'\nconst config = $input.first().json;\nlet input;\ntry {\n  input = $('Execute Workflow Trigger').first().json;\n} catch (e) {\n  input = $('When executed by another node').first().json;\n}\n\nconst twilioFrom = String(config.twilio?.fromNumber || '').trim();\nif (!twilioFrom) {\n  throw new Error('CONFIG.twilio.fromNumber is empty — set your Twilio Messaging E.164 sender in CONFIG (Return Config). Do not use owner.phone as From; Twilio rejects non-Twilio numbers.');\n}\n\nreturn [{\n  json: {\n    to: input.to,\n    body: input.body,\n    from: twilioFrom,\n    workflowName: input.workflowName || 'SW: Send SMS'\n  }\n}];"
         },
         "id": "55f91a1e-abdf-45c4-9e16-31295345a0cb",
         "name": "Prepare SMS",
@@ -630,6 +624,279 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-14T02:53:58.046Z",
+        "id": 1849,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:55:34.340Z",
+        "id": 1909,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:00:29.494Z",
+        "id": 1975,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:11:35.549Z",
+        "id": 2041,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:31.240Z",
+        "id": 2107,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:40.424Z",
+        "id": 2173,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:27.444Z",
+        "id": 2239,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:54.760Z",
+        "id": 2305,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:07.759Z",
+        "id": 2371,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:50.766Z",
+        "id": 2437,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:27.693Z",
+        "id": 2503,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:32.653Z",
+        "id": 2575,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:21:26.633Z",
+        "id": 2685,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:40.380Z",
+        "id": 2713,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:44.478Z",
+        "id": 2747,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:02:20.477Z",
+        "id": 2915,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:29.565Z",
+        "id": 3013,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:53:58.034Z",
+        "id": 1848,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T02:55:34.327Z",
+        "id": 1908,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:00:29.478Z",
+        "id": 1974,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:11:35.536Z",
+        "id": 2040,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:12:31.225Z",
+        "id": 2106,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:15:40.417Z",
+        "id": 2172,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:27.430Z",
+        "id": 2238,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:16:54.752Z",
+        "id": 2304,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:07.746Z",
+        "id": 2370,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:23:50.743Z",
+        "id": 2436,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T03:24:27.686Z",
+        "id": 2502,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-14T09:44:32.637Z",
+        "id": 2574,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-17T04:21:26.625Z",
+        "id": 2684,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:40.368Z",
+        "id": 2712,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-18T22:45:44.457Z",
+        "id": 2746,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T00:02:20.457Z",
+        "id": 2914,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:29.546Z",
+        "id": 3012,
+        "workflowId": "VzxtOFmmGEitVEQk",
+        "versionId": "7c9a85d3-baab-4228-88de-e836e1205b63",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
   }
 }

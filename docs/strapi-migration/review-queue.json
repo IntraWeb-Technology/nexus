@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-08-04T18:21:20.369Z",
+  "migrationBatch": "2026-08-04T18:21:20.367Z",
+  "mode": "write",
+  "items": [
+    {
+      "domain": "case-studies",
+      "identifier": "intraweb",
+      "reason": "case-study-body-not-split",
+      "sourceFile": "C:\\Users\\jschi\\OneDrive\\Desktop\\Projects\\2025_portfolio\\portfolio-os\\apps\\site\\content\\case-studies/intraweb.mdx",
+      "suggestedSites": [
+        "personal",
+        "intraweb"
+      ],
+      "notes": "Full MDX body was placed in `solution`; split into challenge/solution/results manually."
+    },
+    {
+      "domain": "case-studies",
+      "identifier": "tendril",
+      "reason": "case-study-body-not-split",
+      "sourceFile": "C:\\Users\\jschi\\OneDrive\\Desktop\\Projects\\2025_portfolio\\portfolio-os\\apps\\site\\content\\case-studies/tendril.mdx",
+      "suggestedSites": [
+        "personal"
+      ],
+      "notes": "Full MDX body was placed in `solution`; split into challenge/solution/results manually."
+    }
+  ]
+}

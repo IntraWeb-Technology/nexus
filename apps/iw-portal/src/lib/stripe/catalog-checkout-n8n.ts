@@ -5,6 +5,11 @@ export function isPortalInvoiceCheckout(session: Stripe.Checkout.Session): boole
   return Boolean(session.metadata?.invoice_id && session.metadata?.project_id)
 }
 
+/** Subscription checkout created by /api/billing/create-maintenance-checkout */
+export function isPortalMaintenanceSubscriptionCheckout(session: Stripe.Checkout.Session): boolean {
+  return session.metadata?.portal_checkout === 'maintenance'
+}
+
 export function looksLikeCatalogStripeCheckout(session: Stripe.Checkout.Session): boolean {
   const m = session.metadata ?? {}
   return Boolean(session.payment_link || m.sku || m.type)
@@ -21,6 +26,7 @@ export function catalogCheckoutPaymentSucceeded(session: Stripe.Checkout.Session
 export function shouldForwardCatalogPayment(session: Stripe.Checkout.Session): boolean {
   if (!catalogCheckoutPaymentSucceeded(session)) return false
   if (isPortalInvoiceCheckout(session)) return false
+  if (isPortalMaintenanceSubscriptionCheckout(session)) return false
   return looksLikeCatalogStripeCheckout(session)
 }
 

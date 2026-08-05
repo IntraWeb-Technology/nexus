@@ -1,0 +1,1329 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:23:13.886Z",
+  "id": "Lo3BuqzQkgI4YINy",
+  "name": "System 5 — Proposal & Contract Delivery",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "deal-proposal-stage",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "9d8ab89e-e23a-4c51-a9c2-666b469702b2",
+      "name": "Webhook Deal Proposal Stage",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "deal-proposal-stage"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.body.deal_id || $json.deal_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "dealname,dealstage,amount,pipeline,description,closedate,hs_priority"
+            },
+            {
+              "name": "associations",
+              "value": "contacts,companies"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3c3a264f-57ec-452e-b756-66841ce6256c",
+      "name": "Get Full Deal and Contact HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge webhook payload with HubSpot deal data\nconst webhookBody = $('Webhook Deal Proposal Stage').item.json.body || $('Webhook Deal Proposal Stage').item.json;\nconst dealData = $input.item.json;\n\nconst deal_id = webhookBody.deal_id || '';\nconst company_name = webhookBody.company_name || dealData.properties?.dealname || '';\nconst industry = webhookBody.industry || '';\nconst pain_points = webhookBody.pain_points || '';\nconst deal_value = webhookBody.deal_value || dealData.properties?.amount || '0';\nconst tier = webhookBody.tier || 'Starter';\nconst contact_email = webhookBody.contact_email || '';\nconst contact_name = webhookBody.contact_name || '';\nconst contact_phone_raw = webhookBody.contact_phone || '';\n\n// Normalize phone\nlet contact_phone = contact_phone_raw.replace(/[^0-9]/g, '');\nif (contact_phone.length === 10) contact_phone = '+1' + contact_phone;\nelse if (contact_phone.length === 11 && contact_phone.startsWith('1')) contact_phone = '+' + contact_phone;\nelse contact_phone = contact_phone_raw;\n\nconst first_name = contact_name.split(' ')[0] || contact_name;\n\nreturn [{\n  json: {\n    deal_id,\n    company_name,\n    industry,\n    pain_points,\n    deal_value,\n    tier,\n    contact_email,\n    contact_name,\n    first_name,\n    contact_phone,\n    contact_phone_raw,\n    proposal_requested_at: new Date().toISOString(),\n    hubspot_deal: dealData.properties || {}\n  }\n}];"
+      },
+      "id": "a80af88f-601a-47b8-b0be-f50cadba19ee",
+      "name": "Prepare Proposal Variables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 4000,\n  \"system\": \"You are writing a consulting proposal for IntraWeb Technologies LLC, a NJ-based AI automation firm. IntraWeb's positioning: we are the implementation layer for AI-enabled operations. We don't just advise — we build. Write in a direct, confident, builder tone. No corporate speak. No em dashes. Use real numbers and specific outcomes where possible. Output a complete HTML proposal document with inline CSS styling. The proposal must include these sections as H2 headings: Executive Summary, The Problem We're Solving, What We'll Build, Timeline, Investment, Why IntraWeb, Next Steps. Make it look professional and polished.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a full consulting proposal for the following engagement:\\n\\nClient Company: {{ $json.company_name }}\\nIndustry: {{ $json.industry }}\\nPain Points: {{ $json.pain_points }}\\nProposed Investment: ${{ $json.deal_value }}/month\\nService Tier: {{ $json.tier }}\\nContact Name: {{ $json.contact_name }}\\n\\nThe proposal should be specific to their industry, address their stated pain points directly, and outline what IntraWeb will build for them. Include realistic timelines and specific deliverables. The Investment section should present the ${{ $json.deal_value }}/month fee as a clear ROI play. Next Steps should be: sign agreement, complete credentials intake, schedule kickoff call. Output complete HTML with inline CSS only.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "1009b268-4beb-4e59-a619-443b6548e6bb",
+      "name": "Claude Generate Proposal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract HTML from Claude response\nconst claudeResponse = $input.item.json;\nconst proposalData = $('Prepare Proposal Variables').item.json;\n\nlet proposalHtml = '';\n\ntry {\n  const content = claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text;\n  if (content) {\n    proposalHtml = content.trim();\n    // If Claude wrapped in markdown code blocks, strip them\n    if (proposalHtml.startsWith('```html')) {\n      proposalHtml = proposalHtml.replace(/^```html\\n?/, '').replace(/\\n?```$/, '').trim();\n    } else if (proposalHtml.startsWith('```')) {\n      proposalHtml = proposalHtml.replace(/^```\\n?/, '').replace(/\\n?```$/, '').trim();\n    }\n  }\n} catch(e) {\n  proposalHtml = '<html><body><h1>Proposal for ' + proposalData.company_name + '</h1><p>Proposal generation encountered an error. Please regenerate.</p></body></html>';\n}\n\nreturn [{\n  json: {\n    ...proposalData,\n    proposal_html: proposalHtml,\n    proposal_filename: 'IntraWeb-Proposal-' + proposalData.company_name.replace(/[^a-zA-Z0-9]/g, '-') + '-' + new Date().toISOString().split('T')[0] + '.pdf'\n  }\n}];"
+      },
+      "id": "9e5ec994-f372-4550-a964-53911fefdd7f",
+      "name": "Extract Proposal HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.PDF_SERVICE_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.PDF_SERVICE_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"html\": \"{{ $json.proposal_html }}\",\n  \"filename\": \"{{ $json.proposal_filename }}\",\n  \"options\": {\n    \"format\": \"A4\",\n    \"margin\": {\n      \"top\": \"20mm\",\n      \"right\": \"15mm\",\n      \"bottom\": \"20mm\",\n      \"left\": \"15mm\"\n    },\n    \"printBackground\": true\n  }\n}",
+        "options": {}
+      },
+      "id": "0e4360b9-96de-42b3-b13d-1df4fc7e2dca",
+      "name": "Convert HTML to PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle PDF conversion result\n// The PDF service returns either a base64 string or a URL\nconst pdfResult = $input.item.json;\nconst proposalData = $('Extract Proposal HTML').item.json;\n\nlet pdfBase64 = '';\nlet pdfUrl = '';\n\nif (pdfResult.pdf_base64) {\n  pdfBase64 = pdfResult.pdf_base64;\n} else if (pdfResult.base64) {\n  pdfBase64 = pdfResult.base64;\n} else if (pdfResult.url) {\n  pdfUrl = pdfResult.url;\n} else if (pdfResult.data) {\n  pdfBase64 = pdfResult.data;\n}\n\nreturn [{\n  json: {\n    ...proposalData,\n    pdf_base64: pdfBase64,\n    pdf_download_url: pdfUrl,\n    pdf_ready: !!(pdfBase64 || pdfUrl)\n  }\n}];"
+      },
+      "id": "7f77bafe-d4cb-4d0c-82ac-76c3e8e18242",
+      "name": "Process PDF Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_DRIVE_ACCESS_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"{{ $json.proposal_filename }}\",\n  \"mimeType\": \"application/pdf\",\n  \"parents\": [\"{{ $env.GOOGLE_DRIVE_PROPOSALS_FOLDER_ID }}\"]\n}",
+        "options": {}
+      },
+      "id": "bdbebec3-e05a-4ee8-aa47-b4d3067c9ed6",
+      "name": "Upload PDF to Google Drive",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1552,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.id }}/permissions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_DRIVE_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"anyone\",\n  \"role\": \"reader\"\n}",
+        "options": {}
+      },
+      "id": "12adbe12-3f5f-4028-97cc-a795f473ca59",
+      "name": "Set Drive File Shareable",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1760,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build shareable Drive link\nconst driveUploadResult = $('Upload PDF to Google Drive').item.json;\nconst proposalData = $('Process PDF Result').item.json;\n\nconst fileId = driveUploadResult.id;\nconst driveLink = 'https://drive.google.com/file/d/' + fileId + '/view';\nconst downloadLink = 'https://drive.google.com/uc?export=download&id=' + fileId;\n\nreturn [{\n  json: {\n    ...proposalData,\n    drive_file_id: fileId,\n    drive_link: driveLink,\n    download_link: downloadLink\n  }\n}];"
+      },
+      "id": "3cb8c5cd-51de-463e-923b-2102cbbfff10",
+      "name": "Build Drive Shareable Link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Proposals!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"{{ $json.contact_name }}\",\n      \"{{ $json.company_name }}\",\n      \"{{ $json.deal_value }}\",\n      \"{{ $json.tier }}\",\n      \"{{ $json.drive_link }}\",\n      \"Pending Review\",\n      \"{{ $json.deal_id }}\",\n      \"{{ $json.contact_email }}\",\n      \"{{ $json.contact_phone }}\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "373aaf39-b436-4340-9756-cc924ae192f5",
+      "name": "Add to Proposals Queue Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2208,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOOGLE_CHAT_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*Proposal draft ready for {{ $json.company_name }} (${{ $json.deal_value }}/mo)*\\n\\nContact: {{ $json.contact_name }} ({{ $json.contact_email }})\\nTier: {{ $json.tier }}\\nIndustry: {{ $json.industry }}\\n\\nDrive Link: {{ $json.drive_link }}\\n\\nSet Status to 'Approved' in the Proposals Google Sheet to send to client.\"\n}",
+        "options": {}
+      },
+      "id": "23e1e963-96ab-405e-be0c-4970915e022c",
+      "name": "Google Chat Proposal Ready Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2432,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Proposal generated and queued for review\", \"drive_link\": \"{{ $('Build Drive Shareable Link').item.json.drive_link }}\" }",
+        "options": {}
+      },
+      "id": "9683defd-59a2-4ed1-8084-03ff6421c844",
+      "name": "Return 200 OK Initial",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "proposal-approved",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "85f9004a-6b44-4bae-b510-6a85a8306a3b",
+      "name": "Webhook Proposal Approved",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        304
+      ],
+      "webhookId": "proposal-approved"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract approval payload (triggered when Status set to 'Approved' in Sheets)\nconst body = $input.item.json.body || $input.item.json;\n\nconst deal_id = body.deal_id || '';\nconst company_name = body.company_name || '';\nconst contact_name = body.contact_name || '';\nconst contact_email = body.contact_email || '';\nconst contact_phone = body.contact_phone || '';\nconst tier = body.tier || '';\nconst deal_value = body.deal_value || '';\nconst drive_link = body.drive_link || '';\nconst download_link = body.download_link || '';\nconst first_name = contact_name.split(' ')[0] || contact_name;\n\nreturn [{\n  json: {\n    deal_id,\n    company_name,\n    contact_name,\n    first_name,\n    contact_email,\n    contact_phone,\n    tier,\n    deal_value,\n    drive_link,\n    download_link,\n    approved_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "58be6d96-5d0c-4ee2-a510-3be9fa9bf3a1",
+      "name": "Prepare Approved Proposal Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $json.contact_email }}\"],\n  \"subject\": \"Your IntraWeb proposal — {{ $json.company_name }}\",\n  \"html\": \"<h2>Hi {{ $json.first_name }},</h2><p>Your proposal is ready. It outlines exactly what we'll build for {{ $json.company_name }}, the timeline, and the investment.</p><p><a href='{{ $json.drive_link }}' style='background:#0066cc;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;'>View Proposal</a></p><p>To move forward, you'll receive a separate link to sign the service agreement electronically. Once signed, we start immediately.</p><p><a href='{{ $env.ESIGNATURE_LINK }}?client={{ $json.company_name }}&deal={{ $json.deal_id }}' style='background:#00aa44;color:white;padding:12px 24px;text-decoration:none;border-radius:4px;display:inline-block;margin-top:10px;'>Sign Agreement</a></p><p>Questions? Reply to this email or call/text me directly.</p><p>John<br>IntraWeb Technologies<br>john@intrawebtech.com</p>\"\n}",
+        "options": {}
+      },
+      "id": "e25c1ffc-b41f-49c4-98c2-d41a46f19984",
+      "name": "Send Proposal Email via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $json.deal_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"dealstage\": \"presentationscheduled\",\n    \"proposal_sent_date\": \"{{ $now.toISO() }}\",\n    \"proposal_drive_link\": \"{{ $json.drive_link }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "7ed03e95-2924-4d5e-acf1-9c6190a941f8",
+      "name": "Update HubSpot Deal Proposal Sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        672,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Proposal sent to {{ $('Prepare Approved Proposal Data').item.json.contact_name }} at {{ $('Prepare Approved Proposal Data').item.json.company_name }}. Drive link: {{ $('Prepare Approved Proposal Data').item.json.drive_link }}. Sent: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "d71d4077-9fd5-4b24-af61-972251c600b2",
+      "name": "Log Proposal Sent HubSpot Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        880,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Automations Log!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"System 5 — Proposal & Contract Delivery\",\n      \"Proposal Sent\",\n      \"Proposal sent to {{ $('Prepare Approved Proposal Data').item.json.contact_name }} at {{ $('Prepare Approved Proposal Data').item.json.company_name }} (${{ $('Prepare Approved Proposal Data').item.json.deal_value }}/mo {{ $('Prepare Approved Proposal Data').item.json.tier }})\",\n      \"Proposal approved and sent\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "89ca96ed-274d-46c8-8841-8597da1e19fc",
+      "name": "Log Proposal Sent to Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1104,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Proposal sent to client\" }",
+        "options": {}
+      },
+      "id": "95714591-828d-45fe-8be3-0697dbfe944c",
+      "name": "Return 200 OK Approved",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 48,
+        "unit": "hours"
+      },
+      "id": "df655a59-8027-453d-874b-a15af9f47b77",
+      "name": "Wait 48 Hours Follow Up",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1552,
+        304
+      ],
+      "webhookId": "wait-48h-proposal-followup"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Prepare Approved Proposal Data').item.json.deal_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "dealstage,amount,closedate"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "95da3a3b-4cff-4a8e-b42f-5fdcf19b2482",
+      "name": "Check Deal Stage 48hr",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1760,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-proposal-sent",
+              "leftValue": "={{ $json.properties.dealstage.value }}",
+              "rightValue": "presentationscheduled",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3c0f8f91-b6bb-4f82-b6ab-20889ee8dabd",
+      "name": "Still at Proposal Stage 48hr?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{ $('Prepare Approved Proposal Data').item.json.contact_phone }}"
+            },
+            {
+              "name": "From",
+              "value": "={{ $env.TWILIO_PHONE_NUMBER }}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{ $('Prepare Approved Proposal Data').item.json.first_name }}, wanted to check in on the IntraWeb proposal for {{ $('Prepare Approved Proposal Data').item.json.company_name }}. Any questions I can answer? — John"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1147711a-0ffe-4a72-aff5-ae7bd21b2f07",
+      "name": "Send 48hr Follow Up SMS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2208,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"48-hour follow-up SMS sent to {{ $('Prepare Approved Proposal Data').item.json.contact_name }}. Proposal still pending. Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "1b09216d-e5e1-4ae5-be78-dd75819d875f",
+      "name": "Log 48hr Follow Up HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2432,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 48,
+        "unit": "hours"
+      },
+      "id": "98925fe2-5d62-476b-a987-c267337ceb90",
+      "name": "Wait Additional 48 Hours 96hr Total",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2640,
+        192
+      ],
+      "webhookId": "wait-96h-proposal-followup"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/deals/{{ $('Prepare Approved Proposal Data').item.json.deal_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "dealstage"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2cdff6c6-56a2-460d-9a40-ece235050dca",
+      "name": "Check Deal Stage 96hr",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2864,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-still-pending-96",
+              "leftValue": "={{ $json.properties.dealstage.value }}",
+              "rightValue": "presentationscheduled",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "0196421d-f115-45ec-a302-5b8d5155d88c",
+      "name": "Still Pending at 96hr?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3088,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 800,\n  \"system\": \"You are writing a follow-up email for John at IntraWeb Technologies after sending a consulting proposal. Voice: direct, no fluff, no em dashes. The proposal has been out for 4 days with no response. Be professional, address any possible hesitation, and make it easy to say yes or ask questions. Output valid JSON with fields: subject (string) and body_html (string with HTML markup).\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a 96-hour follow-up email to {{ $('Prepare Approved Proposal Data').item.json.first_name }} at {{ $('Prepare Approved Proposal Data').item.json.company_name }}. The proposal for ${{ $('Prepare Approved Proposal Data').item.json.deal_value }}/month has been out for 4 days. Address common hesitations (timing, scope, ROI). Offer to jump on a quick call to answer any questions. Keep it under 150 words. Output JSON only with subject and body_html fields.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "e85f7937-8eb6-4123-a5c2-fbe4337e0bfb",
+      "name": "Claude 96hr Follow Up Email Gen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3312,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.item.json;\nconst approvedData = $('Prepare Approved Proposal Data').item.json;\n\nlet subject = 'Following up on your IntraWeb proposal';\nlet body_html = '<p>Hi ' + approvedData.first_name + ',</p><p>Following up on the proposal for ' + approvedData.company_name + '. Happy to hop on a quick call to address any questions. — John, IntraWeb</p>';\n\ntry {\n  const content = claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text;\n  if (content) {\n    const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n    const parsed = JSON.parse(cleaned);\n    subject = parsed.subject || subject;\n    body_html = parsed.body_html || body_html;\n  }\n} catch(e) {}\n\nreturn [{\n  json: {\n    ...approvedData,\n    followup_subject: subject,\n    followup_body_html: body_html\n  }\n}];"
+      },
+      "id": "fdc8de7b-50d5-46fb-bdff-47e6726ba132",
+      "name": "Parse 96hr Follow Up Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3520,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $json.contact_email }}\"],\n  \"subject\": \"{{ $json.followup_subject }}\",\n  \"html\": \"{{ $json.followup_body_html }}\"\n}",
+        "options": {}
+      },
+      "id": "5eb95c9e-1864-4455-9851-a7492c3fad92",
+      "name": "Send 96hr Follow Up Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3744,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"96-hour follow-up email sent to {{ $('Prepare Approved Proposal Data').item.json.contact_name }}. Subject: {{ $('Parse 96hr Follow Up Email').item.json.followup_subject }}. Proposal still pending. Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "3265c5e1-e492-468c-8f70-4cfd41ac5fbd",
+      "name": "Log 96hr Follow Up HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3968,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Automations Log!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"System 5 — Proposal & Contract Delivery\",\n      \"Follow Up Sent\",\n      \"96hr follow-up email sent to {{ $('Prepare Approved Proposal Data').item.json.contact_name }} at {{ $('Prepare Approved Proposal Data').item.json.company_name }}. Proposal still pending.\",\n      \"96hr auto follow-up\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "2c32920a-70aa-43c6-8c56-129c9d9ec291",
+      "name": "Log 96hr Follow Up to Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        4192,
+        128
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ce7fedb7-9523-4753-9a6b-9a13c1aba6a1",
+      "name": "Deal Already Advanced",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2208,
+        400
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9334fbb5-1f2d-4e5a-821d-08a29c6281bb",
+      "name": "Deal Advanced at 96hr",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        3312,
+        320
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "ea56101f-9230-4df2-ab82-b8b1715f3a74",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOOGLE_CHAT_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*ERROR — System 5: Proposal & Contract Delivery*\\n\\nWorkflow: {{ $json.workflow.name }}\\nNode: {{ $json.execution.lastNodeExecuted }}\\nError: {{ $json.execution.error.message }}\\nTime: {{ $now.toISO() }}\\n\\nImmediate attention required.\"\n}",
+        "options": {}
+      },
+      "id": "a57bbc0d-792b-45e3-b76e-4646b618529d",
+      "name": "Error Alert Google Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        224,
+        608
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Deal Proposal Stage": {
+      "main": [
+        [
+          {
+            "node": "Get Full Deal and Contact HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Deal and Contact HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Prepare Proposal Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Proposal Variables": {
+      "main": [
+        [
+          {
+            "node": "Claude Generate Proposal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Generate Proposal": {
+      "main": [
+        [
+          {
+            "node": "Extract Proposal HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Proposal HTML": {
+      "main": [
+        [
+          {
+            "node": "Convert HTML to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert HTML to PDF": {
+      "main": [
+        [
+          {
+            "node": "Process PDF Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process PDF Result": {
+      "main": [
+        [
+          {
+            "node": "Upload PDF to Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload PDF to Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Set Drive File Shareable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Drive File Shareable": {
+      "main": [
+        [
+          {
+            "node": "Build Drive Shareable Link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Drive Shareable Link": {
+      "main": [
+        [
+          {
+            "node": "Add to Proposals Queue Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add to Proposals Queue Sheet": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Proposal Ready Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Proposal Ready Alert": {
+      "main": [
+        [
+          {
+            "node": "Return 200 OK Initial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Proposal Approved": {
+      "main": [
+        [
+          {
+            "node": "Prepare Approved Proposal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Approved Proposal Data": {
+      "main": [
+        [
+          {
+            "node": "Send Proposal Email via Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Proposal Email via Resend": {
+      "main": [
+        [
+          {
+            "node": "Update HubSpot Deal Proposal Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update HubSpot Deal Proposal Sent": {
+      "main": [
+        [
+          {
+            "node": "Log Proposal Sent HubSpot Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Proposal Sent HubSpot Note": {
+      "main": [
+        [
+          {
+            "node": "Log Proposal Sent to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Proposal Sent to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Return 200 OK Approved",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait 48 Hours Follow Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 48 Hours Follow Up": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage 48hr",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage 48hr": {
+      "main": [
+        [
+          {
+            "node": "Still at Proposal Stage 48hr?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still at Proposal Stage 48hr?": {
+      "main": [
+        [
+          {
+            "node": "Send 48hr Follow Up SMS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deal Already Advanced",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send 48hr Follow Up SMS": {
+      "main": [
+        [
+          {
+            "node": "Log 48hr Follow Up HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log 48hr Follow Up HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait Additional 48 Hours 96hr Total",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Additional 48 Hours 96hr Total": {
+      "main": [
+        [
+          {
+            "node": "Check Deal Stage 96hr",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Deal Stage 96hr": {
+      "main": [
+        [
+          {
+            "node": "Still Pending at 96hr?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Still Pending at 96hr?": {
+      "main": [
+        [
+          {
+            "node": "Claude 96hr Follow Up Email Gen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Deal Advanced at 96hr",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude 96hr Follow Up Email Gen": {
+      "main": [
+        [
+          {
+            "node": "Parse 96hr Follow Up Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse 96hr Follow Up Email": {
+      "main": [
+        [
+          {
+            "node": "Send 96hr Follow Up Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send 96hr Follow Up Email": {
+      "main": [
+        [
+          {
+            "node": "Log 96hr Follow Up HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log 96hr Follow Up HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Log 96hr Follow Up to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Error Alert Google Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "33526e49-d74c-45ea-b75a-fb71206b4758",
+  "activeVersionId": null,
+  "versionCounter": 6,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:23:13.890Z",
+      "createdAt": "2026-03-05T05:23:13.890Z",
+      "role": "workflow:owner",
+      "workflowId": "Lo3BuqzQkgI4YINy",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

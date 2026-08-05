@@ -1,0 +1,1492 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:14:56.977Z",
+  "id": "8JwxPM6Qk4TIZbWs",
+  "name": "System 3 — Outbound Lead Outreach Sequence (14-day 5-touch)",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "start-outbound-sequence",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "29e2d1f3-ce80-4755-a678-ec6d2b827e9a",
+      "name": "Webhook Start Sequence",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -6384,
+        304
+      ],
+      "webhookId": "start-outbound-sequence"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract and normalize incoming payload\nconst body = $input.item.json.body || $input.item.json;\n\nconst contact_id = body.contact_id || '';\nconst contact_name = body.contact_name || body.firstname || 'there';\nconst company_name = body.company_name || body.company || '';\nconst phone_raw = body.phone || '';\nconst email = body.email || '';\nconst industry = body.industry || 'your industry';\n\n// Normalize phone to E.164\nlet phone = phone_raw.replace(/[^0-9]/g, '');\nif (phone.length === 10) {\n  phone = '+1' + phone;\n} else if (phone.length === 11 && phone.startsWith('1')) {\n  phone = '+' + phone;\n} else {\n  phone = phone_raw;\n}\n\n// Extract first name\nconst first_name = contact_name.split(' ')[0] || contact_name;\n\nreturn [{\n  json: {\n    contact_id,\n    contact_name,\n    first_name,\n    company_name,\n    phone,\n    phone_raw,\n    email,\n    industry,\n    sequence_start: new Date().toISOString(),\n    sequence_stop: false,\n    touch_count: 0\n  }\n}];"
+      },
+      "id": "b42ce069-4233-48cf-b842-ce46ee3d18e0",
+      "name": "Set Sequence Variables",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -6160,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.contact_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "firstname,lastname,company,phone,email,industry,sequence_stop,lifecyclestage"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "de85141e-f599-4698-a479-a151cbbd86d0",
+      "name": "Get HubSpot Contact Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -5936,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1024,\n  \"system\": \"You are writing a cold outreach email for John at IntraWeb Technologies, NJ-based AI automation consulting. Voice: direct, specific, no fluff, no em dashes. Reference the recipient's specific industry. One clear pain point. Soft CTA to reply or book. Output valid JSON with fields: subject (string) and body_html (string with HTML email markup).\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a personalized intro cold outreach email to {{ $('Set Sequence Variables').item.json.first_name }} at {{ $('Set Sequence Variables').item.json.company_name }}, a business in the {{ $('Set Sequence Variables').item.json.industry }} industry in NJ. Address one specific operational pain point common in {{ $('Set Sequence Variables').item.json.industry }}. CTA is to reply or book a 15-min call. Sign off as John from IntraWeb Technologies. Output JSON only with subject and body_html fields.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "79840e71-10ef-4a6d-b5df-8dfc9591f6a6",
+      "name": "Claude Touch 1 Email Gen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -5728,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude response and extract subject + HTML body\nconst claudeResponse = $input.item.json;\nconst lead = $('Set Sequence Variables').item.json;\n\nlet subject = 'Quick question about ' + lead.company_name;\nlet body_html = '<p>Hi ' + lead.first_name + ',</p><p>Following up on some ideas for ' + lead.company_name + '.</p><p>— John, IntraWeb Technologies</p>';\n\ntry {\n  const content = claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text;\n  if (content) {\n    // Strip markdown code blocks if present\n    const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n    const parsed = JSON.parse(cleaned);\n    subject = parsed.subject || subject;\n    body_html = parsed.body_html || body_html;\n  }\n} catch(e) {\n  // Keep defaults if parsing fails\n}\n\nreturn [{\n  json: {\n    ...lead,\n    email_subject: subject,\n    email_body_html: body_html,\n    touch: 1\n  }\n}];"
+      },
+      "id": "a65d71ab-c225-4685-87c9-be476db5e1ef",
+      "name": "Parse Touch 1 Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5504,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $json.email }}\"],\n  \"subject\": \"{{ $json.email_subject }}\",\n  \"html\": \"{{ $json.email_body_html }}\"\n}",
+        "options": {}
+      },
+      "id": "c85216fc-39e0-4794-b0fc-5814af8dd89e",
+      "name": "Send Touch 1 Email via Resend",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -5280,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Set Sequence Variables').item.json.contact_id }}/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Touch 1 (Day 0) — Intro email sent via Resend. Subject: {{ $('Parse Touch 1 Email').item.json.email_subject }}. Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "38ace7ac-9d26-48f8-9495-3c28d891a8ac",
+      "name": "Log Touch 1 to HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -5056,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Automations Log!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"System 3 — Outbound Sequence\",\n      \"Success\",\n      \"Touch 1 email sent to {{ $('Set Sequence Variables').item.json.contact_name }} at {{ $('Set Sequence Variables').item.json.company_name }}\",\n      \"Sequence start\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "b8eb7aa3-b3df-4b16-86f3-646e6112dccd",
+      "name": "Log Touch 1 to Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -4848,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "days"
+      },
+      "id": "bfaaa896-f6f5-42d0-8ad3-ac7777d60242",
+      "name": "Wait 2 Days",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -4624,
+        304
+      ],
+      "webhookId": "wait-2-days-touch2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Check HubSpot for sequence_stop flag\nconst contactId = $('Set Sequence Variables').item.json.contact_id;\nreturn [{ json: { contact_id: contactId, check_stop: true } }];"
+      },
+      "id": "f4f892a4-cf54-406f-ae9a-5e8939dd2881",
+      "name": "Prep Stop Check T2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4400,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $json.contact_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "sequence_stop,firstname,company,phone,email,industry"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e01e00d7-fa35-4d2b-a5ab-c89072e1b574",
+      "name": "Check Sequence Stop T2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -4176,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-stop-t2",
+              "leftValue": "={{ $json.properties.sequence_stop.value }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "34c6dd8d-5d7a-465b-a178-f6f867c764b4",
+      "name": "Stop Check T2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -3968,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{ $('Set Sequence Variables').item.json.phone }}"
+            },
+            {
+              "name": "From",
+              "value": "={{ $env.TWILIO_PHONE_NUMBER }}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{ $('Set Sequence Variables').item.json.first_name }}, sent you an email about automating {{ $('Set Sequence Variables').item.json.company_name }}'s operations. Worth a 15-min chat? — John, IntraWeb"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "80a2ef82-7ccf-4fb6-816f-dc037dfd316f",
+      "name": "Touch 2 SMS Twilio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3824,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Touch 2 (Day 2) — SMS sent via Twilio to {{ $('Set Sequence Variables').item.json.phone }}. Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $('Set Sequence Variables').item.json.contact_id }}\" },\n      \"types\": [{ \"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 202 }]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "957cf046-1f4d-4bd6-b092-4ebf38ea45c3",
+      "name": "Log Touch 2 HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3600,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "id": "861b6a56-8a27-462e-8559-ffb7bef229f6",
+      "name": "Wait 3 Days T3",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -3376,
+        -16
+      ],
+      "webhookId": "wait-3-days-touch3"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Set Sequence Variables').item.json.contact_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "sequence_stop,firstname,company,phone,email,industry"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3f4cc742-7e83-4714-bf70-f6328876f2b5",
+      "name": "Check Sequence Stop T3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -3168,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-stop-t3",
+              "leftValue": "={{ $json.properties.sequence_stop.value }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b27db5d3-8817-4621-85d4-70c665621fdc",
+      "name": "Stop Check T3",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2944,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1024,\n  \"system\": \"You are writing a follow-up cold outreach email for John at IntraWeb Technologies, NJ-based AI automation consulting. Voice: direct, specific, no fluff, no em dashes. This is touch 3 in a sequence. Reference specific automation examples for the recipient's industry. Show what's possible with AI automation. CTA to book a 15-min call. Output valid JSON with fields: subject (string) and body_html (string with HTML email markup).\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write a follow-up email (touch 3, day 5) to {{ $('Set Sequence Variables').item.json.first_name }} at {{ $('Set Sequence Variables').item.json.company_name }} in the {{ $('Set Sequence Variables').item.json.industry }} industry. Include 2-3 specific real-world automation examples relevant to {{ $('Set Sequence Variables').item.json.industry }} businesses. Show what IntraWeb could build for them. CTA: book a 15-min call. Output JSON only with subject and body_html fields.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "cd75f56f-d708-4ad2-ad1b-83eda108940e",
+      "name": "Claude Touch 3 Email Gen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2640,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.item.json;\nconst lead = $('Set Sequence Variables').item.json;\n\nlet subject = 'What AI automation looks like for ' + lead.industry + ' businesses';\nlet body_html = '<p>Hi ' + lead.first_name + ',</p><p>Wanted to share some examples of what automation could look like for ' + lead.company_name + '.</p><p>— John, IntraWeb Technologies</p>';\n\ntry {\n  const content = claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text;\n  if (content) {\n    const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n    const parsed = JSON.parse(cleaned);\n    subject = parsed.subject || subject;\n    body_html = parsed.body_html || body_html;\n  }\n} catch(e) {}\n\nreturn [{\n  json: {\n    ...lead,\n    email_subject: subject,\n    email_body_html: body_html,\n    touch: 3\n  }\n}];"
+      },
+      "id": "38696b43-1573-4420-aa3f-dd65af3d2fc5",
+      "name": "Parse Touch 3 Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2416,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $json.email }}\"],\n  \"subject\": \"{{ $json.email_subject }}\",\n  \"html\": \"{{ $json.email_body_html }}\"\n}",
+        "options": {}
+      },
+      "id": "b24fe779-1357-4a99-a8f3-a48468b2ec00",
+      "name": "Send Touch 3 Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -2208,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Touch 3 (Day 5) — Automation examples email sent. Subject: {{ $('Parse Touch 3 Email').item.json.email_subject }}. Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $('Set Sequence Variables').item.json.contact_id }}\" },\n      \"types\": [{ \"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 202 }]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "23628661-d0c8-4d48-87ae-b6836634f414",
+      "name": "Log Touch 3 HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1984,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 3,
+        "unit": "days"
+      },
+      "id": "4584b8ac-000a-4603-a386-7ece14759ac0",
+      "name": "Wait 3 Days T4",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -1760,
+        128
+      ],
+      "webhookId": "wait-3-days-touch4"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Set Sequence Variables').item.json.contact_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "sequence_stop"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "43aecb55-baea-4030-be9e-adc49ca0b71d",
+      "name": "Check Sequence Stop T4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1536,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-stop-t4",
+              "leftValue": "={{ $json.properties.sequence_stop.value }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2882f57e-ea02-4d4d-82d6-fa691b77ebed",
+      "name": "Stop Check T4",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1328,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{ $('Set Sequence Variables').item.json.phone }}"
+            },
+            {
+              "name": "From",
+              "value": "={{ $env.TWILIO_PHONE_NUMBER }}"
+            },
+            {
+              "name": "Body",
+              "value": "=Hi {{ $('Set Sequence Variables').item.json.first_name }}, following up on a few automation ideas I sent over for {{ $('Set Sequence Variables').item.json.company_name }}. Happy to do a quick 15-min call to walk through it. Worth it? — John, IntraWeb"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ac0cf5ff-6e0c-4de4-8e9d-bdca215785d1",
+      "name": "Touch 4 SMS Twilio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -1088,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Touch 4 (Day 8) — SMS sent via Twilio. Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $('Set Sequence Variables').item.json.contact_id }}\" },\n      \"types\": [{ \"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 202 }]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "5b993e29-b01f-4bab-8cd5-cbd46eb2cb6c",
+      "name": "Log Touch 4 HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -864,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 6,
+        "unit": "days"
+      },
+      "id": "4959e48d-668c-4196-a91a-5cb47406c158",
+      "name": "Wait 6 Days T5",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        208
+      ],
+      "webhookId": "wait-6-days-touch5"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Set Sequence Variables').item.json.contact_id }}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "properties",
+              "value": "sequence_stop"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "67daa5d1-f134-4f92-b4f3-05ed44ac2972",
+      "name": "Check Sequence Stop T5",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -432,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-stop-t5",
+              "leftValue": "={{ $json.properties.sequence_stop.value }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "80e5719b-1065-45ec-a0da-eff88d9ee9a7",
+      "name": "Stop Check T5",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1024,\n  \"system\": \"You are writing a closing-the-loop final email in a 5-touch cold outreach sequence for John at IntraWeb Technologies, NJ-based AI automation consulting. Voice: direct, no fluff, no em dashes. This is the last email in the sequence. Be respectful of their time. Offer a free 20-minute operations audit with zero obligation. Make it easy to say yes. Output valid JSON with fields: subject (string) and body_html (string with HTML email markup).\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Write the final closing-the-loop email (touch 5, day 14) to {{ $('Set Sequence Variables').item.json.first_name }} at {{ $('Set Sequence Variables').item.json.company_name }} in the {{ $('Set Sequence Variables').item.json.industry }} industry. Acknowledge this is the last email. Offer a free 20-minute operations audit. Make the offer feel low-risk and specific. CTA: reply yes or click the calendar link. Sign off as John from IntraWeb. Output JSON only with subject and body_html fields.\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "0f74f3b6-20bf-4287-9005-bbd8e36595a3",
+      "name": "Claude Touch 5 Email Gen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const claudeResponse = $input.item.json;\nconst lead = $('Set Sequence Variables').item.json;\n\nlet subject = 'Closing the loop — free 20-min ops audit for ' + lead.company_name;\nlet body_html = '<p>Hi ' + lead.first_name + ',</p><p>Last email from me. Wanted to offer a free 20-minute operations audit for ' + lead.company_name + ' — no pitch, just value.</p><p>— John, IntraWeb Technologies</p>';\n\ntry {\n  const content = claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text;\n  if (content) {\n    const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n    const parsed = JSON.parse(cleaned);\n    subject = parsed.subject || subject;\n    body_html = parsed.body_html || body_html;\n  }\n} catch(e) {}\n\nreturn [{\n  json: {\n    ...lead,\n    email_subject: subject,\n    email_body_html: body_html,\n    touch: 5\n  }\n}];"
+      },
+      "id": "2b9e4c76-a333-4f02-96e0-750afbb0c68e",
+      "name": "Parse Touch 5 Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $json.email }}\"],\n  \"subject\": \"{{ $json.email_subject }}\",\n  \"html\": \"{{ $json.email_body_html }}\"\n}",
+        "options": {}
+      },
+      "id": "bf41ed8a-fea3-46fd-86bf-75303386d666",
+      "name": "Send Touch 5 Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"Touch 5 (Day 14) — Final closing email sent. Subject: {{ $('Parse Touch 5 Email').item.json.email_subject }}. Sequence complete. Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $('Set Sequence Variables').item.json.contact_id }}\" },\n      \"types\": [{ \"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 202 }]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "109ff021-cce0-4c03-8a0c-3024888b8411",
+      "name": "Log Touch 5 HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{ $('Set Sequence Variables').item.json.contact_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"sequence_completed\": \"true\",\n    \"sequence_completed_date\": \"{{ $now.toISO() }}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "9e7b316c-1116-4203-a216-c6e1540fc258",
+      "name": "Mark Sequence Complete HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Automations Log!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"System 3 — Outbound Sequence\",\n      \"Completed\",\n      \"Full 5-touch sequence completed for {{ $('Set Sequence Variables').item.json.contact_name }} at {{ $('Set Sequence Variables').item.json.company_name }}\",\n      \"14-day sequence finished\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "a89a5972-5476-4291-bb0d-befe2e204d9d",
+      "name": "Log Sequence Complete to Sheet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"status\": \"ok\", \"message\": \"Outbound sequence started\", \"contact_id\": \"{{ $('Set Sequence Variables').item.json.contact_id }}\" }",
+        "options": {}
+      },
+      "id": "f4dae88c-b1a2-42f2-a27f-42fafe81a849",
+      "name": "Return 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -5936,
+        512
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "b9c5b738-1be9-4f57-95fd-5b486ce6d84e",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -6384,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOOGLE_CHAT_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*ERROR — System 3: Outbound Sequence*\\n\\nWorkflow: {{ $json.workflow.name }}\\nNode: {{ $json.execution.lastNodeExecuted }}\\nError: {{ $json.execution.error.message }}\\nTime: {{ $now.toISO() }}\\n\\nImmediate attention required.\"\n}",
+        "options": {}
+      },
+      "id": "6c9a7fba-3497-4da5-90e5-039d17e8e062",
+      "name": "Error Alert Google Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -6160,
+        560
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "5f04850e-22c4-414c-82b8-2c5df37c5825",
+      "name": "Sequence Stopped",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -3632,
+        448
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Start Sequence": {
+      "main": [
+        [
+          {
+            "node": "Set Sequence Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Sequence Variables": {
+      "main": [
+        [
+          {
+            "node": "Get HubSpot Contact Details",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Return 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get HubSpot Contact Details": {
+      "main": [
+        [
+          {
+            "node": "Claude Touch 1 Email Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Touch 1 Email Gen": {
+      "main": [
+        [
+          {
+            "node": "Parse Touch 1 Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Touch 1 Email": {
+      "main": [
+        [
+          {
+            "node": "Send Touch 1 Email via Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Touch 1 Email via Resend": {
+      "main": [
+        [
+          {
+            "node": "Log Touch 1 to HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Touch 1 to HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Log Touch 1 to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Touch 1 to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Wait 2 Days",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 2 Days": {
+      "main": [
+        [
+          {
+            "node": "Prep Stop Check T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prep Stop Check T2": {
+      "main": [
+        [
+          {
+            "node": "Check Sequence Stop T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sequence Stop T2": {
+      "main": [
+        [
+          {
+            "node": "Stop Check T2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Check T2": {
+      "main": [
+        [
+          {
+            "node": "Sequence Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Touch 2 SMS Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Touch 2 SMS Twilio": {
+      "main": [
+        [
+          {
+            "node": "Log Touch 2 HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Touch 2 HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days T3": {
+      "main": [
+        [
+          {
+            "node": "Check Sequence Stop T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sequence Stop T3": {
+      "main": [
+        [
+          {
+            "node": "Stop Check T3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Check T3": {
+      "main": [
+        [
+          {
+            "node": "Sequence Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Claude Touch 3 Email Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Touch 3 Email Gen": {
+      "main": [
+        [
+          {
+            "node": "Parse Touch 3 Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Touch 3 Email": {
+      "main": [
+        [
+          {
+            "node": "Send Touch 3 Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Touch 3 Email": {
+      "main": [
+        [
+          {
+            "node": "Log Touch 3 HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Touch 3 HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait 3 Days T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 3 Days T4": {
+      "main": [
+        [
+          {
+            "node": "Check Sequence Stop T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sequence Stop T4": {
+      "main": [
+        [
+          {
+            "node": "Stop Check T4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Check T4": {
+      "main": [
+        [
+          {
+            "node": "Sequence Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Touch 4 SMS Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Touch 4 SMS Twilio": {
+      "main": [
+        [
+          {
+            "node": "Log Touch 4 HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Touch 4 HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Wait 6 Days T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 6 Days T5": {
+      "main": [
+        [
+          {
+            "node": "Check Sequence Stop T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Sequence Stop T5": {
+      "main": [
+        [
+          {
+            "node": "Stop Check T5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Check T5": {
+      "main": [
+        [
+          {
+            "node": "Sequence Stopped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Claude Touch 5 Email Gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Touch 5 Email Gen": {
+      "main": [
+        [
+          {
+            "node": "Parse Touch 5 Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Touch 5 Email": {
+      "main": [
+        [
+          {
+            "node": "Send Touch 5 Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Touch 5 Email": {
+      "main": [
+        [
+          {
+            "node": "Log Touch 5 HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Touch 5 HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Mark Sequence Complete HubSpot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Sequence Complete HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Log Sequence Complete to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Error Alert Google Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "1fded54b-441c-44a3-8e62-4c38b62c1106",
+  "activeVersionId": null,
+  "versionCounter": 11,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:14:56.981Z",
+      "createdAt": "2026-03-05T05:14:56.981Z",
+      "role": "workflow:owner",
+      "workflowId": "8JwxPM6Qk4TIZbWs",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

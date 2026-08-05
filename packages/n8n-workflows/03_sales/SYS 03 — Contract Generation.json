@@ -1,19 +1,14 @@
 {
-  "updatedAt": "2026-04-03T03:42:44.580Z",
+  "updatedAt": "2026-04-22T02:02:02.683Z",
   "createdAt": "2026-03-21T17:14:25.980Z",
   "id": "5gXQdYfFgl0JStaA",
   "name": "SYS 03 — Contract Generation",
-  "description": null,
+  "description": "Generates a full MSA PDF when a HubSpot deal enters Contract Sent. Uses IntraWeb Lawyer Skill v2 — NJ law, Net 15, 1.5%/month late fee, liability cap, IP ownership, 24-month non-solicitation, and live HubSpot product catalog.",
   "active": true,
   "isArchived": false,
   "nodes": [
     {
-      "parameters": {
-        "content": "## SYS 03 — Contract Generation\n\n### Purpose\nGenerate a **Master Services Agreement (MSA) PDF** when a deal enters **Contract Sent**: AI-written **Exhibit A — Statement of Work summary** plus **fixed** commercial terms (fees from deal/tier, signatures). Same human-in-the-loop pattern as SYS 03 — Proposal and Contract Delivery (**Contracts** tab in the master sheet).\n\n### What this workflow does *not* do\nIt does **not** provide legal advice or replace attorney review. It does **not** run e-signature (use DocuSign, HubSpot quotes, or similar after the PDF is approved). Requires **`client_drive_folder_id`** on the deal for upload (same as SYS 03 — Proposal and Contract Delivery).\n\n### When it fires\n- **Webhook:** `POST` → `/webhook/hubspot-deal-contract-sent`\n- **HubSpot:** Deal enters **Contract Sent** (direct workflow, or **SYS 00** router on `dealstage`).\n\n### Dependencies\nCONFIG, Anthropic, Google Drive & Sheets, Send Email, Send Google Chat Alert, Log sub-workflows. Add a **Contracts** tab to the master sheet (see `docs/google-sheets-setup.md`). Create deal property **`contract_sent_date`** (see `docs/hubspot-setup.md`).",
-        "height": 520,
-        "width": 500,
-        "color": 5
-      },
+      "parameters": {},
       "id": "note-sys15",
       "name": "Note — About this workflow",
       "type": "n8n-nodes-base.stickyNote",
@@ -35,40 +30,48 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        250,
-        300
+        256,
+        288
       ],
       "webhookId": "2a83d054-b43e-407c-a1c9-321910ab0019"
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1eTTVoSFSlSPvZV4",
           "mode": "id"
-        }
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
       },
       "id": "sys15-config",
       "name": "Get Config",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        470,
-        300
+        480,
+        288
       ]
     },
     {
       "parameters": {
-        "jsCode": "const deal = $('Deal Contract Sent Webhook').first().json;\nconst config = $('Get Config').first().json;\nconst body = deal.body && typeof deal.body === 'object' ? deal.body : deal;\nconst props = body.properties || body;\n\nconst valueFrom = (...values) => {\n  for (const value of values) {\n    if (value !== undefined && value !== null && String(value).trim()) {\n      return String(value).trim();\n    }\n  }\n  return '';\n};\n\nconst money = (value) => {\n  if (value === undefined || value === null || value === '') return 0;\n  const normalized = Number(String(value).replace(/[^0-9.-]/g, ''));\n  return Number.isFinite(normalized) ? normalized : 0;\n};\n\nconst titleCase = (value) => value ? value.charAt(0).toUpperCase() + value.slice(1) : '';\n\nconst addressParts = [\n  valueFrom(props.address, props.street, props.street_address, props.company_address),\n  valueFrom(props.city, props.company_city),\n  valueFrom(props.state, props.state_region, props.company_state),\n  valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\n  valueFrom(props.country, props.company_country)\n].filter(Boolean);\n\nconst tierKey = valueFrom(props.tier).toLowerCase() || 'starter';\nconst tierInfo = (config.tiers && (config.tiers[tierKey] || config.tiers.starter)) || {\n  name: titleCase(tierKey) || 'Starter',\n  monthlyPrice: 0,\n  setupFee: 0\n};\n\nconst rawPainSources = [\n  valueFrom(props.deal_pain_points),\n  valueFrom(props.painPoints),\n  valueFrom(props.pain_point_summary)\n].filter(Boolean);\n\nconst uniquePainSources = [...new Set(rawPainSources)];\nconst painPoints = uniquePainSources.join('\\n\\n');\nconst contactFirstName = valueFrom(props.contact_firstname, props.firstName, props.firstname);\nconst contactLastName = valueFrom(props.contact_lastname, props.lastName, props.lastname);\nconst contactName = [contactFirstName, contactLastName].filter(Boolean).join(' ');\n\nconst companyName = valueFrom(\n  props.company,\n  props.company_name,\n  props.business_name,\n  props.dealname,\n  props.name\n);\nconst tierMonthly = money(tierInfo.monthlyPrice);\nconst upfrontDue = money(tierInfo.setupFee);\nconst tierAmount = money(props.amount) || upfrontDue;\nconst remainingTierBalance = Math.max(tierAmount - upfrontDue, 0);\nconst launchBalance = remainingTierBalance + tierMonthly;\n\nreturn [{\n  json: {\n    clientName: valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),\n    company: companyName,\n    companyName,\n    industry: valueFrom(props.industry),\n    painPoints,\n    painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),\n    rawPainPoints: valueFrom(props.deal_pain_points, painPoints),\n    dealValue: tierAmount,\n    tierAmount,\n    tier: tierKey,\n    tierLabel: tierInfo.name || titleCase(tierKey) || 'Starter',\n    tierMonthly,\n    upfrontDue,\n    launchBalance,\n    dealId: valueFrom(body.id, deal.id, body.dealId, deal.dealId),\n    contactEmail: valueFrom(props.contact_email, props.email),\n    contactPhone: valueFrom(props.contact_phone, props.phone, props.mobilephone),\n    contactFirstName,\n    contactName: contactName || contactFirstName,\n    address: addressParts.join(', '),\n    driveFolderId: valueFrom(props.client_drive_folder_id),\n    config\n  }\n}];"
+        "jsCode": "const deal = $('Deal Contract Sent Webhook').first().json;\nconst config = $('Get Config').first().json;\nconst body = deal.body && typeof deal.body === 'object' ? deal.body : deal;\nconst props = body.properties || body;\n\nconst valueFrom = (...values) => {\n  for (const value of values) {\n    if (value !== undefined && value !== null && String(value).trim()) {\n      return String(value).trim();\n    }\n  }\n  return '';\n};\n\nconst money = (value) => {\n  if (value === undefined || value === null || value === '') return 0;\n  const normalized = Number(String(value).replace(/[^0-9.-]/g, ''));\n  return Number.isFinite(normalized) ? normalized : 0;\n};\n\nconst titleCase = (value) => value ? value.charAt(0).toUpperCase() + value.slice(1) : '';\n\nconst addressParts = [\n  valueFrom(props.address, props.street, props.street_address, props.company_address),\n  valueFrom(props.city, props.company_city),\n  valueFrom(props.state, props.state_region, props.company_state),\n  valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\n  valueFrom(props.country, props.company_country)\n].filter(Boolean);\n\nconst tierKey = valueFrom(props.tier).toLowerCase() || 'starter';\nconst tierInfo = (config.tiers && (config.tiers[tierKey] || config.tiers.starter)) || {\n  name: titleCase(tierKey) || 'Starter',\n  monthlyPrice: 0,\n  setupFee: 0\n};\n\nconst rawPainSources = [\n  valueFrom(props.deal_pain_points),\n  valueFrom(props.painPoints),\n  valueFrom(props.pain_point_summary)\n].filter(Boolean);\n\nconst uniquePainSources = [...new Set(rawPainSources)];\nconst painPoints = uniquePainSources.join('\\n\\n');\nconst contactFirstName = valueFrom(props.contact_firstname, props.firstName, props.firstname);\nconst contactLastName = valueFrom(props.contact_lastname, props.lastName, props.lastname);\nconst contactName = [contactFirstName, contactLastName].filter(Boolean).join(' ');\n\nconst companyName = valueFrom(\n  props.company,\n  props.company_name,\n  props.business_name,\n  props.dealname,\n  props.name\n);\nconst tierMonthly = money(tierInfo.monthlyPrice);\nconst upfrontDue = money(tierInfo.setupFee);\n\nconst parseLineItemsRaw = () => {\n  const candidates = [\n    body.lineItems,\n    body.line_items,\n    props.lineItems,\n    props.line_items,\n    props.hs_line_items,\n  ];\n  for (const c of candidates) {\n    if (Array.isArray(c) && c.length) return c;\n    if (typeof c === 'string' && c.trim().startsWith('[')) {\n      try {\n        const parsed = JSON.parse(c);\n        if (Array.isArray(parsed) && parsed.length) return parsed;\n      } catch (e) { /* ignore */ }\n    }\n  }\n  return [];\n};\n\nconst normalizeLineItems = (raw) => {\n  return raw.map((x, i) => {\n    if (!x || typeof x !== 'object') return null;\n    const qty = Math.max(1, Number(x.quantity ?? x.qty ?? x.hs_quantity ?? 1) || 1);\n    const unit = money(x.unitPrice ?? x.price ?? x.rate ?? x.hs_price ?? x.hs_unit_price);\n    const lineTotal = money(x.amount ?? x.line_amount ?? x.total ?? x.line_total ?? x.hs_line_item_amount);\n    const name = valueFrom(x.name, x.productName, x.title, x.hs_sku, `Line item ${i + 1}`);\n    const sku = valueFrom(x.hs_sku, x.sku, '');\n    const description = valueFrom(x.description, x.details, x.notes, '');\n    let amount = lineTotal;\n    if (!amount && unit) amount = unit * qty;\n    if (!amount) amount = 0;\n    return {\n      name,\n      sku,\n      description,\n      quantity: qty,\n      unitPrice: unit || (qty ? amount / qty : amount),\n      amount,\n    };\n  }).filter(Boolean);\n};\n\nconst rawLineItems = parseLineItemsRaw();\nconst lineItems = normalizeLineItems(rawLineItems);\nconst lineItemsSubtotal = lineItems.reduce((s, li) => s + (Number(li.amount) || 0), 0);\n\nconst explicitDealAmount = money(props.amount);\nconst explicitDiscount = money(\n  valueFrom(\n    props.hs_total_discount,\n    props.total_discount,\n    props.deal_discount,\n    props.discount_amount,\n    props.hs_discount,\n  ),\n);\nlet impliedDiscount = 0;\nif (\n  explicitDiscount <= 0 &&\n  lineItemsSubtotal > 0 &&\n  explicitDealAmount > 0 &&\n  lineItemsSubtotal > explicitDealAmount + 0.005\n) {\n  impliedDiscount = lineItemsSubtotal - explicitDealAmount;\n}\nconst totalDiscount = explicitDiscount > 0 ? explicitDiscount : impliedDiscount;\n\nconst tierAmount =\n  explicitDealAmount > 0\n    ? explicitDealAmount\n    : lineItemsSubtotal > 0\n      ? lineItemsSubtotal\n      : upfrontDue;\nconst dealAmountForDisplay = explicitDealAmount > 0 ? explicitDealAmount : tierAmount;\nconst remainingTierBalance = Math.max(tierAmount - upfrontDue, 0);\nconst launchBalance = remainingTierBalance + tierMonthly;\n\nconst productList = lineItems.map((i) => ({\n  sku: i.sku || '',\n  name: i.name || '',\n  price: i.unitPrice ?? (i.quantity ? i.amount / i.quantity : i.amount),\n}));\n\nreturn [{\n  json: {\n    clientName: valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),\n    company: companyName,\n    companyName,\n    industry: valueFrom(props.industry),\n    painPoints,\n    painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),\n    rawPainPoints: valueFrom(props.deal_pain_points, painPoints),\n    dealValue: tierAmount,\n    dealAmount: dealAmountForDisplay,\n    lineItemsSubtotal,\n    totalDiscount,\n    lineItems,\n    tierAmount,\n    tier: tierKey,\n    tierLabel: tierInfo.name || titleCase(tierKey) || 'Starter',\n    tierMonthly,\n    upfrontDue,\n    launchBalance,\n    productList,\n    dealId: valueFrom(body.id, deal.id, body.dealId, deal.dealId),\n    contactEmail: valueFrom(props.contact_email, props.email),\n    contactPhone: valueFrom(props.contact_phone, props.phone, props.mobilephone),\n    contactFirstName,\n    contactName: contactName || contactFirstName,\n    address: addressParts.join(', '),\n    driveFolderId: valueFrom(props.client_drive_folder_id),\n    config\n  }\n}];"
       },
       "id": "sys15-extract",
       "name": "Extract Deal Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        690,
-        300
+        704,
+        288
       ]
     },
     {
@@ -77,17 +80,18 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
               "id": "has-folder",
               "leftValue": "={{ $json.driveFolderId }}",
-              "rightValue": "",
               "operator": {
                 "type": "string",
                 "operation": "notEmpty"
-              }
+              },
+              "singleValue": true
             }
           ],
           "combinator": "and"
@@ -99,8 +103,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        910,
-        300
+        928,
+        288
       ]
     },
     {
@@ -112,39 +116,39 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        910,
-        480
+        1152,
+        384
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "PGf6jPoWtxSPlr0h",
           "mode": "id"
-        }
+        },
+        "options": {}
       },
       "id": "sys15-skip-alert-send",
       "name": "Send Missing Folder Alert",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        1130,
-        480
+        1376,
+        384
       ]
     },
     {
       "parameters": {
-        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst scopeContext = [d.rawPainPoints, d.painPointSummary].filter(Boolean).join('\\n') || d.painPoints || '(None provided)';\n\nreturn [{\n  json: {\n    systemPrompt: 'You are drafting Exhibit A (Statement of Work) for a Master Services Agreement for IntraWeb Technologies LLC, an implementation and automation consultancy. Output ONLY clean semantic HTML for the exhibit body: no markdown, no backticks, no DOCTYPE, no html/head/body tags. Use h2, h3, p, ul, ol, li, strong. This is an operational scope description, not legal language—no warranties, governing law, or liability caps. Do not invent facts not supported by the payload.',\n    userPrompt: `Write Exhibit A — Statement of Work for this engagement.\\n\\nClient: ${d.clientName}\\nCompany: ${d.company}\\nIndustry: ${d.industry || 'Not provided'}\\nTier: ${d.tierLabel}\\nProject / tier amount: $${d.tierAmount || 0}\\nMonthly recurring (if applicable): $${d.tierMonthly || 0}\\nUpfront / setup portion: $${d.upfrontDue || 0}\\n\\nContext from discovery (use for scope only):\\n\"\"\"\\n${scopeContext}\\n\"\"\"\\n\\nReturn sections:\\n1. Objectives\\n2. Deliverables and workstreams (bullet lists)\\n3. Client responsibilities (assumptions, access, approvals)\\n4. Out of scope (explicit)\\n5. Change requests (brief process)\\n\\nKeep it concise and implementation-ready.`,\n    maxTokens: 3500\n  }\n}];"
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst sc = [d.rawPainPoints, d.painPointSummary].filter(Boolean).join('\\n') || d.painPoints || '(None provided)';\nconst pl =\n  d.lineItems && d.lineItems.length > 0\n    ? d.lineItems\n        .map(\n          (li, i) =>\n            `  ${i + 1}. ${li.name || 'Item'}${li.sku ? ` [${li.sku}]` : ''} — Qty ${li.quantity ?? 1} @ $${Number(li.unitPrice || 0).toLocaleString()} — Line $${Number(li.amount || 0).toLocaleString()}${li.description ? ` (${li.description})` : ''}\\n`,\n        )\n        .join('')\n    : d.productList && d.productList.length > 0\n      ? d.productList.map((p) => `  - ${p.name} (${p.sku}): $${Number(p.price).toLocaleString()}`).join('\\n')\n      : `  - Tier: ${d.tierLabel} — $${Number(d.tierAmount).toLocaleString()}`;\n\nconst pricingNotes = [\n  (d.lineItemsSubtotal || 0) > 0 ? `Line items subtotal: $${Number(d.lineItemsSubtotal).toLocaleString()}` : null,\n  (d.totalDiscount || 0) > 0 ? `Discounts: $${Number(d.totalDiscount).toLocaleString()}` : null,\n].filter(Boolean).join(' · ');\n\nconst systemPrompt = `You are acting as an expert business and contract attorney specializing in New Jersey technology services law, drafting Exhibit A (Statement of Work) for a Master Services Agreement on behalf of IntraWeb Technologies LLC.\n\nCOMPANY PROFILE\nLegal Name: IntraWeb Technologies LLC | New Jersey LLC\nPrincipal: John Schibelli | jschibelli@gmail.com | intrawebtech.com\n\nSTANDARD TERMS\nPayment: Net 15. Late fee: 1.5%/month (18%/yr).\nRevisions: Starter/Website = 2 rounds included. Growth/Advanced = 3 rounds included. Additional rounds: $150-$175/hr after signed Change Order.\nGoverning Law: State of New Jersey. Venue: Morris County.\n\nOUTPUT RULES\nReturn ONLY clean semantic HTML for the Exhibit A body. No markdown, no backticks, no DOCTYPE, no html/head/body tags.\nUse only: h2, h3, p, ul, ol, li, strong.\nDo not include signatures, governing law, liability caps, or payment terms — those are in the MSA wrapper.\nDo not invent facts not in the payload. Use [CONFIRM WITH CLIENT] for missing data.`;\n\nconst userPrompt = `Generate Exhibit A — Statement of Work.\n\nCLIENT: ${d.clientName} | ${d.company} | ${d.industry || 'industry not provided'} | ${d.contactEmail || 'email not provided'}\n\nENGAGEMENT\nTier: ${d.tierLabel}\nDeal line items / products:\n${pl}\nHubSpot deal amount (after discounts): $${Number(d.dealAmount || d.tierAmount).toLocaleString()}${pricingNotes ? ` — ${pricingNotes}` : ''}\nTier payment template — Monthly: $${Number(d.tierMonthly).toLocaleString()} | Upfront: $${Number(d.upfrontDue).toLocaleString()}\n\nDISCOVERY CONTEXT\n\"\"\"\n${sc}\n\"\"\"\n\nSections: 1. Objectives 2. Deliverables and workstreams (reference SKUs) 3. Client responsibilities 4. Out of scope 5. Change request process (ref $150-$175/hr and Net 15)`;\n\nreturn [{ json: { systemPrompt, userPrompt, maxTokens: 3500 } }];"
       },
       "id": "sys15-claude-prep",
       "name": "Prep Claude Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1130,
-        200
+        1152,
+        192
       ]
     },
     {
@@ -178,8 +182,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1350,
-        200
+        1376,
+        192
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -197,21 +201,21 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1470,
-        200
+        1600,
+        192
       ]
     },
     {
       "parameters": {
-        "jsCode": "const claudeResult = $('Parse Claude Response').first().json;\nconst d = $('Extract Deal Data').first().json;\nconst owner = (d.config && d.config.owner) || {};\nconst companyName = owner.companyName || 'IntraWeb Technologies LLC';\nconst ownerEmail = owner.email || '';\nconst ownerPhone = owner.phone || '';\nconst ownerName = owner.name || 'Authorized Representative';\nconst clientLegalName = d.company || d.clientName || 'Client';\nconst effectiveDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });\nconst exhibitBody = (claudeResult.data ? claudeResult.data.text : claudeResult.html || '').trim() || '<p>Exhibit A could not be generated.</p>';\n\nconst escapeHtml = (value) => String(value ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\\"/g, '&quot;')\n  .replace(/'/g, '&#39;');\n\nconst formatCurrency = (value) => {\n  const numeric = Number(value || 0);\n  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number.isFinite(numeric) ? numeric : 0);\n};\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>Master Services Agreement — ${escapeHtml(clientLegalName)}</title>\n  <link href=\"https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Manrope:wght@400;600;700&display=swap\" rel=\"stylesheet\">\n  <style>\n    @page { size: Letter; margin: 0.65in; }\n    * { box-sizing: border-box; }\n    body { margin: 0; padding: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 11.5px; line-height: 1.55; color: #1a1f2e; }\n    h1 { font-family: 'Manrope', Arial, sans-serif; font-size: 22px; margin: 0 0 8px; letter-spacing: -0.02em; }\n    .sub { font-family: 'Manrope', Arial, sans-serif; font-size: 11px; color: #5b6472; margin-bottom: 20px; }\n    h2 { font-family: 'Manrope', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #374151; margin: 22px 0 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }\n    h3 { font-size: 12.5px; margin: 14px 0 8px; }\n    p { margin: 0 0 10px; }\n    ul, ol { margin: 0 0 10px 18px; padding: 0; }\n    table.fees { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-family: 'Manrope', Arial, sans-serif; font-size: 11px; }\n    table.fees td { padding: 8px 10px; border: 1px solid #e5e7eb; vertical-align: top; }\n    table.fees td:last-child { text-align: right; font-weight: 700; width: 28%; }\n    .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }\n    .party { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; background: #fafbfc; }\n    .party .label { font-family: 'Manrope', Arial, sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-bottom: 6px; }\n    .exhibit { border: 1px solid #d1d5db; border-radius: 10px; padding: 16px 18px; margin: 16px 0 20px; background: #fff; }\n    .exhibit h2:first-child, .exhibit h3:first-child { margin-top: 0; }\n    .sig { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; break-inside: avoid; }\n    .sig-box { border-top: 1px solid #111827; padding-top: 8px; min-height: 64px; font-family: 'Manrope', Arial, sans-serif; font-size: 10px; }\n    .notice { font-family: 'Manrope', Arial, sans-serif; font-size: 9.5px; color: #6b7280; margin-top: 20px; padding: 10px 12px; background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 8px; line-height: 1.45; }\n  </style>\n</head>\n<body>\n  <h1>Master Services Agreement</h1>\n  <p class=\"sub\">Effective date: ${escapeHtml(effectiveDate)} &nbsp;|&nbsp; ${escapeHtml(companyName)}</p>\n\n  <h2>Parties</h2>\n  <div class=\"parties\">\n    <div class=\"party\">\n      <div class=\"label\">Client</div>\n      <p><strong>${escapeHtml(clientLegalName)}</strong><br/>Attn: ${escapeHtml(d.contactName || d.contactFirstName || '—')}<br/>${d.address ? escapeHtml(d.address) + '<br/>' : ''}${d.contactEmail ? escapeHtml(d.contactEmail) : ''}</p>\n    </div>\n    <div class=\"party\">\n      <div class=\"label\">Provider</div>\n      <p><strong>${escapeHtml(companyName)}</strong><br/>${ownerEmail ? escapeHtml(ownerEmail) : ''}${ownerPhone ? '<br/>' + escapeHtml(ownerPhone) : ''}</p>\n    </div>\n  </div>\n\n  <h2>1. Services</h2>\n  <p>Provider will perform the professional services described in <strong>Exhibit A</strong> (Statement of Work), which is incorporated into this Agreement. Exhibit A may be updated by written agreement of the parties (including email).</p>\n\n  <h2>2. Fees and payment</h2>\n  <p>Fees are based on the commercial terms selected for this engagement unless otherwise agreed in writing.</p>\n  <table class=\"fees\">\n    <tr><td>Tier / package amount</td><td>${escapeHtml(formatCurrency(d.tierAmount))}</td></tr>\n    <tr><td>Estimated upfront / setup</td><td>${escapeHtml(formatCurrency(d.upfrontDue))}</td></tr>\n    <tr><td>Monthly recurring (if applicable)</td><td>${escapeHtml(formatCurrency(d.tierMonthly))}</td></tr>\n    <tr><td>Launch / initial payment (estimate)</td><td>${escapeHtml(formatCurrency(d.launchBalance))}</td></tr>\n  </table>\n  <p>Invoices are due per the payment instructions on the invoice unless a different schedule is agreed in writing. Late payments may incur suspension of work until accounts are current.</p>\n\n  <h2>3. Term</h2>\n  <p>This Agreement begins on the Effective Date and continues until the services in Exhibit A are completed and fees for completed work are paid, unless terminated earlier under Section 4.</p>\n\n  <h2>4. Termination</h2>\n  <p>Either party may terminate for material breach if the other party fails to cure within fifteen (15) days of written notice. Client remains responsible for fees for work performed through the termination date.</p>\n\n  <h2>5. Confidentiality</h2>\n  <p>Each party agrees to protect the other’s non-public business information using reasonable care and to use it only for this engagement.</p>\n\n  <h2>6. Intellectual property</h2>\n  <p>Client retains ownership of its pre-existing materials. Deliverables created specifically for Client are assigned to Client upon full payment, excluding Provider tools, templates, and general know-how.</p>\n\n  <h2>7. Limitation of liability</h2>\n  <p>To the maximum extent permitted by law, neither party is liable for indirect or consequential damages. Provider’s total liability under this Agreement for any claim is limited to the fees paid by Client to Provider in the three (3) months preceding the claim.</p>\n\n  <h2>8. Independent contractor</h2>\n  <p>Provider is an independent contractor. This Agreement does not create a partnership or employment relationship.</p>\n\n  <h2>9. Notices</h2>\n  <p>Notices may be sent to the emails listed above or to such other addresses as the parties designate in writing.</p>\n\n  <h2>10. Exhibit A — Statement of Work</h2>\n  <div class=\"exhibit exhibit-body\">${exhibitBody}</div>\n\n  <h2>11. Signatures</h2>\n  <p>By signing below, the parties agree to this Agreement including Exhibit A.</p>\n  <div class=\"sig\">\n    <div class=\"sig-box\"><strong>${escapeHtml(clientLegalName)}</strong><br/><br/>Name: ___________________________<br/>Title: ___________________________<br/>Date: ___________________________</div>\n    <div class=\"sig-box\"><strong>${escapeHtml(companyName)}</strong><br/><br/>Name: ${escapeHtml(ownerName)}<br/>Title: Authorized Representative<br/>Date: ___________________________</div>\n  </div>\n\n  <p class=\"notice\"><strong>Important:</strong> This document is a business template for internal use. It is not legal advice. Have qualified counsel review and customize before execution. Electronic signature and filing are your team’s responsibility after internal approval in the master sheet.</p>\n</body>\n</html>`;\n\nreturn [{ json: { html, fileName: `IntraWeb — ${d.clientName} — Master Services Agreement.pdf` } }];"
+        "jsCode": "const claudeResult = $('Parse Claude Response').first().json;\nconst d = $('Extract Deal Data').first().json;\nconst config = d.config || {};\nconst branding = config.branding || {};\nconst owner = (config && config.owner) || {};\nconst companyName = owner.companyName || 'IntraWeb Technologies LLC';\nconst ownerEmail = owner.email || '';\nconst ownerPhone = owner.phone || '';\nconst ownerName = owner.name || 'Authorized Representative';\nconst clientLegalName = d.company || d.clientName || 'Client';\nconst effectiveDate = new Date().toLocaleDateString('en-US', {\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric',\n});\nconst docId = d.dealId ? `MSA-${String(d.dealId).slice(0, 12)}` : `MSA-${Date.now().toString(36).toUpperCase()}`;\n\nconst exhibitBody =\n  (claudeResult.data ? claudeResult.data.text : claudeResult.html || '').trim() ||\n  '<p class=\"body-text\">Exhibit A could not be generated.</p>';\n\nconst escapeHtml = (value) =>\n  String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#39;');\n\nconst formatCurrency = (value) => {\n  const numeric = Number(value || 0);\n  return new Intl.NumberFormat('en-US', {\n    style: 'currency',\n    currency: 'USD',\n    maximumFractionDigits: 0,\n  }).format(Number.isFinite(numeric) ? numeric : 0);\n};\n\nconst lineItemsPdf = Array.isArray(d.lineItems) ? d.lineItems : [];\nconst subtotalPdf =\n  Number(d.lineItemsSubtotal) ||\n  lineItemsPdf.reduce((s, li) => s + (Number(li.amount) || 0), 0);\nconst discPdf = Math.max(0, Number(d.totalDiscount) || 0);\nconst dealAmtPdf = Number(d.dealAmount) || Number(d.tierAmount) || 0;\nconst finalDealPdf =\n  dealAmtPdf > 0\n    ? dealAmtPdf\n    : subtotalPdf - discPdf > 0\n      ? subtotalPdf - discPdf\n      : subtotalPdf;\n\nconst feeTableBody = (() => {\n  const rows = [];\n  if (lineItemsPdf.length) {\n    lineItemsPdf.forEach((li) => {\n      const name = escapeHtml(li.name || 'Item');\n      const sku =\n        li.sku && String(li.sku).trim()\n          ? ` <span class=\"muted\">(${escapeHtml(li.sku)})</span>`\n          : '';\n      rows.push(\n        `<tr><td>${name}${sku}<div class=\"line-table__meta\">Qty ${escapeHtml(String(li.quantity ?? 1))} × ${escapeHtml(formatCurrency(li.unitPrice))}</div></td><td class=\"num\">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,\n      );\n    });\n    rows.push(\n      `<tr class=\"line-table__subtotal\"><td>Subtotal (line items)</td><td class=\"num\">${escapeHtml(formatCurrency(subtotalPdf))}</td></tr>`,\n    );\n    if (discPdf > 0.005) {\n      rows.push(\n        `<tr class=\"line-table__discount\"><td>Discounts</td><td class=\"num\">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,\n      );\n    }\n    rows.push(\n      `<tr class=\"line-table__total\"><td><strong>Total deal amount</strong></td><td class=\"num\"><strong>${escapeHtml(formatCurrency(finalDealPdf))}</strong></td></tr>`,\n    );\n  } else {\n    rows.push(\n      `<tr><td>Tier / package (${escapeHtml(d.tierLabel || d.tier || '')})</td><td class=\"num\">${escapeHtml(formatCurrency(d.tierAmount))}</td></tr>`,\n    );\n    if (discPdf > 0.005) {\n      rows.push(\n        `<tr class=\"line-table__discount\"><td>Discounts</td><td class=\"num\">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,\n      );\n    }\n    rows.push(\n      `<tr class=\"line-table__total\"><td><strong>Total deal amount</strong></td><td class=\"num\"><strong>${escapeHtml(formatCurrency(finalDealPdf || d.tierAmount))}</strong></td></tr>`,\n    );\n  }\n  rows.push(\n    `<tr class=\"line-table__schedule\"><td colspan=\"2\">Payment timing estimates (tier template; invoice cadence per Provider)</td></tr>`,\n  );\n  rows.push(\n    `<tr><td>Estimated upfront / setup</td><td class=\"num\">${escapeHtml(formatCurrency(d.upfrontDue))}</td></tr>`,\n  );\n  rows.push(\n    `<tr><td>Monthly recurring (if applicable)</td><td class=\"num\">${escapeHtml(formatCurrency(d.tierMonthly))}</td></tr>`,\n  );\n  rows.push(\n    `<tr><td>Launch / initial payment (estimate)</td><td class=\"num\">${escapeHtml(formatCurrency(d.launchBalance))}</td></tr>`,\n  );\n  return rows.join('');\n})();\n\nconst logoHtml = (() => {\n  const b64 = branding.logoPdfBase64 || branding.logoDarkBase64;\n  const url = branding.logoUrlDark || branding.logoUrl;\n  if (b64 && String(b64).trim()) {\n    const src = String(b64).startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;\n    return `<img class=\"doc-header__logo\" src=\"${src}\" alt=\"IntraWeb\" height=\"36\" />`;\n  }\n  if (url && String(url).trim()) {\n    return `<img class=\"doc-header__logo\" src=\"${escapeHtml(url)}\" alt=\"IntraWeb\" height=\"36\" />`;\n  }\n  return `<div class=\"doc-header__wordmark\" aria-hidden=\"true\">IntraWeb</div>`;\n})();\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>Master Services Agreement — ${escapeHtml(clientLegalName)}</title>\n  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n  <link href=\"https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap\" rel=\"stylesheet\" />\n  <style>\n    :root {\n      --iw-slate-950: #0d1117;\n      --iw-slate-900: #141b26;\n      --iw-slate-800: #1c2636;\n      --iw-slate-700: #253347;\n      --iw-slate-600: #344659;\n      --iw-slate-500: #4a6075;\n      --iw-slate-400: #6b8399;\n      --iw-slate-300: #96aebe;\n      --iw-slate-200: #c4d1da;\n      --iw-slate-100: #e4eaef;\n      --iw-slate-50: #f2f5f8;\n      --iw-teal: #00c2a8;\n      --iw-teal-light: #00dfc8;\n      --iw-teal-dim: #007a6a;\n      --iw-teal-ghost: #e0f8f5;\n      --iw-orange: #f26419;\n      --iw-orange-dim: #c04e0e;\n      --iw-orange-ghost: #fef0e8;\n      --iw-white: #ffffff;\n      --iw-off-white: #f8fafb;\n      --iw-print-footer-block: 0.72in;\n    }\n    @page {\n      size: letter;\n      margin: 0.52in 0.58in 0.72in 0.58in;\n    }\n    * {\n      box-sizing: border-box;\n      -webkit-print-color-adjust: exact;\n      print-color-adjust: exact;\n    }\n    html,\n    body {\n      margin: 0;\n      padding: 0;\n      background: var(--iw-slate-50);\n      color: var(--iw-slate-700);\n      font-family: 'DM Sans', system-ui, sans-serif;\n    }\n    .iw-page {\n      display: flex;\n      flex-direction: column;\n      width: 816px;\n      max-width: 100%;\n      min-height: 1056px;\n      margin: 0 auto;\n      background: var(--iw-slate-50);\n      color: var(--iw-slate-700);\n    }\n    .iw-page > header,\n    .iw-page > .doc-hero,\n    .iw-page > .doc-meta-bar {\n      flex-shrink: 0;\n    }\n    main.doc-body {\n      flex: 1 1 auto;\n    }\n    @media print {\n      .iw-page {\n        display: block;\n        width: 100%;\n        min-height: 0;\n        margin: 0;\n      }\n    }\n    .doc-header {\n      display: flex;\n      align-items: center;\n      justify-content: space-between;\n      gap: 16px;\n      padding: 14px 24px;\n      background: var(--iw-slate-950);\n      border-bottom: 3px solid var(--iw-teal);\n      color: var(--iw-white);\n    }\n    .doc-header__logo {\n      height: 36px;\n      width: auto;\n      display: block;\n    }\n    .doc-header__wordmark {\n      font-size: 18px;\n      font-weight: 700;\n      letter-spacing: 0.04em;\n      color: var(--iw-white);\n    }\n    .doc-header__doc-type {\n      font-size: 9pt;\n      font-weight: 700;\n      letter-spacing: 0.12em;\n      text-transform: uppercase;\n      color: var(--iw-slate-300);\n    }\n    .doc-header__doc-id {\n      font-size: 10pt;\n      font-weight: 600;\n      color: var(--iw-white);\n      margin-top: 4px;\n      text-align: right;\n    }\n    .doc-hero {\n      background: var(--iw-slate-900);\n      padding: 32px 32px 28px;\n      color: var(--iw-white);\n      break-after: avoid-page;\n      page-break-after: avoid;\n    }\n    .doc-hero__label {\n      display: inline-block;\n      font-size: 9pt;\n      font-weight: 700;\n      letter-spacing: 0.14em;\n      text-transform: uppercase;\n      color: var(--iw-orange);\n      margin-bottom: 10px;\n    }\n    .doc-hero__label::before {\n      content: '— ';\n      color: var(--iw-orange);\n    }\n    .doc-hero__title {\n      margin: 0 0 10px;\n      font-size: 24pt;\n      font-weight: 700;\n      line-height: 1.15;\n      color: var(--iw-white);\n    }\n    .doc-hero__subtitle {\n      margin: 0;\n      max-width: 640px;\n      font-size: 11pt;\n      line-height: 1.55;\n      color: var(--iw-slate-300);\n    }\n    .doc-meta-bar {\n      display: flex;\n      flex-wrap: wrap;\n      background: var(--iw-slate-800);\n      color: var(--iw-slate-100);\n      font-size: 9.5pt;\n    }\n    .doc-meta-bar__item {\n      flex: 1 1 0;\n      min-width: 140px;\n      padding: 12px 16px;\n      border-right: 1px solid var(--iw-slate-600);\n    }\n    .doc-meta-bar__item:last-child {\n      border-right: none;\n    }\n    .doc-meta-bar__k {\n      font-size: 7.5pt;\n      font-weight: 700;\n      letter-spacing: 0.1em;\n      text-transform: uppercase;\n      color: var(--iw-slate-400);\n      margin-bottom: 4px;\n    }\n    .doc-meta-bar__v {\n      font-weight: 600;\n      color: var(--iw-white);\n      word-break: break-word;\n    }\n    .doc-body {\n      background: var(--iw-white);\n      padding: 44px 48px 56px;\n    }\n    @media print {\n      .doc-body {\n        padding-top: 36pt;\n        padding-bottom: calc(36pt + var(--iw-print-footer-block));\n      }\n    }\n    .doc-body > * + * {\n      margin-top: 28px;\n    }\n    .doc-section__title {\n      display: flex;\n      align-items: center;\n      gap: 12px;\n      font-size: 12pt;\n      font-weight: 700;\n      margin: 0 0 14px;\n      padding-bottom: 8px;\n      border-bottom: 1.5px solid var(--iw-slate-100);\n      color: var(--iw-slate-800);\n      break-after: avoid;\n      page-break-after: avoid;\n      break-inside: avoid;\n    }\n    section {\n      break-inside: auto;\n    }\n    .doc-section__accent {\n      width: 4px;\n      height: 18px;\n      background: var(--iw-teal);\n      flex-shrink: 0;\n    }\n    .kv-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 14px 20px;\n    }\n    .kv-grid .kv-k {\n      font-size: 7.5pt;\n      font-weight: 700;\n      letter-spacing: 0.08em;\n      text-transform: uppercase;\n      color: var(--iw-slate-400);\n      margin-bottom: 4px;\n    }\n    .kv-grid .kv-v {\n      font-size: 10pt;\n      color: var(--iw-slate-800);\n      font-weight: 600;\n      word-break: break-word;\n    }\n    .party-box {\n      border: 1px solid var(--iw-slate-100);\n      border-radius: 10px;\n      padding: 14px 16px;\n      background: var(--iw-off-white);\n    }\n    .line-table {\n      width: 100%;\n      border-collapse: collapse;\n      font-size: 10pt;\n      break-inside: auto;\n    }\n    .line-table thead {\n      display: table-header-group;\n    }\n    .line-table tbody tr {\n      break-inside: avoid;\n      page-break-inside: avoid;\n    }\n    .line-table thead th {\n      background: var(--iw-slate-950);\n      color: var(--iw-white);\n      text-align: left;\n      padding: 10px 12px;\n      font-weight: 700;\n      font-size: 8.5pt;\n      letter-spacing: 0.06em;\n      text-transform: uppercase;\n    }\n    .line-table thead th:last-child {\n      text-align: right;\n    }\n    .line-table tbody tr:nth-child(odd) {\n      background: var(--iw-off-white);\n    }\n    .line-table tbody tr:nth-child(even) {\n      background: var(--iw-white);\n    }\n    .line-table td {\n      padding: 10px 12px;\n      border-bottom: 1px solid var(--iw-slate-100);\n      vertical-align: top;\n    }\n    .line-table td.num {\n      text-align: right;\n      font-weight: 700;\n      color: var(--iw-slate-800);\n      white-space: nowrap;\n    }\n    .line-table__meta {\n      font-size: 8.5pt;\n      color: var(--iw-slate-500);\n      font-weight: 500;\n      margin-top: 3px;\n    }\n    .line-table .muted {\n      font-weight: 500;\n      color: var(--iw-slate-500);\n    }\n    .line-table tr.line-table__subtotal td {\n      background: var(--iw-off-white);\n      font-weight: 700;\n      border-bottom: 1px solid var(--iw-slate-200);\n    }\n    .line-table tr.line-table__discount td {\n      color: var(--iw-orange-dim);\n      font-weight: 700;\n      background: var(--iw-orange-ghost);\n    }\n    .line-table tr.line-table__total td {\n      background: var(--iw-teal-ghost);\n      color: var(--iw-teal-dim);\n      font-weight: 800;\n      font-size: 11pt;\n      border-bottom: none;\n    }\n    .line-table tr.line-table__schedule td {\n      font-size: 8.5pt;\n      font-weight: 600;\n      color: var(--iw-slate-500);\n      padding-top: 16px;\n      border-bottom: 1px dashed var(--iw-slate-200);\n    }\n    .body-text {\n      font-size: 10pt;\n      line-height: 1.75;\n      color: var(--iw-slate-700);\n      margin: 0 0 10px;\n    }\n    .proposal-body p,\n    .proposal-body li {\n      font-size: 10pt;\n      line-height: 1.7;\n      color: var(--iw-slate-700);\n      orphans: 3;\n      widows: 3;\n    }\n    .proposal-body h2,\n    .proposal-body h3 {\n      break-after: avoid;\n      page-break-after: avoid;\n    }\n    .msa-exhibit {\n      border: 1px solid var(--iw-slate-100);\n      border-radius: 12px;\n      padding: 22px 22px;\n      background: var(--iw-white);\n      break-inside: auto;\n    }\n    .callout--slate {\n      border-left: 4px solid var(--iw-slate-500);\n      background: var(--iw-slate-50);\n      padding: 14px 16px;\n      border-radius: 0 10px 10px 0;\n      margin-top: 20px;\n    }\n    /* Card classes inherited from the proposal design system - applied so\n       Exhibit A (generated by Claude) is protected the same way as the proposal */\n    .proposal-body .scope-card,\n    .proposal-body .pain-card,\n    .proposal-body .roadmap-card,\n    .proposal-body .outcome-card,\n    .proposal-body .next-step-card,\n    .proposal-body .why-block,\n    .proposal-body .section-card {\n      break-inside: avoid;\n      page-break-inside: avoid;\n    }\n    .line-table tr.line-table__schedule,\n    .line-table tr.line-table__schedule + tr,\n    .line-table tr.line-table__schedule + tr + tr,\n    .line-table tr.line-table__total {\n      break-inside: avoid;\n      page-break-inside: avoid;\n    }\n    .line-table tr.line-table__schedule {\n      break-before: avoid;\n      page-break-before: avoid;\n    }\n    .line-table tr.line-table__total {\n      break-after: avoid;\n      page-break-after: avoid;\n    }\n    .signature-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 28px;\n      margin-top: 28px;\n      break-inside: avoid;\n      page-break-inside: avoid;\n    }\n    .signature-grid__col {\n      border-top: 1px solid var(--iw-slate-800);\n      padding-top: 10px;\n      min-height: 72px;\n      font-size: 9pt;\n      color: var(--iw-slate-600);\n    }\n    .signature-grid__role {\n      font-weight: 700;\n      color: var(--iw-slate-800);\n      margin-bottom: 8px;\n    }\n    .doc-footer {\n      display: grid;\n      grid-template-columns: 1fr 2fr 1fr;\n      align-items: center;\n      gap: 12px;\n      flex-shrink: 0;\n      margin-top: auto;\n      padding: 16px 28px 18px;\n      background: var(--iw-slate-950);\n      color: var(--iw-slate-300);\n      font-size: 8pt;\n    }\n    @media print {\n      .doc-footer {\n        position: fixed;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 10;\n        margin: 0;\n        padding: 12px 0.58in 14px;\n        box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.06);\n      }\n    }\n    .doc-footer__brand {\n      font-weight: 700;\n      color: var(--iw-teal-light);\n      letter-spacing: 0.04em;\n    }\n    .doc-footer__conf {\n      text-align: center;\n      color: var(--iw-slate-400);\n      line-height: 1.4;\n    }\n    .doc-footer__page {\n      text-align: right;\n      color: var(--iw-slate-300);\n      font-weight: 600;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"iw-page\">\n    <header class=\"doc-header\">\n      <div class=\"doc-header__left\">${logoHtml}</div>\n      <div>\n        <div class=\"doc-header__doc-type\">Service Agreement</div>\n        <div class=\"doc-header__doc-id\">${escapeHtml(docId)}</div>\n      </div>\n    </header>\n\n    <section class=\"doc-hero\">\n      <div class=\"doc-hero__label\">Service Agreement</div>\n      <h1 class=\"doc-hero__title\">Master Services Agreement</h1>\n      <p class=\"doc-hero__subtitle\">${escapeHtml(effectiveDate)} · ${escapeHtml(companyName)} · ${escapeHtml(clientLegalName)}</p>\n    </section>\n\n    <div class=\"doc-meta-bar\">\n      <div class=\"doc-meta-bar__item\">\n        <div class=\"doc-meta-bar__k\">Client</div>\n        <div class=\"doc-meta-bar__v\">${escapeHtml(clientLegalName)}</div>\n      </div>\n      <div class=\"doc-meta-bar__item\">\n        <div class=\"doc-meta-bar__k\">Effective date</div>\n        <div class=\"doc-meta-bar__v\">${escapeHtml(effectiveDate)}</div>\n      </div>\n      <div class=\"doc-meta-bar__item\">\n        <div class=\"doc-meta-bar__k\">Provider</div>\n        <div class=\"doc-meta-bar__v\">${escapeHtml(companyName)}</div>\n      </div>\n    </div>\n\n    <main class=\"doc-body\">\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>Parties</h2>\n        <div class=\"kv-grid\">\n          <div class=\"party-box\">\n            <div class=\"kv-k\">Client</div>\n            <p class=\"body-text\" style=\"margin: 0\">\n              <strong>${escapeHtml(clientLegalName)}</strong><br />\n              Attn: ${escapeHtml(d.contactName || d.contactFirstName || '—')}<br />\n              ${d.address ? escapeHtml(d.address) + '<br />' : ''}${d.contactEmail ? escapeHtml(d.contactEmail) : ''}\n            </p>\n          </div>\n          <div class=\"party-box\">\n            <div class=\"kv-k\">Provider</div>\n            <p class=\"body-text\" style=\"margin: 0\">\n              <strong>${escapeHtml(companyName)}</strong><br />\n              ${ownerEmail ? escapeHtml(ownerEmail) : ''}${ownerPhone ? '<br />' + escapeHtml(ownerPhone) : ''}\n            </p>\n          </div>\n        </div>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>1. Services</h2>\n        <p class=\"body-text\">Provider will perform the professional services described in <strong>Exhibit A</strong> (Statement of Work), which is incorporated into this Agreement. Exhibit A may be updated by written agreement of the parties (including email).</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>2. Fees and payment</h2>\n        <p class=\"body-text\">Pricing reflects HubSpot deal line items and the recorded deal amount (including discounts when present). Payment timing rows below are estimates from the selected tier template.</p>\n        <table class=\"line-table\">\n          <thead>\n            <tr>\n              <th>Description</th>\n              <th>Amount</th>\n            </tr>\n          </thead>\n          <tbody>\n            ${feeTableBody}\n          </tbody>\n        </table>\n        <p class=\"body-text\">Invoices are due per the payment instructions on the invoice unless a different schedule is agreed in writing. Late payments may incur suspension of work until accounts are current.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>3. Term</h2>\n        <p class=\"body-text\">This Agreement begins on the Effective Date and continues until the services in Exhibit A are completed and fees for completed work are paid, unless terminated earlier under Section 4.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>4. Termination</h2>\n        <p class=\"body-text\">Either party may terminate for material breach if the other party fails to cure within fifteen (15) days of written notice. Client remains responsible for fees for work performed through the termination date.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>5. Confidentiality</h2>\n        <p class=\"body-text\">Each party agrees to protect the other’s non-public business information using reasonable care and to use it only for this engagement.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>6. Intellectual property</h2>\n        <p class=\"body-text\">Client retains ownership of its pre-existing materials. Deliverables created specifically for Client are assigned to Client upon full payment, excluding Provider tools, templates, and general know-how.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>7. Limitation of liability</h2>\n        <p class=\"body-text\">To the maximum extent permitted by law, neither party is liable for indirect or consequential damages. Provider’s total liability under this Agreement for any claim is limited to the fees paid by Client to Provider in the three (3) months preceding the claim.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>8. Independent contractor</h2>\n        <p class=\"body-text\">Provider is an independent contractor. This Agreement does not create a partnership or employment relationship.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>9. Notices</h2>\n        <p class=\"body-text\">Notices may be sent to the emails listed above or to such other addresses as the parties designate in writing.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>10. Exhibit A — Statement of Work</h2>\n        <div class=\"msa-exhibit proposal-body\">${exhibitBody}</div>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>11. Signatures</h2>\n        <p class=\"body-text\">By signing below, the parties agree to this Agreement including Exhibit A.</p>\n        <div class=\"signature-grid\">\n          <div class=\"signature-grid__col\">\n            <div class=\"signature-grid__role\">Client</div>\n            <div><strong>${escapeHtml(clientLegalName)}</strong></div>\n            <div style=\"margin-top: 16px\">Name: ___________________________</div>\n            <div>Title: ___________________________</div>\n            <div>Date: ___________________________</div>\n          </div>\n          <div class=\"signature-grid__col\">\n            <div class=\"signature-grid__role\">Provider</div>\n            <div><strong>${escapeHtml(companyName)}</strong></div>\n            <div style=\"margin-top: 16px\">Name: ${escapeHtml(ownerName)}</div>\n            <div>Title: Authorized Representative</div>\n            <div>Date: ___________________________</div>\n          </div>\n        </div>\n      </section>\n\n      <div class=\"callout--slate\">\n        <p class=\"body-text\" style=\"margin: 0\">\n          <strong>Important:</strong> This document is a business template for internal use. It is not legal advice. Have qualified counsel review and customize before execution. Electronic signature and filing are your team’s responsibility after internal approval in the master sheet.\n        </p>\n      </div>\n    </main>\n\n    <footer class=\"doc-footer\">\n      <div class=\"doc-footer__brand\">IntraWeb</div>\n      <div class=\"doc-footer__conf\">Confidential — ${escapeHtml(clientLegalName)} · ${escapeHtml(companyName)}</div>\n      <div class=\"doc-footer__page\">Page 1</div>\n    </footer>\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: { html, fileName: `IntraWeb — ${d.clientName} — Master Services Agreement.pdf` } }];\n"
       },
       "id": "sys15-pdf-prep",
       "name": "Prep Contract PDF",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1690,
-        200
+        1824,
+        192
       ]
     },
     {
@@ -248,8 +252,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [
-        1910,
-        200
+        2048,
+        192
       ]
     },
     {
@@ -261,17 +265,24 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2020,
-        200
+        2272,
+        192
       ]
     },
     {
       "parameters": {
-        "operation": "upload",
         "name": "={{ $('Prep Contract PDF').first().json.fileName }}",
-        "parents": [
-          "={{ $('Extract Deal Data').first().json.driveFolderId }}"
-        ],
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/ (Root folder)"
+        },
         "options": {}
       },
       "id": "sys15-upload",
@@ -279,56 +290,47 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        2130,
-        200
+        2496,
+        192
       ],
       "credentials": {
-        "googleApi": {
-          "id": "IJzDJS1jpbItegZD",
-          "name": "Google Sheets account 2"
+        "googleDriveOAuth2Api": {
+          "id": "oPioaF4sFaVsK13H",
+          "name": "Google Drive account 2"
         }
       }
     },
     {
       "parameters": {
-        "operation": "append",
-        "documentId": {
-          "mode": "id",
-          "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
-        },
-        "sheetName": {
-          "mode": "name",
-          "value": "Contracts"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Date": "={{ new Date().toISOString().split('T')[0] }}",
-            "Client": "={{ $('Extract Deal Data').first().json.clientName }}",
-            "Company": "={{ $('Extract Deal Data').first().json.company }}",
-            "Industry": "={{ $('Extract Deal Data').first().json.industry }}",
-            "Deal Value": "={{ $('Extract Deal Data').first().json.dealValue }}",
-            "Tier": "={{ $('Extract Deal Data').first().json.tier }}",
-            "Contact Email": "={{ $('Extract Deal Data').first().json.contactEmail }}",
-            "Pain Points": "={{ ($('Extract Deal Data').first().json.painPoints || '').toString().slice(0, 500) }}",
-            "Drive Link": "={{ $('Upload to Drive').first()?.json?.id ? 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.id : ($('Upload to Drive').first()?.json?.data?.id ? 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.data.id : '') }}",
-            "Status": "Pending Review"
-          }
-        },
+        "jsCode": "const d = $('Extract Deal Data').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\nfunction esc(x) { return String(x ?? '').replace(/'/g, \"''\"); }\nconst dealId = String(d.dealId || '').trim();\nconst q = \"INSERT INTO public.os_contracts_queue (queue_type,hubspot_deal_id,queue_date,client_name,company,industry,deal_value,tier,contact_email,pain_points,drive_link,status) VALUES ('contract','\" + esc(dealId) + \"',CURRENT_DATE,'\" + esc(d.clientName) + \"','\" + esc(d.company) + \"','\" + esc(d.industry) + \"','\" + esc(String(d.dealValue)) + \"','\" + esc(d.tier) + \"','\" + esc(d.contactEmail) + \"','\" + esc(String(d.painPoints || '').slice(0, 500)) + \"','\" + esc(driveLink) + \"','Pending Review') ON CONFLICT (hubspot_deal_id,queue_type) DO UPDATE SET client_name = EXCLUDED.client_name, company = EXCLUDED.company, industry = EXCLUDED.industry, deal_value = EXCLUDED.deal_value, tier = EXCLUDED.tier, contact_email = EXCLUDED.contact_email, pain_points = EXCLUDED.pain_points, drive_link = EXCLUDED.drive_link, status = EXCLUDED.status, queue_date = EXCLUDED.queue_date, updated_at = now();\";\nreturn [{ json: { _sql: q } }];"
+      },
+      "id": "sys15-contract-queue-sql",
+      "name": "Build Contract Queue SQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "{{ $json._sql }}",
         "options": {}
       },
       "id": "sys15-sheets",
       "name": "Add to Contracts Queue",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
-        2350,
-        200
+        2944,
+        192
       ],
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "IJzDJS1jpbItegZD",
-          "name": "Google Sheets account 2"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
@@ -341,31 +343,31 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2570,
-        200
+        3168,
+        192
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "PGf6jPoWtxSPlr0h",
           "mode": "id"
-        }
+        },
+        "options": {}
       },
       "id": "sys15-alert",
       "name": "Send Alert",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        2790,
-        200
+        3392,
+        192
       ]
     },
     {
       "parameters": {
-        "amount": 30,
+        "amount": 1,
         "unit": "minutes"
       },
       "id": "sys15-poll-wait",
@@ -373,44 +375,29 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        3010,
-        200
+        3616,
+        192
       ],
       "webhookId": "7e1eb85d-fd7d-44d2-b928-e7db2d1a14f6"
     },
     {
       "parameters": {
-        "operation": "read",
-        "documentId": {
-          "mode": "id",
-          "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
-        },
-        "sheetName": {
-          "mode": "name",
-          "value": "Contracts"
-        },
-        "filters": {
-          "values": [
-            {
-              "lookupColumn": "Client",
-              "lookupValue": "={{ $('Extract Deal Data').first().json.clientName }}"
-            }
-          ]
-        },
+        "operation": "executeQuery",
+        "query": "{{ \"SELECT status AS \\\"Status\\\", status FROM public.os_contracts_queue WHERE queue_type = 'contract' AND hubspot_deal_id = '\" + String($('Extract Deal Data').first().json.dealId||'').replace(/'/g,\"''\") + \"' ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 1;\" }}",
         "options": {}
       },
       "id": "sys15-check-approval",
       "name": "Check Approval Status",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4,
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
       "position": [
-        3230,
-        200
+        3840,
+        112
       ],
       "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "IJzDJS1jpbItegZD",
-          "name": "Google Sheets account 2"
+        "postgres": {
+          "id": "OS_SUPABASE_POSTGRES",
+          "name": "Supabase OS Postgres"
         }
       }
     },
@@ -420,7 +407,8 @@
           "options": {
             "caseSensitive": false,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 2
           },
           "conditions": [
             {
@@ -442,8 +430,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        3450,
-        200
+        4064,
+        192
       ]
     },
     {
@@ -455,13 +443,12 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3670,
-        100
+        4288,
+        192
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "FF6VOLCcRxI4uNYD",
@@ -487,8 +474,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        3890,
-        100
+        4512,
+        192
       ]
     },
     {
@@ -505,16 +492,15 @@
               }
             ]
           }
-        },
-        "options": {}
+        }
       },
       "id": "sys15-update-deal",
       "name": "Update Deal",
       "type": "n8n-nodes-base.hubspot",
       "typeVersion": 2,
       "position": [
-        4110,
-        100
+        4736,
+        176
       ],
       "credentials": {
         "hubspotApi": {
@@ -532,31 +518,30 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4330,
-        100
+        4960,
+        192
       ]
     },
     {
       "parameters": {
-        "source": "database",
         "workflowId": {
           "__rl": true,
           "value": "1qQFLOSHZsS9JPKP",
           "mode": "id"
-        }
+        },
+        "options": {}
       },
       "id": "sys15-log",
       "name": "Log to Sheet",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        4550,
-        100
+        5184,
+        192
       ]
     },
     {
       "parameters": {
-        "mode": "once",
         "minutesSaved": 120
       },
       "id": "sys15-track-time",
@@ -564,8 +549,8 @@
       "type": "n8n-nodes-base.timeSaved",
       "typeVersion": 1,
       "position": [
-        4770,
-        100
+        5408,
+        192
       ]
     }
   ],
@@ -699,6 +684,17 @@
       ]
     },
     "Upload to Drive": {
+      "main": [
+        [
+          {
+            "node": "Build Contract Queue SQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Contract Queue SQL": {
       "main": [
         [
           {
@@ -841,19 +837,36 @@
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "availableInMCP": false,
+    "availableInMCP": true,
     "timeSavedMode": "dynamic",
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": "w9S9LovIY8CxchZm"
   },
   "staticData": null,
   "meta": {
+    "aiBuilderAssisted": true,
     "templateCredsSetupCompleted": true
   },
-  "pinData": {},
-  "versionId": "2a6db986-b02f-4d2e-85f9-23d89ef21c66",
-  "activeVersionId": "2a6db986-b02f-4d2e-85f9-23d89ef21c66",
-  "versionCounter": 126,
+  "pinData": {
+    "Deal Contract Sent Webhook": [
+      {
+        "json": {
+          "id": "320346410735",
+          "properties": {
+            "dealname": "Justin Fatzer — Test engagement",
+            "tier": "starter",
+            "contact_email": "john.schibelli@intrawebtech.com",
+            "contact_firstname": "Justin",
+            "contact_lastname": "Fatzer",
+            "contact_phone": "+1 555 0100"
+          }
+        }
+      }
+    ]
+  },
+  "versionId": "196040ba-ac03-41f4-9b2f-8f0f63191e5b",
+  "activeVersionId": "8d5022cb-68fe-463d-9cca-e9b0668a606a",
+  "versionCounter": 309,
   "triggerCount": 1,
   "shared": [
     {
@@ -876,9 +889,9 @@
   ],
   "tags": [],
   "activeVersion": {
-    "updatedAt": "2026-04-03T03:42:44.581Z",
-    "createdAt": "2026-04-03T03:42:44.581Z",
-    "versionId": "2a6db986-b02f-4d2e-85f9-23d89ef21c66",
+    "updatedAt": "2026-04-19T19:25:35.422Z",
+    "createdAt": "2026-04-19T19:25:35.422Z",
+    "versionId": "8d5022cb-68fe-463d-9cca-e9b0668a606a",
     "workflowId": "5gXQdYfFgl0JStaA",
     "nodes": [
       {
@@ -934,7 +947,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const deal = $('Deal Contract Sent Webhook').first().json;\nconst config = $('Get Config').first().json;\nconst body = deal.body && typeof deal.body === 'object' ? deal.body : deal;\nconst props = body.properties || body;\n\nconst valueFrom = (...values) => {\n  for (const value of values) {\n    if (value !== undefined && value !== null && String(value).trim()) {\n      return String(value).trim();\n    }\n  }\n  return '';\n};\n\nconst money = (value) => {\n  if (value === undefined || value === null || value === '') return 0;\n  const normalized = Number(String(value).replace(/[^0-9.-]/g, ''));\n  return Number.isFinite(normalized) ? normalized : 0;\n};\n\nconst titleCase = (value) => value ? value.charAt(0).toUpperCase() + value.slice(1) : '';\n\nconst addressParts = [\n  valueFrom(props.address, props.street, props.street_address, props.company_address),\n  valueFrom(props.city, props.company_city),\n  valueFrom(props.state, props.state_region, props.company_state),\n  valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\n  valueFrom(props.country, props.company_country)\n].filter(Boolean);\n\nconst tierKey = valueFrom(props.tier).toLowerCase() || 'starter';\nconst tierInfo = (config.tiers && (config.tiers[tierKey] || config.tiers.starter)) || {\n  name: titleCase(tierKey) || 'Starter',\n  monthlyPrice: 0,\n  setupFee: 0\n};\n\nconst rawPainSources = [\n  valueFrom(props.deal_pain_points),\n  valueFrom(props.painPoints),\n  valueFrom(props.pain_point_summary)\n].filter(Boolean);\n\nconst uniquePainSources = [...new Set(rawPainSources)];\nconst painPoints = uniquePainSources.join('\\n\\n');\nconst contactFirstName = valueFrom(props.contact_firstname, props.firstName, props.firstname);\nconst contactLastName = valueFrom(props.contact_lastname, props.lastName, props.lastname);\nconst contactName = [contactFirstName, contactLastName].filter(Boolean).join(' ');\n\nconst companyName = valueFrom(\n  props.company,\n  props.company_name,\n  props.business_name,\n  props.dealname,\n  props.name\n);\nconst tierMonthly = money(tierInfo.monthlyPrice);\nconst upfrontDue = money(tierInfo.setupFee);\nconst tierAmount = money(props.amount) || upfrontDue;\nconst remainingTierBalance = Math.max(tierAmount - upfrontDue, 0);\nconst launchBalance = remainingTierBalance + tierMonthly;\n\nreturn [{\n  json: {\n    clientName: valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),\n    company: companyName,\n    companyName,\n    industry: valueFrom(props.industry),\n    painPoints,\n    painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),\n    rawPainPoints: valueFrom(props.deal_pain_points, painPoints),\n    dealValue: tierAmount,\n    tierAmount,\n    tier: tierKey,\n    tierLabel: tierInfo.name || titleCase(tierKey) || 'Starter',\n    tierMonthly,\n    upfrontDue,\n    launchBalance,\n    dealId: valueFrom(body.id, deal.id, body.dealId, deal.dealId),\n    contactEmail: valueFrom(props.contact_email, props.email),\n    contactPhone: valueFrom(props.contact_phone, props.phone, props.mobilephone),\n    contactFirstName,\n    contactName: contactName || contactFirstName,\n    address: addressParts.join(', '),\n    driveFolderId: valueFrom(props.client_drive_folder_id),\n    config\n  }\n}];"
+          "jsCode": "const deal = $('Deal Contract Sent Webhook').first().json;\nconst config = $('Get Config').first().json;\nconst body = deal.body && typeof deal.body === 'object' ? deal.body : deal;\nconst props = body.properties || body;\n\nconst valueFrom = (...values) => {\n  for (const value of values) {\n    if (value !== undefined && value !== null && String(value).trim()) {\n      return String(value).trim();\n    }\n  }\n  return '';\n};\n\nconst money = (value) => {\n  if (value === undefined || value === null || value === '') return 0;\n  const normalized = Number(String(value).replace(/[^0-9.-]/g, ''));\n  return Number.isFinite(normalized) ? normalized : 0;\n};\n\nconst titleCase = (value) => value ? value.charAt(0).toUpperCase() + value.slice(1) : '';\n\nconst addressParts = [\n  valueFrom(props.address, props.street, props.street_address, props.company_address),\n  valueFrom(props.city, props.company_city),\n  valueFrom(props.state, props.state_region, props.company_state),\n  valueFrom(props.zip, props.zip_code, props.postal_code, props.company_zip),\n  valueFrom(props.country, props.company_country)\n].filter(Boolean);\n\nconst tierKey = valueFrom(props.tier).toLowerCase() || 'starter';\nconst tierInfo = (config.tiers && (config.tiers[tierKey] || config.tiers.starter)) || {\n  name: titleCase(tierKey) || 'Starter',\n  monthlyPrice: 0,\n  setupFee: 0\n};\n\nconst rawPainSources = [\n  valueFrom(props.deal_pain_points),\n  valueFrom(props.painPoints),\n  valueFrom(props.pain_point_summary)\n].filter(Boolean);\n\nconst uniquePainSources = [...new Set(rawPainSources)];\nconst painPoints = uniquePainSources.join('\\n\\n');\nconst contactFirstName = valueFrom(props.contact_firstname, props.firstName, props.firstname);\nconst contactLastName = valueFrom(props.contact_lastname, props.lastName, props.lastname);\nconst contactName = [contactFirstName, contactLastName].filter(Boolean).join(' ');\n\nconst companyName = valueFrom(\n  props.company,\n  props.company_name,\n  props.business_name,\n  props.dealname,\n  props.name\n);\nconst tierMonthly = money(tierInfo.monthlyPrice);\nconst upfrontDue = money(tierInfo.setupFee);\n\nconst parseLineItemsRaw = () => {\n  const candidates = [\n    body.lineItems,\n    body.line_items,\n    props.lineItems,\n    props.line_items,\n    props.hs_line_items,\n  ];\n  for (const c of candidates) {\n    if (Array.isArray(c) && c.length) return c;\n    if (typeof c === 'string' && c.trim().startsWith('[')) {\n      try {\n        const parsed = JSON.parse(c);\n        if (Array.isArray(parsed) && parsed.length) return parsed;\n      } catch (e) { /* ignore */ }\n    }\n  }\n  return [];\n};\n\nconst normalizeLineItems = (raw) => {\n  return raw.map((x, i) => {\n    if (!x || typeof x !== 'object') return null;\n    const qty = Math.max(1, Number(x.quantity ?? x.qty ?? x.hs_quantity ?? 1) || 1);\n    const unit = money(x.unitPrice ?? x.price ?? x.rate ?? x.hs_price ?? x.hs_unit_price);\n    const lineTotal = money(x.amount ?? x.line_amount ?? x.total ?? x.line_total ?? x.hs_line_item_amount);\n    const name = valueFrom(x.name, x.productName, x.title, x.hs_sku, `Line item ${i + 1}`);\n    const sku = valueFrom(x.hs_sku, x.sku, '');\n    const description = valueFrom(x.description, x.details, x.notes, '');\n    let amount = lineTotal;\n    if (!amount && unit) amount = unit * qty;\n    if (!amount) amount = 0;\n    return {\n      name,\n      sku,\n      description,\n      quantity: qty,\n      unitPrice: unit || (qty ? amount / qty : amount),\n      amount,\n    };\n  }).filter(Boolean);\n};\n\nconst rawLineItems = parseLineItemsRaw();\nconst lineItems = normalizeLineItems(rawLineItems);\nconst lineItemsSubtotal = lineItems.reduce((s, li) => s + (Number(li.amount) || 0), 0);\n\nconst explicitDealAmount = money(props.amount);\nconst explicitDiscount = money(\n  valueFrom(\n    props.hs_total_discount,\n    props.total_discount,\n    props.deal_discount,\n    props.discount_amount,\n    props.hs_discount,\n  ),\n);\nlet impliedDiscount = 0;\nif (\n  explicitDiscount <= 0 &&\n  lineItemsSubtotal > 0 &&\n  explicitDealAmount > 0 &&\n  lineItemsSubtotal > explicitDealAmount + 0.005\n) {\n  impliedDiscount = lineItemsSubtotal - explicitDealAmount;\n}\nconst totalDiscount = explicitDiscount > 0 ? explicitDiscount : impliedDiscount;\n\nconst tierAmount =\n  explicitDealAmount > 0\n    ? explicitDealAmount\n    : lineItemsSubtotal > 0\n      ? lineItemsSubtotal\n      : upfrontDue;\nconst dealAmountForDisplay = explicitDealAmount > 0 ? explicitDealAmount : tierAmount;\nconst remainingTierBalance = Math.max(tierAmount - upfrontDue, 0);\nconst launchBalance = remainingTierBalance + tierMonthly;\n\nconst productList = lineItems.map((i) => ({\n  sku: i.sku || '',\n  name: i.name || '',\n  price: i.unitPrice ?? (i.quantity ? i.amount / i.quantity : i.amount),\n}));\n\nreturn [{\n  json: {\n    clientName: valueFrom(props.dealname, props.name, props.company, props.business_name, props.company_name),\n    company: companyName,\n    companyName,\n    industry: valueFrom(props.industry),\n    painPoints,\n    painPointSummary: valueFrom(props.pain_point_summary, props.painPoints),\n    rawPainPoints: valueFrom(props.deal_pain_points, painPoints),\n    dealValue: tierAmount,\n    dealAmount: dealAmountForDisplay,\n    lineItemsSubtotal,\n    totalDiscount,\n    lineItems,\n    tierAmount,\n    tier: tierKey,\n    tierLabel: tierInfo.name || titleCase(tierKey) || 'Starter',\n    tierMonthly,\n    upfrontDue,\n    launchBalance,\n    productList,\n    dealId: valueFrom(body.id, deal.id, body.dealId, deal.dealId),\n    contactEmail: valueFrom(props.contact_email, props.email),\n    contactPhone: valueFrom(props.contact_phone, props.phone, props.mobilephone),\n    contactFirstName,\n    contactName: contactName || contactFirstName,\n    address: addressParts.join(', '),\n    driveFolderId: valueFrom(props.client_drive_folder_id),\n    config\n  }\n}];"
         },
         "id": "sys15-extract",
         "name": "Extract Deal Data",
@@ -951,17 +964,18 @@
             "options": {
               "caseSensitive": true,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "strict",
+              "version": 2
             },
             "conditions": [
               {
                 "id": "has-folder",
                 "leftValue": "={{ $json.driveFolderId }}",
-                "rightValue": "",
                 "operator": {
                   "type": "string",
                   "operation": "notEmpty"
-                }
+                },
+                "singleValue": true
               }
             ],
             "combinator": "and"
@@ -1010,7 +1024,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const d = $('Extract Deal Data').first().json;\nconst scopeContext = [d.rawPainPoints, d.painPointSummary].filter(Boolean).join('\\n') || d.painPoints || '(None provided)';\n\nreturn [{\n  json: {\n    systemPrompt: 'You are drafting Exhibit A (Statement of Work) for a Master Services Agreement for IntraWeb Technologies LLC, an implementation and automation consultancy. Output ONLY clean semantic HTML for the exhibit body: no markdown, no backticks, no DOCTYPE, no html/head/body tags. Use h2, h3, p, ul, ol, li, strong. This is an operational scope description, not legal language—no warranties, governing law, or liability caps. Do not invent facts not supported by the payload.',\n    userPrompt: `Write Exhibit A — Statement of Work for this engagement.\\n\\nClient: ${d.clientName}\\nCompany: ${d.company}\\nIndustry: ${d.industry || 'Not provided'}\\nTier: ${d.tierLabel}\\nProject / tier amount: $${d.tierAmount || 0}\\nMonthly recurring (if applicable): $${d.tierMonthly || 0}\\nUpfront / setup portion: $${d.upfrontDue || 0}\\n\\nContext from discovery (use for scope only):\\n\"\"\"\\n${scopeContext}\\n\"\"\"\\n\\nReturn sections:\\n1. Objectives\\n2. Deliverables and workstreams (bullet lists)\\n3. Client responsibilities (assumptions, access, approvals)\\n4. Out of scope (explicit)\\n5. Change requests (brief process)\\n\\nKeep it concise and implementation-ready.`,\n    maxTokens: 3500\n  }\n}];"
+          "jsCode": "const d = $('Extract Deal Data').first().json;\nconst sc = [d.rawPainPoints, d.painPointSummary].filter(Boolean).join('\\n') || d.painPoints || '(None provided)';\nconst pl =\n  d.lineItems && d.lineItems.length > 0\n    ? d.lineItems\n        .map(\n          (li, i) =>\n            `  ${i + 1}. ${li.name || 'Item'}${li.sku ? ` [${li.sku}]` : ''} — Qty ${li.quantity ?? 1} @ $${Number(li.unitPrice || 0).toLocaleString()} — Line $${Number(li.amount || 0).toLocaleString()}${li.description ? ` (${li.description})` : ''}\\n`,\n        )\n        .join('')\n    : d.productList && d.productList.length > 0\n      ? d.productList.map((p) => `  - ${p.name} (${p.sku}): $${Number(p.price).toLocaleString()}`).join('\\n')\n      : `  - Tier: ${d.tierLabel} — $${Number(d.tierAmount).toLocaleString()}`;\n\nconst pricingNotes = [\n  (d.lineItemsSubtotal || 0) > 0 ? `Line items subtotal: $${Number(d.lineItemsSubtotal).toLocaleString()}` : null,\n  (d.totalDiscount || 0) > 0 ? `Discounts: $${Number(d.totalDiscount).toLocaleString()}` : null,\n].filter(Boolean).join(' · ');\n\nconst systemPrompt = `You are acting as an expert business and contract attorney specializing in New Jersey technology services law, drafting Exhibit A (Statement of Work) for a Master Services Agreement on behalf of IntraWeb Technologies LLC.\n\nCOMPANY PROFILE\nLegal Name: IntraWeb Technologies LLC | New Jersey LLC\nPrincipal: John Schibelli | jschibelli@gmail.com | intrawebtech.com\n\nSTANDARD TERMS\nPayment: Net 15. Late fee: 1.5%/month (18%/yr).\nRevisions: Starter/Website = 2 rounds included. Growth/Advanced = 3 rounds included. Additional rounds: $150-$175/hr after signed Change Order.\nGoverning Law: State of New Jersey. Venue: Morris County.\n\nOUTPUT RULES\nReturn ONLY clean semantic HTML for the Exhibit A body. No markdown, no backticks, no DOCTYPE, no html/head/body tags.\nUse only: h2, h3, p, ul, ol, li, strong.\nDo not include signatures, governing law, liability caps, or payment terms — those are in the MSA wrapper.\nDo not invent facts not in the payload. Use [CONFIRM WITH CLIENT] for missing data.`;\n\nconst userPrompt = `Generate Exhibit A — Statement of Work.\n\nCLIENT: ${d.clientName} | ${d.company} | ${d.industry || 'industry not provided'} | ${d.contactEmail || 'email not provided'}\n\nENGAGEMENT\nTier: ${d.tierLabel}\nDeal line items / products:\n${pl}\nHubSpot deal amount (after discounts): $${Number(d.dealAmount || d.tierAmount).toLocaleString()}${pricingNotes ? ` — ${pricingNotes}` : ''}\nTier payment template — Monthly: $${Number(d.tierMonthly).toLocaleString()} | Upfront: $${Number(d.upfrontDue).toLocaleString()}\n\nDISCOVERY CONTEXT\n\"\"\"\n${sc}\n\"\"\"\n\nSections: 1. Objectives 2. Deliverables and workstreams (reference SKUs) 3. Client responsibilities 4. Out of scope 5. Change request process (ref $150-$175/hr and Net 15)`;\n\nreturn [{ json: { systemPrompt, userPrompt, maxTokens: 3500 } }];"
         },
         "id": "sys15-claude-prep",
         "name": "Prep Claude Prompt",
@@ -1077,7 +1091,7 @@
       },
       {
         "parameters": {
-          "jsCode": "const claudeResult = $('Parse Claude Response').first().json;\nconst d = $('Extract Deal Data').first().json;\nconst owner = (d.config && d.config.owner) || {};\nconst companyName = owner.companyName || 'IntraWeb Technologies LLC';\nconst ownerEmail = owner.email || '';\nconst ownerPhone = owner.phone || '';\nconst ownerName = owner.name || 'Authorized Representative';\nconst clientLegalName = d.company || d.clientName || 'Client';\nconst effectiveDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });\nconst exhibitBody = (claudeResult.data ? claudeResult.data.text : claudeResult.html || '').trim() || '<p>Exhibit A could not be generated.</p>';\n\nconst escapeHtml = (value) => String(value ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;')\n  .replace(/\\\"/g, '&quot;')\n  .replace(/'/g, '&#39;');\n\nconst formatCurrency = (value) => {\n  const numeric = Number(value || 0);\n  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number.isFinite(numeric) ? numeric : 0);\n};\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <title>Master Services Agreement — ${escapeHtml(clientLegalName)}</title>\n  <link href=\"https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Manrope:wght@400;600;700&display=swap\" rel=\"stylesheet\">\n  <style>\n    @page { size: Letter; margin: 0.65in; }\n    * { box-sizing: border-box; }\n    body { margin: 0; padding: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 11.5px; line-height: 1.55; color: #1a1f2e; }\n    h1 { font-family: 'Manrope', Arial, sans-serif; font-size: 22px; margin: 0 0 8px; letter-spacing: -0.02em; }\n    .sub { font-family: 'Manrope', Arial, sans-serif; font-size: 11px; color: #5b6472; margin-bottom: 20px; }\n    h2 { font-family: 'Manrope', Arial, sans-serif; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: #374151; margin: 22px 0 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }\n    h3 { font-size: 12.5px; margin: 14px 0 8px; }\n    p { margin: 0 0 10px; }\n    ul, ol { margin: 0 0 10px 18px; padding: 0; }\n    table.fees { width: 100%; border-collapse: collapse; margin: 10px 0 16px; font-family: 'Manrope', Arial, sans-serif; font-size: 11px; }\n    table.fees td { padding: 8px 10px; border: 1px solid #e5e7eb; vertical-align: top; }\n    table.fees td:last-child { text-align: right; font-weight: 700; width: 28%; }\n    .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }\n    .party { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; background: #fafbfc; }\n    .party .label { font-family: 'Manrope', Arial, sans-serif; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: #6b7280; margin-bottom: 6px; }\n    .exhibit { border: 1px solid #d1d5db; border-radius: 10px; padding: 16px 18px; margin: 16px 0 20px; background: #fff; }\n    .exhibit h2:first-child, .exhibit h3:first-child { margin-top: 0; }\n    .sig { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; break-inside: avoid; }\n    .sig-box { border-top: 1px solid #111827; padding-top: 8px; min-height: 64px; font-family: 'Manrope', Arial, sans-serif; font-size: 10px; }\n    .notice { font-family: 'Manrope', Arial, sans-serif; font-size: 9.5px; color: #6b7280; margin-top: 20px; padding: 10px 12px; background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 8px; line-height: 1.45; }\n  </style>\n</head>\n<body>\n  <h1>Master Services Agreement</h1>\n  <p class=\"sub\">Effective date: ${escapeHtml(effectiveDate)} &nbsp;|&nbsp; ${escapeHtml(companyName)}</p>\n\n  <h2>Parties</h2>\n  <div class=\"parties\">\n    <div class=\"party\">\n      <div class=\"label\">Client</div>\n      <p><strong>${escapeHtml(clientLegalName)}</strong><br/>Attn: ${escapeHtml(d.contactName || d.contactFirstName || '—')}<br/>${d.address ? escapeHtml(d.address) + '<br/>' : ''}${d.contactEmail ? escapeHtml(d.contactEmail) : ''}</p>\n    </div>\n    <div class=\"party\">\n      <div class=\"label\">Provider</div>\n      <p><strong>${escapeHtml(companyName)}</strong><br/>${ownerEmail ? escapeHtml(ownerEmail) : ''}${ownerPhone ? '<br/>' + escapeHtml(ownerPhone) : ''}</p>\n    </div>\n  </div>\n\n  <h2>1. Services</h2>\n  <p>Provider will perform the professional services described in <strong>Exhibit A</strong> (Statement of Work), which is incorporated into this Agreement. Exhibit A may be updated by written agreement of the parties (including email).</p>\n\n  <h2>2. Fees and payment</h2>\n  <p>Fees are based on the commercial terms selected for this engagement unless otherwise agreed in writing.</p>\n  <table class=\"fees\">\n    <tr><td>Tier / package amount</td><td>${escapeHtml(formatCurrency(d.tierAmount))}</td></tr>\n    <tr><td>Estimated upfront / setup</td><td>${escapeHtml(formatCurrency(d.upfrontDue))}</td></tr>\n    <tr><td>Monthly recurring (if applicable)</td><td>${escapeHtml(formatCurrency(d.tierMonthly))}</td></tr>\n    <tr><td>Launch / initial payment (estimate)</td><td>${escapeHtml(formatCurrency(d.launchBalance))}</td></tr>\n  </table>\n  <p>Invoices are due per the payment instructions on the invoice unless a different schedule is agreed in writing. Late payments may incur suspension of work until accounts are current.</p>\n\n  <h2>3. Term</h2>\n  <p>This Agreement begins on the Effective Date and continues until the services in Exhibit A are completed and fees for completed work are paid, unless terminated earlier under Section 4.</p>\n\n  <h2>4. Termination</h2>\n  <p>Either party may terminate for material breach if the other party fails to cure within fifteen (15) days of written notice. Client remains responsible for fees for work performed through the termination date.</p>\n\n  <h2>5. Confidentiality</h2>\n  <p>Each party agrees to protect the other’s non-public business information using reasonable care and to use it only for this engagement.</p>\n\n  <h2>6. Intellectual property</h2>\n  <p>Client retains ownership of its pre-existing materials. Deliverables created specifically for Client are assigned to Client upon full payment, excluding Provider tools, templates, and general know-how.</p>\n\n  <h2>7. Limitation of liability</h2>\n  <p>To the maximum extent permitted by law, neither party is liable for indirect or consequential damages. Provider’s total liability under this Agreement for any claim is limited to the fees paid by Client to Provider in the three (3) months preceding the claim.</p>\n\n  <h2>8. Independent contractor</h2>\n  <p>Provider is an independent contractor. This Agreement does not create a partnership or employment relationship.</p>\n\n  <h2>9. Notices</h2>\n  <p>Notices may be sent to the emails listed above or to such other addresses as the parties designate in writing.</p>\n\n  <h2>10. Exhibit A — Statement of Work</h2>\n  <div class=\"exhibit exhibit-body\">${exhibitBody}</div>\n\n  <h2>11. Signatures</h2>\n  <p>By signing below, the parties agree to this Agreement including Exhibit A.</p>\n  <div class=\"sig\">\n    <div class=\"sig-box\"><strong>${escapeHtml(clientLegalName)}</strong><br/><br/>Name: ___________________________<br/>Title: ___________________________<br/>Date: ___________________________</div>\n    <div class=\"sig-box\"><strong>${escapeHtml(companyName)}</strong><br/><br/>Name: ${escapeHtml(ownerName)}<br/>Title: Authorized Representative<br/>Date: ___________________________</div>\n  </div>\n\n  <p class=\"notice\"><strong>Important:</strong> This document is a business template for internal use. It is not legal advice. Have qualified counsel review and customize before execution. Electronic signature and filing are your team’s responsibility after internal approval in the master sheet.</p>\n</body>\n</html>`;\n\nreturn [{ json: { html, fileName: `IntraWeb — ${d.clientName} — Master Services Agreement.pdf` } }];"
+          "jsCode": "const claudeResult = $('Parse Claude Response').first().json;\nconst d = $('Extract Deal Data').first().json;\nconst config = d.config || {};\nconst branding = config.branding || {};\nconst owner = (config && config.owner) || {};\nconst companyName = owner.companyName || 'IntraWeb Technologies LLC';\nconst ownerEmail = owner.email || '';\nconst ownerPhone = owner.phone || '';\nconst ownerName = owner.name || 'Authorized Representative';\nconst clientLegalName = d.company || d.clientName || 'Client';\nconst effectiveDate = new Date().toLocaleDateString('en-US', {\n  year: 'numeric',\n  month: 'long',\n  day: 'numeric',\n});\nconst docId = d.dealId ? `MSA-${String(d.dealId).slice(0, 12)}` : `MSA-${Date.now().toString(36).toUpperCase()}`;\n\nconst exhibitBody =\n  (claudeResult.data ? claudeResult.data.text : claudeResult.html || '').trim() ||\n  '<p class=\"body-text\">Exhibit A could not be generated.</p>';\n\nconst escapeHtml = (value) =>\n  String(value ?? '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;')\n    .replace(/'/g, '&#39;');\n\nconst formatCurrency = (value) => {\n  const numeric = Number(value || 0);\n  return new Intl.NumberFormat('en-US', {\n    style: 'currency',\n    currency: 'USD',\n    maximumFractionDigits: 0,\n  }).format(Number.isFinite(numeric) ? numeric : 0);\n};\n\nconst lineItemsPdf = Array.isArray(d.lineItems) ? d.lineItems : [];\nconst subtotalPdf =\n  Number(d.lineItemsSubtotal) ||\n  lineItemsPdf.reduce((s, li) => s + (Number(li.amount) || 0), 0);\nconst discPdf = Math.max(0, Number(d.totalDiscount) || 0);\nconst dealAmtPdf = Number(d.dealAmount) || Number(d.tierAmount) || 0;\nconst finalDealPdf =\n  dealAmtPdf > 0\n    ? dealAmtPdf\n    : subtotalPdf - discPdf > 0\n      ? subtotalPdf - discPdf\n      : subtotalPdf;\n\nconst feeTableBody = (() => {\n  const rows = [];\n  if (lineItemsPdf.length) {\n    lineItemsPdf.forEach((li) => {\n      const name = escapeHtml(li.name || 'Item');\n      const sku =\n        li.sku && String(li.sku).trim()\n          ? ` <span class=\"muted\">(${escapeHtml(li.sku)})</span>`\n          : '';\n      rows.push(\n        `<tr><td>${name}${sku}<div class=\"line-table__meta\">Qty ${escapeHtml(String(li.quantity ?? 1))} × ${escapeHtml(formatCurrency(li.unitPrice))}</div></td><td class=\"num\">${escapeHtml(formatCurrency(li.amount))}</td></tr>`,\n      );\n    });\n    rows.push(\n      `<tr class=\"line-table__subtotal\"><td>Subtotal (line items)</td><td class=\"num\">${escapeHtml(formatCurrency(subtotalPdf))}</td></tr>`,\n    );\n    if (discPdf > 0.005) {\n      rows.push(\n        `<tr class=\"line-table__discount\"><td>Discounts</td><td class=\"num\">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,\n      );\n    }\n    rows.push(\n      `<tr class=\"line-table__total\"><td><strong>Total deal amount</strong></td><td class=\"num\"><strong>${escapeHtml(formatCurrency(finalDealPdf))}</strong></td></tr>`,\n    );\n  } else {\n    rows.push(\n      `<tr><td>Tier / package (${escapeHtml(d.tierLabel || d.tier || '')})</td><td class=\"num\">${escapeHtml(formatCurrency(d.tierAmount))}</td></tr>`,\n    );\n    if (discPdf > 0.005) {\n      rows.push(\n        `<tr class=\"line-table__discount\"><td>Discounts</td><td class=\"num\">-${escapeHtml(formatCurrency(discPdf))}</td></tr>`,\n      );\n    }\n    rows.push(\n      `<tr class=\"line-table__total\"><td><strong>Total deal amount</strong></td><td class=\"num\"><strong>${escapeHtml(formatCurrency(finalDealPdf || d.tierAmount))}</strong></td></tr>`,\n    );\n  }\n  rows.push(\n    `<tr class=\"line-table__schedule\"><td colspan=\"2\">Payment timing estimates (tier template; invoice cadence per Provider)</td></tr>`,\n  );\n  rows.push(\n    `<tr><td>Estimated upfront / setup</td><td class=\"num\">${escapeHtml(formatCurrency(d.upfrontDue))}</td></tr>`,\n  );\n  rows.push(\n    `<tr><td>Monthly recurring (if applicable)</td><td class=\"num\">${escapeHtml(formatCurrency(d.tierMonthly))}</td></tr>`,\n  );\n  rows.push(\n    `<tr><td>Launch / initial payment (estimate)</td><td class=\"num\">${escapeHtml(formatCurrency(d.launchBalance))}</td></tr>`,\n  );\n  return rows.join('');\n})();\n\nconst logoHtml = (() => {\n  const b64 = branding.logoPdfBase64 || branding.logoDarkBase64;\n  const url = branding.logoUrlDark || branding.logoUrl;\n  if (b64 && String(b64).trim()) {\n    const src = String(b64).startsWith('data:') ? b64 : `data:image/png;base64,${b64}`;\n    return `<img class=\"doc-header__logo\" src=\"${src}\" alt=\"IntraWeb\" height=\"36\" />`;\n  }\n  if (url && String(url).trim()) {\n    return `<img class=\"doc-header__logo\" src=\"${escapeHtml(url)}\" alt=\"IntraWeb\" height=\"36\" />`;\n  }\n  return `<div class=\"doc-header__wordmark\" aria-hidden=\"true\">IntraWeb</div>`;\n})();\n\nconst html = `<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>Master Services Agreement — ${escapeHtml(clientLegalName)}</title>\n  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />\n  <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />\n  <link href=\"https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap\" rel=\"stylesheet\" />\n  <style>\n    :root {\n      --iw-slate-950: #0d1117;\n      --iw-slate-900: #141b26;\n      --iw-slate-800: #1c2636;\n      --iw-slate-700: #253347;\n      --iw-slate-600: #344659;\n      --iw-slate-500: #4a6075;\n      --iw-slate-400: #6b8399;\n      --iw-slate-300: #96aebe;\n      --iw-slate-200: #c4d1da;\n      --iw-slate-100: #e4eaef;\n      --iw-slate-50: #f2f5f8;\n      --iw-teal: #00c2a8;\n      --iw-teal-light: #00dfc8;\n      --iw-teal-dim: #007a6a;\n      --iw-teal-ghost: #e0f8f5;\n      --iw-orange: #f26419;\n      --iw-orange-dim: #c04e0e;\n      --iw-orange-ghost: #fef0e8;\n      --iw-white: #ffffff;\n      --iw-off-white: #f8fafb;\n      --iw-print-footer-block: 0.72in;\n    }\n    @page {\n      size: letter;\n      margin: 0.52in 0.58in 0.72in 0.58in;\n    }\n    * {\n      box-sizing: border-box;\n      -webkit-print-color-adjust: exact;\n      print-color-adjust: exact;\n    }\n    html,\n    body {\n      margin: 0;\n      padding: 0;\n      background: var(--iw-slate-50);\n      color: var(--iw-slate-700);\n      font-family: 'DM Sans', system-ui, sans-serif;\n    }\n    .iw-page {\n      display: flex;\n      flex-direction: column;\n      width: 816px;\n      max-width: 100%;\n      min-height: 1056px;\n      margin: 0 auto;\n      background: var(--iw-slate-50);\n      color: var(--iw-slate-700);\n    }\n    .iw-page > header,\n    .iw-page > .doc-hero,\n    .iw-page > .doc-meta-bar {\n      flex-shrink: 0;\n    }\n    main.doc-body {\n      flex: 1 1 auto;\n    }\n    @media print {\n      .iw-page {\n        display: block;\n        width: 100%;\n        min-height: 0;\n        margin: 0;\n      }\n    }\n    .doc-header {\n      display: flex;\n      align-items: center;\n      justify-content: space-between;\n      gap: 16px;\n      padding: 14px 24px;\n      background: var(--iw-slate-950);\n      border-bottom: 3px solid var(--iw-teal);\n      color: var(--iw-white);\n    }\n    .doc-header__logo {\n      height: 36px;\n      width: auto;\n      display: block;\n    }\n    .doc-header__wordmark {\n      font-size: 18px;\n      font-weight: 700;\n      letter-spacing: 0.04em;\n      color: var(--iw-white);\n    }\n    .doc-header__doc-type {\n      font-size: 9pt;\n      font-weight: 700;\n      letter-spacing: 0.12em;\n      text-transform: uppercase;\n      color: var(--iw-slate-300);\n    }\n    .doc-header__doc-id {\n      font-size: 10pt;\n      font-weight: 600;\n      color: var(--iw-white);\n      margin-top: 4px;\n      text-align: right;\n    }\n    .doc-hero {\n      background: var(--iw-slate-900);\n      padding: 32px 32px 28px;\n      color: var(--iw-white);\n      break-after: avoid-page;\n      page-break-after: avoid;\n    }\n    .doc-hero__label {\n      display: inline-block;\n      font-size: 9pt;\n      font-weight: 700;\n      letter-spacing: 0.14em;\n      text-transform: uppercase;\n      color: var(--iw-orange);\n      margin-bottom: 10px;\n    }\n    .doc-hero__label::before {\n      content: '— ';\n      color: var(--iw-orange);\n    }\n    .doc-hero__title {\n      margin: 0 0 10px;\n      font-size: 24pt;\n      font-weight: 700;\n      line-height: 1.15;\n      color: var(--iw-white);\n    }\n    .doc-hero__subtitle {\n      margin: 0;\n      max-width: 640px;\n      font-size: 11pt;\n      line-height: 1.55;\n      color: var(--iw-slate-300);\n    }\n    .doc-meta-bar {\n      display: flex;\n      flex-wrap: wrap;\n      background: var(--iw-slate-800);\n      color: var(--iw-slate-100);\n      font-size: 9.5pt;\n    }\n    .doc-meta-bar__item {\n      flex: 1 1 0;\n      min-width: 140px;\n      padding: 12px 16px;\n      border-right: 1px solid var(--iw-slate-600);\n    }\n    .doc-meta-bar__item:last-child {\n      border-right: none;\n    }\n    .doc-meta-bar__k {\n      font-size: 7.5pt;\n      font-weight: 700;\n      letter-spacing: 0.1em;\n      text-transform: uppercase;\n      color: var(--iw-slate-400);\n      margin-bottom: 4px;\n    }\n    .doc-meta-bar__v {\n      font-weight: 600;\n      color: var(--iw-white);\n      word-break: break-word;\n    }\n    .doc-body {\n      background: var(--iw-white);\n      padding: 44px 48px 56px;\n    }\n    @media print {\n      .doc-body {\n        padding-top: 36pt;\n        padding-bottom: calc(36pt + var(--iw-print-footer-block));\n      }\n    }\n    .doc-body > * + * {\n      margin-top: 28px;\n    }\n    .doc-section__title {\n      display: flex;\n      align-items: center;\n      gap: 12px;\n      font-size: 12pt;\n      font-weight: 700;\n      margin: 0 0 14px;\n      padding-bottom: 8px;\n      border-bottom: 1.5px solid var(--iw-slate-100);\n      color: var(--iw-slate-800);\n      break-after: avoid;\n      page-break-after: avoid;\n      break-inside: avoid;\n    }\n    section {\n      break-inside: auto;\n    }\n    .doc-section__accent {\n      width: 4px;\n      height: 18px;\n      background: var(--iw-teal);\n      flex-shrink: 0;\n    }\n    .kv-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 14px 20px;\n    }\n    .kv-grid .kv-k {\n      font-size: 7.5pt;\n      font-weight: 700;\n      letter-spacing: 0.08em;\n      text-transform: uppercase;\n      color: var(--iw-slate-400);\n      margin-bottom: 4px;\n    }\n    .kv-grid .kv-v {\n      font-size: 10pt;\n      color: var(--iw-slate-800);\n      font-weight: 600;\n      word-break: break-word;\n    }\n    .party-box {\n      border: 1px solid var(--iw-slate-100);\n      border-radius: 10px;\n      padding: 14px 16px;\n      background: var(--iw-off-white);\n    }\n    .line-table {\n      width: 100%;\n      border-collapse: collapse;\n      font-size: 10pt;\n      break-inside: auto;\n    }\n    .line-table thead {\n      display: table-header-group;\n    }\n    .line-table tbody tr {\n      break-inside: avoid;\n      page-break-inside: avoid;\n    }\n    .line-table thead th {\n      background: var(--iw-slate-950);\n      color: var(--iw-white);\n      text-align: left;\n      padding: 10px 12px;\n      font-weight: 700;\n      font-size: 8.5pt;\n      letter-spacing: 0.06em;\n      text-transform: uppercase;\n    }\n    .line-table thead th:last-child {\n      text-align: right;\n    }\n    .line-table tbody tr:nth-child(odd) {\n      background: var(--iw-off-white);\n    }\n    .line-table tbody tr:nth-child(even) {\n      background: var(--iw-white);\n    }\n    .line-table td {\n      padding: 10px 12px;\n      border-bottom: 1px solid var(--iw-slate-100);\n      vertical-align: top;\n    }\n    .line-table td.num {\n      text-align: right;\n      font-weight: 700;\n      color: var(--iw-slate-800);\n      white-space: nowrap;\n    }\n    .line-table__meta {\n      font-size: 8.5pt;\n      color: var(--iw-slate-500);\n      font-weight: 500;\n      margin-top: 3px;\n    }\n    .line-table .muted {\n      font-weight: 500;\n      color: var(--iw-slate-500);\n    }\n    .line-table tr.line-table__subtotal td {\n      background: var(--iw-off-white);\n      font-weight: 700;\n      border-bottom: 1px solid var(--iw-slate-200);\n    }\n    .line-table tr.line-table__discount td {\n      color: var(--iw-orange-dim);\n      font-weight: 700;\n      background: var(--iw-orange-ghost);\n    }\n    .line-table tr.line-table__total td {\n      background: var(--iw-teal-ghost);\n      color: var(--iw-teal-dim);\n      font-weight: 800;\n      font-size: 11pt;\n      border-bottom: none;\n    }\n    .line-table tr.line-table__schedule td {\n      font-size: 8.5pt;\n      font-weight: 600;\n      color: var(--iw-slate-500);\n      padding-top: 16px;\n      border-bottom: 1px dashed var(--iw-slate-200);\n    }\n    .body-text {\n      font-size: 10pt;\n      line-height: 1.75;\n      color: var(--iw-slate-700);\n      margin: 0 0 10px;\n    }\n    .proposal-body p,\n    .proposal-body li {\n      font-size: 10pt;\n      line-height: 1.7;\n      color: var(--iw-slate-700);\n      orphans: 3;\n      widows: 3;\n    }\n    .proposal-body h2,\n    .proposal-body h3 {\n      break-after: avoid;\n      page-break-after: avoid;\n    }\n    .msa-exhibit {\n      border: 1px solid var(--iw-slate-100);\n      border-radius: 12px;\n      padding: 22px 22px;\n      background: var(--iw-white);\n      break-inside: auto;\n    }\n    .callout--slate {\n      border-left: 4px solid var(--iw-slate-500);\n      background: var(--iw-slate-50);\n      padding: 14px 16px;\n      border-radius: 0 10px 10px 0;\n      margin-top: 20px;\n    }\n    /* Card classes inherited from the proposal design system - applied so\n       Exhibit A (generated by Claude) is protected the same way as the proposal */\n    .proposal-body .scope-card,\n    .proposal-body .pain-card,\n    .proposal-body .roadmap-card,\n    .proposal-body .outcome-card,\n    .proposal-body .next-step-card,\n    .proposal-body .why-block,\n    .proposal-body .section-card {\n      break-inside: avoid;\n      page-break-inside: avoid;\n    }\n    .line-table tr.line-table__schedule,\n    .line-table tr.line-table__schedule + tr,\n    .line-table tr.line-table__schedule + tr + tr,\n    .line-table tr.line-table__total {\n      break-inside: avoid;\n      page-break-inside: avoid;\n    }\n    .line-table tr.line-table__schedule {\n      break-before: avoid;\n      page-break-before: avoid;\n    }\n    .line-table tr.line-table__total {\n      break-after: avoid;\n      page-break-after: avoid;\n    }\n    .signature-grid {\n      display: grid;\n      grid-template-columns: 1fr 1fr;\n      gap: 28px;\n      margin-top: 28px;\n      break-inside: avoid;\n      page-break-inside: avoid;\n    }\n    .signature-grid__col {\n      border-top: 1px solid var(--iw-slate-800);\n      padding-top: 10px;\n      min-height: 72px;\n      font-size: 9pt;\n      color: var(--iw-slate-600);\n    }\n    .signature-grid__role {\n      font-weight: 700;\n      color: var(--iw-slate-800);\n      margin-bottom: 8px;\n    }\n    .doc-footer {\n      display: grid;\n      grid-template-columns: 1fr 2fr 1fr;\n      align-items: center;\n      gap: 12px;\n      flex-shrink: 0;\n      margin-top: auto;\n      padding: 16px 28px 18px;\n      background: var(--iw-slate-950);\n      color: var(--iw-slate-300);\n      font-size: 8pt;\n    }\n    @media print {\n      .doc-footer {\n        position: fixed;\n        left: 0;\n        right: 0;\n        bottom: 0;\n        z-index: 10;\n        margin: 0;\n        padding: 12px 0.58in 14px;\n        box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.06);\n      }\n    }\n    .doc-footer__brand {\n      font-weight: 700;\n      color: var(--iw-teal-light);\n      letter-spacing: 0.04em;\n    }\n    .doc-footer__conf {\n      text-align: center;\n      color: var(--iw-slate-400);\n      line-height: 1.4;\n    }\n    .doc-footer__page {\n      text-align: right;\n      color: var(--iw-slate-300);\n      font-weight: 600;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"iw-page\">\n    <header class=\"doc-header\">\n      <div class=\"doc-header__left\">${logoHtml}</div>\n      <div>\n        <div class=\"doc-header__doc-type\">Service Agreement</div>\n        <div class=\"doc-header__doc-id\">${escapeHtml(docId)}</div>\n      </div>\n    </header>\n\n    <section class=\"doc-hero\">\n      <div class=\"doc-hero__label\">Service Agreement</div>\n      <h1 class=\"doc-hero__title\">Master Services Agreement</h1>\n      <p class=\"doc-hero__subtitle\">${escapeHtml(effectiveDate)} · ${escapeHtml(companyName)} · ${escapeHtml(clientLegalName)}</p>\n    </section>\n\n    <div class=\"doc-meta-bar\">\n      <div class=\"doc-meta-bar__item\">\n        <div class=\"doc-meta-bar__k\">Client</div>\n        <div class=\"doc-meta-bar__v\">${escapeHtml(clientLegalName)}</div>\n      </div>\n      <div class=\"doc-meta-bar__item\">\n        <div class=\"doc-meta-bar__k\">Effective date</div>\n        <div class=\"doc-meta-bar__v\">${escapeHtml(effectiveDate)}</div>\n      </div>\n      <div class=\"doc-meta-bar__item\">\n        <div class=\"doc-meta-bar__k\">Provider</div>\n        <div class=\"doc-meta-bar__v\">${escapeHtml(companyName)}</div>\n      </div>\n    </div>\n\n    <main class=\"doc-body\">\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>Parties</h2>\n        <div class=\"kv-grid\">\n          <div class=\"party-box\">\n            <div class=\"kv-k\">Client</div>\n            <p class=\"body-text\" style=\"margin: 0\">\n              <strong>${escapeHtml(clientLegalName)}</strong><br />\n              Attn: ${escapeHtml(d.contactName || d.contactFirstName || '—')}<br />\n              ${d.address ? escapeHtml(d.address) + '<br />' : ''}${d.contactEmail ? escapeHtml(d.contactEmail) : ''}\n            </p>\n          </div>\n          <div class=\"party-box\">\n            <div class=\"kv-k\">Provider</div>\n            <p class=\"body-text\" style=\"margin: 0\">\n              <strong>${escapeHtml(companyName)}</strong><br />\n              ${ownerEmail ? escapeHtml(ownerEmail) : ''}${ownerPhone ? '<br />' + escapeHtml(ownerPhone) : ''}\n            </p>\n          </div>\n        </div>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>1. Services</h2>\n        <p class=\"body-text\">Provider will perform the professional services described in <strong>Exhibit A</strong> (Statement of Work), which is incorporated into this Agreement. Exhibit A may be updated by written agreement of the parties (including email).</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>2. Fees and payment</h2>\n        <p class=\"body-text\">Pricing reflects HubSpot deal line items and the recorded deal amount (including discounts when present). Payment timing rows below are estimates from the selected tier template.</p>\n        <table class=\"line-table\">\n          <thead>\n            <tr>\n              <th>Description</th>\n              <th>Amount</th>\n            </tr>\n          </thead>\n          <tbody>\n            ${feeTableBody}\n          </tbody>\n        </table>\n        <p class=\"body-text\">Invoices are due per the payment instructions on the invoice unless a different schedule is agreed in writing. Late payments may incur suspension of work until accounts are current.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>3. Term</h2>\n        <p class=\"body-text\">This Agreement begins on the Effective Date and continues until the services in Exhibit A are completed and fees for completed work are paid, unless terminated earlier under Section 4.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>4. Termination</h2>\n        <p class=\"body-text\">Either party may terminate for material breach if the other party fails to cure within fifteen (15) days of written notice. Client remains responsible for fees for work performed through the termination date.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>5. Confidentiality</h2>\n        <p class=\"body-text\">Each party agrees to protect the other’s non-public business information using reasonable care and to use it only for this engagement.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>6. Intellectual property</h2>\n        <p class=\"body-text\">Client retains ownership of its pre-existing materials. Deliverables created specifically for Client are assigned to Client upon full payment, excluding Provider tools, templates, and general know-how.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>7. Limitation of liability</h2>\n        <p class=\"body-text\">To the maximum extent permitted by law, neither party is liable for indirect or consequential damages. Provider’s total liability under this Agreement for any claim is limited to the fees paid by Client to Provider in the three (3) months preceding the claim.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>8. Independent contractor</h2>\n        <p class=\"body-text\">Provider is an independent contractor. This Agreement does not create a partnership or employment relationship.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>9. Notices</h2>\n        <p class=\"body-text\">Notices may be sent to the emails listed above or to such other addresses as the parties designate in writing.</p>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>10. Exhibit A — Statement of Work</h2>\n        <div class=\"msa-exhibit proposal-body\">${exhibitBody}</div>\n      </section>\n\n      <section>\n        <h2 class=\"doc-section__title\"><span class=\"doc-section__accent\" aria-hidden=\"true\"></span>11. Signatures</h2>\n        <p class=\"body-text\">By signing below, the parties agree to this Agreement including Exhibit A.</p>\n        <div class=\"signature-grid\">\n          <div class=\"signature-grid__col\">\n            <div class=\"signature-grid__role\">Client</div>\n            <div><strong>${escapeHtml(clientLegalName)}</strong></div>\n            <div style=\"margin-top: 16px\">Name: ___________________________</div>\n            <div>Title: ___________________________</div>\n            <div>Date: ___________________________</div>\n          </div>\n          <div class=\"signature-grid__col\">\n            <div class=\"signature-grid__role\">Provider</div>\n            <div><strong>${escapeHtml(companyName)}</strong></div>\n            <div style=\"margin-top: 16px\">Name: ${escapeHtml(ownerName)}</div>\n            <div>Title: Authorized Representative</div>\n            <div>Date: ___________________________</div>\n          </div>\n        </div>\n      </section>\n\n      <div class=\"callout--slate\">\n        <p class=\"body-text\" style=\"margin: 0\">\n          <strong>Important:</strong> This document is a business template for internal use. It is not legal advice. Have qualified counsel review and customize before execution. Electronic signature and filing are your team’s responsibility after internal approval in the master sheet.\n        </p>\n      </div>\n    </main>\n\n    <footer class=\"doc-footer\">\n      <div class=\"doc-footer__brand\">IntraWeb</div>\n      <div class=\"doc-footer__conf\">Confidential — ${escapeHtml(clientLegalName)} · ${escapeHtml(companyName)}</div>\n      <div class=\"doc-footer__page\">Page 1</div>\n    </footer>\n  </div>\n</body>\n</html>`;\n\nreturn [{ json: { html, fileName: `IntraWeb — ${d.clientName} — Master Services Agreement.pdf` } }];\n"
         },
         "id": "sys15-pdf-prep",
         "name": "Prep Contract PDF",
@@ -1157,52 +1171,43 @@
           200
         ],
         "credentials": {
-          "googleApi": {
-            "id": "IJzDJS1jpbItegZD",
-            "name": "Google Sheets account 2"
+          "googleDriveOAuth2Api": {
+            "id": "oPioaF4sFaVsK13H",
+            "name": "Google Drive account 2"
           }
         }
       },
       {
         "parameters": {
-          "operation": "append",
-          "documentId": {
-            "mode": "id",
-            "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "Contracts"
-          },
-          "columns": {
-            "mappingMode": "defineBelow",
-            "value": {
-              "Date": "={{ new Date().toISOString().split('T')[0] }}",
-              "Client": "={{ $('Extract Deal Data').first().json.clientName }}",
-              "Company": "={{ $('Extract Deal Data').first().json.company }}",
-              "Industry": "={{ $('Extract Deal Data').first().json.industry }}",
-              "Deal Value": "={{ $('Extract Deal Data').first().json.dealValue }}",
-              "Tier": "={{ $('Extract Deal Data').first().json.tier }}",
-              "Contact Email": "={{ $('Extract Deal Data').first().json.contactEmail }}",
-              "Pain Points": "={{ ($('Extract Deal Data').first().json.painPoints || '').toString().slice(0, 500) }}",
-              "Drive Link": "={{ $('Upload to Drive').first()?.json?.id ? 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.id : ($('Upload to Drive').first()?.json?.data?.id ? 'https://drive.google.com/file/d/' + $('Upload to Drive').first().json.data.id : '') }}",
-              "Status": "Pending Review"
-            }
-          },
+          "jsCode": "const d = $('Extract Deal Data').first().json;\nconst uploadOut = $('Upload to Drive').first();\nconst fileId = uploadOut?.json?.id ?? uploadOut?.json?.data?.id ?? '';\nconst driveLink = fileId ? 'https://drive.google.com/file/d/' + fileId : '';\nfunction esc(x) { return String(x ?? '').replace(/'/g, \"''\"); }\nconst dealId = String(d.dealId || '').trim();\nconst q = \"INSERT INTO public.os_contracts_queue (queue_type,hubspot_deal_id,queue_date,client_name,company,industry,deal_value,tier,contact_email,pain_points,drive_link,status) VALUES ('contract','\" + esc(dealId) + \"',CURRENT_DATE,'\" + esc(d.clientName) + \"','\" + esc(d.company) + \"','\" + esc(d.industry) + \"','\" + esc(String(d.dealValue)) + \"','\" + esc(d.tier) + \"','\" + esc(d.contactEmail) + \"','\" + esc(String(d.painPoints || '').slice(0, 500)) + \"','\" + esc(driveLink) + \"','Pending Review') ON CONFLICT (hubspot_deal_id,queue_type) DO UPDATE SET client_name = EXCLUDED.client_name, company = EXCLUDED.company, industry = EXCLUDED.industry, deal_value = EXCLUDED.deal_value, tier = EXCLUDED.tier, contact_email = EXCLUDED.contact_email, pain_points = EXCLUDED.pain_points, drive_link = EXCLUDED.drive_link, status = EXCLUDED.status, queue_date = EXCLUDED.queue_date, updated_at = now();\";\nreturn [{ json: { _sql: q } }];"
+        },
+        "id": "sys15-contract-queue-sql",
+        "name": "Build Contract Queue SQL",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2230,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "={{ $json._sql }}",
           "options": {}
         },
         "id": "sys15-sheets",
         "name": "Add to Contracts Queue",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           2350,
           200
         ],
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "IJzDJS1jpbItegZD",
-            "name": "Google Sheets account 2"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       },
@@ -1254,37 +1259,22 @@
       },
       {
         "parameters": {
-          "operation": "read",
-          "documentId": {
-            "mode": "id",
-            "value": "={{ $('Extract Deal Data').first().json.config.google.masterSheetId }}"
-          },
-          "sheetName": {
-            "mode": "name",
-            "value": "Contracts"
-          },
-          "filters": {
-            "values": [
-              {
-                "lookupColumn": "Client",
-                "lookupValue": "={{ $('Extract Deal Data').first().json.clientName }}"
-              }
-            ]
-          },
+          "operation": "executeQuery",
+          "query": "={{ \"SELECT status AS \\\"Status\\\", status FROM public.os_contracts_queue WHERE queue_type = 'contract' AND hubspot_deal_id = '\" + String($('Extract Deal Data').first().json.dealId||'').replace(/'/g,\"''\") + \"' ORDER BY updated_at DESC NULLS LAST, created_at DESC LIMIT 1;\" }}",
           "options": {}
         },
         "id": "sys15-check-approval",
         "name": "Check Approval Status",
-        "type": "n8n-nodes-base.googleSheets",
-        "typeVersion": 4,
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.5,
         "position": [
           3230,
           200
         ],
         "credentials": {
-          "googleSheetsOAuth2Api": {
-            "id": "IJzDJS1jpbItegZD",
-            "name": "Google Sheets account 2"
+          "postgres": {
+            "id": "OS_SUPABASE_POSTGRES",
+            "name": "Supabase OS Postgres"
           }
         }
       },
@@ -1294,7 +1284,8 @@
             "options": {
               "caseSensitive": false,
               "leftValue": "",
-              "typeValidation": "strict"
+              "typeValidation": "strict",
+              "version": 2
             },
             "conditions": [
               {
@@ -1576,6 +1567,17 @@
         "main": [
           [
             {
+              "node": "Build Contract Queue SQL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Contract Queue SQL": {
+        "main": [
+          [
+            {
               "node": "Add to Contracts Queue",
               "type": "main",
               "index": 0
@@ -1716,6 +1718,23 @@
     "name": null,
     "description": null,
     "autosaved": false,
-    "workflowPublishHistory": []
+    "workflowPublishHistory": [
+      {
+        "createdAt": "2026-04-19T19:25:35.486Z",
+        "id": 3029,
+        "workflowId": "5gXQdYfFgl0JStaA",
+        "versionId": "8d5022cb-68fe-463d-9cca-e9b0668a606a",
+        "event": "activated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      },
+      {
+        "createdAt": "2026-04-19T19:25:35.467Z",
+        "id": 3028,
+        "workflowId": "5gXQdYfFgl0JStaA",
+        "versionId": "8d5022cb-68fe-463d-9cca-e9b0668a606a",
+        "event": "deactivated",
+        "userId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    ]
   }
 }

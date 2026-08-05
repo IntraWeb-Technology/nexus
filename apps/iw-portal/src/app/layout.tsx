@@ -1,21 +1,33 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
-import { DM_Sans } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
+import ClerkProviderFromRequest from '@/components/auth/ClerkProviderFromRequest'
 import { ThemeProvider } from '@/contexts/theme-context'
-import { portalThemeBootScript } from '@/lib/theme-storage'
+import { clerkAfterSignOutUrl, clerkProviderSatelliteProps, clerkSatelliteConfigured } from '@/lib/clerk-satellite'
 import './globals.css'
 
-const dmSans = DM_Sans({
-  variable: '--font-dm-sans',
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: ['400', '500', '600', '700'],
+})
+
+const jetBrainsMono = JetBrains_Mono({
+  variable: '--font-mono',
+  subsets: ['latin'],
+  weight: ['400', '500'],
 })
 
 export const metadata: Metadata = {
   title: 'IntraWeb OS — Client Portal',
   description: 'IntraWeb Technologies LLC client project dashboard',
-  // viewport-fit=cover enables env(safe-area-inset-*) for iPhone notch / home-indicator clearance
-  viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
+}
+
+/** Next.js 16: viewport must be a separate export (not inside metadata). */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -23,18 +35,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const clerkInner = clerkSatelliteConfigured() ? (
+    <ClerkProviderFromRequest>{children}</ClerkProviderFromRequest>
+  ) : (
+    <ClerkProvider {...clerkProviderSatelliteProps('')} afterSignOutUrl={clerkAfterSignOutUrl()}>
+      {children}
+    </ClerkProvider>
+  )
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.variable} min-h-screen antialiased`}>
-        <script
-          // Runs before paint; keeps `data-theme` aligned with localStorage (issue #2).
-          dangerouslySetInnerHTML={{ __html: portalThemeBootScript() }}
-        />
-        <ThemeProvider>
-          <ClerkProvider signInUrl="/sign-in" signUpUrl="/sign-up" afterSignOutUrl="/sign-in">
-            {children}
-          </ClerkProvider>
-        </ThemeProvider>
+      <body className={`${inter.variable} ${jetBrainsMono.variable} min-h-screen antialiased`}>
+        <ThemeProvider>{clerkInner}</ThemeProvider>
       </body>
     </html>
   )

@@ -31,7 +31,7 @@ function Item({ href, label, icon }: { href: string; label: string; icon: ReactN
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--iw-border)] bg-[var(--iw-slate-2)] pb-safe transition-[background-color,border-color] duration-300 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-[var(--hairline)] bg-[var(--bg-1)] pb-safe transition-[background-color,border-color] duration-300 md:hidden">
       <Item
         href="/dashboard"
         label="Home"

@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { EmptyState } from '@/components/ui/EmptyState'
 import type { ActivityFeedItem } from '@/lib/activity/types'
 
@@ -14,7 +15,7 @@ type IconKey =
   | 'hubspot_email'
 
 function ActivityIcon({ type }: { type: string }) {
-  const iconMap: Record<IconKey, JSX.Element> = {
+  const iconMap: Record<IconKey, ReactElement> = {
     payment: (
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
         <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
@@ -85,19 +86,28 @@ function ActivityIcon({ type }: { type: string }) {
   )
 }
 
-function formatRelative(iso: string) {
+/** Explicit local date + time so the stamp matches the activity (not fuzzy “2d ago”). */
+function formatActivityTimestamp(iso: string) {
   const d = new Date(iso)
-  const diff = Date.now() - d.getTime()
-  const minute = 60_000
-  const hour = 3_600_000
-  const day = 86_400_000
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
 
-  if (diff < minute) return 'Just now'
-  if (diff < hour) return `${Math.floor(diff / minute)}m ago`
-  if (diff < day) return `${Math.floor(diff / hour)}h ago`
-  if (diff < 2 * day) return 'Yesterday'
-  if (diff < 14 * day) return `${Math.floor(diff / day)}d ago`
-  return d.toLocaleDateString()
+/** Strip legacy `proposal:<uuid> ·` prefixes from stored rows. */
+function sanitizeActivityDetail(item: ActivityFeedItem): string | null {
+  const raw = item.detail?.trim()
+  if (!raw) return null
+  if (item.type === 'proposal') {
+    const stripped = raw.replace(/^proposal:[^·]+·\s*/i, '').trim()
+    return stripped || raw
+  }
+  return raw
 }
 
 export function ActivityFeed({ items }: { items: ActivityFeedItem[] }) {
@@ -113,6 +123,7 @@ export function ActivityFeed({ items }: { items: ActivityFeedItem[] }) {
     <ul className="iw-enter-stagger relative space-y-0">
       {items.map((a, i) => {
         const isLast = i === items.length - 1
+        const detail = sanitizeActivityDetail(a)
         return (
           <li key={a.id} className="relative flex gap-4 pb-4">
             {/* Vertical connector */}
@@ -128,12 +139,13 @@ export function ActivityFeed({ items }: { items: ActivityFeedItem[] }) {
                 <p className="font-medium text-[var(--iw-text)]">{a.label}</p>
                 <time
                   dateTime={a.created_at}
+                  title={new Date(a.created_at).toISOString()}
                   className="shrink-0 text-xs text-[var(--iw-text-3)]"
                 >
-                  {formatRelative(a.created_at)}
+                  {formatActivityTimestamp(a.created_at)}
                 </time>
               </div>
-              {a.detail ? <p className="mt-1 text-sm text-[var(--iw-text-2)]">{a.detail}</p> : null}
+              {detail ? <p className="mt-1 text-sm text-[var(--iw-text-2)]">{detail}</p> : null}
             </div>
           </li>
         )

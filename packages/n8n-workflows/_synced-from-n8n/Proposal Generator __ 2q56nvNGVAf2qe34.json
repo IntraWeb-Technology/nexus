@@ -1,0 +1,346 @@
+{
+  "updatedAt": "2026-04-21T00:48:51.762Z",
+  "createdAt": "2026-04-11T03:23:37.423Z",
+  "id": "2q56nvNGVAf2qe34",
+  "name": "Proposal Generator",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1889e9b3-29c2-4d9e-97ba-1e63050948fd",
+      "name": "Run Proposal Generator",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "operation": "search",
+        "limit": 1,
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "email|string",
+                    "operator": "CONTAINS_TOKEN",
+                    "value": "={{ $json.contactQuery }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "properties": [
+            "firstname",
+            "lastname",
+            "email",
+            "phone",
+            "company",
+            "website",
+            "message",
+            "lead_score",
+            "lead_tier",
+            "scoring_breakdown",
+            "jobtitle",
+            "decision_maker",
+            "hs_lead_status"
+          ]
+        }
+      },
+      "id": "f96d0ac4-2284-4641-b17e-a5de2102ceea",
+      "name": "Search HubSpot Contact",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        512,
+        304
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ZDFqX6DMxufgJufI",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "resource": "deal",
+        "operation": "search",
+        "limit": 1,
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "associations.contact|string",
+                    "value": "={{ $(\"Search HubSpot Contact\").item.json.id }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "properties": [
+            "dealname",
+            "amount",
+            "dealstage",
+            "description",
+            "hs_priority",
+            "hs_next_step",
+            "closedate"
+          ]
+        }
+      },
+      "id": "14196dfb-df57-4800-9dd4-8ef1d98e846c",
+      "name": "Search Associated Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        768,
+        304
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "ZDFqX6DMxufgJufI",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"claude-sonnet-4-20250514\", \"max_tokens\": 1500, \"system\": \"You are a senior proposal writer for IntraWeb Technologies LLC, a New Jersey-based AI automation and operations firm. IntraWeb positioning: 95% of AI pilots fail to deliver ROI. We fix that. IntraWeb delivers Operations as a Service, helping SMBs with 10-150 employees restructure internal processes to adopt AI effectively. The firm differentiates from consultancies, agencies, and platform vendors. Two service tracks: AI Transformation (strategy-focused long-term partnerships with executives and operators) and AI Engineering (hands-on technical execution for technical leadership). Pricing: Automation Starter $2,500 ($1k upfront, $1,500 plus $300/mo at go-live). Automation Growth $4,000 ($2k down, $2k plus $450/mo at go-live). SaaS Website Launch $6k-$10k. Premium $32k-$65k. Hourly $150-$175/hr. Tone: precise and operator-minded. No em dashes. No fluff. Make problems feel systemic not the clients fault. Make change feel rational and safe. Proposal sections: Executive Summary, The Problem We Are Addressing, Proposed Approach, Scope of Work, Investment, Timeline, Why IntraWeb, Next Steps. Keep under 700 words. Use [CONFIRM WITH CLIENT] for missing data.\", \"messages\": [{ \"role\": \"user\", \"content\": \"Generate a professional client proposal for IntraWeb Technologies.\\n\\nCLIENT\\nName: \" + $(\"Search HubSpot Contact\").item.json.properties.firstname + \" \" + $(\"Search HubSpot Contact\").item.json.properties.lastname + \"\\nCompany: \" + $(\"Search HubSpot Contact\").item.json.properties.company + \"\\nEmail: \" + $(\"Search HubSpot Contact\").item.json.properties.email + \"\\nPhone: \" + $(\"Search HubSpot Contact\").item.json.properties.phone + \"\\nWebsite: \" + ($(\"Search HubSpot Contact\").item.json.properties.website || \"Not provided\") + \"\\nJob Title: \" + ($(\"Search HubSpot Contact\").item.json.properties.jobtitle || \"Not provided\") + \"\\nDecision Maker: \" + ($(\"Search HubSpot Contact\").item.json.properties.decision_maker || \"Unknown\") + \"\\nLead Tier: \" + ($(\"Search HubSpot Contact\").item.json.properties.lead_tier || \"Unknown\") + \"\\nIntake Message: \" + ($(\"Search HubSpot Contact\").item.json.properties.message || \"No intake message.\") + \"\\nScore Breakdown: \" + ($(\"Search HubSpot Contact\").item.json.properties.scoring_breakdown || \"N/A\") + \"\\n\\nDEAL\\nDeal Name: \" + ($json.properties.dealname || \"No deal found\") + \"\\nAmount: \" + ($json.properties.amount ? \"$\" + $json.properties.amount : \"TBD\") + \"\\nStage: \" + ($json.properties.dealstage || \"Early stage\") + \"\\nPriority: \" + ($json.properties.hs_priority || \"Not set\") + \"\\nNext Step: \" + ($json.properties.hs_next_step || \"Not set\") }] } }}",
+        "options": {}
+      },
+      "id": "49d5f943-8fff-4765-b432-5afd3ca7fd95",
+      "name": "Generate Proposal via Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1024,
+        304
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5a3lBUTq9SU0ADbQ",
+          "name": "Resend API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "10198516-230b-4c3a-851b-5a4e37e88c43",
+      "name": "Format Proposal Output",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1280,
+        304
+      ]
+    }
+  ],
+  "connections": {
+    "Run Proposal Generator": {
+      "main": [
+        [
+          {
+            "node": "Search HubSpot Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search HubSpot Contact": {
+      "main": [
+        [
+          {
+            "node": "Search Associated Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Associated Deal": {
+      "main": [
+        [
+          {
+            "node": "Generate Proposal via Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Proposal via Claude": {
+      "main": [
+        [
+          {
+            "node": "Format Proposal Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {
+    "Run Proposal Generator": [
+      {
+        "json": {
+          "description": "POST webhookBody as JSON to n8n path hubspot-deal-proposal-stage (same shape SYS 00 forwards).",
+          "mode": "deal-first",
+          "dealId": "320346410735",
+          "associatedContactIds": [
+            "465446632129"
+          ],
+          "proposalEmailOverride": "jschibelli@gmail.com",
+          "webhookBody": {
+            "id": "320346410735",
+            "properties": {
+              "amount": "13125",
+              "closedate": "2026-05-01T01:25:34.024Z",
+              "createdate": "2026-04-11T03:40:39.664Z",
+              "dealname": "Justin Fatzer - Website/Automation",
+              "dealstage": "3382756085",
+              "hs_lastmodifieddate": "2026-04-20T23:01:40.696Z",
+              "hs_object_id": "320346410735",
+              "pipeline": "default",
+              "deal_pain_points": "Contact pain_point:\nWebsite intake submission\nBusiness: UNKNOWN\nIndustry: Other\nGoals: Sell products / services online, Automate booking / scheduling, Generate more leads\nTimeline: Flexible / no hard deadline\nBudget: Under $2,500\nOutcome: SELLING MY PEMF KLOUD MATS AND BUBBLE2 DEVICES ONLINE, ZEN CLEANSES, PURIUM PRODUCTS, AND OTHER POSSIBLE PRODUCTS. \nNotes: NOPE\n\n---\n\nWebsite intake (plain):\n=== Website intake (full) ===\n\n— Contact & business —\nName\nJustin  Fatzer\n\nEmail\nJfatzer1@gmail.com\n\nPhone\n19168028745\n\nBusiness\nUNKNOWN\n\nIndustry\nOther\n\nLocation\nMANTECA, CA\n\nBusiness description\nBIO HACKING, COACHING, MOVEMENT, CONSCIOUS MOVEMENTS, PRODUCT SALES, WEB BOOK POSSIBLY, RETREATS, SPIRITUAL AWARENESS AND MIND BODY SOUL AWARENESS\n\n— Goals & timeline —\nGoals\nSell products / services online, Automate booking / scheduling, Generate more leads\n\nOutcome / detail\nSELLING MY PEMF KLOUD MATS AND BUBBLE2 DEVICES ONLINE, ZEN CLEANSES, PURIUM PRODUCTS, AND OTHER POSSIBLE PRODUCTS.\n\nTimeline\nFlexible / no hard deadline\n\nAudience\nPEOPLE THAT TRUST ME AND BELIEVE IN WHAT IVE GONE THROUGH TO GET WHERE IM AT NOW. PEOPLE THAT KNOW THAT THERE IS SOMETHING ELSE OUT THERE BUT DONT KNOW WHAT TO DO OR WHO TO TRUST.\n\n— Design —\nVibe\nClean & minimal, Friendly & approachable, Luxury / premium, Bold & modern\n\nLogo\nNo — I need a logo designed\n\nFont style\nSans-serif (modern, clean)\n\nPhotos\nNo — need stock photos\n\nDon't want\nIM NOT A DOUCHE BIO HACKING PERSON. IM STRAIGHT TO THE POINT   DONE MORE THAN 90% OUT THERE IN ALL AREAS OF BIO HACKING- PLANT MEDICANES, RETREATS, YEARS OF TRANSFORMATIONAL WORK AND COACHING OTHERS THE PAST 2 YEARS. HEALING THE BODY TO BECOMING THE MAN I KNOW I AM SPIRITUALLY CONNECTED TO MY HIGHER SELF.\n\nDesign notes\nPEOPLE WILL BUY AND WORK WITH ME IF THEY FIND ME.. I DONT WANT EVERYONE ONLY THE ONES THAT ALIGN WITH ME WHEN THEY SEE ME. THEY WILL KNOW IM THERE MAN.\n\n— Content & pages —\nPages\nHome, About, Services / Offerings, Pricing, Blog / Resources, Portfolio / Gallery, Testimonials / Reviews, Contact / Quote Request, Booking / Scheduling, FAQs, Legal / Privacy / Terms\n\nOther pages\nPAGES TO MY OTHER SITES FOR PRODUCTS MAYBE\n\nCopywriter\nSplit — I have some, need help with the rest\n\nCMS\nNot sure\n\nFeatures / integrations\nContact / Lead Forms, Live Chat, Appointment Booking, Email Marketing Integration, Google Reviews Widget, AI Chatbot, Online Payments, CRM Integration\n\n— Budget —\nRange\nUnder $2,500\n\nOngoing support\nPossibly\n\nFunding\nPersonal funds\n\nPayment preference\nMonthly retainer\n\nBudget notes\nBOOT STRAPPING IT... GOING INTO THE UNKNOWN LIKE YOU JON\n\n— Competitors & inspiration —\nCompetitors\n👉 Aubrey Marcus, 👉 Paul Chek, 👉 Ben Greenfield\n\nSites you love\n?\n\nWhat you like\nHELP PEOPLE THAT ARE WILLING TO GIVE UP WHAT DOESNT WORK\n\nWhat you dislike\nNEEDY AND CHEAP PEOPLE\n\nDifferentiator\nI HAVE A LOT OF EXPERIENCE FROM BREAKING MY BODY DOWN AND REBUILDING IT ON MY OWN. TRIED MOST MODALITIES OVER THE PAST 15 YEARS... SPIRITUALLY, MOVEMENT, TRANSFORMATIONAL WORK TO STEM CELLS, TO LOSING ALL MY MONEY A COUPLE TIMES TO PREVAILING FROM NOTHING TO BEING TRUE TO KNOWING THE TRUTH ABOUT THIS HUMAN EXPERIENCE.\n\nFinal notes\nNOPE\n\n---\n\nWebsite intake (JSON):\n{\n  \"contact\": {\n    \"firstName\": \"Justin \",\n    \"lastName\": \"Fatzer\",\n    \"email\": \"Jfatzer1@gmail.com\",\n    \"phone\": \"19168028745\",\n    \"businessName\": \"UNKNOWN\",\n    \"industry\": \"Other\",\n    \"location\": \"MANTECA, CA\",\n    \"website\": \"\",\n    \"bizDesc\": \"BIO HACKING, COACHING, MOVEMENT, CONSCIOUS MOVEMENTS, PRODUCT SALES, WEB BOOK POSSIBLY, RETREATS, SPIRITUAL AWARENESS AND MIND BODY SOUL AWARENESS\"\n  },\n  \"goals\": {\n    \"goals\": [\n      \"Sell products / services online\",\n      \"Automate booking / scheduling\",\n      \"Generate more leads\"\n    ],\n    \"goalDetail\": \"SELLING MY PEMF KLOUD MATS AND BUBBLE2 DEVICES ONLINE, ZEN CLEANSES, PURIUM PRODUCTS, AND OTHER POSSIBLE PRODUCTS. \",\n    \"timeline\": \"Flexible / no hard deadline\",\n    \"hardDeadline\": \"\",\n    \"audience\": \"PEOPLE THAT TRUST ME AND BELIEVE IN WHAT IVE GONE THROUGH TO GET WHERE IM AT NOW. PEOPLE THAT KNOW THAT THERE IS SOMETHING ELSE OUT THERE BUT DONT KNOW WHAT TO DO OR WHO TO TRUST. \"\n  },\n  \"design\": {\n    \"vibe\": [\n      \"Clean & minimal\",\n      \"Friendly & approachable\",\n      \"Luxury / premium\",\n      \"Bold & modern\"\n    ],\n    \"hasLogo\": \"No — I need a logo designed\",\n    \"brandColors\": \"\",\n    \"fontStyle\": \"Sans-serif (modern, clean)\",\n    \"hasPhotos\": \"No — need stock photos\",\n    \"dontWant\": \"IM NOT A DOUCHE BIO HACKING PERSON. IM STRAIGHT TO THE POINT   DONE MORE THAN 90% OUT THERE IN ALL AREAS OF BIO HACKING- PLANT MEDICANES, RETREATS, YEARS OF TRANSFORMATIONAL WORK AND COACHING OTHERS THE PAST 2 YEARS. HEALING THE BODY TO BECOMING THE MAN I KNOW I AM SPIRITUALLY CONNECTED TO MY HIGHER SELF. \",\n    \"designNotes\": \"PEOPLE WILL BUY AND WORK WITH ME IF THEY FIND ME.. I DONT WANT EVERYONE ONLY THE ONES THAT ALIGN WITH ME WHEN THEY SEE ME. THEY WILL KNOW IM THERE MAN. \"\n  },\n  \"content\": {\n    \"pages\": [\n      \"Home\",\n      \"About\",\n      \"Services / Offerings\",\n      \"Pricing\",\n      \"Blog / Resources\",\n      \"Portfolio / Gallery\",\n      \"Testimonials / Reviews\",\n      \"Contact / Quote Request\",\n      \"Booking / Scheduling\",\n      \"FAQs\",\n      \"Legal / Privacy / Terms\"\n    ],\n    \"otherPages\": \"PAGES TO MY OTHER SITES FOR PRODUCTS MAYBE\",\n    \"copywriter\": \"Split — I have some, need help with the rest\",\n    \"cms\": \"Not sure\",\n    \"features\": [\n      \"Contact / Lead Forms\",\n      \"Live Chat\",\n      \"Appointment Booking\",\n      \"Email Marketing Integration\",\n      \"Google Reviews Widget\",\n      \"AI Chatbot\",\n      \"Online Payments\",\n      \"CRM Integration\"\n    ]\n  },\n  \"budget\": {\n    \"range\": \"Under $2,500\",\n    \"ongoing\": \"Possibly\",\n    \"funding\": \"Personal funds\",\n    \"payment\": \"Monthly retainer\",\n    \"notes\": \"BOOT STRAPPING IT... GOING INTO THE UNKNOWN LIKE YOU JON\"\n  },\n  \"research\": {\n    \"competitors\": [\n      \"👉 Aubrey Marcus\",\n      \"👉 Paul Chek\",\n      \"👉 Ben Greenfield\"\n    ],\n    \"inspiration\": [\n      \"?\"\n    ],\n    \"likeAbout\": \"HELP PEOPLE THAT ARE WILLING TO GIVE UP WHAT DOESNT WORK\",\n    \"dislikeAbout\": \"NEEDY AND CHEAP PEOPLE\",\n    \"differentiator\": \"I HAVE A LOT OF EXPERIENCE FROM BREAKING MY BODY DOWN AND REBUILDING IT ON MY OWN. TRIED MOST MODALITIES OVER THE PAST 15 YEARS... SPIRITUALLY, MOVEMENT, TRANSFORMATIONAL WORK TO STEM CELLS, TO LOSING ALL MY MONEY A COUPLE TIMES TO PREVAILING FROM NOTHING TO BEING TRUE TO KNOWING THE TRUTH ABOUT THIS HUMAN EXPERIENCE. \",\n    \"finalNotes\": \"NOPE\"\n  }\n}\n\n---\n\nWebsite intake (structured fields):\nAudience: PEOPLE THAT TRUST ME AND BELIEVE IN WHAT IVE GONE THROUGH TO GET WHERE IM AT NOW. PEOPLE THAT KNOW THAT THERE IS SOMETHING ELSE OUT THERE BUT DONT KNOW WHAT TO DO OR WHO TO TRUST.\nBudget Notes: BOOT STRAPPING IT... GOING INTO THE UNKNOWN LIKE YOU JON\nBudget Range: Under $2,500\nBusiness Description: BIO HACKING, COACHING, MOVEMENT, CONSCIOUS MOVEMENTS, PRODUCT SALES, WEB BOOK POSSIBLY, RETREATS, SPIRITUAL AWARENESS AND MIND BODY SOUL AWARENESS\nCms: Not sure\nCompetitors: 👉 Aubrey Marcus, 👉 Paul Chek, 👉 Ben Greenfield\nCopywriter: Split — I have some, need help with the rest\nDesign Notes: PEOPLE WILL BUY AND WORK WITH ME IF THEY FIND ME.. I DONT WANT EVERYONE ONLY THE ONES THAT ALIGN WITH ME WHEN THEY SEE ME. THEY WILL KNOW IM THERE MAN.\nDifferentiator: I HAVE A LOT OF EXPERIENCE FROM BREAKING MY BODY DOWN AND REBUILDING IT ON MY OWN. TRIED MOST MODALITIES OVER THE PAST 15 YEARS... SPIRITUALLY, MOVEMENT, TRANSFORMATIONAL WORK TO STEM CELLS, TO LOSING ALL MY MONEY A COUPLE TIMES TO PREVAILING FROM NOTHING TO BEING TRUE TO KNOWING THE TRUTH ABOUT THIS HUMAN EXPERIENCE.\nDislike About: NEEDY AND CHEAP PEOPLE\nDont Want: IM NOT A DOUCHE BIO HACKING PERSON. IM STRAIGHT TO THE POINT   DONE MORE THAN 90% OUT THERE IN ALL AREAS OF BIO HACKING- PLANT MEDICANES, RETREATS, YEARS OF TRANSFORMATIONAL WORK AND COACHING OTHERS THE PAST 2 YEARS. HEALING THE BODY TO BECOMING THE MAN I KNOW I AM SPIRITUALLY CONNECTED TO MY HIGHER SELF.\nFeatures: Contact / Lead Forms, Live Chat, Appointment Booking, Email Marketing Integration, Google Reviews Widget, AI Chatbot, Online Payments, CRM Integration\nFinal Notes: NOPE\nFont Style: Sans-serif (modern, clean)\nFunding: Personal funds\nGoal Detail: SELLING MY PEMF KLOUD MATS AND BUBBLE2 DEVICES ONLINE, ZEN CLEANSES, PURIUM PRODUCTS, AND OTHER POSSIBLE PRODUCTS.\nGoals: Sell products / services online, Automate booking / scheduling, Generate more leads\nHas Logo: No — I need a logo designed\nHas Photos: No — need stock photos\nIndustry: Other\nInspiration Sites: ?\nLike About: HELP PEOPLE THAT ARE WILLING TO GIVE UP WHAT DOESNT WORK\nLocation: MANTECA, CA\nOngoing Support: Possibly\nOther Pages: PAGES TO MY OTHER SITES FOR PRODUCTS MAYBE\nPages: Home, About, Services / Offerings, Pricing, Blog / Resources, Portfolio / Gallery, Testimonials / Reviews, Contact / Quote Request, Booking / Scheduling, FAQs, Legal / Privacy / Terms\nPayment: Monthly retainer\nTimeline: Flexible / no hard deadline\nVibe: Clean & minimal, Friendly & approachable, Luxury / premium, Bold & modern",
+              "contact_firstname": "Justin",
+              "contact_lastname": "Fatzer",
+              "contact_phone": "19168028745",
+              "company": "UNKNOWN",
+              "contact_email": "jschibelli@gmail.com"
+            }
+          },
+          "source": {
+            "deal": {
+              "id": "320346410735",
+              "properties": {
+                "amount": "13125",
+                "closedate": "2026-05-01T01:25:34.024Z",
+                "createdate": "2026-04-11T03:40:39.664Z",
+                "dealname": "Justin Fatzer - Website/Automation",
+                "dealstage": "3382756085",
+                "hs_lastmodifieddate": "2026-04-20T23:01:40.696Z",
+                "hs_object_id": "320346410735",
+                "pipeline": "default"
+              }
+            },
+            "contactsMerged": {
+              "company": "UNKNOWN",
+              "createdate": "2026-04-03T04:44:45.761Z",
+              "email": "jfatzer1@gmail.com",
+              "firstname": "Justin",
+              "hs_object_id": "465446632129",
+              "lastmodifieddate": "2026-04-11T03:40:53.279Z",
+              "lastname": "Fatzer",
+              "pain_point": "Website intake submission\nBusiness: UNKNOWN\nIndustry: Other\nGoals: Sell products / services online, Automate booking / scheduling, Generate more leads\nTimeline: Flexible / no hard deadline\nBudget: Under $2,500\nOutcome: SELLING MY PEMF KLOUD MATS AND BUBBLE2 DEVICES ONLINE, ZEN CLEANSES, PURIUM PRODUCTS, AND OTHER POSSIBLE PRODUCTS. \nNotes: NOPE",
+              "phone": "19168028745",
+              "website_intake_audience": "PEOPLE THAT TRUST ME AND BELIEVE IN WHAT IVE GONE THROUGH TO GET WHERE IM AT NOW. PEOPLE THAT KNOW THAT THERE IS SOMETHING ELSE OUT THERE BUT DONT KNOW WHAT TO DO OR WHO TO TRUST.",
+              "website_intake_budget_notes": "BOOT STRAPPING IT... GOING INTO THE UNKNOWN LIKE YOU JON",
+              "website_intake_budget_range": "Under $2,500",
+              "website_intake_business_description": "BIO HACKING, COACHING, MOVEMENT, CONSCIOUS MOVEMENTS, PRODUCT SALES, WEB BOOK POSSIBLY, RETREATS, SPIRITUAL AWARENESS AND MIND BODY SOUL AWARENESS",
+              "website_intake_cms": "Not sure",
+              "website_intake_competitors": "👉 Aubrey Marcus, 👉 Paul Chek, 👉 Ben Greenfield",
+              "website_intake_copywriter": "Split — I have some, need help with the rest",
+              "website_intake_design_notes": "PEOPLE WILL BUY AND WORK WITH ME IF THEY FIND ME.. I DONT WANT EVERYONE ONLY THE ONES THAT ALIGN WITH ME WHEN THEY SEE ME. THEY WILL KNOW IM THERE MAN.",
+              "website_intake_details": "=== Website intake (full) ===\n\n— Contact & business —\nName\nJustin  Fatzer\n\nEmail\nJfatzer1@gmail.com\n\nPhone\n19168028745\n\nBusiness\nUNKNOWN\n\nIndustry\nOther\n\nLocation\nMANTECA, CA\n\nBusiness description\nBIO HACKING, COACHING, MOVEMENT, CONSCIOUS MOVEMENTS, PRODUCT SALES, WEB BOOK POSSIBLY, RETREATS, SPIRITUAL AWARENESS AND MIND BODY SOUL AWARENESS\n\n— Goals & timeline —\nGoals\nSell products / services online, Automate booking / scheduling, Generate more leads\n\nOutcome / detail\nSELLING MY PEMF KLOUD MATS AND BUBBLE2 DEVICES ONLINE, ZEN CLEANSES, PURIUM PRODUCTS, AND OTHER POSSIBLE PRODUCTS.\n\nTimeline\nFlexible / no hard deadline\n\nAudience\nPEOPLE THAT TRUST ME AND BELIEVE IN WHAT IVE GONE THROUGH TO GET WHERE IM AT NOW. PEOPLE THAT KNOW THAT THERE IS SOMETHING ELSE OUT THERE BUT DONT KNOW WHAT TO DO OR WHO TO TRUST.\n\n— Design —\nVibe\nClean & minimal, Friendly & approachable, Luxury / premium, Bold & modern\n\nLogo\nNo — I need a logo designed\n\nFont style\nSans-serif (modern, clean)\n\nPhotos\nNo — need stock photos\n\nDon't want\nIM NOT A DOUCHE BIO HACKING PERSON. IM STRAIGHT TO THE POINT   DONE MORE THAN 90% OUT THERE IN ALL AREAS OF BIO HACKING- PLANT MEDICANES, RETREATS, YEARS OF TRANSFORMATIONAL WORK AND COACHING OTHERS THE PAST 2 YEARS. HEALING THE BODY TO BECOMING THE MAN I KNOW I AM SPIRITUALLY CONNECTED TO MY HIGHER SELF.\n\nDesign notes\nPEOPLE WILL BUY AND WORK WITH ME IF THEY FIND ME.. I DONT WANT EVERYONE ONLY THE ONES THAT ALIGN WITH ME WHEN THEY SEE ME. THEY WILL KNOW IM THERE MAN.\n\n— Content & pages —\nPages\nHome, About, Services / Offerings, Pricing, Blog / Resources, Portfolio / Gallery, Testimonials / Reviews, Contact / Quote Request, Booking / Scheduling, FAQs, Legal / Privacy / Terms\n\nOther pages\nPAGES TO MY OTHER SITES FOR PRODUCTS MAYBE\n\nCopywriter\nSplit — I have some, need help with the rest\n\nCMS\nNot sure\n\nFeatures / integrations\nContact / Lead Forms, Live Chat, Appointment Booking, Email Marketing Integration, Google Reviews Widget, AI Chatbot, Online Payments, CRM Integration\n\n— Budget —\nRange\nUnder $2,500\n\nOngoing support\nPossibly\n\nFunding\nPersonal funds\n\nPayment preference\nMonthly retainer\n\nBudget notes\nBOOT STRAPPING IT... GOING INTO THE UNKNOWN LIKE YOU JON\n\n— Competitors & inspiration —\nCompetitors\n👉 Aubrey Marcus, 👉 Paul Chek, 👉 Ben Greenfield\n\nSites you love\n?\n\nWhat you like\nHELP PEOPLE THAT ARE WILLING TO GIVE UP WHAT DOESNT WORK\n\nWhat you dislike\nNEEDY AND CHEAP PEOPLE\n\nDifferentiator\nI HAVE A LOT OF EXPERIENCE FROM BREAKING MY BODY DOWN AND REBUILDING IT ON MY OWN. TRIED MOST MODALITIES OVER THE PAST 15 YEARS... SPIRITUALLY, MOVEMENT, TRANSFORMATIONAL WORK TO STEM CELLS, TO LOSING ALL MY MONEY A COUPLE TIMES TO PREVAILING FROM NOTHING TO BEING TRUE TO KNOWING THE TRUTH ABOUT THIS HUMAN EXPERIENCE.\n\nFinal notes\nNOPE",
+              "website_intake_differentiator": "I HAVE A LOT OF EXPERIENCE FROM BREAKING MY BODY DOWN AND REBUILDING IT ON MY OWN. TRIED MOST MODALITIES OVER THE PAST 15 YEARS... SPIRITUALLY, MOVEMENT, TRANSFORMATIONAL WORK TO STEM CELLS, TO LOSING ALL MY MONEY A COUPLE TIMES TO PREVAILING FROM NOTHING TO BEING TRUE TO KNOWING THE TRUTH ABOUT THIS HUMAN EXPERIENCE.",
+              "website_intake_dislike_about": "NEEDY AND CHEAP PEOPLE",
+              "website_intake_dont_want": "IM NOT A DOUCHE BIO HACKING PERSON. IM STRAIGHT TO THE POINT   DONE MORE THAN 90% OUT THERE IN ALL AREAS OF BIO HACKING- PLANT MEDICANES, RETREATS, YEARS OF TRANSFORMATIONAL WORK AND COACHING OTHERS THE PAST 2 YEARS. HEALING THE BODY TO BECOMING THE MAN I KNOW I AM SPIRITUALLY CONNECTED TO MY HIGHER SELF.",
+              "website_intake_features": "Contact / Lead Forms, Live Chat, Appointment Booking, Email Marketing Integration, Google Reviews Widget, AI Chatbot, Online Payments, CRM Integration",
+              "website_intake_final_notes": "NOPE",
+              "website_intake_font_style": "Sans-serif (modern, clean)",
+              "website_intake_funding": "Personal funds",
+              "website_intake_goal_detail": "SELLING MY PEMF KLOUD MATS AND BUBBLE2 DEVICES ONLINE, ZEN CLEANSES, PURIUM PRODUCTS, AND OTHER POSSIBLE PRODUCTS.",
+              "website_intake_goals": "Sell products / services online, Automate booking / scheduling, Generate more leads",
+              "website_intake_has_logo": "No — I need a logo designed",
+              "website_intake_has_photos": "No — need stock photos",
+              "website_intake_industry": "Other",
+              "website_intake_inspiration_sites": "?",
+              "website_intake_json": "{\n  \"contact\": {\n    \"firstName\": \"Justin \",\n    \"lastName\": \"Fatzer\",\n    \"email\": \"Jfatzer1@gmail.com\",\n    \"phone\": \"19168028745\",\n    \"businessName\": \"UNKNOWN\",\n    \"industry\": \"Other\",\n    \"location\": \"MANTECA, CA\",\n    \"website\": \"\",\n    \"bizDesc\": \"BIO HACKING, COACHING, MOVEMENT, CONSCIOUS MOVEMENTS, PRODUCT SALES, WEB BOOK POSSIBLY, RETREATS, SPIRITUAL AWARENESS AND MIND BODY SOUL AWARENESS\"\n  },\n  \"goals\": {\n    \"goals\": [\n      \"Sell products / services online\",\n      \"Automate booking / scheduling\",\n      \"Generate more leads\"\n    ],\n    \"goalDetail\": \"SELLING MY PEMF KLOUD MATS AND BUBBLE2 DEVICES ONLINE, ZEN CLEANSES, PURIUM PRODUCTS, AND OTHER POSSIBLE PRODUCTS. \",\n    \"timeline\": \"Flexible / no hard deadline\",\n    \"hardDeadline\": \"\",\n    \"audience\": \"PEOPLE THAT TRUST ME AND BELIEVE IN WHAT IVE GONE THROUGH TO GET WHERE IM AT NOW. PEOPLE THAT KNOW THAT THERE IS SOMETHING ELSE OUT THERE BUT DONT KNOW WHAT TO DO OR WHO TO TRUST. \"\n  },\n  \"design\": {\n    \"vibe\": [\n      \"Clean & minimal\",\n      \"Friendly & approachable\",\n      \"Luxury / premium\",\n      \"Bold & modern\"\n    ],\n    \"hasLogo\": \"No — I need a logo designed\",\n    \"brandColors\": \"\",\n    \"fontStyle\": \"Sans-serif (modern, clean)\",\n    \"hasPhotos\": \"No — need stock photos\",\n    \"dontWant\": \"IM NOT A DOUCHE BIO HACKING PERSON. IM STRAIGHT TO THE POINT   DONE MORE THAN 90% OUT THERE IN ALL AREAS OF BIO HACKING- PLANT MEDICANES, RETREATS, YEARS OF TRANSFORMATIONAL WORK AND COACHING OTHERS THE PAST 2 YEARS. HEALING THE BODY TO BECOMING THE MAN I KNOW I AM SPIRITUALLY CONNECTED TO MY HIGHER SELF. \",\n    \"designNotes\": \"PEOPLE WILL BUY AND WORK WITH ME IF THEY FIND ME.. I DONT WANT EVERYONE ONLY THE ONES THAT ALIGN WITH ME WHEN THEY SEE ME. THEY WILL KNOW IM THERE MAN. \"\n  },\n  \"content\": {\n    \"pages\": [\n      \"Home\",\n      \"About\",\n      \"Services / Offerings\",\n      \"Pricing\",\n      \"Blog / Resources\",\n      \"Portfolio / Gallery\",\n      \"Testimonials / Reviews\",\n      \"Contact / Quote Request\",\n      \"Booking / Scheduling\",\n      \"FAQs\",\n      \"Legal / Privacy / Terms\"\n    ],\n    \"otherPages\": \"PAGES TO MY OTHER SITES FOR PRODUCTS MAYBE\",\n    \"copywriter\": \"Split — I have some, need help with the rest\",\n    \"cms\": \"Not sure\",\n    \"features\": [\n      \"Contact / Lead Forms\",\n      \"Live Chat\",\n      \"Appointment Booking\",\n      \"Email Marketing Integration\",\n      \"Google Reviews Widget\",\n      \"AI Chatbot\",\n      \"Online Payments\",\n      \"CRM Integration\"\n    ]\n  },\n  \"budget\": {\n    \"range\": \"Under $2,500\",\n    \"ongoing\": \"Possibly\",\n    \"funding\": \"Personal funds\",\n    \"payment\": \"Monthly retainer\",\n    \"notes\": \"BOOT STRAPPING IT... GOING INTO THE UNKNOWN LIKE YOU JON\"\n  },\n  \"research\": {\n    \"competitors\": [\n      \"👉 Aubrey Marcus\",\n      \"👉 Paul Chek\",\n      \"👉 Ben Greenfield\"\n    ],\n    \"inspiration\": [\n      \"?\"\n    ],\n    \"likeAbout\": \"HELP PEOPLE THAT ARE WILLING TO GIVE UP WHAT DOESNT WORK\",\n    \"dislikeAbout\": \"NEEDY AND CHEAP PEOPLE\",\n    \"differentiator\": \"I HAVE A LOT OF EXPERIENCE FROM BREAKING MY BODY DOWN AND REBUILDING IT ON MY OWN. TRIED MOST MODALITIES OVER THE PAST 15 YEARS... SPIRITUALLY, MOVEMENT, TRANSFORMATIONAL WORK TO STEM CELLS, TO LOSING ALL MY MONEY A COUPLE TIMES TO PREVAILING FROM NOTHING TO BEING TRUE TO KNOWING THE TRUTH ABOUT THIS HUMAN EXPERIENCE. \",\n    \"finalNotes\": \"NOPE\"\n  }\n}",
+              "website_intake_like_about": "HELP PEOPLE THAT ARE WILLING TO GIVE UP WHAT DOESNT WORK",
+              "website_intake_location": "MANTECA, CA",
+              "website_intake_ongoing_support": "Possibly",
+              "website_intake_other_pages": "PAGES TO MY OTHER SITES FOR PRODUCTS MAYBE",
+              "website_intake_pages": "Home, About, Services / Offerings, Pricing, Blog / Resources, Portfolio / Gallery, Testimonials / Reviews, Contact / Quote Request, Booking / Scheduling, FAQs, Legal / Privacy / Terms",
+              "website_intake_payment": "Monthly retainer",
+              "website_intake_timeline": "Flexible / no hard deadline",
+              "website_intake_vibe": "Clean & minimal, Friendly & approachable, Luxury / premium, Bold & modern"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "versionId": "efa42635-91c7-4e7c-95ad-1dade70d2c5f",
+  "activeVersionId": null,
+  "versionCounter": 86,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-04-11T03:23:37.444Z",
+      "createdAt": "2026-04-11T03:23:37.444Z",
+      "role": "workflow:owner",
+      "workflowId": "2q56nvNGVAf2qe34",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

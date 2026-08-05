@@ -1,0 +1,105 @@
+{
+  "kind": "collectionType",
+  "collectionName": "projects",
+  "info": {
+    "singularName": "project",
+    "pluralName": "projects",
+    "displayName": "Project",
+    "description": "Portfolio and product projects"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "summary": {
+      "type": "text"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "sites": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::site.site"
+    },
+    "projectType": {
+      "type": "enumeration",
+      "enum": [
+        "web-app",
+        "mobile-app",
+        "desktop-app",
+        "api",
+        "library",
+        "other"
+      ],
+      "default": "web-app"
+    },
+    "technologies": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::technology.technology"
+    },
+    "repositoryUrl": {
+      "type": "string"
+    },
+    "liveUrl": {
+      "type": "string"
+    },
+    "documentationUrl": {
+      "type": "string"
+    },
+    "featuredImage": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "gallery": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "projectStatus": {
+      "type": "enumeration",
+      "enum": [
+        "completed",
+        "in-progress",
+        "planned",
+        "archived"
+      ],
+      "default": "planned"
+    },
+    "startDate": {
+      "type": "date"
+    },
+    "endDate": {
+      "type": "date"
+    },
+    "featured": {
+      "type": "boolean",
+      "default": false
+    },
+    "seo": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.seo"
+    },
+    "migrationBatch": {
+      "type": "string"
+    }
+  }
+}

@@ -28,3 +28,25 @@ API URL in use: ${apiUrl}
   }
   throw error
 }
+
+/** Ensures `008_os_tables.sql` was applied (operational store for n8n + internal APIs). */
+export async function exitIfOsSchemaMissing(sb: SupabaseClient, apiUrl: string): Promise<void> {
+  const { error } = await sb.from('os_deals_sheet').select('id').limit(1)
+  if (!error) return
+
+  const code = (error as { code?: string }).code
+  const msg = error.message ?? ''
+  if (code === 'PGRST205' || msg.includes('schema cache') || msg.includes("does not exist")) {
+    console.error(`
+Supabase API cannot see public.os_deals_sheet (${code ?? 'error'}).
+
+Apply OS migration:
+  • Supabase Dashboard → SQL → run apps/iw-portal/supabase/migrations/008_os_tables.sql
+  • Or: supabase db push (from apps/iw-portal with project linked)
+
+API URL in use: ${apiUrl}
+`)
+    process.exit(1)
+  }
+  throw error
+}

@@ -1,3 +1,11 @@
 packages:
   - "apps/*"
+  # Temporary build-check copy — duplicate package name breaks Turbo
+  - "!apps/_cms-strapi-build-check"
+  # Yarn/Nextra docs live in a separate repo (git submodule); not part of pnpm workspace
+  - "!apps/cms-strapi-docs"
+  # Nested Hashnode monorepo with its own Turbo root; validate via its own tooling until integrated
+  - "!apps/personal-site"
+  # Agent-OS markdown only — no package.json build graph
+  - "!apps/ai-ops"
   - "packages/*"

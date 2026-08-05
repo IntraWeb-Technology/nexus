@@ -1,0 +1,737 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-05T05:36:21.927Z",
+  "id": "E4oVjAqG0EOv1m9A",
+  "name": "System 9 — Internal Reporting Dashboard Pipeline",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */4 * * *"
+            }
+          ]
+        }
+      },
+      "id": "fc32552e-11e8-4df0-9480-f5ef7b18ba53",
+      "name": "Every 4 Hours Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -224,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.hubapi.com/crm/v3/objects/deals?properties=dealname,dealstage,amount,closedate,hs_lastmodifieddate,createdate,hs_deal_stage_probability&limit=250&archived=false",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3de07dba-92eb-4e9f-95c6-7d9d29952f1e",
+      "name": "Get All Deals from HubSpot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Group deals by stage and calculate total values per stage\nconst response = $input.first().json;\nconst deals = response.results || [];\nconst now = new Date();\n\nconst stageGroups = {};\nconst pipelineData = [];\n\ndeals.forEach(deal => {\n  const stage = deal.properties?.dealstage || 'Unknown';\n  const amount = parseFloat(deal.properties?.amount || 0);\n  const createDate = deal.properties?.createdate ? new Date(deal.properties.createdate) : null;\n  const lastModified = deal.properties?.hs_lastmodifieddate ? new Date(deal.properties.hs_lastmodifieddate) : null;\n  const closeDate = deal.properties?.closedate || '';\n\n  const daysInStage = lastModified\n    ? Math.floor((now - lastModified) / (1000 * 60 * 60 * 24))\n    : 0;\n\n  if (!stageGroups[stage]) {\n    stageGroups[stage] = { count: 0, totalValue: 0, deals: [] };\n  }\n  stageGroups[stage].count++;\n  stageGroups[stage].totalValue += amount;\n  stageGroups[stage].deals.push(deal.id);\n\n  pipelineData.push({\n    dealId: deal.id,\n    dealName: deal.properties?.dealname || 'Unnamed',\n    stage,\n    amount,\n    closeDate,\n    daysInStage,\n    createDate: createDate ? createDate.toISOString() : ''\n  });\n});\n\n// Build stage summary\nconst stageSummary = Object.entries(stageGroups).map(([stage, data]) => ({\n  stage,\n  count: data.count,\n  totalValue: data.totalValue\n}));\n\nreturn [{\n  json: {\n    pipelineData,\n    stageSummary,\n    totalDeals: deals.length,\n    generatedAt: now.toISOString()\n  }\n}];\n"
+      },
+      "id": "a11e0130-d518-442a-bf36-fa7253a50155",
+      "name": "Group Deals by Stage",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts?properties=email,firstname,lastname,createdate,hs_lead_status,hs_analytics_source&filterGroups[0][filters][0][propertyName]=hs_analytics_source&filterGroups[0][filters][0][operator]=EQ&filterGroups[0][filters][0][value]=ORGANIC_SEARCH&filterGroups[0][filters][1][propertyName]=createdate&filterGroups[0][filters][1][operator]=GTE&filterGroups[0][filters][1][value]={{Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime())}}&limit=250",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1256e552-d1a0-4180-9631-9e440c41a79f",
+      "name": "Get Contacts This Month",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts?properties=email,firstname,lastname,createdate,hs_lead_status,hs_analytics_source&filterGroups[0][filters][0][propertyName]=createdate&filterGroups[0][filters][0][operator]=BETWEEN&filterGroups[0][filters][0][value]={{Math.floor(new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).getTime())}}&filterGroups[0][filters][0][highValue]={{Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 0).getTime())}}&limit=250",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aabeb6c9-547b-40ed-9fcd-c26bdd48844a",
+      "name": "Get Contacts Last Month",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate lead counts and month-over-month deltas\nconst thisMonthData = $('Get Contacts This Month').item.json;\nconst lastMonthData = $('Get Contacts Last Month').item.json;\n\nconst thisMonthCount = thisMonthData.total || (thisMonthData.results || []).length;\nconst lastMonthCount = lastMonthData.total || (lastMonthData.results || []).length;\n\nconst delta = thisMonthCount - lastMonthCount;\nconst deltaPercent = lastMonthCount > 0\n  ? ((delta / lastMonthCount) * 100).toFixed(1)\n  : 'N/A';\n\nconst sources = {};\n(thisMonthData.results || []).forEach(contact => {\n  const source = contact.properties?.hs_analytics_source || 'Direct';\n  sources[source] = (sources[source] || 0) + 1;\n});\n\nreturn [{\n  json: {\n    thisMonthLeads: thisMonthCount,\n    lastMonthLeads: lastMonthCount,\n    monthDelta: delta,\n    deltaPercent,\n    sourceBreakdown: sources,\n    generatedAt: new Date().toISOString()\n  }\n}];\n"
+      },
+      "id": "d29b08a8-ab04-42b7-9a68-19e433434706",
+      "name": "Calculate Lead Counts and Deltas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.hubapi.com/crm/v3/objects/deals?properties=dealname,dealstage,amount,closedate,hs_lastmodifieddate,createdate&filterGroups[0][filters][0][propertyName]=dealstage&filterGroups[0][filters][0][operator]=IN&filterGroups[0][filters][0][values][0]=invoice_sent&filterGroups[0][filters][0][values][1]=paid&filterGroups[0][filters][0][values][2]=closedwon&limit=250",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8eba1b42-2932-4e06-a4fb-e8136efa4e05",
+      "name": "Get Revenue Stage Deals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate invoiced total, collected total, outstanding, and overdue\nconst response = $input.first().json;\nconst deals = response.results || [];\nconst now = new Date();\nconst thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);\n\nlet invoicedTotal = 0;\nlet collectedTotal = 0;\nlet outstandingTotal = 0;\nlet overdueTotal = 0;\nconst overdueDeals = [];\n\ndeals.forEach(deal => {\n  const stage = (deal.properties?.dealstage || '').toLowerCase();\n  const amount = parseFloat(deal.properties?.amount || 0);\n  const lastModified = deal.properties?.hs_lastmodifieddate\n    ? new Date(deal.properties.hs_lastmodifieddate)\n    : null;\n\n  if (stage === 'invoice_sent' || stage === 'invoicesent') {\n    invoicedTotal += amount;\n    outstandingTotal += amount;\n\n    // Check if overdue (invoice sent > 30 days ago)\n    if (lastModified && lastModified < thirtyDaysAgo) {\n      overdueTotal += amount;\n      overdueDeals.push({\n        dealId: deal.id,\n        dealName: deal.properties?.dealname || 'Unknown',\n        amount,\n        daysSinceInvoice: Math.floor((now - lastModified) / (1000 * 60 * 60 * 24))\n      });\n    }\n  } else if (stage === 'paid' || stage === 'closedwon') {\n    collectedTotal += amount;\n    invoicedTotal += amount;\n  }\n});\n\nreturn [{\n  json: {\n    invoicedTotal,\n    collectedTotal,\n    outstandingTotal,\n    overdueTotal,\n    overdueDeals,\n    overdueCount: overdueDeals.length,\n    generatedAt: now.toISOString()\n  }\n}];\n"
+      },
+      "id": "d7f2df29-3e3d-4864-9c24-ecddfce95b16",
+      "name": "Calculate Revenue Totals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.hubapi.com/crm/v3/objects/deals?properties=dealname,dealstage,client_health_score,hs_lastmodifieddate&filterGroups[0][filters][0][propertyName]=client_health_score&filterGroups[0][filters][0][operator]=HAS_PROPERTY&limit=250",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.HUBSPOT_API_KEY}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "83047224-85cf-45e2-8854-fcbbfb4a1950",
+      "name": "Get Client Health Scores",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        592
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Pipeline!A1:Z1000:clear",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d0dffc7a-f79d-4a28-a4f9-0921a6fa9cb2",
+      "name": "Clear Pipeline Tab",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare pipeline data rows for Sheets\nconst pipelineResult = $('Group Deals by Stage').item.json;\nconst pipelineData = pipelineResult.pipelineData || [];\n\n// Build rows: headers + data\nconst headers = ['Deal Name', 'Stage', 'Value', 'Close Date', 'Days In Stage', 'Created Date', 'Updated At'];\nconst rows = [headers];\n\npipelineData.forEach(deal => {\n  rows.push([\n    deal.dealName,\n    deal.stage,\n    deal.amount.toString(),\n    deal.closeDate,\n    deal.daysInStage.toString(),\n    deal.createDate,\n    new Date().toISOString()\n  ]);\n});\n\n// Add stage summary rows\nrows.push([]);\nrows.push(['--- STAGE SUMMARY ---', '', '', '', '', '', '']);\nrows.push(['Stage', 'Deal Count', 'Total Value', '', '', '', '']);\n\n(pipelineResult.stageSummary || []).forEach(s => {\n  rows.push([s.stage, s.count.toString(), s.totalValue.toString(), '', '', '', '']);\n});\n\nreturn [{ json: { rows } }];\n"
+      },
+      "id": "29c89bd7-8d6a-49af-901b-c5369b443fd7",
+      "name": "Prepare Pipeline Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Pipeline!A1?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "e38ced87-a96e-4fb2-b4d2-fc046555c638",
+      "name": "Write Pipeline Data to Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare revenue tab data for current month\nconst revenueData = $('Calculate Revenue Totals').item.json;\nconst now = new Date();\nconst monthYear = `${now.getMonth() + 1}/${now.getFullYear()}`;\n\nconst rows = [\n  ['Month', 'Invoiced Total', 'Collected Total', 'Outstanding', 'Overdue Total', 'Overdue Count', 'Updated At'],\n  [\n    monthYear,\n    revenueData.invoicedTotal.toString(),\n    revenueData.collectedTotal.toString(),\n    revenueData.outstandingTotal.toString(),\n    revenueData.overdueTotal.toString(),\n    revenueData.overdueCount.toString(),\n    now.toISOString()\n  ]\n];\n\n// Add overdue deal details\nif (revenueData.overdueDeals && revenueData.overdueDeals.length > 0) {\n  rows.push([]);\n  rows.push(['--- OVERDUE INVOICES ---', '', '', '', '', '', '']);\n  rows.push(['Deal Name', 'Amount', 'Days Overdue', '', '', '', '']);\n  revenueData.overdueDeals.forEach(d => {\n    rows.push([d.dealName, d.amount.toString(), d.daysSinceInvoice.toString(), '', '', '', '']);\n  });\n}\n\nreturn [{ json: { rows, revenueData } }];\n"
+      },
+      "id": "5b6b26b1-3da4-4846-8004-f91a86e4f3b6",
+      "name": "Prepare Revenue Rows",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Revenue!A:Z:append?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "c4775c71-5124-4425-9110-7bf1df1c32d2",
+      "name": "Update Revenue Tab",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Prepare leads summary row\nconst leadsData = $('Calculate Lead Counts and Deltas').item.json;\nconst now = new Date();\n\nconst rows = [\n  [\n    now.toISOString(),\n    leadsData.thisMonthLeads.toString(),\n    leadsData.lastMonthLeads.toString(),\n    leadsData.monthDelta.toString(),\n    leadsData.deltaPercent.toString(),\n    JSON.stringify(leadsData.sourceBreakdown)\n  ]\n];\n\nreturn [{ json: { rows } }];\n"
+      },
+      "id": "aad57974-0b64-4c4d-9e6c-99fa8ee39492",
+      "name": "Prepare Leads Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Leads!A:Z:append?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "c19b1730-604b-4cb6-a89b-1b126d451853",
+      "name": "Append Leads Summary to Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        672,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s09-cond-01",
+              "leftValue": "={{$('Calculate Revenue Totals').item.json.overdueCount}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a5829394-d68c-4469-b342-2038735c6be3",
+      "name": "If Overdue Invoices Exist",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format overdue invoice list for alert\nconst revenueData = $('Calculate Revenue Totals').item.json;\nconst overdueDeals = revenueData.overdueDeals || [];\n\nconst overdueList = overdueDeals\n  .map(d => `${d.dealName}: $${d.amount.toLocaleString()} (${d.daysSinceInvoice} days overdue)`)\n  .join('\\n');\n\nconst totalOverdue = revenueData.overdueTotal || 0;\n\nreturn [{\n  json: {\n    alertText: `🔴 OVERDUE INVOICES: ${overdueDeals.length} invoice(s) past 30 days\\n\\n${overdueList}\\n\\nTotal Outstanding: $${totalOverdue.toLocaleString()}`,\n    overdueList,\n    totalOverdue\n  }\n}];\n"
+      },
+      "id": "945aa251-1002-486c-912d-a649904e17c9",
+      "name": "Format Overdue Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "a94a88e7-b1d5-49c2-92eb-21942aec5a5c",
+      "name": "Google Chat Overdue Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{$env.GOOGLE_SHEET_ID}}/values/Automations Log!A:Z:append?valueInputOption=USER_ENTERED",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$env.GOOGLE_SHEETS_ACCESS_TOKEN}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1296cd2-bf2b-4526-9b7a-cc7415fdd1d1",
+      "name": "Log to Automations Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        224
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a7aaf931-5f4d-466a-8315-0c10c4fa7fff",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$env.GOOGLE_CHAT_WEBHOOK_URL}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "02e26960-bfce-4a3f-9bef-7966897a8418",
+      "name": "Google Chat Error Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        768
+      ]
+    }
+  ],
+  "connections": {
+    "Every 4 Hours Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get All Deals from HubSpot",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Contacts This Month",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Contacts Last Month",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Revenue Stage Deals",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Client Health Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Deals from HubSpot": {
+      "main": [
+        [
+          {
+            "node": "Group Deals by Stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Group Deals by Stage": {
+      "main": [
+        [
+          {
+            "node": "Clear Pipeline Tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Pipeline Tab": {
+      "main": [
+        [
+          {
+            "node": "Prepare Pipeline Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Pipeline Rows": {
+      "main": [
+        [
+          {
+            "node": "Write Pipeline Data to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contacts This Month": {
+      "main": [
+        [
+          {
+            "node": "Calculate Lead Counts and Deltas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Contacts Last Month": {
+      "main": [
+        [
+          {
+            "node": "Calculate Lead Counts and Deltas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Lead Counts and Deltas": {
+      "main": [
+        [
+          {
+            "node": "Prepare Leads Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Leads Summary": {
+      "main": [
+        [
+          {
+            "node": "Append Leads Summary to Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Revenue Stage Deals": {
+      "main": [
+        [
+          {
+            "node": "Calculate Revenue Totals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Revenue Totals": {
+      "main": [
+        [
+          {
+            "node": "Prepare Revenue Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Revenue Rows": {
+      "main": [
+        [
+          {
+            "node": "Update Revenue Tab",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Revenue Tab": {
+      "main": [
+        [
+          {
+            "node": "If Overdue Invoices Exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Overdue Invoices Exist": {
+      "main": [
+        [
+          {
+            "node": "Format Overdue Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Overdue Alert": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Overdue Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Chat Overdue Alert": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Leads Summary to Sheets": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Pipeline Data to Sheets": {
+      "main": [
+        [
+          {
+            "node": "Log to Automations Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Chat Error Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "f223ef4f-790b-4c49-ab2a-933d8a9178fc",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-05T05:36:21.930Z",
+      "createdAt": "2026-03-05T05:36:21.930Z",
+      "role": "workflow:owner",
+      "workflowId": "E4oVjAqG0EOv1m9A",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

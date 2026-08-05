@@ -1,0 +1,350 @@
+{
+  "updatedAt": "2026-03-08T19:17:50.000Z",
+  "createdAt": "2026-03-06T04:52:46.099Z",
+  "id": "fSfK2VJeYRRZioBR",
+  "name": "System 3b - Email Touch Executor",
+  "description": null,
+  "active": false,
+  "isArchived": true,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## README\nReusable email sub-workflow for Touch 1, 3, and 5.\n\nExpected input includes contact info, `touch_number`, Claude prompts, fallback subject/body, and HubSpot logging text.\n\nOptional sheet logging runs only when `should_log_to_sheet` is `true`.",
+        "height": 220,
+        "width": 420,
+        "color": 5
+      },
+      "id": "08d6b8a7-8f6a-4bdb-8af8-e9381f0655cb",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "f66d8d95-31a1-442c-a580-36bcbd581b08",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1024,\n  \"system\": \"{{$json.ai_system_prompt}}\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{$json.ai_user_prompt}}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "46e39ffd-351d-47fc-8069-34439bca3741",
+      "name": "Claude: Generate Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        448,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Execute Workflow Trigger').first().json;\nconst response = $input.first().json;\n\nlet subject = lead.default_subject || `Quick question about ${lead.company_name || 'your business'}`;\nlet bodyHtml = lead.default_body_html || `<p>Hi ${lead.first_name || 'there'},</p><p>Wanted to follow up.</p><p>- John, IntraWeb Technologies</p>`;\n\ntry {\n  const content = response.content?.[0]?.text;\n  if (content) {\n    const cleaned = content.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n    const parsed = JSON.parse(cleaned);\n    subject = parsed.subject || subject;\n    bodyHtml = parsed.body_html || bodyHtml;\n  }\n} catch (error) {\n  // Keep defaults if Claude returns malformed JSON.\n}\n\nreturn [{\n  json: {\n    ...lead,\n    email_subject: subject,\n    email_body_html: bodyHtml,\n    touch_count: lead.touch_number || lead.touch_count || 0\n  }\n}];"
+      },
+      "id": "c128a5a7-c61b-406a-b0bf-ff128f765439",
+      "name": "Code: Parse Email Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.RESEND_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"from\": \"John <john@intrawebtech.com>\",\n  \"to\": [\"{{ $json.email }}\"],\n  \"subject\": \"{{ $json.email_subject }}\",\n  \"html\": \"{{ $json.email_body_html }}\"\n}",
+        "options": {}
+      },
+      "id": "37a06b9a-3e59-4686-afbf-666ad409263c",
+      "name": "Resend: Send Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        880,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.HUBSPOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $json.hubspot_note_intro }} Subject: {{ $json.email_subject }}. Time: {{ $now.toISO() }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": { \"id\": \"{{ $json.contact_id }}\" },\n      \"types\": [{ \"associationCategory\": \"HUBSPOT_DEFINED\", \"associationTypeId\": 202 }]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "6e110a31-294f-46a6-8c36-809626052ddc",
+      "name": "HubSpot: Log Email Note",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1104,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "s03b-cond-01",
+              "leftValue": "={{ $json.should_log_to_sheet }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8ce6bc6c-50a3-4148-936c-32bddea666d2",
+      "name": "If Sheet Log Enabled",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://sheets.googleapis.com/v4/spreadsheets/{{ $env.GOOGLE_SHEET_ID }}/values/Automations Log!A:Z:append",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "valueInputOption",
+              "value": "USER_ENTERED"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.GOOGLE_SHEETS_ACCESS_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"values\": [\n    [\n      \"{{ $now.toISO() }}\",\n      \"System 3 - Outbound Sequence\",\n      \"{{ $json.sheet_log_status || 'Success' }}\",\n      \"{{ $json.sheet_log_summary || ('Touch ' + $json.touch_number + ' email sent to ' + $json.contact_name) }}\",\n      \"{{ $json.sheet_log_context || '' }}\"\n    ]\n  ]\n}",
+        "options": {}
+      },
+      "id": "938fc7e1-b449-47e5-8d99-a1194ee94949",
+      "name": "Sheets: Log Email Touch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1552,
+        272
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6b1b1c76-5bdf-4baa-8cab-125d46532a17",
+      "name": "Email Touch Complete",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        352
+      ]
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Claude: Generate Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude: Generate Email": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse Email Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Parse Email Response": {
+      "main": [
+        [
+          {
+            "node": "Resend: Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resend: Send Email": {
+      "main": [
+        [
+          {
+            "node": "HubSpot: Log Email Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot: Log Email Note": {
+      "main": [
+        [
+          {
+            "node": "If Sheet Log Enabled",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Sheet Log Enabled": {
+      "main": [
+        [
+          {
+            "node": "Sheets: Log Email Touch",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Touch Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheets: Log Email Touch": {
+      "main": [
+        [
+          {
+            "node": "Email Touch Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "5e4227fc-766f-4007-ad4e-ba39fa10be59",
+  "activeVersionId": null,
+  "versionCounter": 5,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-06T04:52:46.103Z",
+      "createdAt": "2026-03-06T04:52:46.103Z",
+      "role": "workflow:owner",
+      "workflowId": "fSfK2VJeYRRZioBR",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [],
+  "activeVersion": null
+}

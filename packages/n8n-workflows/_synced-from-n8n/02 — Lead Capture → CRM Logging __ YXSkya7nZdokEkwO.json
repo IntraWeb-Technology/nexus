@@ -1,0 +1,387 @@
+{
+  "updatedAt": "2026-04-18T22:45:40.940Z",
+  "createdAt": "2026-03-04T01:42:01.891Z",
+  "id": "YXSkya7nZdokEkwO",
+  "name": "02 — Lead Capture → CRM Logging",
+  "description": null,
+  "active": false,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-capture",
+        "options": {}
+      },
+      "id": "5079cd96-d732-4987-97c4-49a555dbd487",
+      "name": "Lead Form Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        -112
+      ],
+      "webhookId": "wh-02-lead-capture"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// Extract and normalize fields\nconst firstname = (body.firstname || body.first_name || body.name || '').trim().split(' ')[0] || 'Unknown';\nconst lastname = (body.lastname || body.last_name || body.name || '').trim().split(' ').slice(1).join(' ') || '';\nconst fullName = `${firstname} ${lastname}`.trim();\n\nlet phone = (body.phone || body.telephone || body.mobile || '').replace(/\\D/g, '');\nif (phone && !phone.startsWith('+')) {\n  if (phone.length === 10) phone = '+1' + phone;\n  else if (phone.length === 11 && phone.startsWith('1')) phone = '+' + phone;\n  else phone = '+' + phone;\n}\n\nconst email = (body.email || '').toLowerCase().trim();\nconst jobType = (body.job_type || body.jobType || body.service_type || 'other').toLowerCase().replace(/\\s+/g, '_');\nconst source = (body.source || body.utm_source || body.lead_source || 'website_form').toLowerCase();\nconst notes = body.notes || body.message || body.description || '';\nconst serviceAddress = body.address || body.service_address || '';\n\n// Validation — require at minimum a phone or email\nif (!phone && !email) {\n  throw new Error('Lead form submission missing both phone and email');\n}\n\nreturn [{\n  json: {\n    firstname,\n    lastname,\n    fullName,\n    phone,\n    email,\n    jobType,\n    source,\n    notes,\n    serviceAddress,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "e0dec69b-4afe-4c6b-97b7-1454980ea015",
+      "name": "Normalize Lead Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"filterGroups\": [\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"email\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.email }}\"\n        }\n      ]\n    },\n    {\n      \"filters\": [\n        {\n          \"propertyName\": \"phone_e164\",\n          \"operator\": \"EQ\",\n          \"value\": \"{{ $json.phone }}\"\n        }\n      ]\n    }\n  ],\n  \"properties\": [\"firstname\", \"lastname\", \"phone\", \"phone_e164\", \"email\", \"hs_object_id\", \"lifecyclestage\"],\n  \"limit\": 1\n}",
+        "options": {}
+      },
+      "id": "60eac1e0-d07c-46ee-9627-2fb81a894819",
+      "name": "Search for Existing Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-contact-exists",
+              "leftValue": "={{$json.total}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3fa2c796-8570-40d5-b1ab-1401ee013b01",
+      "name": "Contact Already Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        208,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"firstname\": \"{{ $('Normalize Lead Data').item.json.firstname }}\",\n    \"lastname\": \"{{ $('Normalize Lead Data').item.json.lastname }}\",\n    \"email\": \"{{ $('Normalize Lead Data').item.json.email }}\",\n    \"phone\": \"{{ $('Normalize Lead Data').item.json.phone }}\",\n    \"phone_e164\": \"{{ $('Normalize Lead Data').item.json.phone }}\",\n    \"job_type\": \"{{ $('Normalize Lead Data').item.json.jobType }}\",\n    \"lead_source_detail\": \"{{ $('Normalize Lead Data').item.json.source }}\",\n    \"service_address\": \"{{ $('Normalize Lead Data').item.json.serviceAddress }}\",\n    \"lifecyclestage\": \"lead\",\n    \"hs_lead_status\": \"NEW\",\n    \"reply_status\": \"no_reply\",\n    \"followup_sequence_status\": \"active\"\n  }\n}",
+        "options": {}
+      },
+      "id": "8177ea25-be9b-4ab6-bdc0-8edcaa0f9713",
+      "name": "Create New Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        -256
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.hubapi.com/crm/v3/objects/contacts/{{$json.results[0].id}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"job_type\": \"{{ $('Normalize Lead Data').item.json.jobType }}\",\n    \"lead_source_detail\": \"{{ $('Normalize Lead Data').item.json.source }}\",\n    \"service_address\": \"{{ $('Normalize Lead Data').item.json.serviceAddress }}\",\n    \"phone_e164\": \"{{ $('Normalize Lead Data').item.json.phone }}\",\n    \"hs_lead_status\": \"NEW\"\n  }\n}",
+        "options": {}
+      },
+      "id": "e8dece2a-c0e2-4ede-9f11-70b8468d1289",
+      "name": "Update Existing Contact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n// Normalize — both create and update return the contact in different shapes\nconst contactId = item.id || (item.results && item.results[0] ? item.results[0].id : 'unknown');\nconst leadData = $('Normalize Lead Data').item.json;\n\nreturn [{\n  json: {\n    contactId,\n    fullName: leadData.fullName,\n    phone: leadData.phone,\n    email: leadData.email,\n    jobType: leadData.jobType,\n    source: leadData.source,\n    timestamp: leadData.timestamp\n  }\n}];"
+      },
+      "id": "e38570df-7402-4b86-9513-66dfffea2be9",
+      "name": "Merge Contact Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$vars.CHAT_WEBHOOK}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"🔔 *New Lead Captured*\\n\\n*Name:* {{ $json.fullName }}\\n*Phone:* {{ $json.phone }}\\n*Email:* {{ $json.email }}\\n*Service:* {{ $json.jobType }}\\n*Source:* {{ $json.source }}\\n*Time:* {{ $json.timestamp }}\\n*HubSpot ID:* {{ $json.contactId }}\"\n}",
+        "options": {}
+      },
+      "id": "78e635d5-e77f-4fa4-b6df-f5946429c03b",
+      "name": "Notify Owner via Google Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        928,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "={{$vars.SHEETS_ID}}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Event Log",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{$json.timestamp}}",
+            "Workflow Name": "02-Lead-Capture",
+            "Event Type": "LEAD_CAPTURED",
+            "Contact Name": "={{$json.fullName}}",
+            "Phone": "={{$json.phone}}",
+            "Email": "={{$json.email}}",
+            "Deal ID": "",
+            "Contact ID": "={{$json.contactId}}",
+            "Status": "SUCCESS",
+            "Notes": "=Source: {{$json.source}} | Job: {{$json.jobType}}",
+            "Workflow Run ID": "={{$execution.id}}",
+            "Deal Stage": "",
+            "Amount": ""
+          }
+        },
+        "options": {}
+      },
+      "id": "d6886440-d132-4d55-9736-7f32b2ba61cf",
+      "name": "Log to Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.4,
+      "position": [
+        1168,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"success\": true, \"contactId\": \"{{ $('Merge Contact Result').item.json.contactId }}\", \"message\": \"Lead captured successfully\"}",
+        "options": {}
+      },
+      "id": "749061a8-3c6e-4c78-b868-4ef882f8887e",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1408,
+        -112
+      ]
+    }
+  ],
+  "connections": {
+    "Lead Form Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Search for Existing Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search for Existing Contact": {
+      "main": [
+        [
+          {
+            "node": "Contact Already Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contact Already Exists?": {
+      "main": [
+        [
+          {
+            "node": "Update Existing Contact",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create New Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create New Contact": {
+      "main": [
+        [
+          {
+            "node": "Merge Contact Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Existing Contact": {
+      "main": [
+        [
+          {
+            "node": "Merge Contact Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Contact Result": {
+      "main": [
+        [
+          {
+            "node": "Notify Owner via Google Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Owner via Google Chat": {
+      "main": [
+        [
+          {
+            "node": "Log to Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "d6e0b5c1-c2b6-4173-bb51-42ae89b46050",
+  "activeVersionId": null,
+  "versionCounter": 4,
+  "triggerCount": 0,
+  "shared": [
+    {
+      "updatedAt": "2026-03-04T01:42:01.901Z",
+      "createdAt": "2026-03-04T01:42:01.901Z",
+      "role": "workflow:owner",
+      "workflowId": "YXSkya7nZdokEkwO",
+      "projectId": "o5dYIcHW2mxs82d6",
+      "project": {
+        "updatedAt": "2026-02-23T01:06:36.093Z",
+        "createdAt": "2026-02-23T00:59:28.616Z",
+        "id": "o5dYIcHW2mxs82d6",
+        "name": "John Schibelli <john.schibelli@intrawebtech.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "creatorId": "02df643b-02ab-400b-8f54-77d37b6149c4"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "updatedAt": "2026-03-04T01:54:04.202Z",
+      "createdAt": "2026-03-04T01:54:04.202Z",
+      "id": "CSctV9xpsnyrhuZN",
+      "name": "inbound"
+    },
+    {
+      "updatedAt": "2026-03-04T01:54:54.771Z",
+      "createdAt": "2026-03-04T01:54:54.771Z",
+      "id": "YzUdigv2Y0lrPLBM",
+      "name": "lead-gen"
+    },
+    {
+      "updatedAt": "2026-03-04T01:41:11.575Z",
+      "createdAt": "2026-03-04T01:41:11.575Z",
+      "id": "lsHAxeF8UDIMpLnJ",
+      "name": "apex-comfort"
+    },
+    {
+      "updatedAt": "2026-03-04T01:55:02.031Z",
+      "createdAt": "2026-03-04T01:55:02.031Z",
+      "id": "zRdwAyhaw3cNUydV",
+      "name": "crm"
+    }
+  ],
+  "activeVersion": null
+}
