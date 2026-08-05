@@ -30,7 +30,7 @@ type StrapiEnv = {
  * Does not throw at import time; safe to call from server components.
  */
 export function getStrapiClient(
-  env: StrapiEnv = process.env,
+  env: StrapiEnv = process.env as StrapiEnv,
 ): StrapiClient | null {
   const flag = env.STRAPI_CONTENT_ENABLED?.trim().toLowerCase();
   if (flag !== undefined && flag !== "" && flag !== "true" && flag !== "1") {
