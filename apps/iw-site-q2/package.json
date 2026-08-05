@@ -11,7 +11,7 @@
     "start": "next start --port 3010",
     "lint": "eslint",
     "check-types": "tsc --noEmit",
-    "test": "tsx --test lib/data-deletion.test.ts lib/strapi.test.ts lib/strapi-secrets.test.ts"
+    "test": "pnpm exec tsx --test lib/data-deletion.test.ts lib/strapi.test.ts lib/strapi-secrets.test.ts"
   },
   "dependencies": {
     "@repo/strapi-client": "workspace:*",
@@ -41,6 +41,7 @@
     "eslint-config-next": "16.2.2",
     "postcss": "^8.4.31",
     "tailwindcss": "^4.1.11",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
