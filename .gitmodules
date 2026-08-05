@@ -1,0 +1,3 @@
+[submodule "apps/cms-strapi-docs"]
+	path = apps/cms-strapi-docs
+	url = https://github.com/IntraWeb-Technology/cms-strapi-docs.git

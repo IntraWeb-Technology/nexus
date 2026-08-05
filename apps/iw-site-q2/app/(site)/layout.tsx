@@ -1,12 +1,15 @@
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "@/components/footer";
+import { resolveHeaderNavLinks } from "@/lib/strapi-content";
 
-export default function SiteChromeLayout({ children }: { children: React.ReactNode }) {
+export default async function SiteChromeLayout({ children }: { children: React.ReactNode }) {
+  const links = await resolveHeaderNavLinks();
+
   return (
     <>
-      <NavBar />
+      <NavBar links={links} />
       {children}
-      <Footer />
+      <Footer links={links} />
     </>
   );
 }

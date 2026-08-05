@@ -4,6 +4,7 @@ export const adminNavGroups = [
     items: [
       { href: '/admin', label: 'Overview' },
       { href: '/admin/operations', label: 'Operations Queue' },
+      { href: '/admin/social-ops', label: 'Social Review' },
       { href: '/admin/data-health', label: 'Data Health' },
       { href: '/admin/integrations', label: 'Integrations' },
     ],

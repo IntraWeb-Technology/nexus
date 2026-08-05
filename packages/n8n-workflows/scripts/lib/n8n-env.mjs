@@ -34,7 +34,7 @@ export function loadOneEnvFile(p) {
 }
 
 export function loadEnvLocal() {
-  loadOneEnvFile(join(REPO_ROOT, 'apps', 'iw-site', '.env.local'))
+  loadOneEnvFile(join(REPO_ROOT, 'apps', 'iw-site-q2', '.env.local'))
   loadOneEnvFile(join(REPO_ROOT, 'apps', 'iw-portal', '.env.local'))
   loadOneEnvFile(join(REPO_ROOT, '.env.local'))
 }

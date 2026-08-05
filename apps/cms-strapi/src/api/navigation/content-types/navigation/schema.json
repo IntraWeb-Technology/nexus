@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "navigations",
+  "info": {
+    "singularName": "navigation",
+    "pluralName": "navigations",
+    "displayName": "Navigation",
+    "description": "Site navigation menus"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "site": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::site.site",
+      "required": true
+    },
+    "location": {
+      "type": "enumeration",
+      "enum": [
+        "header",
+        "footer",
+        "mobile",
+        "sidebar"
+      ],
+      "required": true
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.navigation-item"
+    },
+    "migrationBatch": {
+      "type": "string"
+    }
+  }
+}

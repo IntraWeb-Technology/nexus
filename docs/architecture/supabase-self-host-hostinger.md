@@ -107,6 +107,32 @@ docker compose ps       # all services Up (healthy)
 curl -sS http://127.0.0.1:8000/rest/v1/ -H "apikey: $ANON_KEY" | head
 ```
 
+### Troubleshooting: `502 Bad Gateway` on `https://supabase.intrawebtech.com`
+
+Symptoms from outside: `Server: Caddy`, HTTP 502. DNS is correct (`187.77.0.115`), and `https://n8n.intrawebtech.com` works — TLS/Caddy on the VPS is fine; **Kong is not reachable**.
+
+Common causes after `setup.sh`:
+
+1. Stack never started — `setup.sh` only pulls images; you still need `sh run.sh start`.
+2. Kong not on the shared **`edge`** Docker network — the existing n8n Caddy proxies `supabase.intrawebtech.com` to Kong on that network. **`run.sh` only loads overrides listed in `.env` `COMPOSE_FILE`** — creating `docker-compose.override.yml` alone is not enough; run `sh run.sh config add override` then `sh run.sh recreate kong`.
+3. Caddy proxies to `127.0.0.1:8000` — from inside the Caddy container that points at Caddy itself, not Kong. Use the Kong container name on `edge` (e.g. `reverse_proxy supabase-kong:8000`).
+
+Quick fix on the VPS (or run [`fix-supabase-502-edge.sh`](../../apps/iw-portal/scripts/self-host/fix-supabase-502-edge.sh)):
+
+```sh
+cd /root/supabase-project
+docker network create edge 2>/dev/null || true
+# create docker-compose.override.yml — see fix-supabase-502-edge.sh in repo
+sh run.sh start
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8000/rest/v1/
+curl -sS -o /dev/null -w '%{http_code}\n' https://supabase.intrawebtech.com/auth/v1/
+# expect local 401/404 and external 401 — not 502
+```
+
+If still 502 after Kong is healthy locally, inspect Caddy upstream: `docker ps | rg -i caddy` and confirm it `reverse_proxy`s to the Kong container name on the `edge` network (`docker network inspect edge`).
+
+Full diagnostics: [`diagnose-supabase-vps.sh`](../../apps/iw-portal/scripts/self-host/diagnose-supabase-vps.sh).
+
 ---
 
 ## Phase 2 — Schema on self-hosted
@@ -115,11 +141,12 @@ From your dev machine (repo root), with VPS Postgres reachable (VPN, firewall al
 
 ```sh
 # SSH tunnel example (keep open in another terminal):
-# ssh -L 54322:127.0.0.1:5432 root@187.77.0.115
+# Pooler binds localhost only on this VPS (15432 session, 6543 transaction):
+# ssh -L 15432:127.0.0.1:15432 root@187.77.0.115
 
 cd apps/iw-portal
 pnpm exec supabase db push \
-  --db-url "postgresql://postgres.[POOLER_TENANT_ID]:[POSTGRES_PASSWORD]@187.77.0.115:5432/postgres?sslmode=disable"
+  --db-url "postgresql://postgres.[POOLER_TENANT_ID]:[POSTGRES_PASSWORD]@127.0.0.1:15432/postgres?sslmode=disable"
 ```
 
 Notes:

@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "redirects",
+  "info": {
+    "singularName": "redirect",
+    "pluralName": "redirects",
+    "displayName": "Redirect",
+    "description": "URL redirects per site"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "sourcePath": {
+      "type": "string",
+      "required": true
+    },
+    "destinationPath": {
+      "type": "string",
+      "required": true
+    },
+    "site": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::site.site",
+      "required": true
+    },
+    "statusCode": {
+      "type": "enumeration",
+      "enum": ["http_301", "http_302", "http_307", "http_308"],
+      "default": "http_301",
+      "required": true
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

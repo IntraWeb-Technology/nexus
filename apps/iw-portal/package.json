@@ -18,7 +18,7 @@
     "db:link": "pnpm exec supabase link --project-ref wvjwibsomjecolcigjgr",
     "db:push": "pnpm exec supabase db push",
     "db:pull": "pnpm exec supabase db pull",
-    "db:push:self-hosted": "pnpm exec supabase db push --db-url \"${SELF_HOSTED_DATABASE_URL:?Set SELF_HOSTED_DATABASE_URL}\"",
+    "db:push:self-hosted": "tsx scripts/self-host/db-push-self-hosted.ts",
     "self-host:bootstrap-docs": "echo Run bootstrap-supabase-vps.sh ON the Hostinger VPS — see docs/architecture/supabase-self-host-hostinger.md",
     "hubspot:ensure-co-properties": "tsx scripts/hubspot/ensure-change-order-properties.ts",
     "hubspot:ensure-reactivation-contact-properties": "tsx scripts/hubspot/ensure-reactivation-contact-properties.ts",
@@ -26,7 +26,7 @@
     "hubspot:ensure-co-form": "tsx scripts/hubspot/ensure-change-order-form.ts",
     "hubspot:update-co-form": "tsx scripts/hubspot/update-change-order-form.ts",
     "stripe:setup-maintenance-products": "tsx scripts/setup-maintenance-products.ts",
-    "test": "tsx --test src/lib/webhooks/provision-client-idempotency.test.ts src/lib/privacy/classify-deletion-tier.test.ts",
+    "test": "tsx --test src/lib/webhooks/provision-client-idempotency.test.ts src/lib/privacy/classify-deletion-tier.test.ts src/lib/social-ops/social-ops.test.ts",
     "verify:stack": "pnpm --filter @repo/ops diagnostics:verify-stack",
     "vercel:align-env": "pnpm --filter @repo/ops vercel:align-env",
     "vercel:prune-dev-env": "pnpm --filter @repo/ops vercel:prune-dev-env"

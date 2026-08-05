@@ -6,6 +6,7 @@ import { PageHero } from "@/components/page-hero";
 import { SectionLabel } from "@/components/section-label";
 import { DiagnosticCalEmbed } from "@/components/diagnostic-cal-embed";
 import { Btn, Reveal } from "@/components/primitives";
+import type { GeoFaqPair } from "@/lib/cms-content-types";
 
 const delivers = [
   "A full audit of your operational workflows — where time goes, where errors occur, where humans are doing machine work",
@@ -36,7 +37,7 @@ const everyIncludes = [
   "Delivered within a defined timeframe agreed upfront",
 ];
 
-export function DiagnosticPageContent() {
+export function DiagnosticPageContent({ faqItems }: { faqItems?: GeoFaqPair[] } = {}) {
   return (
     <main className="iw-with-bc">
       <BreadcrumbNav
@@ -161,7 +162,7 @@ export function DiagnosticPageContent() {
         </div>
       </section>
 
-      <GeoFaqBlock className="marketing-slab" />
+      <GeoFaqBlock className="marketing-slab" items={faqItems} />
 
       <section className="marketing-slab marketing-slab--stack marketing-slab--page-end">
         <div className="container" style={{ maxWidth: 720 }}>
