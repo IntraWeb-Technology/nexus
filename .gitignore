@@ -5,20 +5,18 @@ node_modules
 .pnp
 .pnp.js
 
-# Local env files
+# Local env files and secrets (never commit)
 .env
-.env.local
-.env.iw-portal.local
-.env.development.local
-.env.test.local
-.env.production.local
-# Monorepo apps (Next.js: apps/<app>/.env.local)
-apps/**/.env
-apps/**/.env.local
-apps/**/.env.development.local
-apps/**/.env.test.local
-apps/**/.env.production.local
+.env.*
+!.env.example
+!**/.env.example
+.env*.local
 .mcp.json
+
+# Monorepo apps (Next.js / Strapi local env)
+apps/**/.env
+apps/**/.env.*
+!apps/**/.env.example
 
 # Testing
 coverage
@@ -29,31 +27,39 @@ coverage
 # Vercel
 .vercel
 
-# Build Outputs
+# Build outputs
 .next/
 out/
 build
 dist
-
+*.tsbuildinfo
 
 # Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Misc
+# Misc / OS
 .DS_Store
+Thumbs.db
 *.pem
+*.ppk
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+hostinger_ci_rsa
+hostinger_ci_rsa.pub
 
-# Local staging clones (not part of the monorepo)
+# Local staging / ops scratch (SSH keys, compose experiments, etc.)
 tmp/
 .tmp/
 
-# turbo prune --docker output
-out/
+# Affected-detection local dump (CI also writes this under GITHUB_WORKSPACE)
+affected-result.json
 
 # Ephemeral Strapi build-check tree (duplicate package name; never publish)
 apps/_cms-strapi-build-check/
 
-# Supabase CLI link cache for apps/iw-portal (machine-local; run `pnpm exec supabase link --project-ref <ref>` in apps/iw-portal)
+# Supabase CLI link cache for apps/iw-portal
 apps/iw-portal/supabase/.temp/
