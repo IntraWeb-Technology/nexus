@@ -111,6 +111,7 @@ Operational runbook: `packages/n8n-workflows/RUNBOOK.md`.
 
 - `pnpm-workspace.yaml` includes `apps/*` and `packages/*` (see file for current excludes).
 - Turborepo uses `envMode: strict`; add build-time environment variables to `turbo.json` when app code reads them during build.
+- GitHub Actions CI reads remote cache via `TURBO_TOKEN` (repository secret) and `TURBO_TEAM` (repository variable). Create a Vercel access token with Remote Caching scope and set the team slug to match Vercel.
 - `@/` path aliases differ by app:
   - `apps/iw-portal`: `@/*` resolves to `src/*`.
   - `apps/iw-site-q2`: `@/*` resolves to the app root.

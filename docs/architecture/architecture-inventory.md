@@ -20,7 +20,7 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | `packages/eslint-config` | `@repo/eslint-config` | Shared ESLint configs (`base`, `next-js`, `react-internal`) |
 | `packages/typescript-config` | `@repo/typescript-config` | Shared `tsconfig` fragments (`base`, `nextjs`, `react-library`) |
 
-**Root:** `package.json` name is `my-turborepo` (historical); repo is referred to as Nexus in docs.
+**Root:** `package.json` name is `nexus`.
 
 ## 3. Script inventory by package
 
