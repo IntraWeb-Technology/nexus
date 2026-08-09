@@ -1,10 +1,13 @@
 # Atlas Build Manifest
 
-**Status:** Approved — implementation contract (Milestone 5)  
+**Status:** Approved — implementation contract  
+**Frontend architecture:** **v1.0 frozen** (M0–M3 Proven) — see [Architecture Freeze](/docs/architecture/architecture-freeze)  
 **Design status:** Atlas Design v1.0 frozen  
 **Canonical Figma:** Atlas Design System (`6r1KqLmwiB8TUXjyedezom`)  
 **Homepage pilot:** Implemented — see [Homepage Pilot](/docs/architecture/homepage-pilot)  
-**Work route:** Implemented — see [Work Route](/docs/architecture/work-route). Additional routes await architectural approval.
+**Work route:** Implemented — see [Work Route](/docs/architecture/work-route)  
+**Case study:** Implemented (fixture-first) — see [Case Study Route](/docs/architecture/case-study-route)  
+**Next milestone:** M4 — About + Contact (do not expand beyond Manifest scope)
 
 ---
 
@@ -128,39 +131,34 @@ flowchart LR
 | CMS mapping | `atlas-web` `lib/strapi/` + `@repo/strapi-client` |
 | Schema changes | `cms-strapi` (with IntraWeb regression) |
 
-### Folder structure (proposal)
+### Folder structure (actual — M0–M3)
 
 ```text
 apps/atlas-web/src/
 ├── app/
-│   ├── (site)/                 # public layout (nav/footer)
-│   │   ├── page.tsx            # /
-│   │   ├── work/
-│   │   ├── about/
-│   │   ├── contact/
-│   │   ├── docs/
-│   │   └── not-found.tsx
-│   ├── api/                    # contact, preview, revalidate only as needed
-│   ├── layout.tsx
-│   ├── robots.ts
-│   └── sitemap.ts
+│   ├── layout.tsx              # fonts, SiteNavActive, SiteFooter
+│   ├── page.tsx                # /
+│   └── work/
+│       ├── page.tsx            # /work
+│       └── [slug]/page.tsx     # /work/portfolio-os
 ├── components/
 │   ├── chrome/                 # Nav, Footer, ReadingProgress
-│   ├── editorial/              # Figure, Callout, CodeBlock, Table, …
-│   ├── sections/               # page-section compositions from Figma
-│   └── ui/                     # tiny primitives (Button link, Input) if needed
-├── lib/
-│   ├── strapi/                 # mappers → app types
-│   ├── seo/
-│   └── utils/
+│   ├── editorial/              # ChapterMarker, Figure, MetadataRow, Toc, Table, Diagram
+│   └── sections/               # page-local compositions (home-*, work-*, case-*)
+├── content/
+│   ├── types.ts                # NavLink, MetaItem
+│   ├── homepage.ts
+│   ├── work.ts
+│   ├── case-study.ts           # CaseStudyFixture domain types (Strapi mapping target)
+│   └── case-studies/
+│       ├── index.ts            # slug registry
+│       └── portfolio-os.ts     # fixture data
 ├── styles/
-│   ├── tokens.css              # design tokens
-│   └── globals.css
-├── types/
-└── tests/                      # unit + Playwright colocated or e2e/
-public/
-└── images/                     # static fallbacks only; prefer CMS media
+│   └── globals.css             # tokens + utilities
+└── e2e/                        # Playwright (homepage, work, case-study)
 ```
+
+No `packages/atlas-*`. No `lib/strapi` yet (deferred until live CMS). Flat `app/` is acceptable; `(site)` group remains optional.
 
 ### Route structure
 
@@ -193,7 +191,7 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `/` | Homepage | Site chrome | Recognition, Featured, Selected, Philosophy, Writing, About teaser, Contact | Nav, Footer, figures, chapter markers | Partial | Site + page | `WebSite` | Journey + a11y + visual | **Implemented** (pilot) |
 | `/work` | Work index | Site chrome | Intro, Featured, Selected, Taxonomy, Contact | Project sections, taxonomy list | Fixture | Collection | `CollectionPage` | Journey + visual | **Implemented** (fixture-first) |
-| `/work/[slug]` | Case study | Site chrome + TOC/progress | Header, TOC, Hero, Overview… Contact (template 21) | Article header, TOC, figures, diagrams, evidence, related | Yes | Article | `Article` / `TechArticle` | Journey + visual | Design frozen |
+| `/work/[slug]` | Case study | Site chrome + TOC/progress | Header, TOC, Hero, Overview… Contact (template 21) | Article header, TOC, figures, diagrams, evidence, related | Fixture | Article | `Article` / `TechArticle` | Journey + visual | **Implemented** (Portfolio OS fixture-first) |
 | `/about` | Editorial profile | Site chrome | Opening, Philosophy, Approach, Style, Principles, Timeline, Focus, Reading, Architecture, Notes, Contact | Pull quote, timeline, diagrams | Partial | Profile | `ProfilePage` / `Person` | Journey + visual | Design frozen |
 | `/docs` | Handbook landing | Site chrome | Header, Search UI, Categories, Recently Updated, Progress note | Search field, category cards, list rows | Partial | Collection | `CollectionPage` | Journey | Design frozen |
 | `/docs/[…slug]` | Doc article (v1.1 if needed) | Site chrome + progress | Article patterns from 26 | Editorial primitives | Yes | Article | `TechArticle` | When in scope | Deferred unless launch requires |
@@ -546,11 +544,11 @@ Update docs when architecture, CMS, or testing materially changes.
 
 | Milestone | Goal | Depends on | Output | Acceptance | Complexity |
 | --- | --- | --- | --- | --- | --- |
-| **M0 — Foundations** | Tokens, fonts, layout shell, Nav/Footer | Manifest approval | `globals.css` tokens, `SiteNav`, `SiteFooter` | Matches chrome Figma; D/T/M | **Done** |
-| **M1 — Home** | Homepage sections | M0 | `/` complete | Visual QA vs Page 15; a11y | **Done** — [report](/docs/architecture/homepage-pilot) |
-| **M2 — Work index** | `/work` + project mapping | M0, M1 approval | Work page | Matches Page 18; fixture-first | **Done** — [report](/docs/architecture/work-route) |
-| **M3 — Case study** | Template 21 + CMS fields | M2, schema extension | `/work/[slug]` | Matches template; evidence figures | L |
-| **M4 — About + Contact** | Profile + form | M0 | `/about`, `/contact` | Matches 20/23; form delivers | M |
+| **M0 — Foundations** | Tokens, fonts, layout shell, Nav/Footer | Manifest approval | `globals.css` tokens, `SiteNav`, `SiteFooter` | Matches chrome Figma; D/T/M | **DONE** |
+| **M1 — Home** | Homepage sections | M0 | `/` complete | Visual QA vs Page 15; a11y | **DONE** — [report](/docs/architecture/homepage-pilot) |
+| **M2 — Work index** | `/work` + project mapping | M0, M1 approval | Work page | Matches Page 18; fixture-first | **DONE** — [report](/docs/architecture/work-route) |
+| **M3 — Case study** | Template 21 + CMS fields | M2, schema extension | `/work/[slug]` | Matches template; evidence figures | **DONE** (fixture-first) — [report](/docs/architecture/case-study-route); Strapi wiring deferred |
+| **M4 — About + Contact** | Profile + form | M0 · architecture freeze | `/about`, `/contact` | Matches 20/23; form delivers | Cleared to start — not started |
 | **M5 — Docs landing** | `/docs` | M0, articles/categories | Docs landing | Matches 22 | S/M |
 | **M6 — SEO + redirects** | Metadata, sitemap, legacy URLs | Content routes | SEO plumbing | Sitemap valid; redirects | S |
 | **M7 — Hardening** | Tests, a11y, visuals, perf, security headers | M1–M6 | CI green | §11–§13 | M |
@@ -680,38 +678,44 @@ flowchart TD
 
 ### Verdict
 
-This manifest is sufficient for **M0–M2** (Home + Work implemented fixture-first). **M3** requires a short ADR choosing case-study schema strategy, then implementation may proceed without inventing presentation outside Pages 15–26.
+**M0–M3 are complete and frozen** as Atlas Frontend Architecture v1.0. See [Architecture Freeze](/docs/architecture/architecture-freeze). Strapi additive schema merge remains deferred; fixtures document the planned editorial field shape. M4 may begin under freeze constraints.
 
 ---
 
 ## Proven Patterns
 
-Validated only after Home + Work implementation succeeded. Do not mark unimplemented patterns as validated.
+Validated only after production implementation, accessibility, responsive, and visual regression approval. Do not mark unimplemented patterns as validated.
 
 ### Validated
 
-- ✓ ChapterMarker — Home + Work
-- ✓ Figure (+ `tone`) — Home featured + Work featured
+- ✓ ChapterMarker — Home + Work + Case Study
+- ✓ Figure (+ `tone`, optional `label` / `panels`) — Home, Work, Case Study
+- ✓ MetadataRow — Case Study desktop metadata
+- ✓ CaseStudyToc — Case Study D/T/M recomposition
+- ✓ ReadingProgress — Case Study long-form chrome
+- ✓ EditorialTable — Constraints / Delivery / Lessons
+- ✓ ArchitectureDiagram — editorial diagram language (hairline, mono IDs)
 - ✓ Navigation (`SiteNav` + route-aware active) — chrome
 - ✓ Footer (`SiteFooter`) — chrome
 - ✓ Page-local section compositions — no section registry
-- ✓ Fixture-first Strapi-shaped content modules — `homepage.ts`, `work.ts`
-- ✓ RSC default · client island only for nav active
+- ✓ Fixture-first Strapi-shaped content modules — `homepage.ts`, `work.ts`, `case-study.ts` (types) + `case-studies/*` (data/registry)
+- ✓ RSC default · client islands only for nav active + reading progress
 - ✓ Playwright D/T/M + axe + visual baselines
+- ✓ Architecture freeze (M0–M3) — [report](/docs/architecture/architecture-freeze)
 
 ### Intentionally not extracted (yet)
 
-- ✗ ContactBridge — Home/Work compositions differ; extract when a true shared shell exists
-- ✗ MetadataRow — Work-only pattern so far
+- ✗ ContactBridge — Home/Work/Case compositions differ; extract when a true shared shell exists
 - ✗ StageRule — Work desktop-only annotation
+- ✗ Decision matrix shell — Case-local until a second case study proves identical
 - ✗ Generic ProjectCard / Card — forbidden; unequal editorial layouts stay in sections
 
-### Planned (not validated)
+### Deferred (not in Portfolio OS template)
 
-- Caption as standalone primitive (lives on `Figure` today)
-- ReadingProgress / CaseStudyToc — Case Study milestone
-- PullQuote / Callout / EvidenceBlock — Case Study / About
+- Caption as standalone primitive (lives on `Figure` / diagram `figcaption`)
+- PullQuote / Callout / EvidenceBlock / Timeline
+- CodeBlock / TerminalBlock / RepositoryCard / EmbedCard / Footnotes
 
 ---
 
-**Stop.** Do not begin Case Study implementation until Work route architectural review completes and the M3 schema ADR is decided.
+**Architecture frozen at v1.0 (M0–M3).** M4 (About + Contact) may begin. Do not start Docs, additional case studies, or Strapi integration as side quests outside Manifest order.

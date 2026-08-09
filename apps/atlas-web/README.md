@@ -2,7 +2,7 @@
 
 Production frontend for Atlas — the ground-up rebuild of [johnschibelli.dev](https://johnschibelli.dev).
 
-**Current milestone:** Home (`/`) + Work (`/work`). Other routes are not implemented.
+**Current milestone:** Home (`/`) + Work (`/work`) + Case Study (`/work/portfolio-os`). Other routes are not implemented.
 
 ## Stack
 
@@ -18,11 +18,11 @@ Production frontend for Atlas — the ground-up rebuild of [johnschibelli.dev](h
 
 ```text
 src/
-├── app/                 # layout, `/`, `/work`
+├── app/                 # layout, `/`, `/work`, `/work/[slug]`
 ├── components/
-│   ├── chrome/          # SiteNav, SiteNavActive, SiteFooter
-│   ├── editorial/       # ChapterMarker, Figure
-│   └── sections/        # page compositions (home-* / work-*)
+│   ├── chrome/          # SiteNav, SiteNavActive, SiteFooter, ReadingProgress
+│   ├── editorial/       # ChapterMarker, Figure, MetadataRow, Toc, Table, Diagram
+│   └── sections/        # page compositions (home-* / work-* / case-*)
 ├── content/             # fixtures (Strapi-shaped)
 └── styles/              # tokens + globals
 ```
@@ -31,6 +31,7 @@ Reports:
 
 - Homepage: [`apps/atlas-docs/content/architecture/homepage-pilot.mdx`](../atlas-docs/content/architecture/homepage-pilot.mdx)
 - Work: [`apps/atlas-docs/content/architecture/work-route.mdx`](../atlas-docs/content/architecture/work-route.mdx)
+- Case Study: [`apps/atlas-docs/content/architecture/case-study-route.mdx`](../atlas-docs/content/architecture/case-study-route.mdx)
 
 ## Development
 

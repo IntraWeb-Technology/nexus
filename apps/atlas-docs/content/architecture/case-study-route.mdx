@@ -1,0 +1,267 @@
+# Case Study Route — Implementation Report
+
+**Status:** Complete — architecturally approved ([Architecture Freeze](/docs/architecture/architecture-freeze))  
+**Scope:** `/work/portfolio-os` only (`apps/atlas-web`)  
+**Date:** 2026-08-08  
+**Authority:** Atlas Design v1.0 · Build Manifest · Figma Page 19 (`Case Study / Desktop 1440`, `Tablet 768`, `Mobile 390`) · Template 21 · Editorial Publishing System (Page 26)
+
+This sprint validates the Editorial Publishing System via the first production case study. Homepage and Work routes were not modified (frozen).
+
+---
+
+## Verdict
+
+| Criterion | Result |
+| --- | --- |
+| `/work/portfolio-os` route | Pass |
+| Figma Page 19 D / T / M compositions | Pass — structure; see intentional differences |
+| Required sections (01–09 + related + contact) | Pass |
+| Fixture-first editorial schema | Pass — maps to planned Strapi `case-study` extensions |
+| Accessibility (axe WCAG AA serious+) | Pass |
+| Playwright journeys | Pass — 27/27 Case Study · Home/Work unchanged |
+| Visual regression baselines | Established (win32 Chromium) |
+| Speculative packages / Strapi wiring | None |
+
+**Architecture frozen.** M4 may begin under freeze constraints — see [Architecture Freeze](/docs/architecture/architecture-freeze).
+
+---
+
+## Folder structure (delta)
+
+```text
+apps/atlas-web/src/
+├── app/work/[slug]/page.tsx     # Case study (portfolio-os only)
+├── components/
+│   ├── chrome/
+│   │   └── reading-progress.tsx # Client island — scroll progress
+│   ├── editorial/
+│   │   ├── architecture-diagram.tsx
+│   │   ├── case-study-toc.tsx
+│   │   ├── editorial-table.tsx
+│   │   ├── figure.tsx           # + optional label / panels
+│   │   └── metadata-row.tsx
+│   └── sections/
+│       ├── case-hero.tsx
+│       ├── case-hero-artifact.tsx
+│       ├── case-overview.tsx
+│       ├── case-problem.tsx
+│       ├── case-constraints.tsx
+│       ├── case-architecture.tsx
+│       ├── case-decisions.tsx
+│       ├── case-implementation.tsx
+│       ├── case-delivery.tsx
+│       ├── case-outcomes.tsx
+│       ├── case-lessons.tsx
+│       ├── case-related.tsx
+│       └── case-contact.tsx
+├── content/case-studies/
+│   ├── index.ts             # slug registry
+│   └── portfolio-os.ts      # fixture data (types in content/case-study.ts)
+└── e2e/
+    └── case-study.spec.ts
+```
+
+---
+
+## Publishing component inventory
+
+### Implemented (required by Portfolio OS template)
+
+| Component | Location | Notes |
+| --- | --- | --- |
+| `ChapterMarker` | existing | Reused |
+| `Figure` | existing + label/panels | Media-type placeholders |
+| `MetadataRow` | new editorial | Desktop metadata grid |
+| `CaseStudyToc` | new editorial | D horizontal · T wrapped · M stacked |
+| `ReadingProgress` | new chrome | Sage track; `aria-valuenow` |
+| `EditorialTable` | new editorial | Constraints / Delivery / Lessons |
+| `ArchitectureDiagram` | new editorial | Hairline nodes, mono IDs, D/T/M recomposition |
+
+### Deferred (not in Portfolio OS template — do not force)
+
+| Component | Reason |
+| --- | --- |
+| `PullQuote` | Not present in Page 19 Portfolio OS |
+| `Callout` | Not present |
+| `Timeline` | Not present |
+| `EvidenceBlock` | Not present as named block |
+| `CodeBlock` / `TerminalBlock` | Not present — code patterns reserved for articles that need them |
+| `RepositoryCard` / `EmbedCard` | Not present |
+| `Footnotes` | Not present |
+| `Caption` standalone | Remains on `Figure` / diagram `figcaption` |
+| `SectionDivider` | Hairlines via borders / `.atlas-hairline` |
+
+---
+
+## Rule of Two / Stability decisions
+
+| Candidate | Decision | Rationale |
+| --- | --- | --- |
+| `MetadataRow` | **Extracted** | Build Manifest P0 primitive; first production consumer on Case Study |
+| `EditorialTable` | **Extracted** | Three section consumers inside one article; publishing primitive |
+| `CaseStudyToc` | **Extracted** | Named chrome/editorial contract from Manifest |
+| `ReadingProgress` | **Extracted** | Chrome island; Case Study is first long-form consumer |
+| `ArchitectureDiagram` | **Extracted** | Editorial diagram language; reusable for future cases |
+| `ContactBridge` | **Not extracted** | Case contact differs from Home/Work spacing/meta; Stability |
+| Decision matrix | **Left in section** | Case-local composition; extract when second case study proves identical |
+| Outcome cards | **Left in section** | Page-local elevated surfaces |
+
+---
+
+## Fixture model
+
+`CaseStudyFixture` (and related types) live in `src/content/case-study.ts` — the Strapi mapping target. Fixture data remains in `case-studies/portfolio-os.ts`; slug lookup in `case-studies/index.ts`.
+
+Domain fields:
+
+- `project` — related `project` collection fields
+- `hero` / `seo` / `toc` — article header + navigation
+- `figures[]` — `kind` matches Image Direction media types
+- `overview` / `problem` / `constraints` / `architecture` / `decisions` / `implementation` / `delivery` / `outcomes` / `lessons`
+- Responsive condensed copy stored on the fixture (tablet/mobile recompositions)
+
+Only `portfolio-os` is registered. Unknown slugs → `notFound()`.
+
+**Schema ADR note:** Fixture assumes additive extension of existing `case-study` (not a parallel Atlas-only type). CMS merge still deferred.
+
+---
+
+## Sections implemented
+
+1. Case header + metadata  
+2. Contents (TOC)  
+3. Hero artifact (Fig. 1)  
+4. 01 Overview  
+5. 02 Problem  
+6. 03 Constraints  
+7. 04 Architecture (Fig. 2)  
+8. 05 Decisions (D-01…D-03)  
+9. 06 Implementation (Fig. 3–5 desktop)  
+10. 07 Delivery  
+11. 08 Outcomes  
+12. 09 Lessons  
+13. Related project  
+14. Contact bridge  
+
+---
+
+## Test results
+
+```text
+pnpm --filter @repo/atlas-web exec playwright test e2e/case-study.spec.ts
+→ 27 passed (desktop / tablet / mobile)
+```
+
+| Suite | Coverage |
+| --- | --- |
+| Landmarks | nav, contents nav, article `#main`, contentinfo, H1 |
+| Sections | `#overview` … `#lessons`, `#contact` |
+| Nav active | `aria-current="page"` on Work |
+| Cross-route | Work → case study CTA |
+| TOC | Architecture anchor into viewport |
+| Reading progress | `progressbar` + `aria-valuenow` |
+| Skip link | Tab → Skip → `#main` |
+| 404 | Unknown slug |
+| axe | `wcag2a/aa` + `wcag21a/aa`; no serious/critical |
+| Visual | Full-page screenshots per breakpoint |
+
+Baselines:
+
+- `apps/atlas-web/e2e/case-study.spec.ts-snapshots/`
+
+Review copies:
+
+- `docs/atlas/exports/case-study/desktop-1440.png`
+- `docs/atlas/exports/case-study/tablet-768.png`
+- `docs/atlas/exports/case-study/mobile-390.png`
+
+---
+
+## Accessibility report
+
+**Target:** WCAG AA  
+**Automated:** `@axe-core/playwright` — no serious/critical on `/work/portfolio-os`
+
+Implemented:
+
+- Semantic article nested in `main` landmark; one H1; logical H2/H3
+- TOC as `nav` with accessible name
+- Figures with `role="img"` + `aria-label` + `figcaption`
+- `EditorialTable` as labeled row pairs (stack associations on narrow)
+- Reading progress as `progressbar`
+- Skip link + focusable `#main`
+- Route-aware Work `aria-current`
+
+### Design issues (documented — not redesigned)
+
+1. **Muted token AA** — unchanged. Captions/meta prefer `atlas-body` / `atlas-secondary`.
+2. **Ink-plane mono labels** — Figma uses muted on ink. Implementation uses `atlas-secondary` on ink so axe AA passes (decorative labels remain `aria-hidden`).
+3. **CONTACT chapter on ink** — umber fails on ink; uses `atlas-secondary` (Home/Work precedent).
+
+---
+
+## Intentional differences vs Figma
+
+| Item | Figma | Implementation | Why |
+| --- | --- | --- | --- |
+| Hero / impl interiors | Annotated chrome | Empty ink + media-type label | AA + Image Direction placeholders |
+| Caption color | Muted | Body | Muted fails AA at caption size |
+| Related destination | Linked | `/work/shared-strapi-cms` (404 until later) | Additional case studies out of scope |
+| Contact destination | Linked | `/contact` (404 until M4) | Contact page out of scope |
+| `(site)` route group | Manifest proposal | Flat `app/work/[slug]` | Sufficient |
+| Code / terminal blocks | Publishing system inventory | Not rendered | Not in Portfolio OS template |
+
+---
+
+## Responsive observations
+
+- Desktop carries full editorial density (3-col overview, decision matrix, table rows, 2-col implementation grid).
+- Tablet collapses tables/matrices to prose summaries; architecture becomes two wrap rows; TOC becomes a single wrapped line.
+- Mobile stacks TOC, architecture nodes, and condensed titles; hero/implementation reduce to single figures.
+- Long-form reading width remains `~720px` (`--atlas-reading`) on problem/overview prose.
+
+---
+
+## Lessons learned
+
+1. **Publishing primitives earn extraction when the template names them** — MetadataRow / EditorialTable / TOC / ReadingProgress are Manifest components, not speculative abstractions.
+2. **Do not force unused publishing components** — CodeBlock/Callout/PullQuote stay deferred until a template requires them.
+3. **Responsive case study is recomposition, not stacked desktop** — fixture stores condensed copy per breakpoint.
+4. **Ink decorative labels need AA-safe tokens** even when `aria-hidden` — axe still evaluates contrast.
+5. **ContactBridge remains page-local** — third consumer still does not share an identical shell.
+
+---
+
+## Known technical debt (Case Study)
+
+- [ ] Real evidence imagery (`next/image`) per Image Direction / asset IDs A-06–A-11
+- [ ] Resolve Muted contrast in Brand System (design)
+- [ ] Soften or implement Related / Contact destinations
+- [ ] Strapi additive schema merge + mapper (M3 ADR follow-through)
+- [ ] Optional: desktop TOC rail (Manifest notes mobile sheet later)
+- [ ] Linux snapshot variants if CI is not win32
+- [ ] CI job for `atlas-web` Playwright on affected changes
+
+---
+
+## Principal engineer review (delta)
+
+| Concern | Finding | Action |
+| --- | --- | --- |
+| Unnecessary abstractions | None — no section registry | — |
+| Duplicated contact bridges | Intentional (Stability) | Documented |
+| Decision matrix genericization | Deferred until second case | Keep section-local |
+| Client JS | Only nav active + reading progress | Acceptable |
+| Maintainability | Fixture is large but maps 1:1 to CMS sections | Prefer over DZ builder |
+
+---
+
+## Commands
+
+```sh
+pnpm --filter @repo/atlas-web dev
+pnpm --filter @repo/atlas-web build
+pnpm --filter @repo/atlas-web check-types
+pnpm --filter @repo/atlas-web exec playwright test e2e/case-study.spec.ts
+pnpm --filter @repo/atlas-web exec playwright test e2e/case-study.spec.ts --update-snapshots=changed
+```
