@@ -1,5 +1,6 @@
 export default {
   index: 'Introduction',
+  architecture: 'Architecture',
   '##': {
     type: 'separator',
   },

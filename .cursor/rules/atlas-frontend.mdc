@@ -1,0 +1,52 @@
+---
+description: Atlas frontend implementation — RSC, Strapi mapping, components
+globs: apps/atlas-web/**
+alwaysApply: false
+---
+
+# Atlas frontend
+
+## Stack (mandatory)
+
+- Follow established Nexus Next.js, React, and TypeScript conventions where sound.
+- Prefer React Server Components. Add `"use client"` only at the smallest necessary boundary.
+- Prefer accessible headless primitives for complex interactions. Do not recreate focus management, dialogs, menus, or keyboard behavior from scratch without a strong reason.
+- Use semantic HTML and logical heading order. Optimize images properly.
+- Avoid unnecessary client-side JavaScript and global state. Do not introduce a state-management library unless React + local state are demonstrably insufficient.
+
+## Strapi boundary (mandatory)
+
+- Keep Strapi transport response shapes out of React components.
+- Use an explicit data-access and mapping layer (prefer extending `@repo/strapi-client` over inventing a parallel client).
+- UI components consume normalized application types, never raw CMS DTOs.
+- Production errors and CMS failures must degrade gracefully.
+
+## Component structure (mandatory)
+
+- Prefer explicit page and section components.
+- Do **not** create a generic page-rendering engine or universal section registry unless real content requirements prove it necessary.
+- Keep Atlas-specific components inside `apps/atlas-web`.
+- Move code to `packages/` only after genuine cross-application reuse exists.
+- Keep components focused. Avoid overly generic prop APIs and deeply nested abstraction layers.
+- Reuse design tokens rather than arbitrary values.
+- Do not build components not required by an approved page design.
+
+## Suggested layout (guidance)
+
+Treat as guidance, not a mandate to reorganize an equally clear existing structure:
+
+```text
+apps/atlas-web/src/
+├── app/
+├── components/
+│   ├── ui/
+│   ├── sections/
+│   └── layouts/
+├── lib/
+│   └── strapi/
+├── styles/
+├── types/
+└── tests/
+```
+
+Note: other Nexus apps differ on `@/*` roots (`iw-portal` → `src/*`, `iw-site-q2` → app root). Pick one clear Atlas layout and document it; do not assume shared `@/` semantics across apps.

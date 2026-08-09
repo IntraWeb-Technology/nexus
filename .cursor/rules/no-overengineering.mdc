@@ -1,0 +1,53 @@
+---
+description: Anti-overengineering gate for Atlas and Atlas-touched shared code
+globs:
+  - apps/atlas-web/**
+  - apps/atlas-docs/**
+  - apps/cms-strapi/**
+  - packages/strapi-client/**
+  - packages/typescript-config/**
+  - packages/eslint-config/**
+alwaysApply: false
+---
+
+# No overengineering
+
+> **Build the smallest coherent solution that satisfies current Atlas requirements.**
+
+## Forbidden without proven need (mandatory)
+
+- Designing for hypothetical future consumers
+- Speculative packages
+- Generic CMS adapter (extend `@repo/strapi-client` instead)
+- Universal component framework
+- Generic page builder
+- Custom infrastructure when existing Nexus tooling is sufficient
+- Dependency injection frameworks
+- Event buses
+- State-management libraries without demonstrated app-wide need
+- Design-token tooling more complex than the site requires
+- Wrapper layers around stable libraries without concrete benefit
+- Abstractions created merely to remove a few lines of duplication
+- Extracting a shared package without a real second consumer
+- Features “because they might be useful later”
+- Infrastructure solely to appear enterprise-grade
+
+Prefer explicit code when the abstraction would be harder to understand. Prefer deleting unnecessary complexity over documenting it. More files, packages, patterns, or tests ≠ better architecture.
+
+## Abstraction checklist (answer before creating one)
+
+1. What concrete **current** problem does this solve?
+2. Where does the duplication or complexity exist **now**?
+3. Are there at least **three** legitimate current uses?
+4. Why is an explicit implementation insufficient?
+5. Does this reduce **total** system complexity?
+6. Can the work be deferred until the need is proven?
+
+**Exceptions** to the three-use guideline: security, correctness, accessibility, framework-required boundaries, critical infrastructure consistency.
+
+## Task discipline (mandatory)
+
+- Do not broaden the task without explicit approval.
+- Do not refactor unrelated code while completing a focused task.
+- When uncertain, choose the simpler reversible implementation.
+- Record deferred ideas in a backlog rather than implementing them.

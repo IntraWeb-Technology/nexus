@@ -1,0 +1,50 @@
+---
+description: Atlas testing — high-risk unit tests, Playwright journeys, a11y, visuals
+globs:
+  - apps/atlas-web/**/*.{test,spec}.{ts,tsx}
+  - apps/atlas-web/**/tests/**
+  - apps/atlas-web/**/e2e/**
+  - apps/atlas-web/playwright*.{ts,js,mjs}
+  - apps/atlas-docs/**/*.{test,spec}.{ts,tsx}
+  - apps/atlas-docs/**/e2e/**
+  - .github/workflows/ci.yml
+  - .github/scripts/affected.mjs
+alwaysApply: false
+---
+
+# Atlas testing
+
+## Principles (mandatory)
+
+- Test high-risk behavior. Do **not** chase arbitrary coverage percentages.
+- Do not write tests for static wrappers with no meaningful behavior.
+- Prefer the repository’s established test tooling. Do not add overlapping frameworks without need.
+- Keep end-to-end tests focused enough to run reliably in CI.
+- Use stable fixtures or seeded CMS data for repeatable tests.
+
+## Unit tests (mandatory where logic exists)
+
+Cover: Strapi response mapping, data normalization, metadata generation, URL generation, validation, and error handling.
+
+## Playwright — critical journeys (mandatory)
+
+Routes/journeys:
+
+- Home, Projects, Project detail, About, Contact
+- Articles when in launch scope
+- Navigation and responsive menu
+- 404 behavior
+
+Also include:
+
+- Accessibility checks on major pages
+- Keyboard-navigation validation
+- Reduced-motion validation where motion exists
+- Site isolation so Atlas cannot expose IntraWeb content
+- Missing content, empty states, Strapi failures, and unpublished content where relevant
+
+## Visual snapshots (mandatory for stable pages)
+
+- Snapshot important, stable pages at desktop, tablet, and mobile.
+- Do not create fragile full-page snapshots for highly dynamic content without controlling data and timing.
+- Screenshots used in documentation must be generated predictably (see atlas-documentation rule).

@@ -1,0 +1,236 @@
+# Homepage Pilot — Implementation Report
+
+**Status:** Complete — architecturally approved; superseded as the sole route gate by [Work Route](/docs/architecture/work-route)  
+**Scope:** `/` only (`apps/atlas-web`)  
+**Date:** 2026-08-07  
+**Authority:** Atlas Design v1.0 · Build Manifest · Figma Page 15
+
+This sprint validated architecture for the homepage. Work (`/work`) is now the second production route — see the Work Route report.
+
+---
+
+## Verdict
+
+The homepage pilot proves:
+
+| Criterion | Result |
+| --- | --- |
+| Design tokens → code | Pass — CSS variables match Editorial Brand System |
+| Component boundaries | Pass — chrome / editorial / sections; Rule of Two held |
+| Build Manifest structure | Pass with notes — flat `app/` (no `(site)` group yet); fixtures in `content/` |
+| Fixture-first CMS shape | Pass — `HomepageFixture` ready for Strapi mapping |
+| Responsive D / T / M | Pass — Playwright projects 1440 / 768 / 390 |
+| Accessibility (axe WCAG AA serious+) | Pass |
+| Playwright journeys | Pass — 15/15 |
+| Visual regression baselines | Established (win32 Chromium) |
+| Speculative packages | None added |
+
+**Do not expand routes until this pilot is architecturally approved.**
+
+---
+
+## Folder structure (actual)
+
+```text
+apps/atlas-web/
+├── e2e/
+│   ├── homepage.spec.ts
+│   └── homepage.spec.ts-snapshots/   # D/T/M visual baselines
+├── playwright.config.ts
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx                # fonts, SiteNav, SiteFooter
+│   │   └── page.tsx                  # homepage composition
+│   ├── components/
+│   │   ├── chrome/
+│   │   │   ├── site-nav.tsx
+│   │   │   └── site-footer.tsx
+│   │   ├── editorial/
+│   │   │   ├── chapter-marker.tsx
+│   │   │   └── figure.tsx
+│   │   └── sections/
+│   │       ├── home-hero.tsx
+│   │       ├── home-featured.tsx
+│   │       ├── home-selected.tsx
+│   │       ├── home-philosophy.tsx
+│   │       ├── home-writing.tsx
+│   │       ├── home-about.tsx
+│   │       └── home-contact.tsx
+│   ├── content/
+│   │   └── homepage.ts               # fixture (Strapi-shaped)
+│   └── styles/
+│       └── globals.css               # tokens + utilities
+└── package.json
+```
+
+No `packages/atlas-*`. No Strapi client wiring this sprint.
+
+---
+
+## Component inventory (built)
+
+| Component | Location | Consumers | Notes |
+| --- | --- | --- | --- |
+| `SiteNav` | `chrome/` | layout | Skip link; D/T discrete links; M condensed `Work · About · Contact` |
+| `SiteFooter` | `chrome/` | layout | Labels use **Work** (nav lock), not Figma “Projects” |
+| `ChapterMarker` | `editorial/` | all sections | Never a heading substitute |
+| `Figure` | `editorial/` | featured | Empty secondary plane + `aria-label` + figcaption |
+| `HomeHero` … `HomeContact` | `sections/` | `page.tsx` only | Kept local (Rule of Two) |
+
+**Not extracted:** MetadataRow, FeaturedProject, ProjectPreview, PullQuote, SectionDivider, ContactBridge as named shared primitives — behaviors live inside section files until a second route needs them.
+
+---
+
+## Sections implemented
+
+1. Global layout (fonts, paper surface, nav, footer)
+2. Hero (media plane + statement field)
+3. Featured Work (Portfolio OS)
+4. Selected Work (feature / offset / band)
+5. Engineering Philosophy (quote + stage diagram + principles)
+6. Writing strip (Stage 05 in Figma — included though omitted from some sprint bullets)
+7. About preview
+8. Contact bridge
+9. Footer
+
+---
+
+## Test results
+
+```text
+pnpm --filter @repo/atlas-web test:e2e
+→ 15 passed (desktop / tablet / mobile × 5 cases)
+```
+
+| Suite | Coverage |
+| --- | --- |
+| Landmarks | `navigation`, `main`, `contentinfo`, H1/H2 |
+| Skip link | Tab → Skip → focus `#main` |
+| Keyboard | Primary CTA focusable |
+| axe | `wcag2a/aa` + `wcag21a/aa`; assert no serious/critical |
+| Visual | Full-page screenshots per breakpoint |
+
+Baselines (canonical for CI):
+
+- `apps/atlas-web/e2e/homepage.spec.ts-snapshots/`
+
+Review copies:
+
+- `docs/atlas/exports/homepage-pilot/desktop-1440.png`
+- `docs/atlas/exports/homepage-pilot/tablet-768.png`
+- `docs/atlas/exports/homepage-pilot/mobile-390.png`
+
+---
+
+## Accessibility report
+
+**Target:** WCAG AA  
+**Automated:** `@axe-core/playwright` — no serious/critical on `/`
+
+Implemented:
+
+- Semantic landmarks and heading hierarchy
+- Skip link + focusable main landmark (`tabIndex` of -1)
+- Focus-visible outline (ink)
+- `prefers-reduced-motion` kill switch
+- Empty media planes expose names via aria-label / role=img; real next/image + alt later
+- Condensed mobile nav remains real links (not a fake Menu label)
+
+### Design issue (do not silently “fix” the token)
+
+**Muted token `#8A847A` fails WCAG AA** on Paper / Elevated / Secondary at caption sizes (~3.25:1 and lower; need 4.5:1).
+
+**Implementation response (not a redesign):**
+
+- Readable captions / meta use atlas-body
+- Muted reserved for decorative contexts after design review
+- Placeholder image annotation text from Figma was **not** painted on secondary planes (see intentional differences) because muted-on-secondary fails axe even inside aria-hidden
+
+**Requires design review:** darken Muted, or restrict Muted to large/bold, or accept Body for all small captions in Brand System docs.
+
+---
+
+## Intentional differences vs Figma (documented)
+
+| Item | Figma | Implementation | Why |
+| --- | --- | --- | --- |
+| Media plane annotations | Visible label + size notes on secondary fills | Empty secondary plane + accessible name | Muted-on-secondary fails AA; annotations were scaffolding for missing assets |
+| Footer link | “Projects” on some frames | “Work” | Navigation System + Manifest route `/work` |
+| Mobile chrome | Some frames still show “Menu” | Condensed `Work · About · Contact` | Page 24 Nav System lock |
+| Writing strip | Present on Page 15 | Implemented | Sprint bullet list omitted it; Figma includes Stage 05 |
+| `(site)` route group | Manifest proposal | Flat `app/page.tsx` | Single route; add group when second public route ships |
+| Real screenshots | Image Direction | Secondary placeholders | Fixture-first; no CMS media yet |
+| Linked routes | Work / About / Contact / Docs | `href` only — **404 until later milestones** | Scope = `/` only |
+
+---
+
+## Architecture observations
+
+1. **Fixture shape works.** Section props take typed slices of `HomepageFixture`. Strapi mappers should target this type, not reinvent props.
+2. **Rule of Two held.** No premature `ui/` package or section registry.
+3. **Client JS ≈ zero.** No `"use client"` on homepage path.
+4. **Tokens in one file** (`globals.css`) is enough for M0/M1; split `tokens.css` when Brand System docs need a second consumer.
+5. **Layout owns chrome; page owns sections.** Correct boundary for static homepage.
+6. **Manifest `app/(site)/` is fine later** — not required to validate homepage.
+
+---
+
+## Lessons learned
+
+1. Frozen muted color conflicts with WCAG AA at caption size — catch early with axe in the pilot, not at launch.
+2. Design annotation text on image placeholders is not production content; empty planes + captions scale better.
+3. Playwright `webServer: build && start` keeps visual baselines on production CSS.
+4. Including the Writing strip avoided silent design drift against Page 15.
+5. Condensed mobile nav as real links beats a hamburger that isn’t designed yet.
+
+---
+
+## Known technical debt (homepage only)
+
+- [ ] Real evidence imagery (`next/image`) per Image Direction
+- [ ] Resolve Muted contrast in Brand System (design)
+- [ ] Implement destination routes or soften hrefs until M2+
+- [ ] Optional: `app/(site)/` layout extraction when M2 starts
+- [ ] CI job for `atlas-web` Playwright on affected changes
+- [ ] Linux snapshot variants if CI is not win32
+
+---
+
+## Recommended Build Manifest updates
+
+1. Mark **M0 + M1 homepage pilot** as implemented; keep M2+ blocked on approval.
+2. Clarify: folder proposal is target architecture; **flat `app/` is acceptable until the second public route**.
+3. Add **Muted AA** as an open design defect (blocking for any muted caption under 14px).
+4. Explicitly list **Writing strip** in Homepage section inventory.
+5. Footer label: standardize on **Work** everywhere.
+6. Note visual baselines live under `e2e/*.spec.ts-snapshots/`.
+
+---
+
+## Build readiness checklist
+
+| Check | Status |
+| --- | --- |
+| Homepage composition vs Figma Page 15 | ✓ structure; see intentional differences |
+| Design system preserved | ✓ (Muted usage constrained for AA) |
+| Component boundaries sensible | ✓ |
+| No speculative architecture | ✓ |
+| No unnecessary packages | ✓ |
+| No silent design drift | ✓ documented |
+| Responsive validated | ✓ Playwright D/T/M |
+| Accessibility passes | ✓ axe serious/critical clear |
+| Playwright passes | ✓ 15/15 |
+| Visual regression established | ✓ |
+| Documentation updated | ✓ this doc + README |
+
+---
+
+## Commands
+
+```sh
+pnpm --filter @repo/atlas-web dev
+pnpm --filter @repo/atlas-web build
+pnpm --filter @repo/atlas-web check-types
+pnpm --filter @repo/atlas-web test:e2e
+pnpm --filter @repo/atlas-web test:e2e:update   # refresh baselines
+```

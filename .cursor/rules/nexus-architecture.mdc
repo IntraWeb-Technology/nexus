@@ -1,0 +1,34 @@
+---
+description: Nexus monorepo architecture, app boundaries, and affected-only Turbo/CI behavior
+alwaysApply: true
+---
+
+# Nexus architecture
+
+## Mandatory
+
+- Nexus is **one Git repository**. Never create nested Git repositories under `apps/`, `packages/`, `tools/`, or elsewhere.
+- Respect existing application boundaries. Every directory under `apps/` is an independently runnable or deployable application.
+- During Atlas work, **do not refactor unrelated apps** (`iw-portal`, `iw-site-q2`, etc.) unless the task explicitly requires a shared dependency change.
+- Shared code belongs in `packages/` **only when real reuse exists today**. Do not create packages for hypothetical future reuse.
+- Tools and one-off automation belong in `tools/` or `scripts/`.
+- Repository-wide documentation belongs in `/docs`. Product-specific documentation belongs with the corresponding docs application (for Atlas: `apps/atlas-docs`).
+- Prefer root-level shared configuration (`packages/typescript-config`, `packages/eslint-config`, root Turbo/CI) over duplicated app-level config. App-specific config is allowed only for genuine unique requirements.
+- Preserve affected-only Turborepo and CI behavior (`pnpm ci:affected`, `turbo --affected` / filter-by-package). An Atlas change must not force unrelated apps to build unless a real dependency edge requires it.
+- Do not reorganize Nexus as a side effect of Atlas work.
+- Any structural repository change needs an explicit reason and must be documented in `/docs` (architecture inventory, ADR, or equivalent).
+
+## Placement
+
+| Kind | Location |
+| --- | --- |
+| Deployable apps | `apps/*` |
+| Shared libraries with ≥2 real consumers | `packages/*` |
+| Migration/automation tooling | `tools/`, `scripts/` |
+| Cross-repo standards & decisions | `/docs` |
+| Atlas product docs | `apps/atlas-docs` |
+
+## Guidance
+
+- Follow [docs/architecture/ci-affected.md](docs/architecture/ci-affected.md) and [docs/architecture/refactor-safety-checklist.md](docs/architecture/refactor-safety-checklist.md).
+- Workspace exclusions in `pnpm-workspace.yaml` are intentional; do not add nested/Yarn-only trees to the pnpm graph without an explicit integration decision.

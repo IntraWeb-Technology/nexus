@@ -1,0 +1,198 @@
+# Work Route — Implementation Report
+
+**Status:** Complete — awaiting architectural review  
+**Scope:** `/work` only (`apps/atlas-web`)  
+**Date:** 2026-08-08  
+**Authority:** Atlas Design v1.0 · Build Manifest · Figma Page 18 (`Work / Desktop 1440`, `Tablet 768`, `Mobile 390`)
+
+This sprint validates that homepage architecture scales to a second route. It does **not** authorize Case Study, About, Contact, or Docs routes.
+
+---
+
+## Verdict
+
+| Criterion | Result |
+| --- | --- |
+| `/work` route | Pass |
+| Figma Page 18 D / T / M compositions | Pass — structure; see intentional differences |
+| Rule of Two | Pass — extract only proven second consumers |
+| Fixture-first Project shape | Pass — `WorkProject` mirrors Strapi `project` + editorial fields |
+| Accessibility (axe WCAG AA serious+) | Pass |
+| Playwright journeys | Pass — 21/21 Work · 36/36 Home+Work |
+| Visual regression baselines | Established (win32 Chromium) |
+| Speculative packages / Strapi wiring | None |
+
+**Stop.** Await architectural review before `/work/[slug]` or other routes.
+
+---
+
+## Folder structure (delta)
+
+```text
+apps/atlas-web/src/
+├── app/
+│   ├── layout.tsx                 # SiteNavActive (route-aware)
+│   ├── page.tsx                   # homepage
+│   └── work/page.tsx              # Work index
+├── components/
+│   ├── chrome/
+│   │   ├── site-nav.tsx
+│   │   ├── site-nav-active.tsx    # client island for aria-current
+│   │   └── site-footer.tsx
+│   ├── editorial/
+│   │   ├── chapter-marker.tsx     # Consumer #2: Work
+│   │   └── figure.tsx             # Consumer #2: Work (+ ink tone)
+│   └── sections/
+│       ├── work-intro.tsx
+│       ├── work-featured.tsx
+│       ├── work-selected.tsx
+│       ├── work-taxonomy.tsx
+│       ├── work-contact.tsx
+│       └── work-stage-rule.tsx    # desktop-only; Work-local
+├── content/
+│   ├── types.ts                   # shared NavLink / MetaItem
+│   ├── homepage.ts
+│   └── work.ts                    # WorkFixture + WorkProject
+└── e2e/
+    ├── homepage.spec.ts
+    └── work.spec.ts
+```
+
+---
+
+## Rule of Two decisions
+
+| Candidate | Decision | Rationale |
+| --- | --- | --- |
+| `ChapterMarker` | **Already extracted** — Work is Consumer #2 | Used across Home + Work sections |
+| `Figure` | **Already extracted** — Work is Consumer #2 | Extended with `tone: "secondary" \| "ink"` only |
+| `SiteNav` / `SiteFooter` | **Already chrome** — Work validates active state | Added `SiteNavActive` client island for `aria-current` |
+| `ContactBridge` | **Not extracted** | Home and Work compositions differ (mobile body, CTA width, title token). Attempted extract caused homepage visual drift — reverted |
+| `MetadataRow` | **Not extracted** | Pattern appears on Work only; Home does not consume a shared component |
+| `StageRule` | **Left local** | Desktop-only Work annotation; absent on tablet/mobile Figma |
+| `FeaturedProject` / `ProjectCard` | **Not created** | Work sections own unequal compositions; no generic card |
+| `Caption` / `SectionDivider` | **Not extracted** | Hairline via `.atlas-hairline`; captions live on `Figure` |
+
+---
+
+## Sections implemented
+
+1. Editorial introduction (chapter, H1, deck, meta, desktop editorial note)
+2. Featured project (Portfolio OS — figure, themes, CTA)
+3. Selected projects (feature / offset / band — unequal layouts)
+4. Editorial taxonomy (desktop descriptions · tablet names · mobile condensed line)
+5. Contact bridge
+6. Footer (existing chrome)
+7. Desktop stage rules (`01 · INTRODUCTION` … `05 · CONTACT`)
+
+---
+
+## Fixture model
+
+`WorkProject` mirrors Strapi `project` (`name`, `slug`, `summary`, `projectStatus`, `featured`) plus Atlas editorial fields planned in the Build Manifest (`category`, `themes`, `layout`, case-study `href`). UI components consume this shape only — no CMS DTOs.
+
+---
+
+## Test results
+
+```text
+pnpm --filter @repo/atlas-web exec playwright test e2e/homepage.spec.ts e2e/work.spec.ts
+→ 36 passed (desktop / tablet / mobile)
+```
+
+| Suite | Coverage |
+| --- | --- |
+| Landmarks | nav, main, contentinfo, H1/H2 |
+| Nav active | `aria-current="page"` on Work |
+| Cross-route | Home → Work navigation |
+| Skip link | Tab → Skip → `#main` |
+| Keyboard | Featured CTA focusable |
+| axe | `wcag2a/aa` + `wcag21a/aa`; no serious/critical |
+| Visual | Full-page screenshots per breakpoint |
+
+Baselines:
+
+- `apps/atlas-web/e2e/work.spec.ts-snapshots/`
+
+Review copies:
+
+- `docs/atlas/exports/work-route/desktop-1440.png`
+- `docs/atlas/exports/work-route/tablet-768.png`
+- `docs/atlas/exports/work-route/mobile-390.png`
+
+---
+
+## Accessibility report
+
+**Target:** WCAG AA  
+**Automated:** `@axe-core/playwright` — no serious/critical on `/work`
+
+Implemented:
+
+- Semantic landmarks and heading hierarchy (one H1)
+- Skip link + focusable main
+- Route-aware `aria-current` (desktop + mobile condensed)
+- Empty ink / secondary media planes with `aria-label` (same AA strategy as homepage)
+- Readable meta / captions use `atlas-body` (not `atlas-muted`)
+
+### Design issues (documented — not redesigned)
+
+1. **Muted token AA** — unchanged from homepage pilot. Figma uses `#8A847A` for meta, captions, taxonomy descriptions, contact body on ink. Implementation continues to prefer `atlas-body` / `atlas-secondary` for readable text.
+2. **CONTACT chapter on ink** — Figma paints umber on ink (fails contrast). Implementation uses `atlas-secondary` (same as homepage contact).
+3. **Featured UI mock annotations** — Figma includes panel chrome + status copy inside the ink figure. Implementation uses empty ink plane + accessible name (homepage media-annotation precedent).
+
+---
+
+## Intentional differences vs Figma
+
+| Item | Figma | Implementation | Why |
+| --- | --- | --- | --- |
+| Featured figure interior | UI chrome mock + status panel | Empty ink plane | AA + asset placeholder strategy |
+| Caption / meta color | Muted | Body / secondary | Muted fails AA at caption size |
+| Footer label | “Projects” on desktop frame | “Work” | Navigation System + Manifest route |
+| Stage rules | Desktop only | `desktop:` only | Matches tablet/mobile frames |
+| Case study / project hrefs | Linked | `href` only — **404 until later milestones** | Scope = `/work` index only |
+| `(site)` route group | Manifest proposal | Flat `app/work/page.tsx` | Sufficient; group still optional |
+
+---
+
+## Lessons learned
+
+1. **Homepage architecture scales** when sections stay page-local and chrome/editorial primitives stay thin.
+2. **Rule of Stability matters** — extracting ContactBridge before compositions matched caused homepage visual drift; revert was correct.
+3. **Responsive Work is not stacked desktop** — tablet/mobile drop stage rules, editorial note, theme chips, and unequal media alignments; fixture stores condensed copy.
+4. **One client island is enough** for route-aware nav; the rest of `/work` stays RSC.
+5. **Project fixture shape is ready for Strapi** — keep mappers at the boundary; do not let DTOs into sections.
+
+---
+
+## Known technical debt (Work)
+
+- [ ] Real evidence imagery (`next/image`) per Image Direction
+- [ ] Resolve Muted contrast in Brand System (design)
+- [ ] Implement `/work/[slug]` (Case Study) — next milestone only
+- [ ] Soften or implement About/Contact destinations
+- [ ] Optional: `app/(site)/` layout group
+- [ ] Linux snapshot variants if CI is not win32
+- [ ] CI job for `atlas-web` Playwright on affected changes
+
+---
+
+## Build Manifest observations
+
+1. Mark **M2 — Work index** as implemented (fixture-first; Strapi wiring still deferred).
+2. Append **Proven Patterns** for validated primitives only.
+3. Note: Contact bridge remains page-local until a third consumer forces a true shared shell.
+4. Stage rules are Work desktop editorial chrome — not a global section registry.
+
+---
+
+## Commands
+
+```sh
+pnpm --filter @repo/atlas-web dev
+pnpm --filter @repo/atlas-web build
+pnpm --filter @repo/atlas-web check-types
+pnpm --filter @repo/atlas-web exec playwright test e2e/work.spec.ts
+pnpm --filter @repo/atlas-web exec playwright test e2e/work.spec.ts --update-snapshots=changed
+```

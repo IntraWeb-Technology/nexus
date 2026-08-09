@@ -1,0 +1,50 @@
+---
+description: Atlas integration with shared cms-strapi — site isolation and content ownership
+globs:
+  - apps/atlas-web/**/strapi/**
+  - apps/atlas-web/src/lib/strapi/**
+  - apps/atlas-web/lib/strapi/**
+  - packages/strapi-client/**
+  - apps/cms-strapi/src/api/**
+  - apps/cms-strapi/src/components/**
+  - apps/cms-strapi/scripts/**
+  - docs/strapi-migration/**
+alwaysApply: false
+---
+
+# Atlas ↔ Strapi
+
+## Instance (mandatory)
+
+- Atlas **must** use `apps/cms-strapi`. Do not create another Strapi instance for Atlas.
+- Strapi already serves Atlas (`personal`) and IntraWeb (`intraweb`).
+- Site separation uses the existing `Site` content model (or equivalent explicit site relationship). **Tags are categorization, not tenancy.**
+
+## Query isolation (mandatory)
+
+- Every site-specific Strapi query must filter by site at the API boundary.
+- Do not fetch all content and filter by site in the browser.
+- Atlas must never render IntraWeb-only content accidentally.
+- Site-specific settings, navigation, branding, SEO defaults, and CTAs stay scoped to the correct site.
+- Prefer `@repo/strapi-client` site-keyed APIs; extend them rather than bypassing site filters.
+
+## Modeling (mandatory)
+
+- Reuse shared editorial entities only when content is genuinely shared.
+- Do not force unlike content into one collection merely to reduce type count.
+- Do not duplicate content types unless fields, workflow, or editorial purpose genuinely differ.
+- Site-specific content should have a required site relationship where appropriate.
+- **Frontend owns layout. Strapi owns structured content.**
+- Avoid unrestricted dynamic-zone page builders. Prefer structured content types and a small set of controlled reusable components. Existing `Page.sections` blocks are for controlled marketing pages — do not expand them into a free-form builder for Atlas.
+- Add only fields required by approved Atlas designs and editorial workflows.
+- Audit existing schemas before changing them. Do not redesign the entire CMS for Atlas without evidence the model is inadequate.
+- Keep schemas, migrations, seeds, and relevant config source-controlled. No manual production-only schema changes.
+- Preserve IntraWeb compatibility. Schema changes affecting both sites need regression validation for both consumers.
+- Preview, draft, and publication features only to the level current editorial workflows require.
+
+## Site keys (reference)
+
+| key | Domain | Consumer |
+| --- | --- | --- |
+| `personal` | johnschibelli.dev | Atlas (`apps/atlas-web`) |
+| `intraweb` | intrawebtech.com | `apps/iw-site-q2` |

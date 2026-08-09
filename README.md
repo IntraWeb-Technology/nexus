@@ -10,6 +10,7 @@ There is **no** `vercel.json` at the repository root. Each Next app ships its ow
 | --- | --- | --- |
 | Client portal | **`apps/iw-portal`** | [`apps/iw-portal/vercel.json`](./apps/iw-portal/vercel.json) |
 | Marketing (`iw-site-q2`) | **`apps/iw-site-q2`** | [`apps/iw-site-q2/vercel.json`](./apps/iw-site-q2/vercel.json) |
+| Atlas | **`apps/atlas-web`** | [`apps/atlas-web/vercel.json`](./apps/atlas-web/vercel.json) |
 
 For each project, enable **Include files outside the root directory in the Build Step** (pnpm workspace + root lockfile). Details: [`apps/iw-portal/README.md`](./apps/iw-portal/README.md).
 
@@ -19,6 +20,7 @@ For each project, enable **Include files outside the root directory in the Build
 
 - `apps/iw-portal` - client dashboard, built with Next.js 16, Clerk, Supabase, Stripe, Resend, and Tailwind CSS v4. Local dev port: `3002`.
 - `apps/iw-site-q2` - production marketing site, built with Next.js 16, reCAPTCHA Enterprise, Cal.com, Resend, Anthropic SDK, and Tailwind CSS v4. Local dev port: `3010`.
+- `apps/atlas-web` - Atlas production frontend (johnschibelli.dev rebuild), Next.js 16 + Tailwind CSS v4. Local dev port: `3020`.
 
 Legacy `apps/iw-site` was removed from this monorepo (relocated elsewhere).
 
@@ -62,6 +64,7 @@ Run a single app:
 ```sh
 pnpm --filter @repo/iw-portal dev
 pnpm --filter @repo/iw-site-q2 dev
+pnpm --filter @repo/atlas-web dev
 ```
 
 ## Build and Checks
@@ -75,7 +78,7 @@ pnpm build
 Build the production apps:
 
 ```sh
-pnpm exec turbo run build --filter=@repo/iw-portal --filter=@repo/iw-site-q2
+pnpm exec turbo run build --filter=@repo/iw-portal --filter=@repo/iw-site-q2 --filter=@repo/atlas-web
 ```
 
 Run linting and type checks:
@@ -115,6 +118,7 @@ Operational runbook: `packages/n8n-workflows/RUNBOOK.md`.
 - `@/` path aliases differ by app:
   - `apps/iw-portal`: `@/*` resolves to `src/*`.
   - `apps/iw-site-q2`: `@/*` resolves to the app root.
+  - `apps/atlas-web`: `@/*` resolves to `src/*`.
 
 ## Deployment
 

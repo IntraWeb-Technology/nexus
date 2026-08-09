@@ -1,0 +1,49 @@
+---
+description: Atlas visual direction, image strategy, and layout system
+globs:
+  - apps/atlas-web/**
+  - apps/atlas-docs/content/**
+  - apps/atlas-docs/app/**
+  - apps/atlas-docs/components/**
+alwaysApply: false
+---
+
+# Atlas design
+
+## Visual direction (mandatory)
+
+Atlas must feel: modern, distinctive, editorial, technical, premium, restrained, human, memorable, confident without arrogance, and current without trend-chasing.
+
+## Prohibited defaults (mandatory)
+
+Do not default to:
+
+- Generic SaaS dashboard styling
+- Off-the-shelf Tailwind portfolio templates
+- Excessive glassmorphism, neon cyberpunk, animated particles
+- Decorative dot grids everywhere, glowing borders on every component
+- Gradient blobs, floating abstract shapes, random 3D cubes
+- Large empty heroes with no meaningful visual content
+- Excessive scroll effects or motion added only to impress
+- AI-generated imagery as generic filler
+- Repetitive rounded cards with identical visual weight
+
+## Image strategy (mandatory)
+
+Atlas **cannot** rely only on colors, gradients, lines, and geometric shapes.
+
+Prefer meaningful imagery: real product screenshots, UI close-ups, device compositions, project galleries, before/after, architecture/workflow/system diagrams, sparingly used code/terminal imagery, professional personal photography where appropriate, editorial article imagery, and project-specific artwork only when it adds value.
+
+Every image must do at least one of: communicate information, demonstrate real work, establish credibility, add meaningful atmosphere, or improve comprehension.
+
+Do not use decorative imagery merely to fill space. Temporary placeholders are allowed during implementation, but every placeholder must be tracked in an explicit asset inventory before launch.
+
+## Layout and visual system (mandatory)
+
+Require: strong hierarchy, intentional whitespace, editorial composition, sophisticated responsive behavior, clear rhythm/alignment, consistent spacing, purposeful asymmetry where appropriate, distinctive project presentation, carefully controlled accents, excellent typography, accessible contrast, visible focus states, and `prefers-reduced-motion` support.
+
+Motion must communicate state or reinforce hierarchy — not decorate.
+
+**The application owns layout. Strapi provides content, not arbitrary page design.**
+
+Document design decisions in `apps/atlas-docs` when they materially affect the visual system.

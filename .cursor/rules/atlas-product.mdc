@@ -1,0 +1,54 @@
+---
+description: Atlas product definition, migration posture, and launch scope
+globs:
+  - apps/atlas-web/**
+  - apps/atlas-docs/**
+  - docs/portfolio/**
+alwaysApply: false
+---
+
+# Atlas product
+
+## Identity
+
+- Atlas is the ground-up rebuild of **johnschibelli.dev**.
+- `apps/atlas-web` — Atlas production frontend.
+- `apps/atlas-docs` — Atlas product documentation site.
+- Site key in shared Strapi: `personal` (see `apps/cms-strapi` / existing Site model).
+- The existing production portfolio remains the migration reference until Atlas replaces it.
+
+## Migration posture (mandatory)
+
+- Atlas is a **greenfield implementation**. Do not reproduce legacy architecture merely because it exists.
+- Existing content, routes, assets, metadata, analytics, and proven functionality are **migration inputs**.
+- Do not discard SEO value, URLs, metadata, redirects, analytics, or useful assets without an explicit migration decision.
+
+## Product bar (mandatory)
+
+- Communicate senior engineering credibility through design, implementation quality, performance, testing, accessibility, and documentation.
+- Serve recruiters, engineering leaders, founders, and qualified clients — not a generic marketing template.
+- Feel like a polished software product, not a developer portfolio theme.
+- Features must support the portfolio’s primary purpose.
+
+## Scope control (mandatory)
+
+Do **not** add without an approved requirement:
+
+- Accounts / auth
+- Dashboards
+- Personalization
+- AI chat
+- Advanced search
+- Live GitHub metrics
+- Other unrelated product features
+
+Keep the initial release focused on core pages and journeys.
+
+## Suggested initial page scope (guidance)
+
+- Home
+- Projects
+- Project / case-study detail
+- About
+- Contact
+- Articles — only if required by current launch scope
