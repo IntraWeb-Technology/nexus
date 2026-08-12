@@ -32,7 +32,9 @@ test.describe("article detail — Why We Chose React Server Components", () => {
     await expect(page.getByText("TRADEOFF")).toBeVisible();
     await expect(page.getByText("TYPESCRIPT")).toBeVisible();
     await expect(page.getByText("YAML")).toBeVisible();
-    await expect(page.getByText("TERMINAL")).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Terminal output" }),
+    ).toBeVisible();
     await expect(
       page.getByRole("heading", {
         level: 2,
@@ -165,7 +167,9 @@ test.describe("article detail — Playwright at Scale (structured)", () => {
     await expect(page.getByLabel("TEST evidence")).toBeVisible();
     await expect(page.getByText("Passing — 3 viewports")).toBeVisible();
     await expect(page.getByText("TYPESCRIPT")).toBeVisible();
-    await expect(page.getByText("TERMINAL")).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Terminal output" }),
+    ).toBeVisible();
   });
 
   test("evidence link resolves to Documentation", async ({ page }) => {

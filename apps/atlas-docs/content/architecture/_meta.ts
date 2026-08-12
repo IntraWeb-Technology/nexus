@@ -5,4 +5,5 @@ export default {
   'work-route': 'Work Route',
   'case-study-route': 'Case Study Route',
   'about-contact-route': 'About + Contact Route',
+  'editorial-publishing': 'Editorial Publishing (M5)',
 };
