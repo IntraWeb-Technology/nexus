@@ -1,0 +1,173 @@
+# Articles / Editorial Publishing — M5 Implementation Report
+
+**Status:** Complete — Editorial System Freeze Gate **PASSED**  
+**Scope:** `/articles`, `/articles/[slug]` (`apps/atlas-web`)  
+**Date:** 2026-08-12  
+**Starting SHA:** `afa5557a8fee641642dacebd2a9fffc487e351d8` (`atlas-rebuild`)  
+**Authority:** Atlas Design v1.0 · Build Manifest · Figma Page 26 (Editorial Publishing System) · Pages 16 / 17 / 25 · Architecture Freeze
+
+M5 followed **AUDIT → COMPLETE → PROVE → FREEZE**. Existing Article routes were material before this milestone; they were completed and proven rather than rebuilt.
+
+---
+
+## Verdict
+
+| Criterion | Result |
+| --- | --- |
+| `/articles` editorial hierarchy (non-card-grid) | Pass |
+| `/articles/[slug]` long-form + structured publishing | Pass |
+| Representative fixtures A / B / C | Pass |
+| Publishing primitives exercised | Pass — see classification |
+| Responsive D / T / M (1440 / 768 / 390) | Pass |
+| Accessibility (axe WCAG AA serious+) | Pass |
+| Playwright Articles suites | Pass — 87/87 |
+| Visual regression (Linux baselines + win32 retained) | Pass for M5 surfaces |
+| Strapi / M8 | Untouched |
+| M6 Docs implementation | Untouched (shared primitives only) |
+| **Editorial System Freeze Gate** | **PASSED** |
+
+**M6 — Documentation is next.** Do not reopen M5 publishing architecture without a Material defect.
+
+---
+
+## What existed before M5
+
+Classification at audit: **C — Material implementation**.
+
+- Full Articles index (intro, topic row, featured, chronological list, cue)
+- Article detail stack (header, TOC, body, related, prev/next, contact, reading progress)
+- Featured hand-authored fixture (`why-we-chose-react-server-components`) exercising figure, callout, code, terminal
+- Shared editorial primitives already used by Case Study / Docs: `ChapterMarker`, `Figure`, `Callout`, `CodeBlock`, `TerminalBlock`, `CaseStudyToc`, `ReadingProgress`, `EditorialTable` (matrix), `MetadataRow`
+- Playwright + axe + win32 visual baselines for index + featured detail
+
+### Gaps closed in M5
+
+| Gap | Resolution |
+| --- | --- |
+| 5/6 articles stubbed via `buildArticleDetail` | Expanded to three representative shapes; remaining notes stay concise shells |
+| No article table / EvidenceBlock | Added `EditorialDataTable` + `EvidenceBlock`; wired through content contract + `ArticleBody` |
+| Topic row unclear intent | Confirmed **informational taxonomy** (not interactive filtering); filtering deferred to M8 |
+| Linux visual baselines missing | Added `*-linux.png` variants (smallest portability fix; win32 retained) |
+
+---
+
+## Representative fixtures
+
+| ID | Slug | Shape | Primitives exercised |
+| --- | --- | --- | --- |
+| **A** | `why-we-chose-react-server-components` | Substantial technical | Prose, H2, figure+caption, tradeoff callout, TypeScript + YAML code, terminal, TOC, progress, related, prev/next |
+| **B** | `ai-assisted-engineering-workflows` | Short editorial | Concise prose, warning callout, TOC, related, prev/next |
+| **C** | `playwright-at-scale` | Structured / evidence-heavy | Note callout, semantic comparison table, EvidenceBlock (test), TypeScript, terminal |
+
+Remaining chronological notes (`lessons-from-building-atlas`, `migrating-from-contentful-to-strapi`, `turborepo-build-optimization`) remain readable via `buildArticleDetail` — not primary validation content.
+
+---
+
+## Topic navigation decision
+
+The topic row is **informational vocabulary** with `All` marked current. It does **not** present as interactive filtering (no buttons/links). Functional topic filtering is deferred until CMS taxonomy (M8). No speculative client filter was added.
+
+---
+
+## Primitive classification (Freeze Gate)
+
+### PROVEN — safe for M6 Documentation reuse
+
+| Primitive | Evidence |
+| --- | --- |
+| `ChapterMarker` | Index + detail + prior routes |
+| `Figure` (+ caption / label plane) | Featured article; empty plane until M7 media |
+| `Callout` (tradeoff / note / warning) | Fixtures A / B / C |
+| `CodeBlock` | TS + YAML on A; TS on C |
+| `TerminalBlock` | A + C |
+| `EditorialDataTable` | Semantic `<table>` on C; region overflow-x |
+| `EvidenceBlock` | Test evidence on C; textual status |
+| `CaseStudyToc` | All article details |
+| `ReadingProgress` | Article detail chrome |
+| `MetadataRow` | Proven on Case Study (article header uses parallel inline `<dl>` — ARTICLE-LOCAL composition) |
+| `EditorialTable` (label/body matrix) | Proven on Case Study; distinct from data table |
+
+### ARTICLE-LOCAL — not a shared Docs contract
+
+| Composition | Notes |
+| --- | --- |
+| `ArticlesIntro` / `ArticlesTopicRow` / `ArticlesFeatured` / `ArticlesList` / `ArticlesCue` | Index IA only |
+| `ArticleHeader` inline metadata `<dl>` | Parallel to Docs header; not forced onto `MetadataRow` (Stability) |
+| `ArticleRelated` / `ArticlePrevNext` / `ArticleContact` | Page-local; Docs keeps parallel sections |
+| `ArticleBody` | Explicit block composition; **not** a shared generic renderer with `DocBody` |
+
+### DEFERRED — do not implement merely to mark proven
+
+| Primitive | Reason |
+| --- | --- |
+| `PullQuote` | Not required by representative M5 fixtures |
+| `EmbedCard` / `RepositoryCard` | Not required |
+| `ListBlock` | Not required as named primitive |
+| Shared `Timeline` | About-local remains; extract when Rule of Two applies |
+| Interactive topic filtering | M8 taxonomy |
+| Figure `src` / production media | M7 assets |
+| Syntax highlighter / copy button | Monospace honesty sufficient for M5 |
+| Standalone Caption | Remains on `Figure` / table / code `figcaption` |
+
+---
+
+## Shared Article / Docs boundary
+
+- **Share:** editorial primitives under `components/editorial/` when Rule of Two (or Manifest P0/P1) applies.
+- **Do not share:** body/header/related section compositions — intentional parallel (`ArticleBody` ≠ `DocBody`).
+- **M6:** may consume PROVEN primitives; must not reopen Article IA or invent a second publishing system.
+- Doc content types were **not** extended in M5; M6 may add `table` / `evidence` fields when Documentation fixtures need them.
+
+---
+
+## Test evidence
+
+| Suite | Result |
+| --- | --- |
+| `e2e/articles.spec.ts` | Pass — landmarks, topics informational, list links, featured nav, axe, visual D/T/M |
+| `e2e/article-detail.spec.ts` | Pass — featured + structured + short; table/evidence/callout; TOC; progress; prev/next; axe; visual |
+| M0–M4 smoke (visual + a11y + landmarks) | Pass after Linux baseline add |
+| `pnpm check-types` | Pass |
+| `pnpm lint` | Pass |
+
+---
+
+## Responsive / visual / a11y
+
+- Index + long technical + structured articles reviewed at **1440 / 768 / 390**
+- No page-level horizontal overflow; tables scroll inside their region
+- axe WCAG 2.1 AA: no serious/critical on Articles surfaces
+- Material design divergence: none identified vs approved editorial direction (Figma MCP unavailable this run; compared to frozen Manifest + existing compositions)
+
+---
+
+## Deferrals
+
+### M7 — Production Assets
+
+- Final article figures / screenshots (replace labeled planes)
+- Real CI / Playwright / coverage evidence captures
+- Architecture diagrams for article figures
+- Final OG artwork and responsive crops
+- Final production copy polish beyond fixture proof
+
+### M9 — Hardening
+
+- Unify snapshot path strategy (win32 + linux dual retention is transitional)
+- Deeper SEO validation
+- Production performance budgets / observability
+- Broader browser matrix
+
+### M8 — Untouched
+
+No Strapi schemas, mappers, or live CMS coupling.
+
+---
+
+## Freeze Gate result
+
+**PASSED.** Representative Article layouts are proven across responsive, accessibility, and publishing primitives. Content contract is stable enough for M6. Shared boundaries are documented. Remaining work is correctly classified into M7 / M8 / M9.
+
+```text
+M5 Articles  →  Editorial System Freeze Gate PASSED  →  M6 Documentation NEXT
+```

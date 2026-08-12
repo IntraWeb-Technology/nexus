@@ -70,6 +70,35 @@ export type ArticleFigureBlock = {
   captionCompact?: string;
 };
 
+/** Comparison / compatibility matrix — semantic table in ArticleBody. */
+export type ArticleTableBlock = {
+  caption: string;
+  captionCompact?: string;
+  columns: string[];
+  rows: Array<{ id: string; cells: string[] }>;
+};
+
+/** Engineering evidence — CI, deploy, tests, coverage, a11y, repo proof. */
+export type ArticleEvidenceKind =
+  | "ci"
+  | "deploy"
+  | "test"
+  | "coverage"
+  | "performance"
+  | "a11y"
+  | "repository"
+  | "documentation";
+
+export type ArticleEvidenceBlock = {
+  kind: ArticleEvidenceKind;
+  title: string;
+  /** Human-readable status — never color-only. */
+  status: string;
+  meta: Array<{ label: string; value: string }>;
+  href?: string;
+  hrefLabel?: string;
+};
+
 export type ArticleSection = {
   id: string;
   chapter: string;
@@ -83,6 +112,8 @@ export type ArticleSection = {
   callout?: ArticleCallout;
   code?: ArticleCodeBlock;
   terminal?: ArticleTerminalBlock;
+  table?: ArticleTableBlock;
+  evidence?: ArticleEvidenceBlock;
 };
 
 export type ArticleNavLink = {

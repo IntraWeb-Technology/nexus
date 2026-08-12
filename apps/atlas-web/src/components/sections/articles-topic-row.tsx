@@ -5,8 +5,9 @@ type ArticlesTopicRowProps = {
 };
 
 /**
- * Topic taxonomy row — presentational filter labels for M5.
- * Active topic is "All"; filtering deferred until CMS wiring.
+ * Topic taxonomy row — informational labels for the Articles index.
+ * Not interactive filtering in M5: the composition communicates topic vocabulary,
+ * with "All" as the current scope. Functional filtering waits for CMS taxonomy (M8).
  */
 export function ArticlesTopicRow({ data }: ArticlesTopicRowProps) {
   return (

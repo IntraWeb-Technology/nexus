@@ -1,6 +1,8 @@
 import { Callout } from "@/components/editorial/callout";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import { CodeBlock } from "@/components/editorial/code-block";
+import { EditorialDataTable } from "@/components/editorial/editorial-table";
+import { EvidenceBlock } from "@/components/editorial/evidence-block";
 import { Figure } from "@/components/editorial/figure";
 import { TerminalBlock } from "@/components/editorial/terminal-block";
 import type { ArticleDetail, ArticleSection } from "@/content/article";
@@ -101,6 +103,27 @@ function SectionBlock({ section }: { section: ArticleSection }) {
               {section.callout.bodyCompact ?? section.callout.body}
             </span>
           </Callout>
+        ) : null}
+
+        {section.table ? (
+          <EditorialDataTable
+            caption={section.table.caption}
+            columns={section.table.columns}
+            rows={section.table.rows}
+            className="w-full"
+          />
+        ) : null}
+
+        {section.evidence ? (
+          <EvidenceBlock
+            kind={section.evidence.kind}
+            title={section.evidence.title}
+            status={section.evidence.status}
+            meta={section.evidence.meta}
+            href={section.evidence.href}
+            hrefLabel={section.evidence.hrefLabel}
+            className="w-full"
+          />
         ) : null}
 
         {section.code ? (

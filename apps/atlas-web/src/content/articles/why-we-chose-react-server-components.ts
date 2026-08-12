@@ -132,11 +132,25 @@ export const whyWeChoseRscArticle: ArticleDetail = {
       chapter: "04 · WHAT FOLLOWED",
       title: "Shared primitives, separate IA.",
       paragraphs: [
-        "Articles and Documentation can share Callout, CodeBlock, Figure, and MetadataRow. They must not share information architecture. Articles remains chronological engineering writing. Documentation remains the handbook of categories, procedures, and ADRs.",
+        "Articles and Documentation can share Callout, CodeBlock, Figure, TerminalBlock, EvidenceBlock, and table primitives. They must not share information architecture. Articles remains chronological engineering writing. Documentation remains the handbook of categories, procedures, and ADRs.",
+        "Related reading and previous/next navigation stay derived from the fixture registry — not hardcoded presentation. Dead links are treated as defects. Cache tags stay explicit in the loader contract so invalidation remains inspectable.",
       ],
       paragraphsTablet: [
-        "Articles and Documentation can share Callout, CodeBlock, Figure, and MetadataRow — not information architecture.",
+        "Articles and Documentation can share publishing primitives — not information architecture.",
+        "Related and previous/next stay fixture-derived. Cache tags stay explicit in the loader contract.",
       ],
+      code: {
+        language: "YAML",
+        caption:
+          "Listing 3 — Cache tags kept explicit in the article loader contract.",
+        captionCompact: "Listing 3 — Explicit cache tags for article loaders.",
+        code: `article:
+  tags:
+    - site:personal
+    - collection:article
+    - slug:why-we-chose-react-server-components
+  revalidate: false`,
+      },
     },
   ],
   related: {
