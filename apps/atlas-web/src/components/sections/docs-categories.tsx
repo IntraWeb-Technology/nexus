@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/chrome/app-link";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import type { DocsCategoryCard, DocsIndexFixture } from "@/content/doc";
 
@@ -21,7 +21,7 @@ function matchesQuery(card: DocsCategoryCard, query: string): boolean {
 
 function CategoryCard({ card }: { card: DocsCategoryCard }) {
   return (
-    <Link
+    <AppLink
       href={card.href}
       className="flex flex-col gap-2 rounded-[2px] border border-atlas-border bg-atlas-elevated px-4 py-[18px] no-underline"
     >
@@ -34,21 +34,21 @@ function CategoryCard({ card }: { card: DocsCategoryCard }) {
       <p className="m-0 font-sans text-[13px] leading-[18px] text-atlas-body">
         {card.description}
       </p>
-    </Link>
+    </AppLink>
   );
 }
 
 function CategoryRowMobile({ card }: { card: DocsCategoryCard }) {
   return (
     <li className="border-t border-atlas-border">
-      <Link href={card.href} className="block space-y-1 py-3.5 no-underline">
+      <AppLink href={card.href} className="block space-y-1 py-3.5 no-underline">
         <p className="m-0 font-sans text-sm leading-[18px] font-semibold text-atlas-ink">
           {card.title}
         </p>
         <p className="m-0 font-sans text-[13px] leading-[18px] text-atlas-body">
           {card.description}
         </p>
-      </Link>
+      </AppLink>
     </li>
   );
 }
