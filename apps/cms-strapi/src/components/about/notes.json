@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_about_notess",
+  "info": {
+    "displayName": "About Notes",
+    "icon": "book",
+    "description": "About notes section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "pullQuote": {
+      "type": "text",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "bodyCondensed": {
+      "type": "text"
+    }
+  }
+}

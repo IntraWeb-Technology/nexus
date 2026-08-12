@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_case_row_sections",
+  "info": {
+    "displayName": "Case Row Section",
+    "icon": "bulletList",
+    "description": "Constraints / delivery / lessons"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "titleMobile": {
+      "type": "string"
+    },
+    "rows": {
+      "type": "json",
+      "required": true
+    },
+    "summaryTablet": {
+      "type": "text"
+    },
+    "summaryMobile": {
+      "type": "text"
+    }
+  }
+}

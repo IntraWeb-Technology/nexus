@@ -15,7 +15,7 @@
     "build": "tsc",
     "check-types": "tsc --noEmit",
     "lint": "node -e \"process.exit(0)\"",
-    "test": "node --import tsx --test src/query.test.ts src/client.test.ts src/normalize/article.test.ts"
+    "test": "node --import tsx --test src/query.test.ts src/client.test.ts src/normalize/article.test.ts src/normalize/atlas.test.ts src/normalize/publishing.test.ts"
   },
   "dependencies": {
     "zod": "^4.3.6"

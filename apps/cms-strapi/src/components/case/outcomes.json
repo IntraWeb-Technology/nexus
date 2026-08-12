@@ -1,0 +1,39 @@
+{
+  "collectionName": "components_case_outcomes",
+  "info": {
+    "displayName": "Case Outcomes",
+    "icon": "trophy",
+    "description": "Outcomes chapter"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "titleMobile": {
+      "type": "string"
+    },
+    "intro": {
+      "type": "text",
+      "required": true
+    },
+    "items": {
+      "type": "json",
+      "required": true
+    },
+    "note": {
+      "type": "text"
+    },
+    "summaryTablet": {
+      "type": "text"
+    },
+    "summaryMobile": {
+      "type": "text"
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "collectionName": "components_case_architectures",
+  "info": {
+    "displayName": "Case Architecture",
+    "icon": "diagram",
+    "description": "Architecture narrative + node paths"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "intro": {
+      "type": "text",
+      "required": true
+    },
+    "requestPath": {
+      "type": "json",
+      "required": true
+    },
+    "deliveryPath": {
+      "type": "json",
+      "required": true
+    },
+    "tabletRequest": {
+      "type": "json"
+    },
+    "tabletDelivery": {
+      "type": "json"
+    },
+    "mobileNodes": {
+      "type": "json"
+    },
+    "legend": {
+      "type": "json"
+    }
+  }
+}

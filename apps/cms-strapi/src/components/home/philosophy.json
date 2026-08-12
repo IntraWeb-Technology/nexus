@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_home_philosophies",
+  "info": {
+    "displayName": "Home Philosophy",
+    "icon": "quote",
+    "description": "Philosophy quote + principles"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "quote": {
+      "type": "text",
+      "required": true
+    },
+    "diagramCaption": {
+      "type": "string"
+    },
+    "stages": {
+      "type": "json",
+      "required": true
+    },
+    "principles": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

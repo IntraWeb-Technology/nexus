@@ -1,10 +1,13 @@
 import type { z } from "zod";
 import type {
+  aboutPageSchema,
   articleSchema,
   authorSchema,
   caseStudySchema,
   categorySchema,
+  contactPageSchema,
   faqItemSchema,
+  homePageSchema,
   navigationSchema,
   pageBlockSchema,
   pageSchema,
@@ -17,7 +20,9 @@ import type {
   tagSchema,
   technologySchema,
   testimonialSchema,
+  workPageSchema,
 } from "./schemas/domain.js";
+import type { homeBridgeSchema } from "./schemas/atlas.js";
 import type {
   contactInformationSchema,
   featureSchema,
@@ -27,6 +32,11 @@ import type {
   socialLinkSchema,
   statItemSchema,
 } from "./schemas/components.js";
+import type {
+  publishingMediaSchema,
+  publishingMetaItemSchema,
+  publishingSectionSchema,
+} from "./schemas/publishing.js";
 import type { mediaAssetSchema } from "./schemas/media.js";
 
 /** Stable site keys from architecture contracts (`docs/strapi-migration/contracts.md`). */
@@ -76,6 +86,10 @@ export type Paginated<T> = {
 // Building-block domain types, inferred from zod schemas (schemas/*.ts) so the
 // runtime validation and the static types can never drift apart.
 export type MediaAsset = z.infer<typeof mediaAssetSchema>;
+export type PublishingMedia = z.infer<typeof publishingMediaSchema>;
+export type PublishingMetaItem = z.infer<typeof publishingMetaItemSchema>;
+export type PublishingSection = z.infer<typeof publishingSectionSchema>;
+export type HomeBridge = z.infer<typeof homeBridgeSchema>;
 export type Seo = z.infer<typeof seoSchema>;
 export type Link = z.infer<typeof linkSchema>;
 export type SocialLink = z.infer<typeof socialLinkSchema>;
@@ -97,6 +111,10 @@ export type Article = z.infer<typeof articleSchema>;
 export type ProjectRef = z.infer<typeof projectRefSchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type CaseStudy = z.infer<typeof caseStudySchema>;
+export type HomePage = z.infer<typeof homePageSchema>;
+export type AboutPage = z.infer<typeof aboutPageSchema>;
+export type WorkPage = z.infer<typeof workPageSchema>;
+export type ContactPage = z.infer<typeof contactPageSchema>;
 export type Service = z.infer<typeof serviceSchema>;
 export type Testimonial = z.infer<typeof testimonialSchema>;
 export type FaqItem = z.infer<typeof faqItemSchema>;
@@ -176,4 +194,24 @@ export type StrapiClient = {
     sourcePath: string,
     options?: RequestOptions,
   ) => Promise<Redirect | null>;
+
+  getHomePage: (
+    siteKey: SiteKey,
+    options?: RequestOptions,
+  ) => Promise<HomePage | null>;
+
+  getAboutPage: (
+    siteKey: SiteKey,
+    options?: RequestOptions,
+  ) => Promise<AboutPage | null>;
+
+  getWorkPage: (
+    siteKey: SiteKey,
+    options?: RequestOptions,
+  ) => Promise<WorkPage | null>;
+
+  getContactPage: (
+    siteKey: SiteKey,
+    options?: RequestOptions,
+  ) => Promise<ContactPage | null>;
 };

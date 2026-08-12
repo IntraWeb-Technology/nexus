@@ -5,10 +5,10 @@ import { HomeHero } from "@/components/sections/home-hero";
 import { HomePhilosophy } from "@/components/sections/home-philosophy";
 import { HomeSelected } from "@/components/sections/home-selected";
 import { HomeWriting } from "@/components/sections/home-writing";
-import { homepageFixture } from "@/content/homepage";
+import { getHomepageContent } from "@/lib/content";
 
-export default function HomePage() {
-  const data = homepageFixture;
+export default async function HomePage() {
+  const data = await getHomepageContent();
 
   return (
     <main id="main" tabIndex={-1} className="outline-none">

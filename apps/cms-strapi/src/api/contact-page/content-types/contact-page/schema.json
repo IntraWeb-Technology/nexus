@@ -1,0 +1,86 @@
+{
+  "kind": "collectionType",
+  "collectionName": "contact_pages",
+  "info": {
+    "singularName": "contact-page",
+    "pluralName": "contact-pages",
+    "displayName": "Contact Page",
+    "description": "Atlas editorial Contact copy"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "site": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::site.site",
+      "required": true
+    },
+    "seo": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.seo",
+      "required": true
+    },
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "nameLabel": {
+      "type": "string",
+      "required": true
+    },
+    "namePlaceholder": {
+      "type": "string",
+      "required": true
+    },
+    "emailLabel": {
+      "type": "string",
+      "required": true
+    },
+    "emailPlaceholder": {
+      "type": "string",
+      "required": true
+    },
+    "messageLabel": {
+      "type": "string",
+      "required": true
+    },
+    "messagePlaceholder": {
+      "type": "string",
+      "required": true
+    },
+    "submitLabel": {
+      "type": "string",
+      "required": true
+    },
+    "meta": {
+      "type": "string"
+    },
+    "successTitle": {
+      "type": "string",
+      "required": true
+    },
+    "successBody": {
+      "type": "text",
+      "required": true
+    },
+    "failureTitle": {
+      "type": "string",
+      "required": true
+    },
+    "failureBody": {
+      "type": "text",
+      "required": true
+    }
+  }
+}

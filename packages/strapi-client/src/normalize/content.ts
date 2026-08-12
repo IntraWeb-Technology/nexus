@@ -3,13 +3,26 @@ import {
   asBoolean,
   asNumber,
   asString,
+  asStringArray,
   documentIdOf,
   flattenEntries,
   flattenEntry,
+  parseEnum,
   pickRelation,
   pickRelationList,
   type FlatEntry,
 } from "../schemas/common.js";
+import {
+  shapeHomeBridge,
+  shapeCaseArchitecture,
+  shapeCaseDecision,
+  shapeCaseFigureSlot,
+  shapeCaseOutcomes,
+  shapeCaseOverview,
+  shapeCaseProseSection,
+  shapeCaseRowSection,
+  shapeCaseToc,
+} from "../schemas/atlas.js";
 import {
   shapeContactInformation,
   shapeFeatures,
@@ -22,6 +35,17 @@ import {
   siteKeysFromToMany,
 } from "../schemas/components.js";
 import { shapeMedia, shapeMediaList } from "../schemas/media.js";
+import {
+  editorialTypeSchema,
+  articleSurfaceSchema,
+  docKindSchema,
+  projectLayoutSchema,
+} from "../schemas/atlas.js";
+import {
+  shapePublishingMedia,
+  shapePublishingMetaItems,
+  shapePublishingSections,
+} from "../schemas/publishing.js";
 import type {
   articleSchema,
   authorSchema,
@@ -355,6 +379,16 @@ export function shapeArticle(
     featured: asBoolean(entry.featured),
     canonicalUrl: asString(entry.canonicalUrl),
     hashnodeId: asString(entry.hashnodeId),
+    surface: parseEnum(entry.surface, articleSurfaceSchema.options) ?? "writing",
+    editorialType: parseEnum(entry.editorialType, editorialTypeSchema.options),
+    docKind: parseEnum(entry.docKind, docKindSchema.options),
+    readingTime: asString(entry.readingTime),
+    dek: asString(entry.dek),
+    dekCompact: asString(entry.dekCompact),
+    headerChapter: asString(entry.headerChapter),
+    headerMeta: shapePublishingMetaItems(entry.headerMeta),
+    sections: shapePublishingSections(entry.sections, ctx.mediaBaseUrl),
+    contactBridge: shapeHomeBridge(entry.contactBridge),
   };
 }
 
@@ -401,6 +435,15 @@ export function shapeProject(
     featured: asBoolean(entry.featured),
     seo: shapeSeo(entry.seo, ctx.mediaBaseUrl),
     publishedAt: asString(entry.publishedAt),
+    category: asString(entry.category),
+    themes: entry.themes == null ? null : asStringArray(entry.themes),
+    statusLabel: asString(entry.statusLabel),
+    layout: parseEnum(entry.layout, projectLayoutSchema.options),
+    sortOrder: asNumber(entry.sortOrder),
+    summaryTablet: asString(entry.summaryTablet),
+    summaryMobile: asString(entry.summaryMobile),
+    ctaLabel: asString(entry.ctaLabel),
+    cardMedia: shapePublishingMedia(entry.cardMedia, ctx.mediaBaseUrl),
   };
 }
 
@@ -414,6 +457,17 @@ export function shapeCaseStudy(
 
   const siteKeys = siteKeysFromToMany(entry, "sites");
   if (siteKeys.length === 0 && preferredSiteKey) siteKeys.push(preferredSiteKey);
+
+  const tocRaw = entry.toc;
+  const toc = tocRaw == null ? null : shapeCaseToc(tocRaw);
+
+  const decisions = flattenEntries(entry.decisions)
+    .map((item) => shapeCaseDecision(item))
+    .filter((item): item is NonNullable<typeof item> => item != null);
+
+  const figureSlots = flattenEntries(entry.figureSlots)
+    .map((item) => shapeCaseFigureSlot(item, ctx.mediaBaseUrl))
+    .filter((item): item is NonNullable<typeof item> => item != null);
 
   return {
     documentId: documentIdOf(entry),
@@ -433,6 +487,29 @@ export function shapeCaseStudy(
     gallery: shapeMediaList(entry.gallery, ctx.mediaBaseUrl),
     seo: shapeSeo(entry.seo, ctx.mediaBaseUrl),
     publishedAt: asString(entry.publishedAt),
+    role: asString(entry.role),
+    year: asString(entry.year),
+    stackLine: asString(entry.stackLine),
+    deck: asString(entry.deck),
+    deckTablet: asString(entry.deckTablet),
+    deckMobile: asString(entry.deckMobile),
+    heroMeta: shapePublishingMetaItems(entry.heroMeta),
+    metaLineTablet: asString(entry.metaLineTablet),
+    metaLineMobileYear: asString(entry.metaLineMobileYear),
+    metaLineMobileRole: asString(entry.metaLineMobileRole),
+    toc,
+    overview: shapeCaseOverview(entry.overview),
+    problem: shapeCaseProseSection(entry.problem),
+    constraints: shapeCaseRowSection(entry.constraints),
+    architecture: shapeCaseArchitecture(entry.architecture),
+    decisions,
+    implementation: shapeCaseProseSection(entry.implementation),
+    delivery: shapeCaseRowSection(entry.delivery),
+    outcomes: shapeCaseOutcomes(entry.outcomes),
+    lessons: shapeCaseRowSection(entry.lessons),
+    figureSlots,
+    relatedNote: asString(entry.relatedNote),
+    contactBridge: shapeHomeBridge(entry.contactBridge),
   };
 }
 

@@ -1,0 +1,37 @@
+{
+  "collectionName": "components_work_intros",
+  "info": {
+    "displayName": "Work Intro",
+    "icon": "book",
+    "description": "Work index intro"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "deck": {
+      "type": "text",
+      "required": true
+    },
+    "deckMobile": {
+      "type": "text"
+    },
+    "meta": {
+      "type": "component",
+      "repeatable": true,
+      "component": "publishing.meta-item"
+    },
+    "editorialNoteLabel": {
+      "type": "string"
+    },
+    "editorialNoteBody": {
+      "type": "text"
+    }
+  }
+}

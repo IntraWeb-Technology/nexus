@@ -17,6 +17,10 @@ export const API_PATHS = {
   testimonials: "/api/testimonials",
   faqItems: "/api/faq-items",
   redirects: "/api/redirects",
+  homePages: "/api/home-pages",
+  aboutPages: "/api/about-pages",
+  workPages: "/api/work-pages",
+  contactPages: "/api/contact-pages",
 } as const;
 
 /**
@@ -228,6 +232,28 @@ export function byExactMatchQuery(
 }
 
 /** Shared populate fragments aligned with content-model components. */
+const publishingMediaPopulate = {
+  asset: true,
+} as const;
+
+const publishingSectionPopulate = {
+  figure: { populate: publishingMediaPopulate },
+  callout: true,
+  code: true,
+  terminal: true,
+  table: true,
+  evidence: {
+    populate: {
+      meta: true,
+    },
+  },
+} as const;
+
+const homeBridgePopulate = {
+  cta: true,
+  workLink: true,
+} as const;
+
 export const POPULATE = {
   media: true,
   seo: {
@@ -315,6 +341,13 @@ export const POPULATE = {
     categories: true,
     tags: true,
     sites: true,
+    headerMeta: true,
+    sections: {
+      populate: publishingSectionPopulate,
+    },
+    contactBridge: {
+      populate: homeBridgePopulate,
+    },
   },
   project: {
     featuredImage: true,
@@ -330,6 +363,9 @@ export const POPULATE = {
       },
     },
     sites: true,
+    cardMedia: {
+      populate: publishingMediaPopulate,
+    },
   },
   caseStudy: {
     featuredImage: true,
@@ -346,6 +382,26 @@ export const POPULATE = {
     },
     relatedProject: true,
     sites: true,
+    heroMeta: true,
+    overview: true,
+    problem: true,
+    constraints: true,
+    architecture: true,
+    decisions: true,
+    implementation: true,
+    delivery: true,
+    outcomes: true,
+    lessons: true,
+    figureSlots: {
+      populate: {
+        media: {
+          populate: publishingMediaPopulate,
+        },
+      },
+    },
+    contactBridge: {
+      populate: homeBridgePopulate,
+    },
   },
   service: {
     featuredImage: true,
@@ -371,5 +427,114 @@ export const POPULATE = {
   },
   redirect: {
     site: true,
+  },
+  homePage: {
+    site: true,
+    seo: {
+      populate: {
+        ogImage: true,
+      },
+    },
+    hero: {
+      populate: {
+        media: { populate: publishingMediaPopulate },
+        primaryCta: true,
+        secondaryCta: true,
+      },
+    },
+    featured: {
+      populate: {
+        figure: { populate: publishingMediaPopulate },
+        cta: true,
+      },
+    },
+    featuredProject: true,
+    selected: {
+      populate: {
+        project: {
+          populate: {
+            cardMedia: { populate: publishingMediaPopulate },
+          },
+        },
+      },
+    },
+    philosophy: true,
+    writingItems: {
+      populate: {
+        article: true,
+      },
+    },
+    aboutTeaser: {
+      populate: homeBridgePopulate,
+    },
+    contactBridge: {
+      populate: homeBridgePopulate,
+    },
+  },
+  aboutPage: {
+    site: true,
+    seo: {
+      populate: {
+        ogImage: true,
+      },
+    },
+    opening: true,
+    philosophy: true,
+    approach: {
+      populate: {
+        figure: { populate: publishingMediaPopulate },
+      },
+    },
+    style: true,
+    principles: true,
+    timeline: true,
+    focus: true,
+    reading: true,
+    architecture: {
+      populate: {
+        figure: { populate: publishingMediaPopulate },
+      },
+    },
+    notes: true,
+    contactBridge: {
+      populate: homeBridgePopulate,
+    },
+  },
+  workPage: {
+    site: true,
+    seo: {
+      populate: {
+        ogImage: true,
+      },
+    },
+    intro: {
+      populate: {
+        meta: true,
+      },
+    },
+    featuredProject: {
+      populate: {
+        cardMedia: { populate: publishingMediaPopulate },
+      },
+    },
+    featuredCopy: {
+      populate: {
+        figure: { populate: publishingMediaPopulate },
+        figureCompact: { populate: publishingMediaPopulate },
+        cta: true,
+      },
+    },
+    taxonomy: true,
+    contactBridge: {
+      populate: homeBridgePopulate,
+    },
+  },
+  contactPage: {
+    site: true,
+    seo: {
+      populate: {
+        ogImage: true,
+      },
+    },
   },
 } as const;

@@ -1,0 +1,58 @@
+{
+  "collectionName": "components_home_featureds",
+  "info": {
+    "displayName": "Home Featured",
+    "icon": "star",
+    "description": "Featured proof copy"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "meta": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "problemLabel": {
+      "type": "string",
+      "required": true
+    },
+    "problem": {
+      "type": "text",
+      "required": true
+    },
+    "outcomeLabel": {
+      "type": "string",
+      "required": true
+    },
+    "outcome": {
+      "type": "text",
+      "required": true
+    },
+    "highlightsLabel": {
+      "type": "string"
+    },
+    "highlights": {
+      "type": "json"
+    },
+    "cta": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.link",
+      "required": true
+    },
+    "figure": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.media"
+    }
+  }
+}

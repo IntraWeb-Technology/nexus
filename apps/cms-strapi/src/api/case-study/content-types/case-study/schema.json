@@ -73,6 +73,99 @@
     },
     "migrationBatch": {
       "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "year": {
+      "type": "string"
+    },
+    "stackLine": {
+      "type": "string"
+    },
+    "deck": {
+      "type": "text"
+    },
+    "deckTablet": {
+      "type": "text"
+    },
+    "deckMobile": {
+      "type": "text"
+    },
+    "heroMeta": {
+      "type": "component",
+      "repeatable": true,
+      "component": "publishing.meta-item"
+    },
+    "metaLineTablet": {
+      "type": "string"
+    },
+    "metaLineMobileYear": {
+      "type": "string"
+    },
+    "metaLineMobileRole": {
+      "type": "string"
+    },
+    "toc": {
+      "type": "json"
+    },
+    "overview": {
+      "type": "component",
+      "repeatable": false,
+      "component": "case.overview"
+    },
+    "problem": {
+      "type": "component",
+      "repeatable": false,
+      "component": "case.prose-section"
+    },
+    "constraints": {
+      "type": "component",
+      "repeatable": false,
+      "component": "case.row-section"
+    },
+    "architecture": {
+      "type": "component",
+      "repeatable": false,
+      "component": "case.architecture"
+    },
+    "decisions": {
+      "type": "component",
+      "repeatable": true,
+      "component": "case.decision"
+    },
+    "implementation": {
+      "type": "component",
+      "repeatable": false,
+      "component": "case.prose-section"
+    },
+    "delivery": {
+      "type": "component",
+      "repeatable": false,
+      "component": "case.row-section"
+    },
+    "outcomes": {
+      "type": "component",
+      "repeatable": false,
+      "component": "case.outcomes"
+    },
+    "lessons": {
+      "type": "component",
+      "repeatable": false,
+      "component": "case.row-section"
+    },
+    "figureSlots": {
+      "type": "component",
+      "repeatable": true,
+      "component": "case.figure-slot"
+    },
+    "relatedNote": {
+      "type": "text"
+    },
+    "contactBridge": {
+      "type": "component",
+      "repeatable": false,
+      "component": "home.bridge"
     }
   }
 }

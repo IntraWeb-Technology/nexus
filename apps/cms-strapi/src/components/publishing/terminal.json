@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_publishing_terminals",
+  "info": {
+    "displayName": "Terminal Block",
+    "icon": "server",
+    "description": "Terminal evidence"
+  },
+  "options": {},
+  "attributes": {
+    "caption": {
+      "type": "string"
+    },
+    "captionCompact": {
+      "type": "string"
+    },
+    "lines": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

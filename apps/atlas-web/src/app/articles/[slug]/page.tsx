@@ -7,21 +7,22 @@ import { ArticleContact } from "@/components/sections/article-contact";
 import { ArticleHeader } from "@/components/sections/article-header";
 import { ArticlePrevNext } from "@/components/sections/article-prev-next";
 import { ArticleRelated } from "@/components/sections/article-related";
-import { articleBySlug, getArticle } from "@/content/articles";
+import { getArticleContent, getArticleSlugs } from "@/lib/content";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return Object.keys(articleBySlug).map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const slugs = await getArticleSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticle(slug);
+  const article = await getArticleContent(slug);
   if (!article) return {};
   return {
     title: article.seo.title,
@@ -31,7 +32,7 @@ export async function generateMetadata({
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
-  const data = getArticle(slug);
+  const data = await getArticleContent(slug);
   if (!data) notFound();
 
   return (

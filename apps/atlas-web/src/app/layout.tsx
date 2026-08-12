@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Newsreader } from "next/font/google";
 import { SiteFooter } from "@/components/chrome/site-footer";
 import { SiteNavActive } from "@/components/chrome/site-nav-active";
-import { homepageFixture } from "@/content/homepage";
+import { siteChrome } from "@/lib/content";
 import "@/styles/globals.css";
 
 const newsreader = Newsreader({
@@ -80,13 +80,13 @@ export default function RootLayout({
     >
       <body className="min-h-dvh bg-atlas-paper font-sans text-atlas-body antialiased">
         <SiteNavActive
-          brand={homepageFixture.nav.brand}
-          links={homepageFixture.nav.links}
+          brand={siteChrome.brand}
+          links={siteChrome.navLinks}
         />
         {children}
         <SiteFooter
-          links={homepageFixture.footer.links}
-          mark={homepageFixture.footer.mark}
+          links={siteChrome.footerLinks}
+          mark={siteChrome.mark}
         />
       </body>
     </html>

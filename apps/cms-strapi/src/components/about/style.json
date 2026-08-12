@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_about_styles",
+  "info": {
+    "displayName": "About Style",
+    "icon": "book",
+    "description": "About style section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "items": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

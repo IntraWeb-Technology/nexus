@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_about_timelines",
+  "info": {
+    "displayName": "About Timeline",
+    "icon": "book",
+    "description": "About timeline section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "entries": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

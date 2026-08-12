@@ -1,0 +1,38 @@
+{
+  "collectionName": "components_about_openings",
+  "info": {
+    "displayName": "About Opening",
+    "icon": "book",
+    "description": "About opening section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "deck": {
+      "type": "text",
+      "required": true
+    },
+    "deckCondensed": {
+      "type": "text"
+    },
+    "meta": {
+      "type": "string"
+    },
+    "metaCondensed": {
+      "type": "string"
+    },
+    "marginNoteLabel": {
+      "type": "string"
+    },
+    "marginNoteBody": {
+      "type": "text"
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "kind": "collectionType",
+  "collectionName": "home_pages",
+  "info": {
+    "singularName": "home-page",
+    "pluralName": "home-pages",
+    "displayName": "Home Page",
+    "description": "Atlas site-scoped Home composition"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "site": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::site.site",
+      "required": true
+    },
+    "seo": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.seo"
+    },
+    "hero": {
+      "type": "component",
+      "repeatable": false,
+      "component": "home.hero",
+      "required": true
+    },
+    "featured": {
+      "type": "component",
+      "repeatable": false,
+      "component": "home.featured",
+      "required": true
+    },
+    "featuredProject": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::project.project",
+      "required": true
+    },
+    "selected": {
+      "type": "component",
+      "repeatable": true,
+      "component": "home.selected-item",
+      "required": true
+    },
+    "philosophy": {
+      "type": "component",
+      "repeatable": false,
+      "component": "home.philosophy",
+      "required": true
+    },
+    "writingChapter": {
+      "type": "string",
+      "required": true
+    },
+    "writingItems": {
+      "type": "component",
+      "repeatable": true,
+      "component": "home.writing-item",
+      "required": true
+    },
+    "aboutTeaser": {
+      "type": "component",
+      "repeatable": false,
+      "component": "home.bridge",
+      "required": true
+    },
+    "contactBridge": {
+      "type": "component",
+      "repeatable": false,
+      "component": "home.bridge",
+      "required": true
+    }
+  }
+}

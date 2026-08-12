@@ -11,7 +11,7 @@
 **About + Contact:** Implemented — see [About + Contact Route](/docs/architecture/about-contact-route)  
 **Articles / Editorial Publishing:** Implemented — see [Editorial Publishing (M5)](/docs/architecture/editorial-publishing)  
 **Documentation:** Implemented — see [Documentation System (M6)](/docs/architecture/documentation-system)  
-**Next milestone:** **M8B — Strapi Implementation** (after M8A Content Contract — **LOCKED**; A-05 deferred)
+**Next milestone:** **M9 — Hardening** (after M8 COMPLETE; A-05 remains deferred)
 
 ---
 
@@ -30,11 +30,11 @@
 | Documentation Freeze | **PASSED** |
 | **M7 — Production Assets** | **COMPLETE** — Freeze **PASS** |
 | Production Asset Freeze | **PASS** (A-05 **DEFERRED / NON-BLOCKING**) |
-| **M8 — Strapi Integration** | **M8A COMPLETE** — Content Contract **LOCKED**; **M8B PLANNED** |
+| **M8 — Strapi Integration** | **COMPLETE** — see [M8 Strapi Integration](/docs/architecture/m8-strapi-integration) |
 | **M9 — Hardening** | Planned |
 | **M10 — Launch** | Planned |
 
-**Program posture:** Fixture-first until Strapi implementation (**M8B**). Documentation Freeze **PASSED**. Production Asset Freeze **PASS**. **M8A Content Contract LOCKED** — see [M8 Content Contract](/docs/architecture/m8-content-contract). **A-05 Vehicle Maintenance** media is consciously **deferred** (no approved production source; substitute evidence forbidden). Do not reopen M0–M7 without a material defect. Do not invent CMS architecture during M8B — execute the locked contract.
+**Program posture:** M8 CMS contract implemented. Documentation Freeze **PASSED**. Production Asset Freeze **PASS**. Content source: Strapi when `STRAPI_URL` is set; explicit fixture mode for tests (`ATLAS_CONTENT_SOURCE=fixture`). **A-05 Vehicle Maintenance** media remains **deferred** (no approved production source; substitute evidence forbidden). Do not reopen M0–M8 without a material defect. Next: **M9 — Hardening**.
 
 ### Milestone scheme note
 
@@ -637,7 +637,7 @@ Update docs when architecture, CMS, or testing materially changes.
 | **M6 — Documentation** | Handbook IA on proven publishing primitives | Freeze Gate passed | `/docs`, `/docs/[…slug]`, category-driven fixtures | Docs reuse PROVEN primitives; no second publishing system | **COMPLETE** |
 | *Documentation Freeze* | Acceptance gate only (not a milestone) | M6 implementation | Handbook IA/nav/search/rendering sign-off | See [Documentation System (M6)](/docs/architecture/documentation-system) | **PASSED** |
 | **M7 — Production Assets** | Formal production visual/evidence asset pass | M5–M6 opportunistic capture underway | Real assets replace fixtures/placeholders | Asset manifest (§7) complete for launch set | **COMPLETE** — Freeze **PASS** |
-| **M8 — Strapi Integration** | Map proven frontend contract → shared CMS | M7 Freeze PASS + M8A contract lock | `personal` site content via `cms-strapi` + `@repo/strapi-client` | Site isolation; no speculative model drift | **M8A COMPLETE** (contract locked) · **M8B PLANNED** |
+| **M8 — Strapi Integration** | Map proven frontend contract → shared CMS | M7 Freeze PASS + M8A contract lock | `personal` site content via `cms-strapi` + `@repo/strapi-client` | Site isolation; no speculative model drift | **COMPLETE** — [report](/docs/architecture/m8-strapi-integration) |
 | **M9 — Hardening** | Quality gates & release readiness | M5–M8 as required | Tests, a11y, visuals, perf, SEO, security headers | §8–§13 green on affected CI | Planned |
 | **M10 — Launch** | Production release | M9 | johnschibelli.dev cutover | Launch DoD (§1) + checklist | Planned |
 
@@ -656,6 +656,7 @@ No parallel “framework” milestones. Do not renumber milestones to insert the
 | M6 Documentation | **M6** + Documentation Freeze | [Documentation System (M6)](/docs/architecture/documentation-system) |
 | M7 Production Assets | **M7** + Production Asset Freeze | [Production Assets (M7)](/docs/architecture/production-assets) |
 | M8 Content Contract | **M8A** (read-only lock) | [M8 Content Contract](/docs/architecture/m8-content-contract) |
+| M8 Strapi Integration | **M8B** (implementation) | [M8 Strapi Integration](/docs/architecture/m8-strapi-integration) |
 
 ### M5 expectations — Articles / Editorial Publishing
 
@@ -702,7 +703,7 @@ When implementation reveals missing screenshots, diagrams, CI/evidence captures,
 **Not a milestone.** Does not alter M5–M10 numbering.
 
 ```text
-M5 Articles  →  Editorial System Freeze Gate PASSED  →  M6 Documentation COMPLETE  →  Documentation Freeze PASSED  →  M7 COMPLETE  →  Production Asset Freeze PASS  →  M8A Content Contract LOCKED  →  M8B NEXT
+M5 Articles  →  Editorial System Freeze Gate PASSED  →  M6 Documentation COMPLETE  →  Documentation Freeze PASSED  →  M7 COMPLETE  →  Production Asset Freeze PASS  →  M8A Content Contract LOCKED  →  M8B COMPLETE  →  M9 NEXT
 ```
 
 **Result (2026-08-12): PASSED.** See [Editorial Publishing (M5)](/docs/architecture/editorial-publishing) for primitive classification (PROVEN / ARTICLE-LOCAL / DEFERRED), fixtures, and test evidence. M6 Documentation completed on those foundations — see [Documentation System (M6)](/docs/architecture/documentation-system).
@@ -774,7 +775,7 @@ M5 is not **DONE** until the reusable Editorial Publishing System has been exerc
 
 ## 18. Build readiness checklist
 
-Program foundations through **M7** are complete; Editorial System Freeze Gate **PASSED**; Documentation Freeze **PASSED**; Production Asset Freeze **PASS**; M8A Content Contract **LOCKED**. Checklist below remains the launch readiness contract; items are not a blocker to begin **M8B**.
+Program foundations through **M8** are complete; Editorial System Freeze Gate **PASSED**; Documentation Freeze **PASSED**; Production Asset Freeze **PASS**; M8A Content Contract **LOCKED** and M8B **IMPLEMENTED**. Checklist below remains the launch readiness contract; items are not a blocker to begin **M9**.
 
 | # | Item | YES/NO |
 | --- | --- | --- |
@@ -787,7 +788,7 @@ Program foundations through **M7** are complete; Editorial System Freeze Gate **
 | 7 | SEO planned (§10) | YES |
 | 8 | Testing planned (§11) | YES |
 | 9 | CI/CD understood (§12) | YES |
-| 10 | M0–M7 complete; Freeze Gates passed; M8A locked; M8B unambiguously next | YES |
+| 10 | M0–M8 complete; Freeze Gates passed; M9 unambiguously next | YES |
 
 ### Open questions (non-blocking for M8B; resolve before relevant later milestones)
 

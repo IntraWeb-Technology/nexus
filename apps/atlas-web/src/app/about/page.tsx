@@ -10,15 +10,18 @@ import { AboutPrinciples } from "@/components/sections/about-principles";
 import { AboutReading } from "@/components/sections/about-reading";
 import { AboutStyle } from "@/components/sections/about-style";
 import { AboutTimeline } from "@/components/sections/about-timeline";
-import { aboutFixture } from "@/content/about";
+import { getAboutContent } from "@/lib/content";
 
-export const metadata: Metadata = {
-  title: aboutFixture.seo.title,
-  description: aboutFixture.seo.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await getAboutContent();
+  return {
+    title: data.seo.title,
+    description: data.seo.description,
+  };
+}
 
-export default function AboutPage() {
-  const data = aboutFixture;
+export default async function AboutPage() {
+  const data = await getAboutContent();
 
   return (
     <main id="main" tabIndex={-1} className="outline-none">
