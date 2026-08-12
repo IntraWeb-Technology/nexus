@@ -28,13 +28,10 @@ test.describe("production media (M7)", () => {
 
   test("work featured figure is production media", async ({ page }) => {
     await page.goto("/work");
-    const figure = page.locator("figure").first();
-    await expect(figure.locator("img")).toBeVisible();
-    await expect(figure.locator("img")).toHaveAttribute(
-      "alt",
-      /Portfolio OS|architecture/i,
-    );
-    await expect(figure.getByText("IMG")).toHaveCount(0);
+    const img = page.locator("main figure img:visible").first();
+    await expect(img).toBeVisible();
+    await expect(img).toHaveAttribute("alt", /Portfolio OS|architecture/i);
+    await expect(page.getByText(/^IMG$/)).toHaveCount(0);
   });
 
   test("work selected Strapi and Automation media render; Vehicle remains blocked", async ({
@@ -56,11 +53,12 @@ test.describe("production media (M7)", () => {
 
   test("case study hero retires placeholder panels label", async ({ page }) => {
     await page.goto("/work/portfolio-os");
-    const heroFigure = page.locator("figure").first();
-    await expect(heroFigure.locator("img")).toBeVisible();
-    await expect(page.getByText("portfolio-os  ·  production surface")).toHaveCount(
-      0,
-    );
+    const img = page.locator("main figure img:visible").first();
+    await expect(img).toBeVisible();
+    await expect(img).toHaveAttribute("alt", /Portfolio OS/i);
+    await expect(
+      page.getByText("portfolio-os  ·  production surface"),
+    ).toHaveCount(0);
   });
 
   test("favicon and default OG metadata are wired", async ({ page }) => {

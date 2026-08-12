@@ -40,15 +40,21 @@ test.describe("homepage", () => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const rscRequests: string[] = [];
+    const samePageRsc: string[] = [];
     page.on("request", (req) => {
-      if (req.headers()["rsc"] === "1") rscRequests.push(req.url());
+      if (req.headers()["rsc"] !== "1") return;
+      const url = new URL(req.url());
+      // Hash CTAs must not RSC-fetch the current route. Prefetch of other
+      // work/case links is expected with Next <Link> and is out of scope.
+      if (url.pathname === "/" || url.pathname === "") {
+        samePageRsc.push(req.url());
+      }
     });
 
     await page.getByRole("link", { name: "View selected work" }).click();
     await expect(page).toHaveURL(/\/#selected-work$/);
     await page.waitForTimeout(300);
-    expect(rscRequests, rscRequests.join("\n")).toEqual([]);
+    expect(samePageRsc, samePageRsc.join("\n")).toEqual([]);
   });
 
   test("has no serious accessibility violations", async ({ page }) => {
