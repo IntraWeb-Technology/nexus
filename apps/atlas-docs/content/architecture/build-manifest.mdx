@@ -577,7 +577,7 @@ No coverage vanity targets. Prefer fixtures/seeds over live prod content in CI.
 | --- | --- |
 | Affected CI | Existing Turbo affected (`pnpm ci:affected`) — Atlas changes must not force unrelated apps |
 | atlas-web | Vercel root `apps/atlas-web`; existing `vercel.json` ignoreCommand |
-| atlas-docs | Remains Yarn app until explicitly onboarded to pnpm; deploy separately |
+| atlas-docs | Remains Yarn app until explicitly onboarded to pnpm; Vercel root `apps/atlas-docs` with Yarn 4 `vercel.json` (do not use pnpm install) |
 | cms-strapi | Existing deploy workflow when affected; IntraWeb regression on shared schema changes |
 | Preview | Vercel previews for atlas-web PRs |
 | Visual regression | Playwright snapshots in CI for atlas-web when tests exist |
