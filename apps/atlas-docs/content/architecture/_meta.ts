@@ -8,4 +8,5 @@ export default {
   'editorial-publishing': 'Editorial Publishing (M5)',
   'documentation-system': 'Documentation System (M6)',
   'production-assets': 'Production Assets (M7)',
+  'm8-content-contract': 'M8 Content Contract (M8A)',
 };
