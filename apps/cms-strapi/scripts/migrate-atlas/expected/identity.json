@@ -1,0 +1,31 @@
+{
+  "projectSlugs": [
+    "portfolio-os",
+    "shared-strapi-cms",
+    "intraweb-automation",
+    "vehicle-maintenance"
+  ],
+  "caseStudySlugs": ["portfolio-os"],
+  "writingArticleSlugs": [
+    "why-we-chose-react-server-components",
+    "playwright-at-scale",
+    "lessons-from-building-atlas",
+    "migrating-from-contentful-to-strapi",
+    "ai-assisted-engineering-workflows",
+    "turborepo-build-optimization"
+  ],
+  "documentationSlugs": [
+    "atlas-architecture",
+    "editorial-system",
+    "design-system",
+    "frontend-architecture",
+    "testing-strategy"
+  ],
+  "projectsWithoutMedia": ["vehicle-maintenance"],
+  "skippedApplicationStaticMedia": [
+    "favicon",
+    "og/default",
+    "atlas-mark"
+  ],
+  "deferredMediaSlots": ["A-05", "PA-DOC2", "PA-DOC3", "PA-DOC4", "PA-DOC5"]
+}

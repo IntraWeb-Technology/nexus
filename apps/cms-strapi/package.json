@@ -19,6 +19,8 @@
     "migrate:content": "tsx scripts/migrate/src/migrate.ts --write",
     "migrate:content:validate": "tsx scripts/migrate/src/migrate.ts --validate",
     "migrate:content:rollback": "tsx scripts/migrate/src/rollback.ts",
+    "migrate:atlas": "tsx --tsconfig scripts/migrate-atlas/tsconfig.json scripts/migrate-atlas/src/migrate.ts",
+    "migrate:atlas:validate": "tsx --tsconfig scripts/migrate-atlas/tsconfig.json scripts/migrate-atlas/src/migrate.ts --validate-only",
     "upgrade": "npx @strapi/upgrade latest",
     "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
