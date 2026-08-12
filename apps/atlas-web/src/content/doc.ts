@@ -68,6 +68,35 @@ export type DocFigureBlock = {
   captionCompact?: string;
 };
 
+/** Comparison / compatibility matrix — semantic table in DocBody. */
+export type DocTableBlock = {
+  caption: string;
+  captionCompact?: string;
+  columns: string[];
+  rows: Array<{ id: string; cells: string[] }>;
+};
+
+/** Engineering evidence — CI, tests, a11y, repository proof. */
+export type DocEvidenceKind =
+  | "ci"
+  | "deploy"
+  | "test"
+  | "coverage"
+  | "performance"
+  | "a11y"
+  | "repository"
+  | "documentation";
+
+export type DocEvidenceBlock = {
+  kind: DocEvidenceKind;
+  title: string;
+  /** Human-readable status — never color-only. */
+  status: string;
+  meta: Array<{ label: string; value: string }>;
+  href?: string;
+  hrefLabel?: string;
+};
+
 export type DocSection = {
   id: string;
   chapter: string;
@@ -79,6 +108,8 @@ export type DocSection = {
   callout?: DocCallout;
   code?: DocCodeBlock;
   terminal?: DocTerminalBlock;
+  table?: DocTableBlock;
+  evidence?: DocEvidenceBlock;
 };
 
 export type DocNavLink = {

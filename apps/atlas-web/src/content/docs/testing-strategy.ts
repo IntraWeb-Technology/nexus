@@ -58,9 +58,9 @@ export const testingStrategyDoc: DocDetail = {
       callout: {
         variant: "note",
         title: "Search is a filter — not AI.",
-        body: "Documentation search is a static filter or UI placeholder this milestone — not an AI search product. Label the control clearly.",
+        body: "Documentation search is a fixture-scoped client filter — not an AI search product or external index. Label the control clearly; Clear resets the query.",
         bodyCompact:
-          "Docs search is a static filter/placeholder — label it clearly.",
+          "Docs search is a client filter. Label it clearly; Clear resets.",
       },
     },
     {
@@ -76,6 +76,22 @@ export const testingStrategyDoc: DocDetail = {
           "$ pnpm --filter @repo/atlas-web exec playwright test e2e/docs.spec.ts",
           "✓ desktop / tablet / mobile",
         ],
+      },
+      evidence: {
+        kind: "test",
+        title: "Documentation handbook suite — fixture-backed",
+        status: "Passing — 3 viewports",
+        meta: [
+          { label: "SUITE", value: "docs + doc-detail" },
+          { label: "VIEWPORTS", value: "1440 · 768 · 390" },
+          { label: "AXE", value: "WCAG 2.1 AA — no serious/critical" },
+          {
+            label: "COMMAND",
+            value: "pnpm --filter atlas-web test:e2e -- docs",
+          },
+        ],
+        href: "/docs",
+        hrefLabel: "Handbook landing →",
       },
       figure: {
         alt: "Playwright projects for desktop, tablet, and mobile Atlas breakpoints",

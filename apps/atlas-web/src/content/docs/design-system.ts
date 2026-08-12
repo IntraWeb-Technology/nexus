@@ -70,6 +70,26 @@ export const designSystemDoc: DocDetail = {
         captionCompact:
           "Fig. 1 — Surface stack for docs landing cards and search.",
       },
+      table: {
+        caption:
+          "Table 1 — Surface roles for Documentation and Articles compositions.",
+        captionCompact: "Table 1 — Surface roles for handbook and journal.",
+        columns: ["Surface", "Token", "Typical use"],
+        rows: [
+          {
+            id: "paper",
+            cells: ["Paper", "--atlas-paper", "Page ground"],
+          },
+          {
+            id: "elevated",
+            cells: ["Elevated", "--atlas-elevated", "Search, cards, nav"],
+          },
+          {
+            id: "secondary",
+            cells: ["Secondary", "--atlas-secondary", "Progress note band"],
+          },
+        ],
+      },
     },
     {
       id: "freeze",
