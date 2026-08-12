@@ -33,7 +33,7 @@
 
 ### Milestone scheme note
 
-Earlier implementation reports used an implementation-local numbering (**M0 Foundations → M1 Home → M2 Work → M3 Case Study**). Those reports remain valid historical proof (Homepage Pilot, Work Route, Case Study Route, Architecture Freeze). As of 2026-08-11 this Build Manifest uses the **program-level** milestone scheme above. That earlier core-route implementation work is completed under **M4 — Editorial Brand / Core Route Implementation**.
+Earlier implementation reports used an implementation-local numbering (**M0 Foundations → M1 Home → M2 Work → M3 Case Study**). Those reports remain valid **historical** proof (Homepage Pilot, Work Route, Case Study Route, Architecture Freeze). As of 2026-08-11 this Build Manifest uses the **program-level** milestone scheme above. That earlier core-route work, together with About and Contact, is completed under **M4 — Editorial Brand / Core Route Implementation**. Historical report language that once said “M4 may begin” describes a past clearance state, not the current program status.
 
 ---
 
@@ -160,7 +160,11 @@ flowchart LR
 | CMS mapping | `atlas-web` `lib/strapi/` + `@repo/strapi-client` |
 | Schema changes | `cms-strapi` (with IntraWeb regression) |
 
-### Folder structure (actual — through M4 core routes)
+### Folder structure (through M4 core routes)
+
+**M4 complete routes:** `/`, `/work`, `/work/[slug]`, `/about`, `/contact` (plus contact API, associated content/components, and Playwright coverage).
+
+Representative tree for Home / Work / Case Study modules (About / Contact follow the same chrome · sections · content · e2e ownership pattern):
 
 ```text
 apps/atlas-web/src/
@@ -173,7 +177,7 @@ apps/atlas-web/src/
 ├── components/
 │   ├── chrome/                 # Nav, Footer, ReadingProgress
 │   ├── editorial/              # ChapterMarker, Figure, MetadataRow, Toc, Table, Diagram
-│   └── sections/               # page-local compositions (home-*, work-*, case-*)
+│   └── sections/               # page-local compositions (home-*, work-*, case-*, about-*, contact-*)
 ├── content/
 │   ├── types.ts                # NavLink, MetaItem
 │   ├── homepage.ts
@@ -184,7 +188,7 @@ apps/atlas-web/src/
 │       └── portfolio-os.ts     # fixture data
 ├── styles/
 │   └── globals.css             # tokens + utilities
-└── e2e/                        # Playwright (homepage, work, case-study)
+└── e2e/                        # Playwright (homepage, work, case-study, about, contact)
 ```
 
 No `packages/atlas-*`. No `lib/strapi` yet (deferred until live CMS). Flat `app/` is acceptable; `(site)` group remains optional.
@@ -224,10 +228,10 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 | `/work/[slug]` | Case study | Site chrome + TOC/progress | Header, TOC, Hero, Overview… Contact (template 21) | Article header, TOC, figures, diagrams, evidence, related | Fixture | Article | `Article` / `TechArticle` | Journey + visual | **Implemented** (Portfolio OS fixture-first) |
 | `/articles` | Editorial writing index | Site chrome | Featured writing, chronological writing, editorial metadata, restrained topic nav (Figma authority) | Editorial hierarchy — **not** a card-grid blog | Fixture (M5) | Collection | `CollectionPage` | Journey + visual | **M5 NEXT** |
 | `/articles/[slug]` | Article / publishing proving ground | Site chrome + TOC/progress as designed | Header, title/deck, metadata, prose, figures, code, callouts, evidence, tables, related, prev/next | Page 26 primitives | Fixture (M5) | Article | `Article` / `TechArticle` | Journey + a11y + visual | **M5 NEXT** |
-| `/about` | Editorial profile | Site chrome | Opening, Philosophy, Approach, Style, Principles, Timeline, Focus, Reading, Architecture, Notes, Contact | Pull quote, timeline, diagrams | Partial | Profile | `ProfilePage` / `Person` | Journey + visual | Design frozen (not next; do not reopen M4) |
+| `/about` | Editorial profile | Site chrome | Opening, Philosophy, Approach, Style, Principles, Timeline, Focus, Reading, Architecture, Notes, Contact | Pull quote, timeline, diagrams | Fixture | Profile | `ProfilePage` / `Person` | Journey + visual | **Implemented** (M4) |
 | `/docs` | Handbook landing | Site chrome | Header, Search UI, Categories, Recently Updated, Progress note | Search field, category cards, list rows | Fixture → CMS at M8 | Collection | `CollectionPage` | Journey | **M6** (after Editorial System Freeze) |
 | `/docs/[…slug]` | Doc article | Site chrome + progress | Article patterns from Page 26 | Proven editorial primitives from M5 gate | Fixture → CMS at M8 | Article | `TechArticle` | Journey + visual | **M6** |
-| `/contact` | Conversation starter | Site chrome | Quiet hero + 3-field form | Form controls | Form only | Contact | — | Journey + form | Design frozen (not next; do not reopen M4) |
+| `/contact` | Conversation starter | Site chrome | Quiet hero + 3-field form | Form controls + contact API | Form only | Contact | — | Journey + form | **Implemented** (M4) |
 | `/404` | Not found | Minimal chrome | Message + links home/work | — | No | `noindex` | — | 404 journey | Required |
 | `/robots.txt` | Crawlers | — | — | — | No | — | — | Smoke | Required |
 | `/sitemap.xml` | Index | — | — | — | Derived | — | — | Smoke | Required |
@@ -236,7 +240,7 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 
 - **`/projects` → `/work`:** prefer `/work` to match Figma; add redirects from legacy URLs (§10).
 - **Articles (`/articles`, `/articles/[slug]`):** **M5** is the first production proving ground for the complete Atlas Editorial Publishing System (Figma Page 26). Not a deferred nice-to-have.
-- **About / Contact:** Designs are frozen in Figma (pages 20 / 23). Nav already targets these routes. They are **not** the next implementation milestone; do not describe them as “M4 to begin.” Remaining page implementation stays in launch scope without renumbering M5–M10.
+- **About / Contact:** **Implemented under M4** (Figma pages 20 / 23; `/about`, `/contact`, contact API, associated content/components, Playwright coverage). Do not reopen M4. Do not move these routes into M5. Do not describe M4 as pending or “cleared to start.”
 - **Search on `/docs`:** UI pattern approved; backend may be static filter or deferred pagefind — decide during M6 without inventing AI search.
 - **Anti-generic-blog guardrail:** `/articles` must not regress into a conventional developer-blog card-grid aesthetic. Atlas is an editorial engineering publication — preserve approved hierarchy, metadata, restrained topic navigation, and selective imagery. Figma remains visual authority; do not invent a new index design from this manifest.
 
@@ -609,7 +613,7 @@ Update docs when architecture, CMS, or testing materially changes.
 | **M1 — Foundations & Identity** | Visual / communication / system direction | M0 | Figma identity & foundation work | Identity established in Atlas Design System | **COMPLETE** |
 | **M2 — Information Architecture** | Site IA & narrative decisions | M1 | Approved IA | Proof-before-biography; featured + curated breadth; small primary nav (Work / About / Contact); Articles in publishing system; homepage narrative stages set | **COMPLETE** — do not reopen |
 | **M3 — Layout Architecture** | Homepage layout across breakpoints | M2 | Desktop / Tablet / Mobile homepage architecture | Narrative structure approved at 1440 / 768 / 390 | **COMPLETE** — no pending prerequisite decisions |
-| **M4 — Editorial Brand / Core Route Implementation** | Brand system + core frontend routes | M0–M3, design freeze | Editorial Brand System in Figma; `/`, `/work`, `/work/[slug]` implemented fixture-first | Matches frozen brand + pages 15/18/21; architecture freeze | **COMPLETE** — do not restart |
+| **M4 — Editorial Brand / Core Route Implementation** | Brand system + core frontend routes | M0–M3, design freeze | Editorial Brand System in Figma; `/`, `/work`, `/work/[slug]`, `/about`, `/contact` (+ contact API) implemented fixture-first | Matches frozen brand + pages 15/18/20/21/23; architecture freeze | **COMPLETE** — do not restart |
 | **M5 — Articles / Editorial Publishing** | Prove Editorial Publishing System in production UI | M4 complete | `/articles`, `/articles/[slug]`, representative fixtures, reusable primitives | See **M5 expectations** below + Editorial System Freeze Gate | **NEXT** |
 | *Editorial System Freeze Gate* | Acceptance gate only (not a milestone) | M5 implementation | Primitive classification + visual/a11y/responsive sign-off | See **Editorial System Freeze Gate** below | Pending after M5 |
 | **M6 — Documentation** | Docs experience on proven editorial system | Freeze gate passed | `/docs`, doc articles using **PROVEN** primitives | Matches page 22 + Page 26 proven set | Planned |
@@ -734,7 +738,7 @@ M5 is not **DONE** until the reusable Editorial Publishing System has been exerc
 | Strapi outage blanks site | L | H | Graceful empty states; cache/ISR (relevant from M8) |
 | Preview/draft leakage | L | H | Preview secret; no draft in public queries (M8+) |
 | Yarn atlas-docs vs pnpm friction | M | L | Keep docs separate until integration decision |
-| Contact spam | M | M | CAPTCHA/honeypot + rate limit when Contact ships |
+| Contact spam | M | M | CAPTCHA/honeypot + rate limit on Contact endpoint |
 | Legacy SEO loss | M | H | Redirect inventory before cutover (M9/M10) |
 | Test flakiness (visual) | M | M | Fixture data; masked dynamic regions |
 
@@ -761,9 +765,8 @@ Program foundations through M4 are complete. Checklist below remains the launch 
 
 1. Extend existing `case-study` / `article` vs Atlas-only types? — resolve before **M8** schema merge.  
 2. Docs search: client filter vs pagefind vs defer? — resolve during **M6**.  
-3. Contact delivery: Resend vs existing Nexus form path? — resolve when Contact implementation is scheduled.  
-4. Legacy URL inventory completeness for redirects? — resolve before **M9/M10** cutover.  
-5. About / Contact implementation slot within M6–M10 without renumbering? — decide without reopening M4 or delaying M5.
+3. Contact delivery: Resend vs existing Nexus form path? — operational choice for the **implemented** Contact route (M4); refine as needed before launch.  
+4. Legacy URL inventory completeness for redirects? — resolve before **M9/M10** cutover.
 
 ---
 
