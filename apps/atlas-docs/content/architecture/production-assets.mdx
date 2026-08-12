@@ -1,13 +1,16 @@
 # Production Assets — M7 Implementation Report
 
-**Status:** Active — Production Asset Freeze **BLOCKED** (A-05)  
+**Status:** Complete — Production Asset Freeze **PASS**  
 **Scope:** Production media for `apps/atlas-web`  
 **Date:** 2026-08-12  
 **Starting SHA:** `eaeae215b19ff7124879ea89104f5eb8d1e0522b` (`atlas-rebuild` / PR #26)  
+**Closure HEAD (pre-closure):** `d66553b2064786e8c243739393b7193aa2adc221`  
 **Branch:** `cursor/atlas-m7-production-assets-452c`  
 **Authority:** Build Manifest §7 · Production Asset Discovery inventory · Diagram Language · Editorial/Documentation Freeze
 
 M7 followed **RESOLVE → CAPTURE / CREATE → INTEGRATE → PROVE → FREEZE**.
+
+Closure pass: A-05 reclassified **DEFERRED / NON-BLOCKING** by authority. No Vehicle Maintenance substitute evidence was created.
 
 ---
 
@@ -35,7 +38,7 @@ Authoritative planning contract supplied with the M7 task (A-01–A-15 + PA-\*).
 | Portfolio OS family | Capture running `atlas-web` production UI (deterministic Playwright) |
 | A-03 | SVG architecture from real Nexus apps (`cms-strapi`, `atlas-web`, `atlas-docs`) — not Strapi marketing chrome |
 | A-04 | SVG workflow from `docs/automations` + `packages/n8n-workflows` |
-| A-05 | **BLOCKED** — no production source in Nexus |
+| A-05 | **DEFERRED / NON-BLOCKING** — no approved Vehicle Maintenance production source; substitute evidence forbidden |
 | A-07 / A-15 / Home philosophy | Keep composed UI |
 | A-08 / PA-ART1 / PA-DOC1 | New composed Diagram Language components |
 | A-09–A-11 | Conditional omit (prose/EvidenceBlock sufficient) |
@@ -53,7 +56,7 @@ Home Selected previously used Project A/B/C. Aligned structurally to Work Select
 | offset | IntraWeb Automation Platform | `/work/intraweb-automation` |
 | band | Vehicle Maintenance Platform | `/work/vehicle-maintenance` |
 
-Fixture outcomes kept short (no production-copy rewrite). Media bound only to real identities.
+Fixture outcomes kept short (no production-copy rewrite). Media bound only to real identities. Vehicle Maintenance remains a project with intentional **no-media** presentation (A-05 deferred).
 
 ---
 
@@ -88,7 +91,7 @@ One coordinated session across `/`, `/work`, `/work/portfolio-os`, `/docs` at 14
 | A-02 | **PRODUCTION** | Work featured 16:9 architecture-band capture |
 | A-03 | **PRODUCTION** | Shared Strapi SVG architecture |
 | A-04 | **PRODUCTION** | IntraWeb automation SVG workflow |
-| A-05 | **BLOCKED** | Vehicle Maintenance — source required |
+| A-05 | **DEFERRED / NON-BLOCKING** | No approved Vehicle Maintenance production source in Nexus. M7 must not manufacture substitute product evidence. Future enrichment only. |
 | A-06 | **PRODUCTION** | Case hero WebP D/T/M (decisions chapter evidence) |
 | A-07 | **COMPOSED** | `ArchitectureDiagram` — PASS vs Diagram Language |
 | A-08 | **COMPOSED** | `ContentMapRenderDiagram` |
@@ -99,6 +102,15 @@ One coordinated session across `/`, `/work`, `/work/portfolio-os`, `/docs` at 14
 | A-13 | **PRODUCTION** | `/og/default.png` 1200×630 + metadata |
 | A-14 | **PRODUCTION** | `/favicon.svg` + brand mark |
 | A-15 | **COMPOSED** | Approach + architecture — PASS; captions de-placeholdered |
+
+### Classification glossary
+
+| Class | Meaning |
+| --- | --- |
+| **PRODUCTION** | Real operational/product evidence from an approved production source |
+| **COMPOSED** | Purpose-built explanatory visual, explicitly represented as composed |
+| **CONDITIONAL OMIT** | Intentionally omitted because it would not improve evidence or narrative |
+| **DEFERRED** | Legitimate future asset opportunity not fulfilled in this milestone |
 
 ---
 
@@ -113,7 +125,6 @@ One coordinated session across `/`, `/work`, `/work/portfolio-os`, `/docs` at 14
 | PA-ART1 | **COMPOSED** | `RscRequestPathDiagram` on RSC article |
 | PA-DOC1 | **COMPOSED** | `AtlasBoundaryDiagram` on Architecture doc |
 | PA-DOC2–5 | **DEFER** | No decorative filler; keep selective placeholders until CMS content warrants figures |
-| A-12 | See §7 | |
 
 ---
 
@@ -160,6 +171,7 @@ M6 IA unchanged.
 - Neutral URL strings (static now; Strapi later)
 - Domain types extended on `CaseFigure`, Work/Home fixtures, Article/Doc figure blocks
 - `composed` enum for Diagram Language insertions without parallel image components
+- Work selected projects without `mediaSrc` render **no media plane** (A-05 intentional absence)
 
 ---
 
@@ -174,7 +186,7 @@ M6 IA unchanged.
 
 ## 15. Responsive verification
 
-Verified via Playwright projects 1440 / 768 / 390 for Home, Work, Case Study, About, Article (RSC), Docs (Architecture), Contact regression. Mobile crops use dedicated WebP where required (not shrunken desktop-only).
+Verified via Playwright projects 1440 / 768 / 390 for Home, Work, Case Study, About, Article (RSC), Docs (Architecture), Contact regression. Mobile crops use dedicated WebP where required. Vehicle Maintenance no-media band verified deliberate at all three widths.
 
 ---
 
@@ -185,7 +197,7 @@ Verified via Playwright projects 1440 / 768 / 390 for Home, Work, Case Study, Ab
 - Diagram contrast follows ink/sage tokens
 - axe WCAG AA serious+ clear on covered routes
 - Contact remains imagery-free
-- Reduced-motion capture context used for evidence
+- A-05 deferral introduces no empty/misleading image semantics
 
 ---
 
@@ -193,19 +205,17 @@ Verified via Playwright projects 1440 / 768 / 390 for Home, Work, Case Study, Ab
 
 | Suite | Result |
 | --- | --- |
-| `pnpm check-types` | Pass |
-| `pnpm lint` | Pass |
-| `pnpm build` | Pass |
+| `pnpm check-types` | **PASS** |
+| `pnpm lint` | **PASS** |
+| `pnpm build` | **PASS** |
 | Playwright (all projects) | **298 passed**, 2 skipped |
-| New `e2e/media.spec.ts` | Pass |
-
-Contact success path now mocks `/api/contact` (delivery credentials are environment-dependent; failure path already mocked).
+| `e2e/media.spec.ts` | **PASS** — Vehicle Maintenance intentional no-media |
 
 ---
 
 ## 18. Visual-regression results
 
-Linux baselines refreshed for Home, Work, Case Study, Articles detail, Docs detail (expected M7 asset changes). Win32 baselines retained. Classification: **EXPECTED M7 ASSET CHANGE**. No material layout regressions identified after refresh.
+Linux baselines refreshed during M7 implementation for expected asset changes. Closure may refresh Work baselines only if the A-05 placeholder removal legitimately changes the Work selected band. Win32 baselines retained.
 
 ---
 
@@ -216,17 +226,21 @@ Linux baselines refreshed for Home, Work, Case Study, Articles detail, Docs deta
 | Must be gone | Required P0 media placeholders for A-01–A-04, A-06, A-13, A-14 — **removed** |
 | Allowed (M8 copy) | Home problem/outcome, Contact form placeholders, About meta/timeline copy |
 | Intentional | Composed diagrams |
-| Blocked | A-05 Vehicle Maintenance media plane |
+| Deferred media | A-05 — project retained, no media plane, no FIG placeholder |
 
 Doc figure labels remain on non-Architecture docs (PA-DOC2–5 deferred).
 
 ---
 
-## 20. Blocked assets
+## 20. Deferred assets (non-blocking)
 
-### A-05 — BLOCKED: production source required
+### A-05 — DEFERRED / NON-BLOCKING
 
-Minimum to resolve: production application URL, repository path, or approved operational screenshot source for Vehicle Maintenance Platform. Do not substitute another project.
+No approved Vehicle Maintenance production source currently exists in Nexus. M7 is not authorized to manufacture substitute product evidence. A-05 is therefore deferred and non-blocking for the M7 Production Asset Freeze.
+
+**Explicitly confirmed:** no Vehicle Maintenance screenshot, mock UI, composed substitute-as-production, or unrelated substitute image was created.
+
+A-05 remains a known future enrichment opportunity when an approved production source exists.
 
 ---
 
@@ -240,6 +254,7 @@ Minimum to resolve: production application URL, repository path, or approved ope
 | Shared Strapi / Automation SVGs | `public/images/work/…` | Strapi M8 (or stay static if authored as brand diagrams) |
 | Article/Docs composed diagrams | React components | Application |
 | ArchitectureDiagram / About diagrams / Home philosophy | Composed UI | Application |
+| A-05 Vehicle Maintenance media | *absent* | Strapi M8 when approved source exists |
 
 CMS-bound metadata (alt, caption, kind, owner, provenance) lives in fixtures today — ready for mapper fields; Strapi not populated.
 
@@ -256,8 +271,8 @@ CMS-bound metadata (alt, caption, kind, owner, provenance) lives in fixtures tod
 
 ## 23. Production Asset Freeze verdict
 
-**BLOCKED** — launch-required P0 **A-05** remains unresolved while Vehicle Maintenance remains launch selected work.
+**PASS** — all available required M7 assets satisfy the contract; A-05 is explicitly **DEFERRED / NON-BLOCKING**; quality gates verified in closure.
 
-### M7 ACTIVE — PRODUCTION ASSET FREEZE BLOCKED
+### M7 COMPLETE — PRODUCTION ASSET FREEZE PASS
 
-Blocking ID: **A-05**. Required: production Vehicle Maintenance source (app / repo / live URL / approved capture).
+M8 remains **PLANNED**. No M8 / Strapi implementation was performed.

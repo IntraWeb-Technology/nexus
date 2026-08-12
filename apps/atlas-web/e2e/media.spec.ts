@@ -34,7 +34,7 @@ test.describe("production media (M7)", () => {
     await expect(page.getByText(/^IMG$/)).toHaveCount(0);
   });
 
-  test("work selected Strapi and Automation media render; Vehicle remains blocked", async ({
+  test("work selected Strapi and Automation media render; Vehicle has intentional no-media", async ({
     page,
   }) => {
     await page.goto("/work");
@@ -45,10 +45,12 @@ test.describe("production media (M7)", () => {
       page.getByRole("img", { name: /IntraWeb|n8n|orchestration/i }).first(),
     ).toBeVisible();
     await expect(
-      page.getByRole("img", {
-        name: /Vehicle Maintenance production media blocked/i,
-      }),
-    ).toHaveCount(1);
+      page.getByRole("heading", { name: "Vehicle Maintenance Platform" }),
+    ).toBeVisible();
+    // A-05 deferred — no production media, no placeholder img semantics.
+    await expect(
+      page.getByRole("img", { name: /Vehicle Maintenance/i }),
+    ).toHaveCount(0);
   });
 
   test("case study hero retires placeholder panels label", async ({ page }) => {

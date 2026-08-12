@@ -27,14 +27,13 @@ export type WorkProject = {
   statusLabel: string;
   featured: boolean;
   layout: WorkProjectLayout;
-  mediaLabel: string;
+  /** Present only when production / composed media ships with the project. */
+  mediaLabel?: string;
   /** Neutral media URL when production evidence exists (M7). */
   mediaSrc?: string;
   mediaWidth?: number;
   mediaHeight?: number;
   mediaSizes?: string;
-  /** When true, media remains intentionally unresolved (blocked source). */
-  mediaBlocked?: boolean;
   href: string;
   ctaLabel: string;
   metaNote?: string;
@@ -247,9 +246,7 @@ export const workFixture: WorkFixture = {
         statusLabel: "Completed",
         featured: false,
         layout: "band",
-        mediaLabel:
-          "Vehicle Maintenance production media blocked — source required",
-        mediaBlocked: true,
+        // A-05 deferred — no approved production source; intentional no-media band.
         href: "/work/vehicle-maintenance",
         ctaLabel: "View →",
         metaNote: "systems note",

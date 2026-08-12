@@ -56,3 +56,11 @@ node scripts/optimize-m7-assets.mjs
 | Favicon / mark / default OG | `public/` static | Application |
 | Project / case / article / docs rasters | `public/images` static | Strapi (M8) |
 | Architecture / workflow diagrams | Composed UI or SVG | Application (composed) or Strapi if CMS authors own them |
+
+## Deferred (non-blocking)
+
+| ID | Asset | Status | Reason |
+| --- | --- | --- | --- |
+| A-05 | Vehicle Maintenance selected media | **DEFERRED / NON-BLOCKING** | No approved production source in Nexus. Do not manufacture substitute evidence. Project remains; no media plane. |
+
+See `apps/atlas-docs/content/architecture/production-assets.mdx` for the full A-01–A-15 matrix and Freeze verdict.

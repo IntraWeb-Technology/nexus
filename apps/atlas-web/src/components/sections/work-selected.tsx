@@ -16,34 +16,28 @@ function ProjectMedia({
   className: string;
   contain?: boolean;
 }) {
-  if (project.mediaSrc && project.mediaWidth && project.mediaHeight) {
-    return (
-      <div
-        className={`relative overflow-hidden rounded-[2px] border border-atlas-border bg-atlas-ink ${className}`.trim()}
-      >
-        <Image
-          src={project.mediaSrc}
-          alt={project.mediaLabel}
-          width={project.mediaWidth}
-          height={project.mediaHeight}
-          sizes={project.mediaSizes}
-          className={
-            contain
-              ? "h-full w-full object-contain p-3"
-              : "h-full w-full object-cover object-top"
-          }
-          unoptimized={project.mediaSrc.endsWith(".svg")}
-        />
-      </div>
-    );
+  if (!project.mediaSrc || !project.mediaWidth || !project.mediaHeight) {
+    return null;
   }
 
   return (
     <div
-      className={`flex items-end overflow-hidden rounded-[2px] border border-atlas-border bg-atlas-ink p-5 ${className}`.trim()}
-      role="img"
-      aria-label={project.mediaLabel}
-    />
+      className={`relative overflow-hidden rounded-[2px] border border-atlas-border bg-atlas-ink ${className}`.trim()}
+    >
+      <Image
+        src={project.mediaSrc}
+        alt={project.mediaLabel ?? project.name}
+        width={project.mediaWidth}
+        height={project.mediaHeight}
+        sizes={project.mediaSizes}
+        className={
+          contain
+            ? "h-full w-full object-contain p-3"
+            : "h-full w-full object-cover object-top"
+        }
+        unoptimized={project.mediaSrc.endsWith(".svg")}
+      />
+    </div>
   );
 }
 
@@ -117,7 +111,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                 <div className="relative min-h-[160px] overflow-hidden rounded-[2px] border border-atlas-border bg-atlas-secondary tablet:min-h-[240px]">
                   <Image
                     src={feature.mediaSrc}
-                    alt={feature.mediaLabel}
+                    alt={feature.mediaLabel ?? feature.name}
                     width={feature.mediaWidth}
                     height={feature.mediaHeight}
                     sizes="100vw"
@@ -125,13 +119,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                     unoptimized={feature.mediaSrc.endsWith(".svg")}
                   />
                 </div>
-              ) : (
-                <div
-                  className="flex min-h-[160px] items-center justify-center rounded-[2px] border border-atlas-border bg-atlas-secondary tablet:min-h-[240px]"
-                  role="img"
-                  aria-label={feature.mediaLabel}
-                />
-              )}
+              ) : null}
               <div className="space-y-2.5 px-4 py-3.5 tablet:space-y-2.5 tablet:px-6 tablet:py-5">
                 <ChapterMarker>{feature.category}</ChapterMarker>
                 <h3 className="m-0 font-display text-[17px] font-semibold text-atlas-ink tablet:text-xl">
@@ -184,7 +172,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                 <div className="relative min-h-[180px] overflow-hidden rounded-[2px] border border-atlas-border bg-atlas-ink">
                   <Image
                     src={offset.mediaSrc}
-                    alt={offset.mediaLabel}
+                    alt={offset.mediaLabel ?? offset.name}
                     width={offset.mediaWidth}
                     height={offset.mediaHeight}
                     sizes="100vw"
@@ -192,13 +180,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                     unoptimized={offset.mediaSrc.endsWith(".svg")}
                   />
                 </div>
-              ) : (
-                <div
-                  className="flex min-h-[180px] items-center justify-center rounded-[2px] border border-atlas-border bg-atlas-secondary"
-                  role="img"
-                  aria-label={offset.mediaLabel}
-                />
-              )}
+              ) : null}
               <ProjectLink project={offset} />
             </article>
 
@@ -207,7 +189,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                 <div className="relative min-h-[160px] overflow-hidden rounded-[2px] border border-atlas-border bg-atlas-ink">
                   <Image
                     src={offset.mediaSrc}
-                    alt={offset.mediaLabel}
+                    alt={offset.mediaLabel ?? offset.name}
                     width={offset.mediaWidth}
                     height={offset.mediaHeight}
                     sizes="100vw"
@@ -215,13 +197,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                     unoptimized={offset.mediaSrc.endsWith(".svg")}
                   />
                 </div>
-              ) : (
-                <div
-                  className="flex min-h-[160px] items-center justify-center rounded-[2px] border border-atlas-border bg-atlas-secondary"
-                  role="img"
-                  aria-label={offset.mediaLabel}
-                />
-              )}
+              ) : null}
               <div className="space-y-2 px-4 py-3.5">
                 <ChapterMarker>{offset.category}</ChapterMarker>
                 <h3 className="m-0 font-display text-[17px] font-semibold text-atlas-ink">
@@ -263,11 +239,19 @@ export function WorkSelected({ data }: WorkSelectedProps) {
             </article>
 
             <article className="hidden items-center gap-4 border border-atlas-border bg-atlas-elevated p-5 tablet:flex desktop:hidden">
-              <div
-                className="flex h-20 w-[100px] shrink-0 items-center justify-center rounded-[2px] border border-atlas-border bg-atlas-secondary"
-                role="img"
-                aria-label={band.mediaLabel}
-              />
+              {band.mediaSrc && band.mediaWidth && band.mediaHeight ? (
+                <div className="relative h-20 w-[100px] shrink-0 overflow-hidden rounded-[2px] border border-atlas-border bg-atlas-ink">
+                  <Image
+                    src={band.mediaSrc}
+                    alt={band.mediaLabel ?? band.name}
+                    width={band.mediaWidth}
+                    height={band.mediaHeight}
+                    sizes="100px"
+                    className="h-full w-full object-contain p-1"
+                    unoptimized={band.mediaSrc.endsWith(".svg")}
+                  />
+                </div>
+              ) : null}
               <div className="min-w-0 space-y-1.5">
                 <ChapterMarker>{band.category}</ChapterMarker>
                 <h3 className="m-0 font-display text-base font-semibold text-atlas-ink">
@@ -277,22 +261,15 @@ export function WorkSelected({ data }: WorkSelectedProps) {
               </div>
             </article>
 
-            <article className="bg-atlas-elevated tablet:hidden">
-              <div
-                className="flex min-h-[160px] items-center justify-center rounded-[2px] border border-atlas-border bg-atlas-secondary"
-                role="img"
-                aria-label={band.mediaLabel}
-              />
-              <div className="space-y-2 px-4 py-3.5">
-                <ChapterMarker>{band.category}</ChapterMarker>
-                <h3 className="m-0 font-display text-[17px] font-semibold text-atlas-ink">
-                  {band.name}
-                </h3>
-                <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body">
-                  {band.summaryMobile ?? band.summary}
-                </p>
-                <ProjectLink project={band} />
-              </div>
+            <article className="space-y-2 border border-atlas-border bg-atlas-elevated px-4 py-3.5 tablet:hidden">
+              <ChapterMarker>{band.category}</ChapterMarker>
+              <h3 className="m-0 font-display text-[17px] font-semibold text-atlas-ink">
+                {band.name}
+              </h3>
+              <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body">
+                {band.summaryMobile ?? band.summary}
+              </p>
+              <ProjectLink project={band} />
             </article>
           </>
         ) : null}
