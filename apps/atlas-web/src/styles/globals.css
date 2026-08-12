@@ -59,6 +59,8 @@
 
 html {
   color-scheme: light;
+  /* Sticky nav (+ reading progress on long-form) must not obscure #anchors */
+  scroll-padding-top: calc(var(--atlas-nav-h) + 0.75rem);
 }
 
 body {

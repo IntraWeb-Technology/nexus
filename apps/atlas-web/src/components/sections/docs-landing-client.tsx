@@ -53,7 +53,7 @@ export function DocsLandingClient({ data }: DocsLandingClientProps) {
           <label htmlFor={inputId} className="sr-only">
             Search documentation
           </label>
-          <div className="flex items-center justify-between rounded-[2px] border border-atlas-border bg-atlas-elevated px-4 py-3.5 text-atlas-body">
+          <div className="flex items-center gap-3 rounded-[2px] border border-atlas-border bg-atlas-elevated px-4 py-3.5 text-atlas-body">
             <input
               ref={inputRef}
               id={inputId}
@@ -62,11 +62,24 @@ export function DocsLandingClient({ data }: DocsLandingClientProps) {
               onChange={(event) => setQuery(event.target.value)}
               placeholder={data.search.placeholder}
               autoComplete="off"
-              className="m-0 w-full border-0 bg-transparent font-sans text-sm leading-[18px] text-atlas-ink outline-none placeholder:text-atlas-body"
+              className="m-0 w-full min-w-0 border-0 bg-transparent font-sans text-sm leading-[18px] text-atlas-ink outline-none placeholder:text-atlas-body [&::-webkit-search-cancel-button]:hidden"
             />
-            <kbd className="ml-3 shrink-0 font-mono text-[11px] text-atlas-body">
-              {data.search.shortcut}
-            </kbd>
+            {query ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  inputRef.current?.focus();
+                }}
+                className="shrink-0 border-0 bg-transparent p-0 font-sans text-xs font-medium text-atlas-umber"
+              >
+                Clear
+              </button>
+            ) : (
+              <kbd className="shrink-0 font-mono text-[11px] text-atlas-body">
+                {data.search.shortcut}
+              </kbd>
+            )}
           </div>
         </div>
       </div>

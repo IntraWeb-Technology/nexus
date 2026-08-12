@@ -65,7 +65,7 @@ export const frontendArchitectureDoc: DocDetail = {
           "$ rg '\"use client\"' apps/atlas-web/src",
           "chrome/site-nav-active.tsx",
           "chrome/reading-progress.tsx",
-          "sections/docs-search.tsx",
+          "sections/docs-landing-client.tsx",
           "sections/contact-form.tsx",
         ],
       },

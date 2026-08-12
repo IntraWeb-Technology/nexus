@@ -84,6 +84,34 @@ test.describe("docs index", () => {
     ).toHaveCount(0);
   });
 
+  test("shows no-results and clears the filter", async ({ page }) => {
+    await page.goto("/docs");
+    const search = page.getByLabel("Search documentation");
+    await search.fill("zzzz-no-match");
+    await expect(
+      page.getByText("No handbook pages match that filter."),
+    ).toBeVisible();
+    await expect(
+      page.getByText("No categories match that filter."),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Clear" }).click();
+    await expect(search).toHaveValue("");
+    await expect(
+      page.getByRole("link", { name: /Atlas Architecture/i }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText("No handbook pages match that filter."),
+    ).toHaveCount(0);
+  });
+
+  test("keyboard shortcut focuses search", async ({ page }) => {
+    await page.goto("/docs");
+    const modifier = process.platform === "darwin" ? "Meta" : "Control";
+    await page.keyboard.press(`${modifier}+k`);
+    await expect(page.getByLabel("Search documentation")).toBeFocused();
+  });
+
   test("Articles category links to chronological journal", async ({ page }) => {
     await page.goto("/docs");
     await expect(
