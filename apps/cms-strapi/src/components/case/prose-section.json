@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_case_prose_sections",
+  "info": {
+    "displayName": "Case Prose Section",
+    "icon": "write",
+    "description": "Problem / implementation prose"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "titleMobile": {
+      "type": "string"
+    },
+    "paragraphs": {
+      "type": "json",
+      "required": true
+    },
+    "paragraphsTablet": {
+      "type": "json"
+    },
+    "bodyMobile": {
+      "type": "text"
+    },
+    "intro": {
+      "type": "text"
+    }
+  }
+}

@@ -1,0 +1,48 @@
+---
+description: Atlas documentation — ownership, milestone records, screenshot sync
+globs:
+  - apps/atlas-docs/**
+  - apps/atlas-web/**/README*
+alwaysApply: false
+---
+
+# Atlas documentation
+
+## Ownership (mandatory)
+
+- Atlas product documentation belongs in `apps/atlas-docs`.
+- Nexus-wide architecture, standards, and repository decisions belong in root `/docs`.
+- Do **not** duplicate the same source of truth in both places. Link across boundaries instead.
+
+## Every completed milestone (mandatory)
+
+Update before claiming the milestone done (see `atlas-definition-of-done`):
+
+| Record | Purpose |
+| --- | --- |
+| **Build Manifest** | Status, scope, checklist, next milestone — keep authoritative |
+| **Implementation report** | What shipped, intentional deltas, test results |
+| **Architecture report** | When boundaries, ownership, freeze scope, or abstractions change |
+| **Deferred technical debt** | Explicit backlog entries — never silent drops |
+| **Decision log** | Material trade-offs and approved exceptions |
+
+Explain **why** decisions were made. Do not merely restate code.
+
+## Atlas docs topics (as they become real)
+
+Product overview, design principles, visual system, typography, color, spacing, motion, components, responsive behavior, page walkthroughs, Strapi content model (Atlas perspective), editorial workflows, testing, accessibility, architecture, deployment overview, maintenance, and ADRs.
+
+## Screenshots (mandatory)
+
+- Include desktop, tablet, and mobile screenshots for important pages.
+- Generate with Playwright where practical.
+- Store in a predictable Atlas docs asset directory.
+- Screenshots must stay synchronized with the implementation.
+- Broken image references and broken documentation links should fail validation.
+
+## Writing standards (mandatory)
+
+- Do not document self-explanatory functions or trivial components.
+- Do not generate filler documentation.
+- Keep public docs free of secrets, credentials, private endpoints, internal tokens, and sensitive operational details. Separate public technical docs from private operational notes when needed.
+- Update docs when architecture, CMS workflows, major components, or testing behavior materially changes.

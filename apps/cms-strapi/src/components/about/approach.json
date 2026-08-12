@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_about_approachs",
+  "info": {
+    "displayName": "About Approach",
+    "icon": "book",
+    "description": "About approach section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "chapterCondensed": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "bodyCondensed": {
+      "type": "text"
+    },
+    "stages": {
+      "type": "json",
+      "required": true
+    },
+    "figureCaption": {
+      "type": "string"
+    },
+    "figure": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.media"
+    }
+  }
+}

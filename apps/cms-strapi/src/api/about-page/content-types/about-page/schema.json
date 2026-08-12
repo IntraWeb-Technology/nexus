@@ -1,0 +1,93 @@
+{
+  "kind": "collectionType",
+  "collectionName": "about_pages",
+  "info": {
+    "singularName": "about-page",
+    "pluralName": "about-pages",
+    "displayName": "About Page",
+    "description": "Atlas site-scoped About composition"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "site": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::site.site",
+      "required": true
+    },
+    "seo": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.seo",
+      "required": true
+    },
+    "opening": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.opening",
+      "required": true
+    },
+    "philosophy": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.philosophy",
+      "required": true
+    },
+    "approach": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.approach",
+      "required": true
+    },
+    "style": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.style",
+      "required": true
+    },
+    "principles": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.principles",
+      "required": true
+    },
+    "timeline": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.timeline",
+      "required": true
+    },
+    "focus": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.focus",
+      "required": true
+    },
+    "reading": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.reading",
+      "required": true
+    },
+    "architecture": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.architecture",
+      "required": true
+    },
+    "notes": {
+      "type": "component",
+      "repeatable": false,
+      "component": "about.notes",
+      "required": true
+    },
+    "contactBridge": {
+      "type": "component",
+      "repeatable": false,
+      "component": "home.bridge",
+      "required": true
+    }
+  }
+}

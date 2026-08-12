@@ -1,0 +1,63 @@
+{
+  "collectionName": "components_publishing_sections",
+  "info": {
+    "displayName": "Publishing Section",
+    "icon": "layer",
+    "description": "Article/Doc chapter with optional primitives"
+  },
+  "options": {},
+  "attributes": {
+    "sectionId": {
+      "type": "string",
+      "required": true
+    },
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "paragraphs": {
+      "type": "json",
+      "required": true
+    },
+    "paragraphsTablet": {
+      "type": "json"
+    },
+    "bodyMobile": {
+      "type": "text"
+    },
+    "figure": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.media"
+    },
+    "callout": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.callout"
+    },
+    "code": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.code"
+    },
+    "terminal": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.terminal"
+    },
+    "table": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.table"
+    },
+    "evidence": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.evidence"
+    }
+  }
+}

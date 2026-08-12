@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_case_decisions",
+  "info": {
+    "displayName": "Case Decision",
+    "icon": "cursor",
+    "description": "Decision matrix item"
+  },
+  "options": {},
+  "attributes": {
+    "decisionId": {
+      "type": "string",
+      "required": true
+    },
+    "statement": {
+      "type": "text",
+      "required": true
+    },
+    "statementTablet": {
+      "type": "text"
+    },
+    "statementMobile": {
+      "type": "text"
+    },
+    "context": {
+      "type": "text",
+      "required": true
+    },
+    "choice": {
+      "type": "text",
+      "required": true
+    },
+    "tradeoff": {
+      "type": "text",
+      "required": true
+    },
+    "consequence": {
+      "type": "text",
+      "required": true
+    }
+  }
+}

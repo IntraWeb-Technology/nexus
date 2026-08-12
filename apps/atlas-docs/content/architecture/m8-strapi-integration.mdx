@@ -1,0 +1,123 @@
+# M8 — Strapi Content Integration (Implementation Report)
+
+**Status:** COMPLETE  
+**Phase:** M8B  
+**Date:** 2026-08-12  
+**Branch:** `cursor/atlas-m8-strapi-content-integration-7311`  
+**Starting SHA (atlas-rebuild):** `5a2f52ad9aaa903faeedbbcbaf44e9479274d1fd`  
+**M8A contract:** [M8 Content Contract](/docs/architecture/m8-content-contract)  
+**M7 SHA:** `e0acda782175ccf235e5b29c1b9a148fbf6d4ea0` (ancestor)  
+**Authority:** Locked M8A contract · Production Asset Freeze PASS
+
+---
+
+## 1. Verdict
+
+### M8 COMPLETE — STRAPI CONTENT CONTRACT IMPLEMENTED
+
+A-05 remains **DEFERRED / NO MEDIA**. No Vehicle Maintenance substitute evidence was created.
+
+---
+
+## 2. What shipped
+
+| Layer | Delivery |
+| --- | --- |
+| Strapi schemas | Additive Project / Case Study / Article fields; `publishing.*`, `case.*`, `home.*`, `about.*`, `work.*` components; `home-page`, `about-page`, `work-page`, `contact-page` singletons (site 1:1) |
+| `@repo/strapi-client` | Types, POPULATE allowlists, shapers, getters for Atlas surfaces |
+| Atlas assemblers | CMS → existing domain fixtures (`HomepageFixture`, `WorkFixture`, `CaseStudyFixture`, …) |
+| Routes | All Atlas content surfaces load via `src/lib/content` getters |
+| Chrome | Nav/footer/mark remain application-static (`content/chrome.ts`) |
+| Migration | `apps/cms-strapi/scripts/migrate-atlas` — validate / dry-run / `--write` |
+| Brand assets | Favicon, Atlas mark, default OG stay in `public/` |
+
+---
+
+## 3. Content source behavior
+
+| Mode | When | Behavior |
+| --- | --- | --- |
+| `fixture` | `ATLAS_CONTENT_SOURCE=fixture` or no `STRAPI_URL` | Typed fixtures (test/dev). Playwright forces fixture. |
+| `strapi` | `STRAPI_URL` / `ATLAS_CONTENT_SOURCE=strapi` | Live CMS; failures throw `AtlasContentError` — **no silent fixture fallback** |
+
+Preview: optional `{ preview: true }` → Strapi draft status via existing client helpers.
+
+---
+
+## 4. Surface migration status
+
+| Surface | Status | Notes |
+| --- | --- | --- |
+| Home | Wired | Singleton + project relations |
+| Work | Wired | Singleton chrome + project query (`sortOrder`) |
+| Case Study | Wired | Additive `case-study` + `relatedProject` |
+| About | Wired | Named-section singleton |
+| Contact | Wired | Editorial copy only; form/API app-owned |
+| Articles | Wired | `surface=writing` + `publishing.section` |
+| Documentation | Wired | Same Article model, `surface=documentation` |
+| Redirects / SEO | Client + `shared.seo` ready | Full legacy redirect inventory remains M9/M10 |
+
+---
+
+## 5. Migration
+
+```bash
+pnpm --filter cms-strapi migrate:atlas:validate   # schema + fixture identities
+pnpm --filter cms-strapi migrate:atlas            # dry-run plan
+pnpm --filter cms-strapi migrate:atlas -- --write # requires live Strapi + token
+```
+
+Dry-run plan: 4 projects, 1 case study, 6 writing articles, 5 docs, 4 singletons.  
+Skips: A-05 media, PA-DOC2–5, favicon, OG, mark.
+
+**Environment note:** Live `--write` was not executed in the M8B agent environment (no running Strapi). Tooling is source-controlled and validated; operators run `--write` against the shared CMS before production cutover.
+
+---
+
+## 6. Assets
+
+| Class | Handling |
+| --- | --- |
+| PRODUCTION (A-01–A-04, A-06, A-12, PA-*) | Migratable via payloads / media upload |
+| COMPOSED (A-07, A-08, A-15, PA-ART1, PA-DOC1) | `evidenceClass=composed` + `composedKey` |
+| A-05 | **Absence of media** — asserted in unit + migration validation |
+| A-13 / A-14 | Application-static |
+
+---
+
+## 7. Verification (executed)
+
+| Gate | Result |
+| --- | --- |
+| `@repo/strapi-client` unit | **21/21 PASS** |
+| `@repo/strapi-client` build | **PASS** |
+| `migrate:atlas:validate` | **PASS** |
+| `atlas-web` unit (`test:unit`) | **8/8 PASS** (includes A-05) |
+| `atlas-web` typecheck | **PASS** |
+| `atlas-web` lint | **PASS** |
+| `atlas-web` production build | **PASS** |
+| Playwright (D/T/M) | **298 passed**, 2 skipped |
+| Accessibility (axe in Playwright) | **PASS** on covered routes |
+| Visual regression | **PASS** vs M7 baselines (fixture source) |
+| M7 media.spec | **PASS** — Vehicle Maintenance intentional no-media |
+
+---
+
+## 8. Deviations from M8A contract
+
+**No deviations from the locked M8A contract.**
+
+Operational clarification only: live Strapi upsert is a deployment step (`migrate:atlas --write`), not performed inside the agent VM.
+
+---
+
+## 9. Files of interest
+
+- Schemas: `apps/cms-strapi/src/components/{publishing,case,home,about,work}/`, `apps/cms-strapi/src/api/{home-page,about-page,work-page,contact-page}/`
+- Client: `packages/strapi-client/src/**`
+- Atlas: `apps/atlas-web/src/lib/{strapi,content}/**`
+- Migration: `apps/cms-strapi/scripts/migrate-atlas/**`
+
+---
+
+### M8 COMPLETE — STRAPI CONTENT CONTRACT IMPLEMENTED

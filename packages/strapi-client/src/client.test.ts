@@ -71,6 +71,7 @@ describe("createStrapiClient integration (mocked fetch)", () => {
                 documentId: "a1",
                 title: "Hello",
                 slug: "hello",
+                surface: "writing",
                 sites: [{ key: "personal", name: "Personal" }],
               },
             ],
@@ -88,12 +89,16 @@ describe("createStrapiClient integration (mocked fetch)", () => {
       },
     });
 
-    const result = await client.getArticles("personal");
+    const result = await client.getArticles("personal", {
+      filters: { surface: { $eq: "writing" } },
+    });
     assert.equal(seenAuth, "Bearer secret-token");
     assert.match(seenUrl, /^https:\/\/cms\.example\.com\/api\/articles\?/);
     assert.match(seenUrl, /personal/);
+    assert.match(seenUrl, /surface/);
     assert.equal(result.items.length, 1);
     assert.equal(result.items[0]?.slug, "hello");
+    assert.equal(result.items[0]?.surface, "writing");
   });
 
   it("throws StrapiHttpError on a non-2xx response", async () => {

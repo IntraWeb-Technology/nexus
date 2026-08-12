@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_work_taxonomies",
+  "info": {
+    "displayName": "Work Taxonomy",
+    "icon": "layer",
+    "description": "Taxonomy band copy"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "deck": {
+      "type": "text",
+      "required": true
+    },
+    "groups": {
+      "type": "json"
+    }
+  }
+}

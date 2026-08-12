@@ -1,0 +1,52 @@
+---
+description: Atlas product definition, migration posture, and launch scope
+globs:
+  - apps/atlas-web/**
+  - apps/atlas-docs/**
+  - docs/portfolio/**
+alwaysApply: false
+---
+
+# Atlas product
+
+## Identity
+
+- Atlas is the ground-up rebuild of **johnschibelli.dev**.
+- `apps/atlas-web` — Atlas production frontend.
+- `apps/atlas-docs` — Atlas product documentation site.
+- Site key in shared Strapi: `personal` (see `apps/cms-strapi` / existing Site model).
+- The existing production portfolio remains the migration reference until Atlas replaces it.
+
+## Maturity (mandatory)
+
+- Frontend architecture, design system, and Editorial Publishing System are **frozen**.
+- Implementation follows the Build Manifest milestones; do not invent parallel scope.
+- Milestone completion requires `atlas-definition-of-done` plus recorded approval before the next milestone begins.
+
+## Migration posture (mandatory)
+
+- Atlas is a **greenfield implementation**. Do not reproduce legacy architecture merely because it exists.
+- Existing content, routes, assets, metadata, analytics, and proven functionality are **migration inputs**.
+- Do not discard SEO value, URLs, metadata, redirects, analytics, or useful assets without an explicit migration decision.
+
+## Product bar (mandatory)
+
+- Communicate senior engineering credibility through design, implementation quality, and documentation.
+- Serve recruiters, engineering leaders, founders, and qualified clients — not a generic marketing template.
+- Feel like a polished software product, not a developer portfolio theme.
+- Features must support the portfolio’s primary purpose.
+- Quality gates (a11y, tests, visuals, build) live in `atlas-definition-of-done` / `atlas-testing` — not as optional polish.
+
+## Scope control (mandatory)
+
+Do **not** add without an approved requirement:
+
+- Accounts / auth
+- Dashboards
+- Personalization
+- AI chat
+- Advanced search
+- Live GitHub metrics
+- Other unrelated product features
+
+Keep release scope to Build Manifest routes and journeys. Page inventory is owned by the Manifest — not by this rule.

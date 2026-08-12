@@ -1,0 +1,35 @@
+{
+  "collectionName": "components_about_architectures",
+  "info": {
+    "displayName": "About Architecture",
+    "icon": "book",
+    "description": "About architecture section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "layers": {
+      "type": "json",
+      "required": true
+    },
+    "figureCaption": {
+      "type": "string"
+    },
+    "figure": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.media"
+    }
+  }
+}

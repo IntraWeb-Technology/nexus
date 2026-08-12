@@ -443,6 +443,60 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAboutPageAboutPage extends Struct.CollectionTypeSchema {
+  collectionName: 'about_pages';
+  info: {
+    description: 'Atlas site-scoped About composition';
+    displayName: 'About Page';
+    pluralName: 'about-pages';
+    singularName: 'about-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    approach: Schema.Attribute.Component<'about.approach', false> &
+      Schema.Attribute.Required;
+    architecture: Schema.Attribute.Component<'about.architecture', false> &
+      Schema.Attribute.Required;
+    contactBridge: Schema.Attribute.Component<'home.bridge', false> &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    focus: Schema.Attribute.Component<'about.focus', false> &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::about-page.about-page'
+    > &
+      Schema.Attribute.Private;
+    notes: Schema.Attribute.Component<'about.notes', false> &
+      Schema.Attribute.Required;
+    opening: Schema.Attribute.Component<'about.opening', false> &
+      Schema.Attribute.Required;
+    philosophy: Schema.Attribute.Component<'about.philosophy', false> &
+      Schema.Attribute.Required;
+    principles: Schema.Attribute.Component<'about.principles', false> &
+      Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    reading: Schema.Attribute.Component<'about.reading', false> &
+      Schema.Attribute.Required;
+    seo: Schema.Attribute.Component<'shared.seo', false> &
+      Schema.Attribute.Required;
+    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'> &
+      Schema.Attribute.Required;
+    style: Schema.Attribute.Component<'about.style', false> &
+      Schema.Attribute.Required;
+    timeline: Schema.Attribute.Component<'about.timeline', false> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
   collectionName: 'articles';
   info: {
@@ -462,6 +516,7 @@ export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
       'manyToMany',
       'api::category.category'
     >;
+    contactBridge: Schema.Attribute.Component<'home.bridge', false>;
     contentFormat: Schema.Attribute.Enumeration<
       ['markdown', 'mdx', 'blocks', 'html']
     > &
@@ -470,11 +525,19 @@ export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    dek: Schema.Attribute.Text;
+    dekCompact: Schema.Attribute.Text;
+    docKind: Schema.Attribute.Enumeration<
+      ['guide', 'adr', 'playbook', 'procedure', 'reference']
+    >;
+    editorialType: Schema.Attribute.Enumeration<['essay', 'decision', 'note']>;
     excerpt: Schema.Attribute.Text;
     featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     featuredImage: Schema.Attribute.Media<'images'>;
     hashnodeId: Schema.Attribute.String;
     hashnodePublication: Schema.Attribute.String;
+    headerChapter: Schema.Attribute.String;
+    headerMeta: Schema.Attribute.Component<'publishing.meta-item', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -486,9 +549,14 @@ export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
     originalUrl: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     publishedDate: Schema.Attribute.DateTime;
+    readingTime: Schema.Attribute.String;
+    sections: Schema.Attribute.Component<'publishing.section', true>;
     seo: Schema.Attribute.Component<'shared.seo', false>;
     sites: Schema.Attribute.Relation<'manyToMany', 'api::site.site'>;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    surface: Schema.Attribute.Enumeration<['writing', 'documentation']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'writing'>;
     tags: Schema.Attribute.Relation<'manyToMany', 'api::tag.tag'>;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
@@ -544,39 +612,62 @@ export interface ApiCaseStudyCaseStudy extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    architecture: Schema.Attribute.Component<'case.architecture', false>;
     challenge: Schema.Attribute.RichText;
     clientName: Schema.Attribute.String;
+    constraints: Schema.Attribute.Component<'case.row-section', false>;
+    contactBridge: Schema.Attribute.Component<'home.bridge', false>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    decisions: Schema.Attribute.Component<'case.decision', true>;
+    deck: Schema.Attribute.Text;
+    deckMobile: Schema.Attribute.Text;
+    deckTablet: Schema.Attribute.Text;
+    delivery: Schema.Attribute.Component<'case.row-section', false>;
     featuredImage: Schema.Attribute.Media<'images'>;
+    figureSlots: Schema.Attribute.Component<'case.figure-slot', true>;
     gallery: Schema.Attribute.Media<'images', true>;
+    heroMeta: Schema.Attribute.Component<'publishing.meta-item', true>;
+    implementation: Schema.Attribute.Component<'case.prose-section', false>;
+    lessons: Schema.Attribute.Component<'case.row-section', false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::case-study.case-study'
     > &
       Schema.Attribute.Private;
+    metaLineMobileRole: Schema.Attribute.String;
+    metaLineMobileYear: Schema.Attribute.String;
+    metaLineTablet: Schema.Attribute.String;
     migrationBatch: Schema.Attribute.String;
+    outcomes: Schema.Attribute.Component<'case.outcomes', false>;
+    overview: Schema.Attribute.Component<'case.overview', false>;
+    problem: Schema.Attribute.Component<'case.prose-section', false>;
     publishedAt: Schema.Attribute.DateTime;
+    relatedNote: Schema.Attribute.Text;
     relatedProject: Schema.Attribute.Relation<
       'manyToOne',
       'api::project.project'
     >;
     results: Schema.Attribute.RichText;
+    role: Schema.Attribute.String;
     seo: Schema.Attribute.Component<'shared.seo', false>;
     sites: Schema.Attribute.Relation<'manyToMany', 'api::site.site'>;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
     solution: Schema.Attribute.RichText;
+    stackLine: Schema.Attribute.String;
     summary: Schema.Attribute.Text;
     technologies: Schema.Attribute.Relation<
       'manyToMany',
       'api::technology.technology'
     >;
     title: Schema.Attribute.String & Schema.Attribute.Required;
+    toc: Schema.Attribute.JSON;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    year: Schema.Attribute.String;
   };
 }
 
@@ -605,6 +696,53 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
     name: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiContactPageContactPage extends Struct.CollectionTypeSchema {
+  collectionName: 'contact_pages';
+  info: {
+    description: 'Atlas editorial Contact copy';
+    displayName: 'Contact Page';
+    pluralName: 'contact-pages';
+    singularName: 'contact-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    body: Schema.Attribute.Text & Schema.Attribute.Required;
+    chapter: Schema.Attribute.String & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    emailLabel: Schema.Attribute.String & Schema.Attribute.Required;
+    emailPlaceholder: Schema.Attribute.String & Schema.Attribute.Required;
+    failureBody: Schema.Attribute.Text & Schema.Attribute.Required;
+    failureTitle: Schema.Attribute.String & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::contact-page.contact-page'
+    > &
+      Schema.Attribute.Private;
+    messageLabel: Schema.Attribute.String & Schema.Attribute.Required;
+    messagePlaceholder: Schema.Attribute.String & Schema.Attribute.Required;
+    meta: Schema.Attribute.String;
+    nameLabel: Schema.Attribute.String & Schema.Attribute.Required;
+    namePlaceholder: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    seo: Schema.Attribute.Component<'shared.seo', false> &
+      Schema.Attribute.Required;
+    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'> &
+      Schema.Attribute.Required;
+    submitLabel: Schema.Attribute.String & Schema.Attribute.Required;
+    successBody: Schema.Attribute.Text & Schema.Attribute.Required;
+    successTitle: Schema.Attribute.String & Schema.Attribute.Required;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -642,6 +780,57 @@ export interface ApiFaqItemFaqItem extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiHomePageHomePage extends Struct.CollectionTypeSchema {
+  collectionName: 'home_pages';
+  info: {
+    description: 'Atlas site-scoped Home composition';
+    displayName: 'Home Page';
+    pluralName: 'home-pages';
+    singularName: 'home-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    aboutTeaser: Schema.Attribute.Component<'home.bridge', false> &
+      Schema.Attribute.Required;
+    contactBridge: Schema.Attribute.Component<'home.bridge', false> &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    featured: Schema.Attribute.Component<'home.featured', false> &
+      Schema.Attribute.Required;
+    featuredProject: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::project.project'
+    > &
+      Schema.Attribute.Required;
+    hero: Schema.Attribute.Component<'home.hero', false> &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::home-page.home-page'
+    > &
+      Schema.Attribute.Private;
+    philosophy: Schema.Attribute.Component<'home.philosophy', false> &
+      Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    selected: Schema.Attribute.Component<'home.selected-item', true> &
+      Schema.Attribute.Required;
+    seo: Schema.Attribute.Component<'shared.seo', false>;
+    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    writingChapter: Schema.Attribute.String & Schema.Attribute.Required;
+    writingItems: Schema.Attribute.Component<'home.writing-item', true> &
+      Schema.Attribute.Required;
   };
 }
 
@@ -747,15 +936,19 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    cardMedia: Schema.Attribute.Component<'publishing.media', false>;
+    category: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    ctaLabel: Schema.Attribute.String;
     description: Schema.Attribute.RichText;
     documentationUrl: Schema.Attribute.String;
     endDate: Schema.Attribute.Date;
     featured: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     featuredImage: Schema.Attribute.Media<'images'>;
     gallery: Schema.Attribute.Media<'images', true>;
+    layout: Schema.Attribute.Enumeration<['feature', 'offset', 'band']>;
     liveUrl: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -778,12 +971,17 @@ export interface ApiProjectProject extends Struct.CollectionTypeSchema {
     seo: Schema.Attribute.Component<'shared.seo', false>;
     sites: Schema.Attribute.Relation<'manyToMany', 'api::site.site'>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    sortOrder: Schema.Attribute.Integer;
     startDate: Schema.Attribute.Date;
+    statusLabel: Schema.Attribute.String;
     summary: Schema.Attribute.Text;
+    summaryMobile: Schema.Attribute.Text;
+    summaryTablet: Schema.Attribute.Text;
     technologies: Schema.Attribute.Relation<
       'manyToMany',
       'api::technology.technology'
     >;
+    themes: Schema.Attribute.JSON;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1048,6 +1246,54 @@ export interface ApiTestimonialTestimonial extends Struct.CollectionTypeSchema {
     quote: Schema.Attribute.Text & Schema.Attribute.Required;
     role: Schema.Attribute.String;
     sites: Schema.Attribute.Relation<'manyToMany', 'api::site.site'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiWorkPageWorkPage extends Struct.CollectionTypeSchema {
+  collectionName: 'work_pages';
+  info: {
+    description: 'Atlas site-scoped Work index chrome';
+    displayName: 'Work Page';
+    pluralName: 'work-pages';
+    singularName: 'work-page';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    contactBridge: Schema.Attribute.Component<'home.bridge', false> &
+      Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    featuredCopy: Schema.Attribute.Component<'work.featured-copy', false> &
+      Schema.Attribute.Required;
+    featuredProject: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::project.project'
+    > &
+      Schema.Attribute.Required;
+    intro: Schema.Attribute.Component<'work.intro', false> &
+      Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::work-page.work-page'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    selectedChapter: Schema.Attribute.String & Schema.Attribute.Required;
+    selectedDeck: Schema.Attribute.Text & Schema.Attribute.Required;
+    selectedHeadline: Schema.Attribute.String & Schema.Attribute.Required;
+    seo: Schema.Attribute.Component<'shared.seo', false> &
+      Schema.Attribute.Required;
+    site: Schema.Attribute.Relation<'oneToOne', 'api::site.site'> &
+      Schema.Attribute.Required;
+    taxonomy: Schema.Attribute.Component<'work.taxonomy', false> &
+      Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1565,11 +1811,14 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::about-page.about-page': ApiAboutPageAboutPage;
       'api::article.article': ApiArticleArticle;
       'api::author.author': ApiAuthorAuthor;
       'api::case-study.case-study': ApiCaseStudyCaseStudy;
       'api::category.category': ApiCategoryCategory;
+      'api::contact-page.contact-page': ApiContactPageContactPage;
       'api::faq-item.faq-item': ApiFaqItemFaqItem;
+      'api::home-page.home-page': ApiHomePageHomePage;
       'api::navigation.navigation': ApiNavigationNavigation;
       'api::page.page': ApiPagePage;
       'api::project.project': ApiProjectProject;
@@ -1580,6 +1829,7 @@ declare module '@strapi/strapi' {
       'api::tag.tag': ApiTagTag;
       'api::technology.technology': ApiTechnologyTechnology;
       'api::testimonial.testimonial': ApiTestimonialTestimonial;
+      'api::work-page.work-page': ApiWorkPageWorkPage;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

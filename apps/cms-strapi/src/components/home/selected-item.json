@@ -1,0 +1,36 @@
+{
+  "collectionName": "components_home_selected_items",
+  "info": {
+    "displayName": "Home Selected Item",
+    "icon": "bulletList",
+    "description": "Selected-work slot"
+  },
+  "options": {},
+  "attributes": {
+    "project": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::project.project",
+      "required": true
+    },
+    "layout": {
+      "type": "enumeration",
+      "enum": [
+        "feature",
+        "offset",
+        "band"
+      ],
+      "required": true
+    },
+    "eyebrow": {
+      "type": "string"
+    },
+    "outcome": {
+      "type": "text",
+      "required": true
+    },
+    "ctaLabel": {
+      "type": "string"
+    }
+  }
+}

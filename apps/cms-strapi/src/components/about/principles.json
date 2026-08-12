@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_about_principless",
+  "info": {
+    "displayName": "About Principles",
+    "icon": "book",
+    "description": "About principles section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "items": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

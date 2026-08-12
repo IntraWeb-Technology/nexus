@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile --filter=@repo/atlas-web... --filter=nexus",
+  "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=@repo/atlas-web --cache=local:rw,remote:rw",
+  "ignoreCommand": "cd ../.. && npx -y turbo@2.9.6 query affected --base=\"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\" --packages @repo/atlas-web --tasks build --exit-code"
+}

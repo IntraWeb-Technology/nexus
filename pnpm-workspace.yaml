@@ -4,6 +4,8 @@ packages:
   - "!apps/_cms-strapi-build-check"
   # Yarn/Nextra docs live in a separate repo (git submodule); not part of pnpm workspace
   - "!apps/cms-strapi-docs"
+  # Atlas product docs (Yarn/Nextra template); keep out of pnpm until integrated
+  - "!apps/atlas-docs"
   # Nested Hashnode monorepo with its own Turbo root; validate via its own tooling until integrated
   - "!apps/personal-site"
   # Agent-OS markdown only — no package.json build graph

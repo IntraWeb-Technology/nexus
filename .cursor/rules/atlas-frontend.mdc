@@ -1,0 +1,72 @@
+---
+description: Atlas frontend architecture — freeze, RSC, Rule of Two, fixtures
+globs: apps/atlas-web/**
+alwaysApply: false
+---
+
+# Atlas frontend
+
+## Architecture freeze (mandatory)
+
+- Atlas Frontend Architecture **v1.0 is frozen** (M0–M3 proven). See architecture freeze in `apps/atlas-docs`.
+- Do **not** change ownership boundaries, folder contracts, or shared extraction policy without explicit approval.
+- Preserve: `chrome/` · `editorial/` · page-local `sections/` · typed `content/` fixtures.
+- Forbidden without approval: page builders, section registries, dynamic-zone mappers, `packages/atlas-*`, speculative adapters.
+
+## RSC-first (mandatory)
+
+- Prefer React Server Components. Add `"use client"` only at the smallest necessary boundary.
+- Avoid unnecessary client JS and global state. Do not add a state-management library unless React + local state are insufficient.
+- Prefer accessible headless primitives for complex interactions; do not recreate focus/dialog/menu behavior from scratch without strong reason.
+- Use semantic HTML, logical heading order, and proper image optimization.
+
+## Rule of Two (mandatory)
+
+Extract a shared component only when **at least two real production consumers** exist (or the Build Manifest names it a required publishing primitive).
+
+- Page-local sections stay in `components/sections/` until a second route needs the same composition.
+- Do not create generic cards, universal section APIs, or shared shells “for later.”
+
+## Rule of Stability (mandatory)
+
+A shared extract is allowed only when it **does not destabilize** frozen routes.
+
+- If extracting would force visual or behavioral drift on Home / Work / Case Study (or other frozen pages), keep the composition local.
+- Prefer revert over “almost shared.” Stability beats DRY.
+
+## Fixture First (mandatory)
+
+- Ship routes against typed fixtures in `src/content/` until approved Strapi mappers exist.
+- Fixtures must mirror the planned CMS/domain shape so mappers target types — not reinvent props.
+- Do not couple UI to live CMS before the mapping layer is ready.
+
+## Domain model boundary (mandatory)
+
+- UI consumes **normalized domain types** only — never raw Strapi/CMS DTOs.
+- Keep transport shapes behind a data-access / mapping layer (prefer extending `@repo/strapi-client`).
+- Domain types live in `content/` (or dedicated type modules), not inside fixture data files that sections import as “the model.”
+- Production/CMS failures must degrade gracefully.
+
+## Component structure (mandatory)
+
+- Prefer explicit page and section components matching approved designs.
+- Keep Atlas-specific UI in `apps/atlas-web`. Move to `packages/` only after genuine cross-app reuse.
+- Keep components focused. Avoid overly generic prop APIs and deep abstraction layers.
+- Reuse design tokens; do not invent values. Do not build components not required by an approved page design.
+
+## Layout (guidance — frozen shape)
+
+```text
+apps/atlas-web/src/
+├── app/
+├── components/
+│   ├── chrome/      # Nav, Footer, ReadingProgress
+│   ├── editorial/   # Publishing primitives (Rule of Two)
+│   └── sections/    # Page-local compositions
+├── content/         # Domain types + fixtures
+├── lib/
+├── styles/
+└── e2e/
+```
+
+Milestone completion gates live in `atlas-definition-of-done`. Design parity lives in `atlas-design`. Strapi tenancy lives in `atlas-strapi`.

@@ -1,0 +1,136 @@
+# Atlas Frontend Architecture Freeze — M0–M3
+
+**Status:** Approved  
+**Date:** 2026-08-08  
+**Scope:** `/`, `/work`, `/work/portfolio-os` (`apps/atlas-web`)  
+**Authority:** Build Manifest · Homepage / Work / Case Study reports · Atlas Cursor rules
+
+---
+
+## Verdict
+
+```text
+APPROVED FOR ARCHITECTURE FREEZE
+```
+
+```text
+Atlas Frontend Architecture v1.0
+M0–M3 Proven
+```
+
+M4 (About + Contact) may begin. Do not expand scope beyond the Build Manifest milestones.
+
+---
+
+## Freeze criteria
+
+| Criterion | Result |
+| --- | --- |
+| Home / Work / Case Study visually stable | Pass — visual baselines unchanged |
+| Tests pass | Pass — 63/63 Playwright (D/T/M) |
+| Accessibility | Pass — axe serious/critical clear on all three routes |
+| Component ownership clear | Pass — chrome / editorial / page-local sections |
+| Fixture boundaries stable | Pass — domain types isolated; no Strapi DTOs in UI |
+| RSC default | Pass — client islands: `SiteNavActive`, `ReadingProgress` only |
+| Shared abstractions justified | Pass — see inventory below |
+| No speculative architecture | Pass |
+| No known defect that grows materially after M4 | Pass (after freeze fixes) |
+
+---
+
+## Issues found
+
+| Issue | Severity | Disposition |
+| --- | --- | --- |
+| Case domain types lived inside `portfolio-os.ts`; editorial/sections imported the fixture module | Architecture boundary | **Fixed** — types → `content/case-study.ts`; registry → `content/case-studies/index.ts` |
+| Case study skip target was `article#main` (no `main` landmark; Home/Work use `main`) | Accessibility consistency | **Fixed** — wrap with `main#main` then nested `article` |
+| Nav / footer link to `/about`, `/contact` (404 until M4) | Expected | Deferred — M4 |
+| `MetadataRow` has one production consumer | Rule of Two tension | **KEEP** — Build Manifest P0 publishing primitive; extract was intentional |
+| Contact bridges differ across Home / Work / Case | Stability | Intentional — not extracted |
+| Placeholder media planes (empty ink/secondary) | Asset debt | Deferred — Image Direction |
+| Muted token AA at caption size | Design | Deferred — Brand System review |
+| Strapi additive schema + mappers | CMS | Deferred — post-M3 wiring |
+| Linux visual snapshot variants / CI Playwright job | Infra | Deferred — M7 |
+
+---
+
+## Changes made (this audit)
+
+1. Extracted `CaseStudyFixture` and related types to `src/content/case-study.ts`.
+2. Moved slug registry to `src/content/case-studies/index.ts`; `portfolio-os.ts` is data-only.
+3. Pointed case sections + `ArchitectureDiagram` at domain types (not the fixture file).
+4. Aligned Case Study landmark model with Home/Work (`main` + nested `article`).
+
+No redesigns, no new dependencies, no speculative abstractions, no Strapi connection.
+
+---
+
+## Shared abstractions validated
+
+| Component | Location | Decision | Reason |
+| --- | --- | --- | --- |
+| `SiteNav` | chrome | **KEEP** | Shared publication chrome |
+| `SiteNavActive` | chrome | **KEEP** | Minimal client island (`usePathname` / `aria-current`) |
+| `SiteFooter` | chrome | **KEEP** | Shared chrome |
+| `ReadingProgress` | chrome | **KEEP** | Long-form scroll chrome; justified client |
+| `ChapterMarker` | editorial | **KEEP** | Home + Work + Case |
+| `Figure` | editorial | **KEEP** | Evidence plane across routes |
+| `MetadataRow` | editorial | **KEEP** | Manifest P0; Case desktop meta |
+| `CaseStudyToc` | editorial | **KEEP** | Named Manifest contract; D/T/M recomposition |
+| `EditorialTable` | editorial | **KEEP** | Constraints / Delivery / Lessons |
+| `ArchitectureDiagram` | editorial | **KEEP** | Editorial diagram language; types now domain-owned |
+
+---
+
+## Abstractions intentionally rejected
+
+- ContactBridge / shared contact shell  
+- StageRule as shared chrome  
+- Decision-matrix / outcome-card generics  
+- Universal ProjectCard / Card system  
+- Section registry / page builder / DZ mapper  
+- Premature `lib/strapi` adapter beyond approved future `@repo/strapi-client`  
+- `packages/atlas-*` UI package  
+- Unused publishing primitives (PullQuote, Callout, CodeBlock, Timeline, …)
+
+---
+
+## Technical debt intentionally deferred
+
+- Production evidence imagery (`next/image`) per asset manifest  
+- Muted contrast design decision  
+- About / Contact / Docs routes (M4–M5)  
+- SEO / redirects / sitemap completion (M6)  
+- Strapi additive `case-study` schema + mappers  
+- Related-case destinations that 404 until additional studies exist  
+- Optional desktop TOC rail / mobile sheet  
+- Linux snapshot variants; affected CI Playwright job (M7)
+
+---
+
+## Test results
+
+```text
+pnpm --filter @repo/atlas-web check-types  → pass
+pnpm --filter @repo/atlas-web build        → pass (/, /work, /work/portfolio-os)
+pnpm --filter @repo/atlas-web test:e2e     → 63 passed (desktop / tablet / mobile)
+```
+
+Coverage: Home · Work · Case Study — landmarks, nav active, skip link, keyboard, axe AA (serious+), visual regression, case 404, TOC, reading progress.
+
+Baselines were **not** regenerated; visual tests matched existing win32 Chromium snapshots.
+
+---
+
+## Recommendation
+
+**Atlas is cleared to begin M4** (About + Contact) under the frozen architecture.
+
+Constraints for M4+:
+
+- Preserve chrome / editorial / page-local section ownership  
+- Keep fixture-first until Strapi mappers exist  
+- Extract only when Rule of Two + Stability are both met  
+- Do not introduce page builders, registries, or speculative packages  
+
+**Stop.** Do not begin M4 in this audit session.

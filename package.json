@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "nexus",
   "private": true,
   "scripts": {
     "build": "turbo run build",
@@ -26,7 +26,7 @@
     "node": "22.x"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["supabase"],
+    "onlyBuiltDependencies": ["supabase", "better-sqlite3"],
     "ignoredBuiltDependencies": ["sharp", "unrs-resolver"],
     "overrides": {
       "@types/react": "^19.2.2",

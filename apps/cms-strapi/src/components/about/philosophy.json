@@ -1,0 +1,29 @@
+{
+  "collectionName": "components_about_philosophys",
+  "info": {
+    "displayName": "About Philosophy",
+    "icon": "book",
+    "description": "About philosophy section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "quote": {
+      "type": "text",
+      "required": true
+    },
+    "quoteCondensed": {
+      "type": "text"
+    },
+    "attribution": {
+      "type": "string"
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    }
+  }
+}

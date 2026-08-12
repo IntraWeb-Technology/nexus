@@ -1,0 +1,38 @@
+{
+  "collectionName": "components_about_focuss",
+  "info": {
+    "displayName": "About Focus",
+    "icon": "book",
+    "description": "About focus section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "bodyCondensed": {
+      "type": "text"
+    },
+    "statusLabel": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "themesLabel": {
+      "type": "string"
+    },
+    "themes": {
+      "type": "string"
+    }
+  }
+}

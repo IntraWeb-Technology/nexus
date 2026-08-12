@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_publishing_callouts",
+  "info": {
+    "displayName": "Callout",
+    "icon": "alien",
+    "description": "Semantic callout"
+  },
+  "options": {},
+  "attributes": {
+    "variant": {
+      "type": "enumeration",
+      "enum": [
+        "tradeoff",
+        "note",
+        "warning"
+      ],
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "body": {
+      "type": "text",
+      "required": true
+    },
+    "bodyCompact": {
+      "type": "text"
+    }
+  }
+}

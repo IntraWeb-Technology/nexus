@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1520" height="860" viewBox="0 0 1520 860" role="img" aria-labelledby="title desc">
+  <title id="title">Shared Strapi multi-site architecture</title>
+  <desc id="desc">One Strapi CMS serving Atlas and IntraWeb consumers through explicit site-key tenancy.</desc>
+  <rect width="1520" height="860" fill="#E9E4DA"/>
+  <text x="48" y="56" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#5A554C">A-03  ·  SHARED CMS</text>
+  <text x="48" y="92" font-family="Georgia, 'Times New Roman', serif" font-size="28" fill="#1A1814">Site tenancy across Atlas and IntraWeb</text>
+
+  <!-- Shared Strapi -->
+  <rect x="520" y="160" width="480" height="120" rx="2" fill="#FFFCF7" stroke="#1A1814" stroke-width="1.5"/>
+  <text x="544" y="208" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#4A5C56">N-CMS</text>
+  <text x="544" y="236" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#1A1814">apps/cms-strapi</text>
+  <text x="544" y="258" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#5A554C">Shared content platform</text>
+
+  <!-- Connectors down -->
+  <line x1="640" y1="280" x2="320" y2="380" stroke="#1A1814" stroke-width="1.5"/>
+  <polygon points="320,380 312,368 328,368" fill="#4A5C56"/>
+  <line x1="760" y1="280" x2="760" y2="380" stroke="#1A1814" stroke-width="1.5"/>
+  <polygon points="760,380 752,368 768,368" fill="#4A5C56"/>
+  <line x1="880" y1="280" x2="1200" y2="380" stroke="#1A1814" stroke-width="1.5"/>
+  <polygon points="1200,380 1192,368 1208,368" fill="#4A5C56"/>
+
+  <!-- Consumers -->
+  <rect x="120" y="400" width="400" height="140" rx="2" fill="#FFFCF7" stroke="#4A5C56" stroke-width="1.5"/>
+  <text x="144" y="448" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#4A5C56">N-01</text>
+  <text x="144" y="478" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#1A1814">apps/atlas-web</text>
+  <text x="144" y="504" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#5A554C">site key · personal</text>
+
+  <rect x="560" y="400" width="400" height="140" rx="2" fill="#FFFCF7" stroke="#1A1814" stroke-width="1.5"/>
+  <text x="584" y="448" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#5A554C">N-02</text>
+  <text x="584" y="478" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#1A1814">apps/atlas-docs</text>
+  <text x="584" y="504" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#5A554C">product documentation</text>
+
+  <rect x="1000" y="400" width="400" height="140" rx="2" fill="#FFFCF7" stroke="#1A1814" stroke-width="1.5"/>
+  <text x="1024" y="448" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#5A554C">N-03</text>
+  <text x="1024" y="478" font-family="Inter, system-ui, sans-serif" font-size="16" fill="#1A1814">IntraWeb consumers</text>
+  <text x="1024" y="504" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#5A554C">site-keyed properties</text>
+
+  <!-- Tenancy note -->
+  <rect x="120" y="620" width="1280" height="140" rx="2" fill="#FFFCF7" stroke="#D4CEC2" stroke-width="1.5"/>
+  <text x="144" y="668" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" fill="#4A5C56">CONTRACT</text>
+  <text x="144" y="700" font-family="Inter, system-ui, sans-serif" font-size="15" fill="#1A1814">Queries filter by site key. Tags are not tenancy. Draft content never crosses public Atlas routes.</text>
+  <text x="144" y="728" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#5A554C">Authority: apps/cms-strapi · Atlas Build Manifest · architecture handbook</text>
+</svg>

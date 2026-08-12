@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_publishing_meta_items",
+  "info": {
+    "displayName": "Meta Item",
+    "icon": "bulletList",
+    "description": "Label \u00b7 value pair"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "value": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

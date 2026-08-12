@@ -14,7 +14,7 @@ This audit is the prerequisite for shared content-model design. No destructive c
 
 | Finding | Detail |
 |---|---|
-| Local Strapi scaffold exists | `nexus/apps/cms-strapi` — Strapi **5.51.1**, SQLite default, **zero content-types** yet |
+| Local Strapi scaffold exists | `nexus/apps/cms-strapi` — Strapi **5.51.2**, SQLite default, **zero content-types** yet |
 | Live remote Strapi | `https://cms.intrawebtech.com` — product CMS candidate; `/api` returns 404 without auth; **no production schema writes** until inventory + backup + approval |
 | Personal site is inside Nexus | `nexus/apps/personal-site` (Portfolio OS monorepo nested under apps) |
 | Portfolio blog is live Hashnode GraphQL | `apps/site/app/blog` calls `gql.hashnode.com`; local `content/blog/*.md` **absent** in nested copy |
@@ -33,11 +33,11 @@ This audit is the prerequisite for shared content-model design. No destructive c
 |---|---|---|---|
 | 1 | Nexus (turborepo) | `E:\IntraWeb-Technologies\10_Repos\nexus` | IntraWeb site + portal + nested personal-site + cms-strapi + migration docs |
 | 2 | Personal site (nested) | `E:\IntraWeb-Technologies\10_Repos\nexus\apps\personal-site` | johnschibelli.dev frontend |
-| 3 | CMS Strapi (local) | `E:\IntraWeb-Technologies\10_Repos\nexus\apps\cms-strapi` | Editorial Strapi 5.51.1 app under development |
+| 3 | CMS Strapi (local) | `E:\IntraWeb-Technologies\10_Repos\nexus\apps\cms-strapi` | Editorial Strapi 5.51.2 app under development |
 | 4 | CMS Strapi Docs | `E:\IntraWeb-Technologies\10_Repos\cms-strapi-docs` | Authoritative CMS documentation (Nextra) |
 | 5 | Hashnode export | `E:\IntraWeb-Technologies\10_Repos\hashnode-schibelli` | 27 Hashnode article exports |
 | 6 | Portfolio OS (legacy) | `C:\Users\jschi\OneDrive\Desktop\Projects\2025_portfolio\portfolio-os` | Fuller content source for migration (blog MD, case studies, cms branding) |
-| 7 | Remote Strapi | `https://cms.intrawebtech.com` | Live 5.51.1 deploy target candidate |
+| 7 | Remote Strapi | `https://cms.intrawebtech.com` | Live 5.51.2 deploy target candidate |
 | 8 | strapi-develop | `E:\IntraWeb-Technologies\10_Repos\strapi-develop` | Upstream Strapi monorepo (reference only) |
 
 ---
@@ -107,7 +107,7 @@ This audit is the prerequisite for shared content-model design. No destructive c
 
 | Item | Value |
 |---|---|
-| Version | Strapi **5.51.1** |
+| Version | Strapi **5.51.2** |
 | DB | `better-sqlite3` (dev); Postgres supported via `config/database.ts` |
 | Content-types | **None** (`src/api/.gitkeep` only) |
 | Components | **None** |
@@ -223,7 +223,7 @@ See [contracts.md](./contracts.md) and README. Shared contracts are mandatory.
 ## 10. Validation of this audit
 
 - [x] Workspace roots enumerated (nexus multi-root + siblings)
-- [x] Local Strapi located (`apps/cms-strapi` 5.51.1, empty schema)
+- [x] Local Strapi located (`apps/cms-strapi` 5.51.2, empty schema)
 - [x] Content sources and entry counts measured
 - [x] Portal operational boundary stated
 - [x] Docs repo confirmed with initial ADRs

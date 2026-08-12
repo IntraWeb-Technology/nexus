@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  /* Atlas Editorial Brand System — frozen */
+  --atlas-paper: #f3f0e9;
+  --atlas-elevated: #fffcf7;
+  --atlas-secondary: #e9e4da;
+  --atlas-ink: #1a1814;
+  --atlas-body: #5a554c;
+  --atlas-muted: #8a847a;
+  --atlas-umber: #5c4a3a;
+  --atlas-sage: #4a5c56;
+  --atlas-border: #d4cec2;
+
+  --atlas-pad-x: 1.5rem; /* 24 mobile */
+  --atlas-nav-h: 3.25rem; /* 52 */
+  --atlas-reading: 45rem;
+  --atlas-page: 90rem; /* 1440 */
+}
+
+@media (min-width: 768px) {
+  :root {
+    --atlas-pad-x: 2.5rem; /* 40 tablet */
+    --atlas-nav-h: 3.5rem; /* 56 */
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --atlas-pad-x: 4rem; /* 64 desktop */
+    --atlas-nav-h: 3.75rem; /* 60 */
+  }
+}
+
+@theme inline {
+  --color-atlas-paper: var(--atlas-paper);
+  --color-atlas-elevated: var(--atlas-elevated);
+  --color-atlas-secondary: var(--atlas-secondary);
+  --color-atlas-ink: var(--atlas-ink);
+  --color-atlas-body: var(--atlas-body);
+  --color-atlas-muted: var(--atlas-muted);
+  --color-atlas-umber: var(--atlas-umber);
+  --color-atlas-sage: var(--atlas-sage);
+  --color-atlas-border: var(--atlas-border);
+
+  --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1440px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+  /* Sticky nav (+ reading progress on long-form) must not obscure #anchors */
+  scroll-padding-top: calc(var(--atlas-nav-h) + 0.75rem);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--atlas-paper);
+  color: var(--atlas-body);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--atlas-ink);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.atlas-pad-x {
+  padding-left: var(--atlas-pad-x);
+  padding-right: var(--atlas-pad-x);
+}
+
+.atlas-chapter {
+  font-family: var(--font-sans);
+  font-size: 0.625rem; /* 10 */
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--atlas-umber);
+  line-height: 1.2;
+}
+
+.atlas-hairline {
+  border: 0;
+  border-top: 1px solid var(--atlas-border);
+  margin: 0;
+}

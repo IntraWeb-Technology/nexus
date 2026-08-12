@@ -1,0 +1,234 @@
+# Documentation System — M6 Implementation Report
+
+**Status:** Complete — Documentation Freeze **PASSED**  
+**Scope:** `/docs`, `/docs/[...slug]` (`apps/atlas-web`)  
+**Date:** 2026-08-12  
+**Starting SHA:** `9885198ed9eef71ddb6346506552a31001e6edff` (`atlas-rebuild` / PR #25)  
+**Authority:** Atlas Design v1.0 · Build Manifest · Figma Page 22 (Documentation) · Page 26 (Editorial Publishing) · Editorial System Freeze Gate
+
+M6 followed **AUDIT → COMPLETE → PROVE → FREEZE**. Existing Documentation routes were material before this milestone; they were completed and proven rather than rebuilt.
+
+---
+
+## Verdict
+
+| Criterion | Result |
+| --- | --- |
+| `/docs` handbook landing + search | Pass |
+| `/docs/[…slug]` technical documents | Pass |
+| Representative fixtures A / B / C | Pass |
+| Shared editorial primitives reused (no second system) | Pass |
+| `ArticleBody` ≠ `DocBody` | Preserved |
+| Responsive D / T / M (1440 / 768 / 390) | Pass |
+| Accessibility (axe WCAG AA serious+) | Pass |
+| Playwright Docs suites | Pass — 76/76 (2 desktop-only shortcut skips) |
+| M5 Articles regression | Pass — 87/87 |
+| Visual regression (Linux baselines + win32 retained) | Pass for M6 surfaces |
+| Strapi / M8 | Untouched |
+| Production asset replacement / M7 campaign | Untouched |
+| **Documentation Freeze** | **PASSED** |
+
+**M7 — Production Assets is next.** Do not reopen Documentation architecture without a material defect.
+
+---
+
+## What existed before M6
+
+Classification at audit: **C — Material implementation**.
+
+- `/docs` landing: intro, searchable categories, recently updated, progress note
+- `/docs/[…slug]`: header, TOC, DocBody, related, prev/next, contact, reading progress
+- Five handbook fixtures (Architecture, Editorial System, Design System, Frontend, Testing)
+- Client-side substring search filter
+- Playwright + axe + visual baselines (win32 + linux) for landing + Architecture detail
+
+### Gaps closed in M6
+
+| Gap | Resolution |
+| --- | --- |
+| Doc content contract lacked `table` / `evidence` | Extended `DocSection`; wired PROVEN `EditorialDataTable` + `EvidenceBlock` through `DocBody` |
+| Design/editorial doc under-exercised tables | Design System fixture gained surface comparison table |
+| Testing doc under-exercised evidence | Testing Strategy fixture gained EvidenceBlock |
+| Search clear/no-results under-tested | Explicit Clear control + Playwright coverage |
+| Deep-link sticky-nav collision | `scroll-padding-top` on `html` |
+| Fixture copy drift (`docs-search.tsx`) | Corrected to `docs-landing-client.tsx` |
+| Governance behind code | This report + Build Manifest update |
+
+### Preserved (not rewritten)
+
+Landing composition, catch-all routing, handbook IA, prev/next + related, TOC, DocBody parallel to ArticleBody, fixture-first content, existing Linux/win32 baselines for landing + Architecture detail.
+
+---
+
+## Documentation IA decision
+
+Documentation remains a **category-driven evergreen handbook**, distinct from Articles chronology.
+
+| Surface | Model |
+| --- | --- |
+| `/docs` | Purpose + categories + freshness list + search filter |
+| `/docs/[…slug]` | Technical document with TOC, body, related, adjacent nav |
+| Primary site nav | Unchanged (Work / About / Contact / Articles) — Docs discovered via handbook + cross-links |
+| Handbook order | `docSummaries` array (drives prev/next) |
+| Freshness | `docsByUpdatedDesc()` on landing |
+
+No three-column SaaS docs portal. No Nextra clone. No card-wall redesign.
+
+---
+
+## Search decision
+
+**Resolved: fixture-scoped client filter** in `DocsLandingClient`.
+
+- Filters document titles/kinds/categories/excerpts and category cards
+- Accessible label; Clear resets; empty states for docs + categories
+- ⌘/Ctrl+K focuses search on desktop
+- No Algolia, Elasticsearch, Pagefind, or AI search
+- Strapi search remains M8+ if volume requires it
+
+---
+
+## Navigation / deep-linking
+
+| Behavior | Status |
+| --- | --- |
+| Category cards → representative docs | Proven |
+| Recently updated rows | Proven |
+| TOC (`aria-label="Documentation contents"`) | Proven |
+| Stable section `id`s + `#heading` URLs | Proven |
+| Sticky nav clearance via `scroll-padding-top` | Proven |
+| Prev/next adjacent handbook order | Proven |
+| Related (up to 3 other docs) | Proven |
+| Unknown / nested invalid slug → `notFound()` 404 | Proven |
+
+---
+
+## Representative fixtures
+
+| ID | Slug | Shape | Primitives exercised |
+| --- | --- | --- | --- |
+| **A** | `atlas-architecture` | Substantial architecture | Prose, TOC, note callout, TypeScript, terminal, figure |
+| **B** | `testing-strategy` | Testing / evidence | Prose, note callout, TypeScript, terminal, EvidenceBlock, figure |
+| **C** | `design-system` | Design / editorial | Prose, note callout, CSS code, figure, comparison table, terminal |
+
+Also retained: `editorial-system`, `frontend-architecture` (complete handbook coverage; not primary validation shapes).
+
+---
+
+## Shared editorial primitives
+
+### Consumed correctly (no API reopen)
+
+`ChapterMarker`, `Figure`, `Callout`, `CodeBlock`, `TerminalBlock`, `EditorialDataTable`, `EvidenceBlock`, `CaseStudyToc`, `ReadingProgress`
+
+### Shared primitives modified
+
+**None.** M6 only extended Docs content types + `DocBody` consumption. Chrome `scroll-padding-top` is a global deep-link fix (also benefits Articles/Case Study).
+
+### M5 Articles compatibility
+
+Articles Playwright suite: **87/87 passed** after M6 changes.
+
+---
+
+## Classification (Documentation Freeze)
+
+### PROVEN — Documentation behaviors
+
+| Behavior | Evidence |
+| --- | --- |
+| Handbook landing hierarchy | `/docs` intro + categories + recent |
+| Client search / clear / empty states | `DocsLandingClient` + Playwright |
+| Catch-all doc routing + 404 | `generateStaticParams` + `notFound()` |
+| TOC + stable anchors + deep links | Architecture detail suite |
+| DocBody publishing blocks | Code, terminal, callout, figure, table, evidence |
+| Adjacent + related navigation | Prev/next + related sections |
+| Reading progress | Detail chrome |
+| Responsive D/T/M | Visual + journey suites |
+| Accessibility | axe WCAG 2.1 AA — no serious/critical |
+
+### DOC-LOCAL — not a shared Articles contract
+
+| Composition | Notes |
+| --- | --- |
+| `DocsIntro` / `DocsLandingClient` / `DocsCategories` / `DocsProgressNote` | Landing IA only |
+| `DocHeader` inline metadata `<dl>` | Parallel to Article header (Stability) |
+| `DocBody` | Explicit block composition; **not** merged with `ArticleBody` |
+| `DocRelated` / `DocPrevNext` / `DocContact` | Page-local twins |
+
+### DEFERRED
+
+| Item | Owner |
+| --- | --- |
+| Production figures / diagrams / evidence media | **M7** |
+| Production copy polish | **M7** |
+| Primary-nav Docs link (if design revisits chrome) | Design approval — not required for Freeze |
+| Category-affinity related ranking | Not required; handbook order sufficient |
+| Nested multi-segment handbook paths | Catch-all ready; fixtures remain single-segment |
+| CMS sourcing / Strapi schemas | **M8** |
+| Search scaling (pagefind / server index) | **M9** if volume requires |
+| Syntax highlighter / copy chrome | Deferred (M5 contract) |
+| Deeper SEO / perf / observability | **M9** |
+
+---
+
+## Test evidence
+
+| Suite | Result |
+| --- | --- |
+| `e2e/docs.spec.ts` | Pass — landmarks, IA, search filter/clear/empty, fixture links, skip, axe, visual D/T/M; ⌘K desktop-only |
+| `e2e/doc-detail.spec.ts` | Pass — Architecture primitives, TOC, deep link, anchors, progress, prev/next, all routes 200, table doc, evidence doc, nested 404, axe, visuals (Architecture + Testing) |
+| `e2e/articles.spec.ts` + `article-detail.spec.ts` | Pass — 87/87 (M5 regression) |
+| `pnpm check-types` | Pass |
+| `pnpm lint` | Pass |
+| `pnpm build` (via Playwright webServer) | Pass |
+
+---
+
+## Responsive / visual / a11y
+
+- `/docs`, Architecture detail, Testing Strategy verified at **1440 / 768 / 390**
+- No page-level horizontal overflow; tables scroll inside region
+- Mobile: category list recomposition, searchable filter, TOC usable, no desktop-sidebar assumptions
+- axe WCAG 2.1 AA: no serious/critical on Docs surfaces
+- Material design divergence: none vs approved handbook + publishing direction
+
+---
+
+## Performance sanity
+
+- Documents remain RSC; search is a focused client island
+- No new search infrastructure or oversized client payloads
+- No universal content renderer introduced
+
+---
+
+## Deferrals
+
+### M7 — Production Assets
+
+- Replace labeled figure planes with architecture / design / testing diagrams
+- Real CI / Playwright / coverage evidence captures for EvidenceBlock
+- Production handbook copy polish
+- OG/social imagery (also M9 coordination)
+
+### M9 — Hardening
+
+- Search scaling if fixture volume grows past client filter
+- Snapshot path strategy (win32 + linux dual retention transitional)
+- Deeper SEO validation / performance budgets / observability
+- Broader browser matrix
+
+### M8 — Untouched
+
+No Strapi schemas, mappers, live CMS coupling, or migration scripts.
+
+---
+
+## Documentation Freeze result
+
+**PASSED.** Handbook IA, navigation, search, document rendering, responsive behavior, accessibility, and shared primitive consumption are stable. M7 can replace production assets/copy without Documentation architecture changes.
+
+```text
+M5 Articles  →  Editorial System Freeze Gate PASSED  →  M6 Documentation COMPLETE  →  Documentation Freeze PASSED  →  M7 Production Assets NEXT
+```

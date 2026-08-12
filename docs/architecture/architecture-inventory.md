@@ -8,8 +8,11 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | --- | --- | --- |
 | `apps/iw-portal` | `@repo/iw-portal` | Next.js 16, Clerk, Supabase, Stripe, Resend, Tailwind v4 |
 | `apps/iw-site-q2` | `@repo/iw-site-q2` | Next.js 16, reCAPTCHA Enterprise, Cal.com, Resend, Anthropic SDK, Tailwind v4 |
+| `apps/atlas-web` | `@repo/atlas-web` | Next.js 16, React 19, Tailwind v4 (scaffold) |
 
 **Active marketing app:** `apps/iw-site-q2` (legacy `apps/iw-site` removed from this monorepo).
+
+**Atlas:** `apps/atlas-web` is the greenfield portfolio frontend; product docs belong in `apps/atlas-docs` (Yarn/Nextra — not in the pnpm workspace until integrated). Implementation contract: [Atlas Build Manifest](../../apps/atlas-docs/content/architecture/build-manifest.mdx) (pointer: [docs/atlas/architecture](../atlas/architecture/README.md)).
 
 ## 2. Package list
 
@@ -20,7 +23,7 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | `packages/eslint-config` | `@repo/eslint-config` | Shared ESLint configs (`base`, `next-js`, `react-internal`) |
 | `packages/typescript-config` | `@repo/typescript-config` | Shared `tsconfig` fragments (`base`, `nextjs`, `react-library`) |
 
-**Root:** `package.json` name is `my-turborepo` (historical); repo is referred to as Nexus in docs.
+**Root:** `package.json` name is `nexus`.
 
 ## 3. Script inventory by package
 
@@ -84,6 +87,16 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | `build` | `next build` |
 | `start` | `next start --port 3010` |
 | `lint` | `eslint` |
+
+### `@repo/atlas-web`
+
+| Script | Command |
+| --- | --- |
+| `dev` | `next dev --port 3020` |
+| `build` | `next build` |
+| `start` | `next start --port 3020` |
+| `lint` | `eslint` |
+| `check-types` | `tsc --noEmit` |
 
 ### `@repo/n8n-workflows`
 

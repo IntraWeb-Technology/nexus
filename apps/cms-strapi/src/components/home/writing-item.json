@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_home_writing_items",
+  "info": {
+    "displayName": "Home Writing Item",
+    "icon": "file",
+    "description": "Writing teaser selection"
+  },
+  "options": {},
+  "attributes": {
+    "article": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::article.article",
+      "required": true
+    },
+    "note": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

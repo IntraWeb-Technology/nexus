@@ -1,0 +1,62 @@
+---
+description: Atlas release-quality validation — Playwright, a11y, visuals, build
+globs:
+  - apps/atlas-web/**/*.{test,spec}.{ts,tsx}
+  - apps/atlas-web/**/tests/**
+  - apps/atlas-web/**/e2e/**
+  - apps/atlas-web/playwright*.{ts,js,mjs}
+  - apps/atlas-docs/**/*.{test,spec}.{ts,tsx}
+  - apps/atlas-docs/**/e2e/**
+  - .github/workflows/ci.yml
+  - .github/scripts/affected.mjs
+alwaysApply: false
+---
+
+# Atlas testing
+
+Release-quality validation for completed Atlas work. The full milestone gate is `atlas-definition-of-done` — do not treat this rule as a substitute for that checklist.
+
+## Principles (mandatory)
+
+- Test high-risk behavior. Do **not** chase arbitrary coverage percentages.
+- Do not write tests for static wrappers with no meaningful behavior.
+- Prefer the repository’s established test tooling. Do not add overlapping frameworks without need.
+- Keep end-to-end tests focused enough to run reliably in CI.
+- Use stable fixtures or seeded CMS data for repeatable tests.
+
+## Every completed route (mandatory)
+
+Before a route (or milestone slice) is done, require:
+
+| Gate | Expectation |
+| --- | --- |
+| Playwright | Critical journey coverage for the route |
+| Accessibility | axe WCAG AA — no serious/critical; keyboard + landmarks |
+| Visual regression | Stable D/T/M snapshots (1440 / 768 / 390) |
+| Responsive verification | Matches Figma recomposition, not stacked desktop |
+| TypeScript | Affected package typecheck passes |
+| Production build | Affected package build passes |
+
+Deferrals need explicit approval and a Manifest / debt-log entry.
+
+## Unit tests (mandatory where logic exists)
+
+Cover: Strapi response mapping, data normalization, metadata generation, URL generation, validation, and error handling.
+
+## Playwright journeys (mandatory)
+
+Cover as they enter scope:
+
+- Home, Work, Case study detail, About, Contact
+- Docs landing when in launch scope; Articles only if required
+- Navigation and responsive menu
+- 404 behavior
+- Site isolation so Atlas cannot expose IntraWeb content
+- Missing content, empty states, Strapi failures, and unpublished content where relevant
+- Reduced-motion validation where motion exists
+
+## Visual snapshots (mandatory for stable pages)
+
+- Snapshot important, stable pages at desktop, tablet, and mobile.
+- Do not create fragile full-page snapshots for highly dynamic content without controlling data and timing.
+- Documentation screenshots must be generated predictably (see `atlas-documentation`).

@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile --filter=@repo/iw-portal... --filter=my-turborepo",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile --filter=@repo/iw-portal... --filter=nexus",
   "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=@repo/iw-portal --cache=local:rw,remote:rw",
   "ignoreCommand": "cd ../.. && npx -y turbo@2.9.6 query affected --base=\"${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}\" --packages @repo/iw-portal --tasks build --exit-code",
   "crons": [

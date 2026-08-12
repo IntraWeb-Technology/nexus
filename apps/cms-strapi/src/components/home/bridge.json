@@ -1,0 +1,46 @@
+{
+  "collectionName": "components_home_bridges",
+  "info": {
+    "displayName": "Home Bridge",
+    "icon": "link",
+    "description": "About/contact/writing bridge copy"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string"
+    },
+    "body": {
+      "type": "text"
+    },
+    "bodyCompact": {
+      "type": "text"
+    },
+    "summary": {
+      "type": "text"
+    },
+    "cta": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.link"
+    },
+    "ctaLabel": {
+      "type": "string"
+    },
+    "href": {
+      "type": "string"
+    },
+    "meta": {
+      "type": "string"
+    },
+    "workLink": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.link"
+    }
+  }
+}

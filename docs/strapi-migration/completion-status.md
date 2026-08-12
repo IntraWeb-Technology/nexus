@@ -24,7 +24,7 @@ The multi-site editorial platform foundation is **implementation-complete for lo
 ```text
 Editorial SoT (planned)     Frontends (soft-fail)           Operational (unchanged)
 ─────────────────────       ─────────────────────           ──────────────────────
-apps/cms-strapi 5.51.1  →   @repo/strapi-client         →   iw-portal (Clerk/Supabase/Stripe)
+apps/cms-strapi 5.51.2  →   @repo/strapi-client         →   iw-portal (Clerk/Supabase/Stripe)
   Site personal|intraweb    personal-site (Hashnode 3°)     HubSpot / n8n / etc.
   Articles, Projects, CS    iw-site-q2 (hardcoded FB)
   Services, FAQ, Nav…

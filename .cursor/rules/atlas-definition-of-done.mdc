@@ -1,0 +1,57 @@
+---
+description: Permanent Definition of Done for every Atlas milestone
+globs:
+  - apps/atlas-web/**
+  - apps/atlas-docs/**
+alwaysApply: false
+---
+
+# Atlas Definition of Done
+
+This is the **minimum quality gate** for every Atlas milestone. A milestone is incomplete until every item below is satisfied or explicitly deferred with approval in the Build Manifest / decision log.
+
+Do not begin the next milestone until this gate passes and **approval is recorded**.
+
+## Visual & responsive
+
+- [ ] Matches approved Figma compositions for the milestone (Figma is visual source of truth — see `atlas-design`)
+- [ ] Validated at **Desktop (1440)**, **Tablet (768)**, and **Mobile (390)**
+- [ ] Responsive recomposition matches Figma (not stacked desktop)
+- [ ] No unapproved design drift during implementation
+
+## Accessibility
+
+- [ ] WCAG **AA** — axe clear of serious/critical on delivered routes
+- [ ] Keyboard path, focus order, skip link, and landmarks verified
+- [ ] `prefers-reduced-motion` respected where motion exists
+
+## Tests & build
+
+- [ ] Playwright coverage for delivered routes/journeys (see `atlas-testing`)
+- [ ] Visual regression baselines for stable D/T/M views
+- [ ] TypeScript / typecheck passing for affected packages
+- [ ] Production build passing for affected packages
+
+## Architecture & engineering policy
+
+- [ ] Architecture unchanged unless the change was **explicitly approved** (see `atlas-frontend` freeze policy)
+- [ ] **Rule of Two** validated for any new shared extraction
+- [ ] **Rule of Stability** validated (no extract that destabilizes frozen routes)
+- [ ] **Fixture First** preserved until approved Strapi mappers exist
+- [ ] Domain types stay at the content boundary — no CMS DTOs in UI
+- [ ] No speculative abstractions (see `no-overengineering`)
+
+## Documentation & release control
+
+- [ ] Build Manifest updated (status, scope, checklist)
+- [ ] Implementation report written for the milestone
+- [ ] Architecture report updated when boundaries, ownership, or freeze scope change
+- [ ] Deferred technical debt recorded (not silently dropped)
+- [ ] Decision log updated for material trade-offs
+- [ ] Product docs screenshots/links stay in sync when visuals change (see `atlas-documentation`)
+
+## Gate
+
+```text
+Milestone complete  →  DoD satisfied + approval recorded  →  next milestone may begin
+```

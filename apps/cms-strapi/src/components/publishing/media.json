@@ -1,0 +1,70 @@
+{
+  "collectionName": "components_publishing_media",
+  "info": {
+    "displayName": "Publishing Media",
+    "icon": "picture",
+    "description": "CMS media with evidence classification"
+  },
+  "options": {},
+  "attributes": {
+    "asset": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "alt": {
+      "type": "string",
+      "required": true
+    },
+    "caption": {
+      "type": "text"
+    },
+    "captionShort": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "enumeration",
+      "enum": [
+        "application-screenshot",
+        "architecture-diagram",
+        "workflow-diagram",
+        "browser-capture",
+        "figma-artifact",
+        "ci-pipeline",
+        "repository-structure",
+        "terminal-output",
+        "code-comparison"
+      ],
+      "required": true
+    },
+    "evidenceClass": {
+      "type": "enumeration",
+      "enum": [
+        "production",
+        "composed"
+      ],
+      "required": true
+    },
+    "composedKey": {
+      "type": "enumeration",
+      "enum": [
+        "architecture-diagram",
+        "content-map-render",
+        "rsc-request-path",
+        "atlas-boundaries",
+        "about-approach",
+        "about-architecture",
+        "home-philosophy"
+      ]
+    },
+    "sizes": {
+      "type": "string"
+    }
+  }
+}
