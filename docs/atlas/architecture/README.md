@@ -4,11 +4,12 @@ Atlas product architecture and the **Build Manifest** (implementation contract) 
 
 → [`apps/atlas-docs/content/architecture/build-manifest.mdx`](../../../apps/atlas-docs/content/architecture/build-manifest.mdx)
 
-**Current program status (as of 2026-08-12):** M0–M7 **COMPLETE** · Production Asset Freeze **PASS** · **M8A Content Contract LOCKED** · **M8B — Strapi Implementation NEXT**. See the Build Manifest current-status table.
+**Current program status (as of 2026-08-12):** M0–M8 **COMPLETE** · Production Asset Freeze **PASS** · **M9 — Hardening NEXT**. See the Build Manifest current-status table.
 
-**M8 Content Contract (implementation-ready):**
+**M8 Content Contract (locked) + implementation report:**
 
-→ [`apps/atlas-docs/content/architecture/m8-content-contract.mdx`](../../../apps/atlas-docs/content/architecture/m8-content-contract.mdx)
+→ [`apps/atlas-docs/content/architecture/m8-content-contract.mdx`](../../../apps/atlas-docs/content/architecture/m8-content-contract.mdx)  
+→ [`apps/atlas-docs/content/architecture/m8-strapi-integration.mdx`](../../../apps/atlas-docs/content/architecture/m8-strapi-integration.mdx)
 
 **Architecture freeze (core routes proven — Frontend v1.0):**
 

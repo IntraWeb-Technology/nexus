@@ -22,6 +22,8 @@ export default defineConfig({
       ...process.env,
       // E2E: deliver without Resend credentials (server-only skip flag)
       CONTACT_INSECURE_SKIP_SEND: "true",
+      // Explicit fixture source — never hit live Strapi during visual gates
+      ATLAS_CONTENT_SOURCE: "fixture",
     },
   },
   projects: [
