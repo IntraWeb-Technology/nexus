@@ -5,15 +5,18 @@ import { WorkIntro } from "@/components/sections/work-intro";
 import { WorkSelected } from "@/components/sections/work-selected";
 import { StageRule } from "@/components/sections/work-stage-rule";
 import { WorkTaxonomy } from "@/components/sections/work-taxonomy";
-import { workFixture } from "@/content/work";
+import { getWorkContent } from "@/lib/content";
 
-export const metadata: Metadata = {
-  title: workFixture.seo.title,
-  description: workFixture.seo.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await getWorkContent();
+  return {
+    title: data.seo.title,
+    description: data.seo.description,
+  };
+}
 
-export default function WorkPage() {
-  const data = workFixture;
+export default async function WorkPage() {
+  const data = await getWorkContent();
 
   return (
     <main id="main" tabIndex={-1} className="outline-none">

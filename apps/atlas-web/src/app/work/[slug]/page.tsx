@@ -16,23 +16,24 @@ import { CaseOverview } from "@/components/sections/case-overview";
 import { CaseProblem } from "@/components/sections/case-problem";
 import { CaseRelated } from "@/components/sections/case-related";
 import {
-  caseStudyBySlug,
-  getCaseStudy,
-} from "@/content/case-studies";
+  getCaseStudyContent,
+  getCaseStudySlugs,
+} from "@/lib/content";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return Object.keys(caseStudyBySlug).map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const slugs = await getCaseStudySlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const study = getCaseStudy(slug);
+  const study = await getCaseStudyContent(slug);
   if (!study) return {};
   return {
     title: study.seo.title,
@@ -42,7 +43,7 @@ export async function generateMetadata({
 
 export default async function CaseStudyPage({ params }: PageProps) {
   const { slug } = await params;
-  const data = getCaseStudy(slug);
+  const data = await getCaseStudyContent(slug);
   if (!data) notFound();
 
   return (

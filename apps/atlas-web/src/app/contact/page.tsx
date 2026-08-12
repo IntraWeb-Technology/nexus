@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
 import { ContactMain } from "@/components/sections/contact-main";
-import { contactFixture } from "@/content/contact";
+import { getContactContent } from "@/lib/content";
 
-export const metadata: Metadata = {
-  title: contactFixture.seo.title,
-  description: contactFixture.seo.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await getContactContent();
+  return {
+    title: data.seo.title,
+    description: data.seo.description,
+  };
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const data = await getContactContent();
+
   return (
     <main id="main" tabIndex={-1} className="outline-none">
-      <ContactMain data={contactFixture} />
+      <ContactMain data={data} />
     </main>
   );
 }

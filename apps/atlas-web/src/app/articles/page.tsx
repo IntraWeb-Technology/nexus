@@ -4,15 +4,18 @@ import { ArticlesFeatured } from "@/components/sections/articles-featured";
 import { ArticlesIntro } from "@/components/sections/articles-intro";
 import { ArticlesList } from "@/components/sections/articles-list";
 import { ArticlesTopicRow } from "@/components/sections/articles-topic-row";
-import { articlesIndexFixture } from "@/content/articles";
+import { getArticlesIndexContent } from "@/lib/content";
 
-export const metadata: Metadata = {
-  title: articlesIndexFixture.seo.title,
-  description: articlesIndexFixture.seo.description,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const data = await getArticlesIndexContent();
+  return {
+    title: data.seo.title,
+    description: data.seo.description,
+  };
+}
 
-export default function ArticlesPage() {
-  const data = articlesIndexFixture;
+export default async function ArticlesPage() {
+  const data = await getArticlesIndexContent();
 
   return (
     <main id="main" tabIndex={-1} className="outline-none">

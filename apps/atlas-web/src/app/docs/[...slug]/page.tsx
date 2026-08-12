@@ -7,14 +7,16 @@ import { DocContact } from "@/components/sections/doc-contact";
 import { DocHeader } from "@/components/sections/doc-header";
 import { DocPrevNext } from "@/components/sections/doc-prev-next";
 import { DocRelated } from "@/components/sections/doc-related";
-import { docBySlug, getDoc, slugFromParams } from "@/content/docs";
+import { getDocContent, getDocSlugs } from "@/lib/content";
+import { slugFromParams } from "@/content/docs";
 
 type PageProps = {
   params: Promise<{ slug: string[] }>;
 };
 
-export function generateStaticParams() {
-  return Object.keys(docBySlug).map((slug) => ({
+export async function generateStaticParams() {
+  const slugs = await getDocSlugs();
+  return slugs.map((slug) => ({
     slug: slug.split("/"),
   }));
 }
@@ -25,7 +27,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const key = slugFromParams(slug);
   if (!key) return {};
-  const doc = getDoc(key);
+  const doc = await getDocContent(key);
   if (!doc) return {};
   return {
     title: doc.seo.title,
@@ -37,7 +39,7 @@ export default async function DocPage({ params }: PageProps) {
   const { slug } = await params;
   const key = slugFromParams(slug);
   if (!key) notFound();
-  const data = getDoc(key);
+  const data = await getDocContent(key);
   if (!data) notFound();
 
   return (
