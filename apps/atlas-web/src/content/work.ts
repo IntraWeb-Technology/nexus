@@ -27,7 +27,13 @@ export type WorkProject = {
   statusLabel: string;
   featured: boolean;
   layout: WorkProjectLayout;
-  mediaLabel: string;
+  /** Present only when production / composed media ships with the project. */
+  mediaLabel?: string;
+  /** Neutral media URL when production evidence exists (M7). */
+  mediaSrc?: string;
+  mediaWidth?: number;
+  mediaHeight?: number;
+  mediaSizes?: string;
   href: string;
   ctaLabel: string;
   metaNote?: string;
@@ -69,6 +75,13 @@ export type WorkFixture = {
     figureAlt: string;
     figureCaption: string;
     figureCaptionShort: string;
+    figureSrc?: string;
+    figureWidth?: number;
+    figureHeight?: number;
+    figureSizes?: string;
+    figureSrcCompact?: string;
+    figureWidthCompact?: number;
+    figureHeightCompact?: number;
     themesLabel: string;
     themes: string[];
     themesCompact: string;
@@ -143,10 +156,20 @@ export const workFixture: WorkFixture = {
     status: "IN PRODUCTION",
     timeframe: "2024 — Present",
     role: "Design & Engineering",
-    figureAlt: "Portfolio OS production surface placeholder",
+    figureAlt:
+      "Portfolio OS architecture diagram on the case-study production surface — request path and delivery tooling",
     figureCaption:
-      "Fig. 1 — Portfolio OS production surface. Placeholder composition pending verified screenshot.",
+      "Fig. 1 — Portfolio OS production surface. Canonical request and delivery path from the live case study.",
     figureCaptionShort: "Fig. 1 — Portfolio OS production surface.",
+    figureSrc:
+      "/images/case-studies/portfolio-os/portfolio-os-work-featured-desktop.webp",
+    figureWidth: 2400,
+    figureHeight: 1350,
+    figureSizes: "(min-width: 1440px) 1216px, 100vw",
+    figureSrcCompact:
+      "/images/case-studies/portfolio-os/portfolio-os-work-featured-compact.webp",
+    figureWidthCompact: 1536,
+    figureHeightCompact: 864,
     themesLabel: "ENGINEERING THEMES",
     themes: [
       "Product Engineering",
@@ -178,7 +201,11 @@ export const workFixture: WorkFixture = {
         statusLabel: "In production",
         featured: false,
         layout: "feature",
-        mediaLabel: "IMG  ·  architecture surface",
+        mediaLabel: "Shared Strapi multi-site architecture",
+        mediaSrc: "/images/work/shared-strapi-architecture.svg",
+        mediaWidth: 1520,
+        mediaHeight: 860,
+        mediaSizes: "(min-width: 1440px) 760px, 100vw",
         href: "/work/shared-strapi-cms",
         ctaLabel: "View project →",
       },
@@ -197,7 +224,11 @@ export const workFixture: WorkFixture = {
         statusLabel: "In production",
         featured: false,
         layout: "offset",
-        mediaLabel: "IMG  ·  workflow diagram",
+        mediaLabel: "IntraWeb n8n orchestration workflow",
+        mediaSrc: "/images/work/intraweb-automation-workflow.svg",
+        mediaWidth: 1120,
+        mediaHeight: 640,
+        mediaSizes: "(min-width: 1440px) 560px, 100vw",
         href: "/work/intraweb-automation",
         ctaLabel: "View project →",
       },
@@ -215,7 +246,7 @@ export const workFixture: WorkFixture = {
         statusLabel: "Completed",
         featured: false,
         layout: "band",
-        mediaLabel: "IMG",
+        // A-05 deferred — no approved production source; intentional no-media band.
         href: "/work/vehicle-maintenance",
         ctaLabel: "View →",
         metaNote: "systems note",

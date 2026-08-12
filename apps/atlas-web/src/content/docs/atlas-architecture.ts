@@ -86,6 +86,7 @@ export const atlasArchitectureDoc: DocDetail = {
           "Fig. 1 — Atlas sits beside IntraWeb apps; Strapi is shared with site isolation.",
         captionCompact:
           "Fig. 1 — Atlas beside IntraWeb; Strapi shared with site isolation.",
+        composed: "atlas-boundaries",
       },
     },
   ],

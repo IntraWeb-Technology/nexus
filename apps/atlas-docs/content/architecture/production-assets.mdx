@@ -1,0 +1,278 @@
+# Production Assets — M7 Implementation Report
+
+**Status:** Complete — Production Asset Freeze **PASS**  
+**Scope:** Production media for `apps/atlas-web`  
+**Date:** 2026-08-12  
+**Starting SHA:** `eaeae215b19ff7124879ea89104f5eb8d1e0522b` (`atlas-rebuild` / PR #26)  
+**Closure HEAD (pre-closure):** `d66553b2064786e8c243739393b7193aa2adc221`  
+**Branch:** `cursor/atlas-m7-production-assets-452c`  
+**Authority:** Build Manifest §7 · Production Asset Discovery inventory · Diagram Language · Editorial/Documentation Freeze
+
+M7 followed **RESOLVE → CAPTURE / CREATE → INTEGRATE → PROVE → FREEZE**.
+
+Closure pass: A-05 reclassified **DEFERRED / NON-BLOCKING** by authority. No Vehicle Maintenance substitute evidence was created.
+
+---
+
+## 1. Starting state
+
+| Check | Result |
+| --- | --- |
+| Fetched `atlas-rebuild` | Yes |
+| Local = `origin/atlas-rebuild` | `eaeae215b19ff7124879ea89104f5eb8d1e0522b` |
+| Working tree clean | Yes |
+| Branch | `cursor/atlas-m7-production-assets-452c` from that SHA |
+
+---
+
+## 2. Production Asset Inventory reference
+
+Authoritative planning contract supplied with the M7 task (A-01–A-15 + PA-\*). No rediscovery pass was performed. Verification confirmed: empty `public/`, `Figure` without `src`, Home Project A/B/C vs Work real identities, composed diagrams present for A-07 / About / Home philosophy.
+
+---
+
+## 3. Asset-source decisions
+
+| ID | Decision |
+| --- | --- |
+| Portfolio OS family | Capture running `atlas-web` production UI (deterministic Playwright) |
+| A-03 | SVG architecture from real Nexus apps (`cms-strapi`, `atlas-web`, `atlas-docs`) — not Strapi marketing chrome |
+| A-04 | SVG workflow from `docs/automations` + `packages/n8n-workflows` |
+| A-05 | **DEFERRED / NON-BLOCKING** — no approved Vehicle Maintenance production source; substitute evidence forbidden |
+| A-07 / A-15 / Home philosophy | Keep composed UI |
+| A-08 / PA-ART1 / PA-DOC1 | New composed Diagram Language components |
+| A-09–A-11 | Conditional omit (prose/EvidenceBlock sufficient) |
+| A-13 / A-14 | Application-static brand assets |
+
+---
+
+## 4. Home selected-work alignment
+
+Home Selected previously used Project A/B/C. Aligned structurally to Work Selected:
+
+| Layout | Identity | Href |
+| --- | --- | --- |
+| feature | Shared Strapi CMS / Atlas | `/work/shared-strapi-cms` |
+| offset | IntraWeb Automation Platform | `/work/intraweb-automation` |
+| band | Vehicle Maintenance Platform | `/work/vehicle-maintenance` |
+
+Fixture outcomes kept short (no production-copy rewrite). Media bound only to real identities. Vehicle Maintenance remains a project with intentional **no-media** presentation (A-05 deferred).
+
+---
+
+## 5. Asset directory / naming
+
+```text
+public/
+  favicon.svg
+  og/default.png
+  images/brand/atlas-mark.svg
+  images/work/*.svg
+  images/case-studies/portfolio-os/*.webp
+  images/docs/*.webp
+  ASSETS.md
+```
+
+Naming: `{subject}-{role}-{viewport?}.{ext}`. Capture sources gitignored under `.m7-capture/`.
+
+---
+
+## 6. Portfolio OS capture strategy
+
+One coordinated session across `/`, `/work`, `/work/portfolio-os`, `/docs` at 1440 / 768 / 390. Crops serve distinct editorial roles (handbook surface, architecture band, decisions chapter, philosophy, UI close-up). Scripts: `scripts/capture-m7-assets.mjs`, `scripts/optimize-m7-assets.mjs`.
+
+---
+
+## 7. A-01–A-15 final matrix
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| A-01 | **PRODUCTION** | Home hero WebP D/T/M from docs handbook surface |
+| A-02 | **PRODUCTION** | Work featured 16:9 architecture-band capture |
+| A-03 | **PRODUCTION** | Shared Strapi SVG architecture |
+| A-04 | **PRODUCTION** | IntraWeb automation SVG workflow |
+| A-05 | **DEFERRED / NON-BLOCKING** | No approved Vehicle Maintenance production source in Nexus. M7 must not manufacture substitute product evidence. Future enrichment only. |
+| A-06 | **PRODUCTION** | Case hero WebP D/T/M (decisions chapter evidence) |
+| A-07 | **COMPOSED** | `ArchitectureDiagram` — PASS vs Diagram Language |
+| A-08 | **COMPOSED** | `ContentMapRenderDiagram` |
+| A-09 | **CONDITIONAL OMIT** | Delivery prose/EvidenceBlock sufficient |
+| A-10 | **CONDITIONAL OMIT** | Would not improve Delivery narrative |
+| A-11 | **CONDITIONAL OMIT** | No fake terminal; EvidenceBlock covers proof |
+| A-12 | **PRODUCTION** | Handbook WebP captured (`images/docs/…`) — P2 |
+| A-13 | **PRODUCTION** | `/og/default.png` 1200×630 + metadata |
+| A-14 | **PRODUCTION** | `/favicon.svg` + brand mark |
+| A-15 | **COMPOSED** | Approach + architecture — PASS; captions de-placeholdered |
+
+### Classification glossary
+
+| Class | Meaning |
+| --- | --- |
+| **PRODUCTION** | Real operational/product evidence from an approved production source |
+| **COMPOSED** | Purpose-built explanatory visual, explicitly represented as composed |
+| **CONDITIONAL OMIT** | Intentionally omitted because it would not improve evidence or narrative |
+| **DEFERRED** | Legitimate future asset opportunity not fulfilled in this milestone |
+
+---
+
+## 8. PA-\* supplemental matrix
+
+| ID | Status | Notes |
+| --- | --- | --- |
+| PA-HF | **PRODUCTION** | Home featured philosophy crop |
+| PA-HS | **PRODUCTION** | Identities aligned; feature media = Shared Strapi SVG |
+| PA-CS3 | **PRODUCTION** | Implementation handbook / brand-system capture |
+| PA-CS4 | **PRODUCTION** | Decisions micro-hierarchy close-up |
+| PA-ART1 | **COMPOSED** | `RscRequestPathDiagram` on RSC article |
+| PA-DOC1 | **COMPOSED** | `AtlasBoundaryDiagram` on Architecture doc |
+| PA-DOC2–5 | **DEFER** | No decorative filler; keep selective placeholders until CMS content warrants figures |
+
+---
+
+## 9. Diagram review results
+
+| Diagram | Verdict |
+| --- | --- |
+| A-07 ArchitectureDiagram | **PASS** — 1.5px strokes, mono IDs, sage emphasis, breakpoint recomposition |
+| Home philosophy | **PASS** — regression only |
+| A-15a Approach | **PASS** — caption cleanup only |
+| A-15b Architecture layers | **PASS** — caption cleanup only |
+
+---
+
+## 10. Delivery-evidence decisions
+
+A-09 / A-10 / A-11 intentionally omitted. Case Study Delivery already communicates CI, monorepo, and Playwright via EvidenceBlock/prose. Adding screenshot galleries would not strengthen the narrative.
+
+---
+
+## 11. Article asset decisions
+
+PA-ART1 remains part of the frozen RSC article contract → composed Diagram Language figure. No generic article thumbnails. M5 hierarchy unchanged.
+
+---
+
+## 12. Docs asset decisions
+
+| Slot | Classification |
+| --- | --- |
+| PA-DOC1 | REPLACE WITH DIAGRAM (composed) |
+| PA-DOC2–5 | DEFER / KEEP PLACEHOLDER UNTIL CMS CONTENT |
+| A-12 | Captured; not forced into every doc surface |
+
+M6 IA unchanged.
+
+---
+
+## 13. Figure / media contract changes
+
+- `Figure` accepts optional `src`, `width`, `height`, `sizes`, `priority`
+- Uses `next/image`; SVG → `unoptimized` + `object-contain`
+- Labels/panels retire when `src` present
+- Neutral URL strings (static now; Strapi later)
+- Domain types extended on `CaseFigure`, Work/Home fixtures, Article/Doc figure blocks
+- `composed` enum for Diagram Language insertions without parallel image components
+- Work selected projects without `mediaSrc` render **no media plane** (A-05 intentional absence)
+
+---
+
+## 14. Performance findings
+
+- Hero LCP: `priority` only on Home hero + Case hero desktop
+- WebP screenshots typically 15–110KB; SVGs &lt;5KB; OG PNG ~32KB
+- Intrinsic dimensions set; `sizes` provided
+- No multi‑MB downloads introduced
+
+---
+
+## 15. Responsive verification
+
+Verified via Playwright projects 1440 / 768 / 390 for Home, Work, Case Study, About, Article (RSC), Docs (Architecture), Contact regression. Mobile crops use dedicated WebP where required. Vehicle Maintenance no-media band verified deliberate at all three widths.
+
+---
+
+## 16. Accessibility verification
+
+- Meaningful alt on production images
+- Figure/caption relationships preserved
+- Diagram contrast follows ink/sage tokens
+- axe WCAG AA serious+ clear on covered routes
+- Contact remains imagery-free
+- A-05 deferral introduces no empty/misleading image semantics
+
+---
+
+## 17. Test results
+
+| Suite | Result |
+| --- | --- |
+| `pnpm check-types` | **PASS** |
+| `pnpm lint` | **PASS** |
+| `pnpm build` | **PASS** |
+| Playwright (all projects) | **298 passed**, 2 skipped |
+| `e2e/media.spec.ts` | **PASS** — Vehicle Maintenance intentional no-media |
+
+---
+
+## 18. Visual-regression results
+
+Linux baselines refreshed during M7 implementation for expected asset changes. Closure refreshed **Work** D/T/M Linux baselines only (A-05 empty media plane removed — expected, inspected). Win32 baselines retained.
+
+---
+
+## 19. Remaining placeholders
+
+| Kind | Items |
+| --- | --- |
+| Must be gone | Required P0 media placeholders for A-01–A-04, A-06, A-13, A-14 — **removed** |
+| Allowed (M8 copy) | Home problem/outcome, Contact form placeholders, About meta/timeline copy |
+| Intentional | Composed diagrams |
+| Deferred media | A-05 — project retained, no media plane, no FIG placeholder |
+
+Doc figure labels remain on non-Architecture docs (PA-DOC2–5 deferred).
+
+---
+
+## 20. Deferred assets (non-blocking)
+
+### A-05 — DEFERRED / NON-BLOCKING
+
+No approved Vehicle Maintenance production source currently exists in Nexus. M7 is not authorized to manufacture substitute product evidence. A-05 is therefore deferred and non-blocking for the M7 Production Asset Freeze.
+
+**Explicitly confirmed:** no Vehicle Maintenance screenshot, mock UI, composed substitute-as-production, or unrelated substitute image was created.
+
+A-05 remains a known future enrichment opportunity when an approved production source exists.
+
+---
+
+## 21. M8 media ownership handoff
+
+| Asset | Current runtime source | Future owner |
+| --- | --- | --- |
+| favicon / atlas-mark | `public/` static | Application |
+| default OG | `public/og/default.png` | Application / metadata system |
+| Portfolio OS rasters | `public/images/case-studies/…` | Strapi M8 |
+| Shared Strapi / Automation SVGs | `public/images/work/…` | Strapi M8 (or stay static if authored as brand diagrams) |
+| Article/Docs composed diagrams | React components | Application |
+| ArchitectureDiagram / About diagrams / Home philosophy | Composed UI | Application |
+| A-05 Vehicle Maintenance media | *absent* | Strapi M8 when approved source exists |
+
+CMS-bound metadata (alt, caption, kind, owner, provenance) lives in fixtures today — ready for mapper fields; Strapi not populated.
+
+---
+
+## 22. M9 deferrals
+
+- Full dynamic per-route OG platform
+- Deep performance budget campaign beyond M7 sanity
+- Broad browser matrix
+- Observability / alerting
+
+---
+
+## 23. Production Asset Freeze verdict
+
+**PASS** — all available required M7 assets satisfy the contract; A-05 is explicitly **DEFERRED / NON-BLOCKING**; quality gates verified in closure.
+
+### M7 COMPLETE — PRODUCTION ASSET FREEZE PASS
+
+M8 remains **PLANNED**. No M8 / Strapi implementation was performed.

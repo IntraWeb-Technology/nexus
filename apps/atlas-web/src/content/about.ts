@@ -127,7 +127,7 @@ export const aboutFixture: AboutFixture = {
       { id: "03", label: "Decide" },
       { id: "04", label: "Prove" },
     ],
-    figureCaption: "Fig. 1 — Problem approach loop (placeholder diagram).",
+    figureCaption: "Fig. 1 — Problem approach loop. Observe → Bound → Decide → Prove.",
   },
   style: {
     chapter: "WORKING STYLE",
@@ -242,7 +242,7 @@ export const aboutFixture: AboutFixture = {
       { name: "Capability", note: "domains" },
       { name: "Platform", note: "shared infra" },
     ],
-    figureCaption: "Fig. 2 — Layered boundary model (placeholder).",
+    figureCaption: "Fig. 2 — Layered boundary model. Surface → Contract → Capability → Platform.",
   },
   notes: {
     chapter: "PERSONAL NOTES",

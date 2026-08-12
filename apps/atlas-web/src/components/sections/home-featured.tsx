@@ -20,8 +20,12 @@ export function HomeFeatured({ data }: HomeFeaturedProps) {
 
       <div className="atlas-pad-x">
         <Figure
-          alt={`${data.status}. Portfolio OS production surface`}
+          alt={data.figureAlt}
           caption={data.figureCaption}
+          src={data.figureSrc}
+          width={data.figureWidth}
+          height={data.figureHeight}
+          sizes={data.figureSizes}
           mediaClassName="min-h-[240px] tablet:min-h-[360px] desktop:min-h-[560px]"
         />
       </div>

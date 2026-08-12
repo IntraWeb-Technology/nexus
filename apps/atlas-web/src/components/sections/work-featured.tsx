@@ -54,6 +54,10 @@ export function WorkFeatured({ data }: WorkFeaturedProps) {
           tone="ink"
           alt={data.figureAlt}
           caption={data.figureCaption}
+          src={data.figureSrc}
+          width={data.figureWidth}
+          height={data.figureHeight}
+          sizes={data.figureSizes}
           className="hidden desktop:block"
           mediaClassName="min-h-[620px] w-full"
         />
@@ -61,6 +65,10 @@ export function WorkFeatured({ data }: WorkFeaturedProps) {
           tone="ink"
           alt={data.figureAlt}
           caption={data.figureCaptionShort}
+          src={data.figureSrcCompact ?? data.figureSrc}
+          width={data.figureWidthCompact ?? data.figureWidth}
+          height={data.figureHeightCompact ?? data.figureHeight}
+          sizes="100vw"
           className="desktop:hidden"
           mediaClassName="min-h-[220px] w-full tablet:min-h-[360px]"
         />

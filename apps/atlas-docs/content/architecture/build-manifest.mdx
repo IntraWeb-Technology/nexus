@@ -11,7 +11,7 @@
 **About + Contact:** Implemented — see [About + Contact Route](/docs/architecture/about-contact-route)  
 **Articles / Editorial Publishing:** Implemented — see [Editorial Publishing (M5)](/docs/architecture/editorial-publishing)  
 **Documentation:** Implemented — see [Documentation System (M6)](/docs/architecture/documentation-system)  
-**Next milestone:** **M7 — Production Assets** (after Documentation Freeze — **PASSED**)
+**Next milestone:** **M8 — Strapi Integration** (after Production Asset Freeze — **PASS**; A-05 deferred)
 
 ---
 
@@ -28,12 +28,13 @@
 | Editorial System Freeze Gate | **PASSED** |
 | **M6 — Documentation** | **COMPLETE** |
 | Documentation Freeze | **PASSED** |
-| **M7 — Production Assets** | **NEXT** |
-| **M8 — Strapi Integration** | Planned |
+| **M7 — Production Assets** | **COMPLETE** — Freeze **PASS** |
+| Production Asset Freeze | **PASS** (A-05 **DEFERRED / NON-BLOCKING**) |
+| **M8 — Strapi Integration** | **PLANNED** |
 | **M9 — Hardening** | Planned |
 | **M10 — Launch** | Planned |
 
-**Program posture:** Fixture-first until Strapi (**M8**). Documentation Freeze **PASSED** — M7 may replace production assets/copy without Documentation architecture changes. Do not reopen M0–M6 without a material defect.
+**Program posture:** Fixture-first until Strapi (**M8**). Documentation Freeze **PASSED**. Production Asset Freeze **PASS**. **A-05 Vehicle Maintenance** media is consciously **deferred** (no approved production source; substitute evidence forbidden). Do not reopen M0–M7 without a material defect. Do not start Strapi until M8 begins by Manifest order.
 
 ### Milestone scheme note
 
@@ -473,23 +474,27 @@ Begin collecting production source material **during M5 and M6** when implementa
 
 M7 still owns the formal production-asset completion pass (replace fixtures/placeholders; complete the visual/evidence set).
 
-| ID | Asset | Owner | Priority | Aspect | Alt / notes | Responsive | Source |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| A-01 | Homepage hero / Portfolio OS shot | Design/Eng | P0 | Full-bleed | Product surface | D/T/M crops | Production UI |
-| A-02 | Work featured media | Eng | P0 | 16:9 | Portfolio OS | Yes | Production |
-| A-03–A-05 | Selected work media (3) | Eng | P0 | Per card | Named project | Yes | Production |
-| A-06 | Case study hero | Eng | P0 | Wide | Case subject | Yes | Production |
-| A-07 | Architecture diagram | Eng | P0 | Landscape | System boundaries | Labels scale | Figma/SVG |
-| A-08 | Workflow / delivery diagram | Eng | P1 | Wide | Pipeline stages | Yes | Figma/SVG |
-| A-09 | CI/CD capture | Eng | P1 | Wide | Honest status | Yes | Actions UI |
-| A-10 | Repo structure | Eng | P1 | Tall | Paths | Yes | IDE/GitHub |
-| A-11 | Terminal / Playwright | Eng | P1 | Wide | Commands | Yes | Local/CI |
-| A-12 | Docs screenshot | Eng | P2 | Content | Handbook | Yes | atlas-docs |
-| A-13 | OG default | Design | P0 | 1200×630 | Site name | — | Export |
-| A-14 | Favicon / logo mark | Design | P0 | SVG | Atlas | — | Brand |
-| A-15 | About diagrams | Design | P1 | Per fig | Approach / layers | Yes | Figma |
+| ID | Asset | Owner | Priority | Aspect | Alt / notes | Responsive | Source | M7 status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A-01 | Homepage hero / Portfolio OS shot | Design/Eng | P0 | Full-bleed | Product surface | D/T/M crops | Production UI | **PRODUCTION** |
+| A-02 | Work featured media | Eng | P0 | 16:9 | Portfolio OS | Yes | Production | **PRODUCTION** |
+| A-03 | Selected work — Shared Strapi | Eng | P0 | Per card | Architecture SVG | Yes | Nexus apps | **PRODUCTION** |
+| A-04 | Selected work — IntraWeb Automation | Eng | P0 | Per card | Workflow SVG | Yes | n8n workflows | **PRODUCTION** |
+| A-05 | Selected work — Vehicle Maintenance | Eng | P0 | Per card | Named project | Yes | Production | **DEFERRED / NON-BLOCKING** |
+| A-06 | Case study hero | Eng | P0 | Wide | Case subject | Yes | Production | **PRODUCTION** |
+| A-07 | Architecture diagram | Eng | P0 | Landscape | System boundaries | Labels scale | Composed UI | **COMPOSED** |
+| A-08 | Workflow / delivery diagram | Eng | P1 | Wide | Content→Map→Render | Yes | Composed UI | **COMPOSED** |
+| A-09 | CI/CD capture | Eng | P1 | Wide | Honest status | Yes | Actions UI | **CONDITIONAL OMIT** |
+| A-10 | Repo structure | Eng | P1 | Tall | Paths | Yes | IDE/GitHub | **CONDITIONAL OMIT** |
+| A-11 | Terminal / Playwright | Eng | P1 | Wide | Commands | Yes | Local/CI | **CONDITIONAL OMIT** |
+| A-12 | Docs screenshot | Eng | P2 | Content | Handbook | Yes | atlas-web `/docs` | **PRODUCTION** |
+| A-13 | OG default | Design | P0 | 1200×630 | Site name | — | Export | **PRODUCTION** |
+| A-14 | Favicon / logo mark | Design | P0 | SVG | Atlas | — | Brand | **PRODUCTION** |
+| A-15 | About diagrams | Design | P1 | Per fig | Approach / layers | Yes | Composed UI | **COMPOSED** |
 
 **Hard ban:** stock photos, AI art, decorative abstracts, logo walls.
+
+**Production Asset Freeze:** **PASS**. A-05 is **DEFERRED / NON-BLOCKING** — no approved Vehicle Maintenance production source exists in Nexus; M7 must not manufacture substitute product evidence. Project identity remains; no media plane. Report: [Production Assets (M7)](/docs/architecture/production-assets).
 
 ---
 
@@ -632,7 +637,7 @@ Update docs when architecture, CMS, or testing materially changes.
 | *Editorial System Freeze Gate* | Acceptance gate only (not a milestone) | M5 implementation | Primitive classification + visual/a11y/responsive sign-off | See **Editorial System Freeze Gate** below | **PASSED** |
 | **M6 — Documentation** | Handbook IA on proven publishing primitives | Freeze Gate passed | `/docs`, `/docs/[…slug]`, category-driven fixtures | Docs reuse PROVEN primitives; no second publishing system | **COMPLETE** |
 | *Documentation Freeze* | Acceptance gate only (not a milestone) | M6 implementation | Handbook IA/nav/search/rendering sign-off | See [Documentation System (M6)](/docs/architecture/documentation-system) | **PASSED** |
-| **M7 — Production Assets** | Formal production visual/evidence asset pass | M5–M6 opportunistic capture underway | Real assets replace fixtures/placeholders | Asset manifest (§7) complete for launch set | **NEXT** |
+| **M7 — Production Assets** | Formal production visual/evidence asset pass | M5–M6 opportunistic capture underway | Real assets replace fixtures/placeholders | Asset manifest (§7) complete for launch set | **COMPLETE** — Freeze **PASS** |
 | **M8 — Strapi Integration** | Map proven frontend contract → shared CMS | M5–M6 contract proven | `personal` site content via `cms-strapi` + `@repo/strapi-client` | Site isolation; no speculative model drift | Planned |
 | **M9 — Hardening** | Quality gates & release readiness | M5–M8 as required | Tests, a11y, visuals, perf, SEO, security headers | §8–§13 green on affected CI | Planned |
 | **M10 — Launch** | Production release | M9 | johnschibelli.dev cutover | Launch DoD (§1) + checklist | Planned |
@@ -650,6 +655,7 @@ No parallel “framework” milestones. Do not renumber milestones to insert the
 | About + Contact | **M4** | [About + Contact Route](/docs/architecture/about-contact-route) |
 | M5 Articles / Editorial Publishing | **M5** + Freeze Gate | [Editorial Publishing (M5)](/docs/architecture/editorial-publishing) |
 | M6 Documentation | **M6** + Documentation Freeze | [Documentation System (M6)](/docs/architecture/documentation-system) |
+| M7 Production Assets | **M7** + Production Asset Freeze | [Production Assets (M7)](/docs/architecture/production-assets) |
 
 ### M5 expectations — Articles / Editorial Publishing
 
@@ -696,7 +702,7 @@ When implementation reveals missing screenshots, diagrams, CI/evidence captures,
 **Not a milestone.** Does not alter M5–M10 numbering.
 
 ```text
-M5 Articles  →  Editorial System Freeze Gate PASSED  →  M6 Documentation COMPLETE  →  Documentation Freeze PASSED  →  M7 NEXT
+M5 Articles  →  Editorial System Freeze Gate PASSED  →  M6 Documentation COMPLETE  →  Documentation Freeze PASSED  →  M7 COMPLETE  →  Production Asset Freeze PASS  →  M8 NEXT
 ```
 
 **Result (2026-08-12): PASSED.** See [Editorial Publishing (M5)](/docs/architecture/editorial-publishing) for primitive classification (PROVEN / ARTICLE-LOCAL / DEFERRED), fixtures, and test evidence. M6 Documentation completed on those foundations — see [Documentation System (M6)](/docs/architecture/documentation-system).
@@ -751,7 +757,7 @@ M5 is not **DONE** until the reusable Editorial Publishing System has been exerc
 
 | Risk | Likelihood | Impact | Status / Mitigation |
 | --- | --- | --- | --- |
-| Missing real evidence assets delay launch | **H** | **H** | **Open — high priority.** Asset manifest owners; labeled placeholders; **opportunistic capture in M5/M6**; formal completion in **M7** |
+| Missing real evidence assets delay launch | **M** | **M** | **Mitigated for M7.** A-05 deferred non-blocking; remaining P0 assets production/composed. Enrich A-05 when an approved source exists. See [Production Assets (M7)](/docs/architecture/production-assets) |
 | Editorial primitives diverge between Articles and Documentation | M | H | **Addressed by Editorial System Freeze Gate** after M5 — classify PROVEN / ARTICLE-LOCAL / DEFERRED before M6 |
 | Case-study / article schema reshape breaks IntraWeb | M | H | Additive fields or Atlas-specific type; dual-site regression — execute at **M8**, not earlier |
 | Scope creep into page builder | M | H | Manifest + no-overengineering rule; reject DZ expansion |
@@ -768,22 +774,22 @@ M5 is not **DONE** until the reusable Editorial Publishing System has been exerc
 
 ## 18. Build readiness checklist
 
-Program foundations through **M6** are complete; Editorial System Freeze Gate **PASSED**; Documentation Freeze **PASSED**. Checklist below remains the launch readiness contract; items are not a blocker to begin **M7**.
+Program foundations through **M7** are complete; Editorial System Freeze Gate **PASSED**; Documentation Freeze **PASSED**; Production Asset Freeze **PASS**. Checklist below remains the launch readiness contract; items are not a blocker to begin **M8**.
 
 | # | Item | YES/NO |
 | --- | --- | --- |
 | 1 | Design frozen (Figma 15–26) | YES |
 | 2 | Routes defined (§3) | YES |
 | 3 | Components documented (§4) | YES |
-| 4 | Assets tracked (§7) | YES (sheet to be owned; opportunistic capture from M5–M6) |
-| 5 | CMS mapped (§6) | YES (plan only — **fixture-first through M6; integrate at M8**) |
+| 4 | Assets tracked (§7) | YES — M7 production/composed/deferred classifications recorded |
+| 5 | CMS mapped (§6) | YES (plan only — **fixture-first through M7; integrate at M8**) |
 | 6 | Accessibility planned (§9) | YES |
 | 7 | SEO planned (§10) | YES |
 | 8 | Testing planned (§11) | YES |
 | 9 | CI/CD understood (§12) | YES |
-| 10 | M0–M6 complete; Freeze Gates passed; M7 unambiguously next | YES |
+| 10 | M0–M7 complete; Freeze Gates passed; M8 unambiguously next | YES |
 
-### Open questions (non-blocking for M7; resolve before relevant later milestones)
+### Open questions (non-blocking for M8; resolve before relevant later milestones)
 
 1. Extend existing `case-study` / `article` vs Atlas-only types? — resolve before **M8** schema merge.  
 2. Docs search: client filter vs pagefind vs defer? — **resolved in M6** (fixture-scoped client filter).  
@@ -857,7 +863,7 @@ flowchart TD
 
 ### Verdict
 
-**M0–M6 are complete.** Editorial System Freeze Gate **PASSED**. Documentation Freeze **PASSED**. Frontend architecture v1.0 remains frozen for proven core routes; see [Architecture Freeze](/docs/architecture/architecture-freeze). Articles publishing report: [Editorial Publishing (M5)](/docs/architecture/editorial-publishing). Documentation report: [Documentation System (M6)](/docs/architecture/documentation-system). Strapi remains deferred to **M8**; fixtures continue to document editorial field shapes. **M7 — Production Assets is next.** Do not reopen M0–M6 without a material defect. Do not start Strapi or Launch side quests outside Manifest order.
+**M0–M7 are complete.** Editorial System Freeze Gate **PASSED**. Documentation Freeze **PASSED**. Production Asset Freeze **PASS**. Frontend architecture v1.0 remains frozen for proven core routes; see [Architecture Freeze](/docs/architecture/architecture-freeze). Articles publishing report: [Editorial Publishing (M5)](/docs/architecture/editorial-publishing). Documentation report: [Documentation System (M6)](/docs/architecture/documentation-system). Production assets report: [Production Assets (M7)](/docs/architecture/production-assets). **A-05** is consciously **DEFERRED / NON-BLOCKING**. Strapi remains deferred to **M8**; fixtures continue to document editorial field shapes. Do not reopen M0–M7 without a material defect. Do not start Strapi or Launch side quests outside Manifest order.
 
 ---
 
@@ -865,10 +871,10 @@ flowchart TD
 
 Validated only after production implementation, accessibility, responsive, and visual regression approval. Do not mark unimplemented patterns as validated.
 
-### Validated (through M6 + Documentation Freeze)
+### Validated (through M7 production media)
 
 - ✓ ChapterMarker — Home + Work + Case Study + Articles + Docs
-- ✓ Figure (+ `tone`, optional `label` / `panels`) — Home, Work, Case Study, Articles, Docs
+- ✓ Figure (+ `tone`, optional `label` / `panels`, optional `src` / dimensions) — Home, Work, Case Study, Articles, Docs
 - ✓ MetadataRow — Case Study desktop metadata
 - ✓ CaseStudyToc — Case Study + Articles + Docs D/T/M recomposition
 - ✓ ReadingProgress — Case Study + Articles + Docs long-form chrome
@@ -878,6 +884,7 @@ Validated only after production implementation, accessibility, responsive, and v
 - ✓ Callout — tradeoff / note / warning (Articles M5 + Docs M6)
 - ✓ CodeBlock / TerminalBlock — Articles + Docs (TS, CSS, YAML, terminal)
 - ✓ ArchitectureDiagram — editorial diagram language (hairline, mono IDs)
+- ✓ ContentMapRenderDiagram / RscRequestPathDiagram / AtlasBoundaryDiagram — M7 composed diagrams
 - ✓ Navigation (`SiteNav` + route-aware active) — chrome
 - ✓ Footer (`SiteFooter`) — chrome
 - ✓ Page-local section compositions — no section registry
@@ -890,6 +897,7 @@ Validated only after production implementation, accessibility, responsive, and v
 - ✓ Architecture freeze for core routes — [report](/docs/architecture/architecture-freeze)
 - ✓ Editorial System Freeze Gate — [report](/docs/architecture/editorial-publishing)
 - ✓ Documentation Freeze — [report](/docs/architecture/documentation-system)
+- ✓ Production media contract + default OG/favicon — [report](/docs/architecture/production-assets)
 
 ### Intentionally not extracted (yet)
 
@@ -899,6 +907,7 @@ Validated only after production implementation, accessibility, responsive, and v
 - ✗ Generic ProjectCard / Card — forbidden; unequal editorial layouts stay in sections
 - ✗ ArticleBody / DocBody merger — intentional parallel renderers (Rule of Stability)
 - ✗ PullQuote / Timeline — leave local until a second consumer
+- ✗ Shared Strapi media library / DAM — M7 uses lightweight `public/`
 
 ### Deferred (post–Freeze Gate)
 
@@ -907,9 +916,11 @@ Page 26 primitives intentionally not required for M5 proof:
 - Caption as standalone primitive (lives on `Figure` / diagram / table `figcaption`)
 - PullQuote / Timeline (shared) / EmbedCard / RepositoryCard / ListBlock / Footnotes
 - Interactive Articles topic filtering (M8 taxonomy)
-- Figure `src` / production evidence media (M7)
+- A-05 Vehicle Maintenance production media (**DEFERRED / NON-BLOCKING** — no approved source; do not fabricate)
+- CMS migration of M7 static media (M8)
 - Syntax highlighter / copy-to-clipboard chrome
+- Dynamic per-route OG beyond default A-13 (M9)
 
 ---
 
-**M0–M6 complete. Editorial System Freeze Gate PASSED. Documentation Freeze PASSED. M7 (Production Assets) is next.** Keep fixture-first until M8 Strapi. Do not start Strapi or Launch side quests outside Manifest order.
+**M0–M7 complete. Editorial System Freeze Gate PASSED. Documentation Freeze PASSED. Production Asset Freeze PASS (A-05 DEFERRED / NON-BLOCKING). M8 is next.** Keep fixture-first until M8 Strapi. Do not start Strapi or Launch side quests outside Manifest order.

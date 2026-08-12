@@ -4,12 +4,42 @@ import { CodeBlock } from "@/components/editorial/code-block";
 import { EditorialDataTable } from "@/components/editorial/editorial-table";
 import { EvidenceBlock } from "@/components/editorial/evidence-block";
 import { Figure } from "@/components/editorial/figure";
+import { RscRequestPathDiagram } from "@/components/editorial/rsc-request-path-diagram";
 import { TerminalBlock } from "@/components/editorial/terminal-block";
 import type { ArticleDetail, ArticleSection } from "@/content/article";
 
 type ArticleBodyProps = {
   sections: ArticleDetail["sections"];
 };
+
+function ArticleFigure({ section }: { section: ArticleSection }) {
+  if (!section.figure) return null;
+  const figure = section.figure;
+  if (figure.composed === "rsc-request-path") {
+    return (
+      <div className="w-full">
+        <RscRequestPathDiagram
+          caption={figure.caption}
+          captionCompact={figure.captionCompact}
+        />
+      </div>
+    );
+  }
+  return (
+    <Figure
+      alt={figure.alt}
+      caption={figure.captionCompact ?? figure.caption}
+      label={figure.labelCompact ?? figure.label}
+      labelAlign="center"
+      src={figure.src}
+      width={figure.width}
+      height={figure.height}
+      sizes={figure.sizes}
+      className="w-full"
+      mediaClassName="min-h-[220px] w-full tablet:min-h-[260px] desktop:h-[360px]"
+    />
+  );
+}
 
 function FigureOnly({ section }: { section: ArticleSection }) {
   if (!section.figure) return null;
@@ -20,14 +50,7 @@ function FigureOnly({ section }: { section: ArticleSection }) {
       className="mx-auto max-w-[var(--atlas-page)]"
     >
       <div className="atlas-pad-x pt-2 pb-10 tablet:pt-1 tablet:pb-8 desktop:pt-2 desktop:pb-10">
-        <Figure
-          alt={section.figure.alt}
-          caption={section.figure.caption}
-          label={section.figure.label}
-          labelAlign="center"
-          className="w-full"
-          mediaClassName="min-h-[220px] w-full tablet:min-h-[260px] desktop:h-[360px]"
-        />
+        <ArticleFigure section={section} />
       </div>
     </section>
   );
@@ -81,16 +104,7 @@ function SectionBlock({ section }: { section: ArticleSection }) {
           ))}
         </div>
 
-        {section.figure ? (
-          <Figure
-            alt={section.figure.alt}
-            caption={section.figure.caption}
-            label={section.figure.label}
-            labelAlign="center"
-            className="w-full"
-            mediaClassName="min-h-[220px] w-full tablet:min-h-[260px] desktop:h-[360px]"
-          />
-        ) : null}
+        {section.figure ? <ArticleFigure section={section} /> : null}
 
         {section.callout ? (
           <Callout

@@ -16,6 +16,11 @@ export type HomepageFixture = {
   hero: {
     mediaLabel: string;
     mediaNote: string;
+    mediaAlt: string;
+    mediaSrc?: string;
+    mediaWidth?: number;
+    mediaHeight?: number;
+    mediaSizes?: string;
     chapter: string;
     title: string;
     deck: string;
@@ -27,7 +32,12 @@ export type HomepageFixture = {
     title: string;
     meta: string;
     status: string;
+    figureAlt: string;
     figureCaption: string;
+    figureSrc?: string;
+    figureWidth?: number;
+    figureHeight?: number;
+    figureSizes?: string;
     problemLabel: string;
     problem: string;
     outcomeLabel: string;
@@ -47,6 +57,11 @@ export type HomepageFixture = {
       outcome: string;
       href: string;
       ctaLabel: string;
+      mediaAlt?: string;
+      mediaSrc?: string;
+      mediaWidth?: number;
+      mediaHeight?: number;
+      mediaSizes?: string;
     }>;
   };
   philosophy: {
@@ -91,8 +106,15 @@ export const homepageFixture: HomepageFixture = {
     ],
   },
   hero: {
-    mediaLabel: "SYSTEM DESIGN",
-    mediaNote: "Screenshot / diagram chapter\n~880×680 · answers what is built",
+    mediaLabel: "PORTFOLIO OS",
+    mediaNote: "Production handbook surface · answers what is built",
+    mediaAlt:
+      "Atlas Portfolio OS documentation handbook — categories, search, and recently updated engineering guides",
+    mediaSrc:
+      "/images/case-studies/portfolio-os/portfolio-os-home-hero-desktop.webp",
+    mediaWidth: 1760,
+    mediaHeight: 1100,
+    mediaSizes: "(min-width: 1440px) 880px, 100vw",
     chapter: "MOMENT ONE",
     title: "Systems that\nearn trust",
     deck: "What this engineer builds — platforms and operating systems, not a résumé opener.",
@@ -104,7 +126,15 @@ export const homepageFixture: HomepageFixture = {
     title: "Portfolio OS",
     meta: "flagship",
     status: "IN PRODUCTION",
-    figureCaption: "Visual anchor — text explains this image",
+    figureAlt:
+      "Portfolio OS engineering philosophy stage — Discover, Architect, Deliver, Measure on the production homepage",
+    figureCaption:
+      "Visual anchor — Portfolio OS philosophy composition from the production surface.",
+    figureSrc:
+      "/images/case-studies/portfolio-os/portfolio-os-home-featured-desktop.webp",
+    figureWidth: 2400,
+    figureHeight: 1350,
+    figureSizes: "(min-width: 1440px) 1376px, 100vw",
     problemLabel: "PROBLEM",
     problem:
       "Problem framing placeholder — the constraint that made the system necessary.",
@@ -124,31 +154,36 @@ export const homepageFixture: HomepageFixture = {
     headline: "Three roles. One sequence.",
     projects: [
       {
-        id: "project-a",
+        id: "shared-strapi-cms",
         layout: "feature",
-        eyebrow: "LARGE FEATURE",
-        title: "Project A — large feature",
-        outcome: "One-line outcome.",
-        href: "/work/project-a",
+        eyebrow: "PLATFORM",
+        title: "Shared Strapi CMS / Atlas",
+        outcome: "One CMS. Explicit site boundaries.",
+        href: "/work/shared-strapi-cms",
         ctaLabel: "View project →",
+        mediaAlt:
+          "Shared Strapi architecture — Atlas, atlas-docs, and IntraWeb consumers under site-key tenancy",
+        mediaSrc: "/images/work/shared-strapi-architecture.svg",
+        mediaWidth: 1520,
+        mediaHeight: 860,
+        mediaSizes: "(min-width: 1440px) 1376px, 100vw",
       },
       {
-        id: "project-b",
+        id: "intraweb-automation",
         layout: "offset",
-        eyebrow: "OFFSET FEATURE",
-        title: "Project B title",
-        outcome:
-          "Deliberate deep indent — intentional offset, not accidental middle ground.",
-        href: "/work/project-b",
+        eyebrow: "AUTOMATION",
+        title: "IntraWeb Automation Platform",
+        outcome: "Inspectable pipelines for internal operations.",
+        href: "/work/intraweb-automation",
         ctaLabel: "View project →",
       },
       {
-        id: "project-c",
+        id: "vehicle-maintenance",
         layout: "band",
-        eyebrow: "WIDE BAND",
-        title: "Project C — compressed systems note",
-        outcome: "Short systems note.",
-        href: "/work/project-c",
+        eyebrow: "PRODUCT ENGINEERING",
+        title: "Vehicle Maintenance Platform",
+        outcome: "Operational product for maintenance cycles.",
+        href: "/work/vehicle-maintenance",
         ctaLabel: "View →",
       },
     ],

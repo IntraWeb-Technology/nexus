@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import type { HomepageFixture } from "@/content/homepage";
@@ -29,7 +30,21 @@ export function HomeSelected({ data }: HomeSelectedProps) {
 
       {feature ? (
         <article className="atlas-pad-x border-t border-atlas-border py-10">
-          <div className="mb-4 min-h-[180px] bg-atlas-secondary tablet:min-h-[280px] desktop:min-h-[360px]" />
+          {feature.mediaSrc && feature.mediaWidth && feature.mediaHeight ? (
+            <div className="relative mb-4 min-h-[180px] overflow-hidden bg-atlas-secondary tablet:min-h-[280px] desktop:min-h-[360px]">
+              <Image
+                src={feature.mediaSrc}
+                alt={feature.mediaAlt ?? feature.title}
+                width={feature.mediaWidth}
+                height={feature.mediaHeight}
+                sizes={feature.mediaSizes}
+                className="h-full w-full object-contain object-left p-4 desktop:p-8"
+                unoptimized={feature.mediaSrc.endsWith(".svg")}
+              />
+            </div>
+          ) : (
+            <div className="mb-4 min-h-[180px] bg-atlas-secondary tablet:min-h-[280px] desktop:min-h-[360px]" />
+          )}
           <ChapterMarker className="mb-2">{feature.eyebrow}</ChapterMarker>
           <h3 className="m-0 font-display text-lg font-semibold text-atlas-ink">
             {feature.title}

@@ -26,6 +26,12 @@ export type CaseFigure = {
   /** Mono overlay on placeholder plane until real media ships */
   label?: string;
   tone?: "secondary" | "ink";
+  /** Neutral media URL (static now; Strapi later). */
+  src?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  priority?: boolean;
 };
 
 export type EditorialRow = {

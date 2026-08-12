@@ -28,12 +28,38 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://johnschibelli.dev"),
   title: {
     default: "Atlas",
     template: "%s · Atlas",
   },
   description:
     "Systems that earn trust — platforms and operating systems by John Schibelli.",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Atlas",
+    title: "Atlas",
+    description:
+      "Systems that earn trust — platforms and operating systems by John Schibelli.",
+    images: [
+      {
+        url: "/og/default.png",
+        width: 1200,
+        height: 630,
+        alt: "Atlas — Systems that earn trust",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Atlas",
+    description:
+      "Systems that earn trust — platforms and operating systems by John Schibelli.",
+    images: ["/og/default.png"],
+  },
 };
 
 export const viewport: Viewport = {

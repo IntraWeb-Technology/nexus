@@ -7,4 +7,5 @@ export default {
   'about-contact-route': 'About + Contact Route',
   'editorial-publishing': 'Editorial Publishing (M5)',
   'documentation-system': 'Documentation System (M6)',
+  'production-assets': 'Production Assets (M7)',
 };

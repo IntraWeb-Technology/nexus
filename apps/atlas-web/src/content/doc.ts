@@ -66,6 +66,12 @@ export type DocFigureBlock = {
   labelCompact?: string;
   caption: string;
   captionCompact?: string;
+  /** Composed handbook diagrams (M7) — prefer over placeholder planes. */
+  composed?: "atlas-boundaries";
+  src?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
 };
 
 /** Comparison / compatibility matrix — semantic table in DocBody. */

@@ -68,6 +68,15 @@ export type ArticleFigureBlock = {
   labelCompact?: string;
   caption: string;
   captionCompact?: string;
+  /**
+   * When set, ArticleBody prefers a composed diagram / production media
+   * over the placeholder label plane. `composed: "rsc-request-path"` is M7 PA-ART1.
+   */
+  composed?: "rsc-request-path";
+  src?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
 };
 
 /** Comparison / compatibility matrix — semantic table in ArticleBody. */
