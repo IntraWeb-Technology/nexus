@@ -1,13 +1,39 @@
 # Atlas Build Manifest
 
 **Status:** Approved — implementation contract  
-**Frontend architecture:** **v1.0 frozen** (M0–M3 Proven) — see [Architecture Freeze](/docs/architecture/architecture-freeze)  
-**Design status:** Atlas Design v1.0 frozen  
+**As of:** 2026-08-11  
+**Frontend architecture:** **v1.0 frozen** — core routes proven; see [Architecture Freeze](/docs/architecture/architecture-freeze)  
+**Design status:** Atlas Design v1.0 frozen (Editorial Brand System + page family)  
 **Canonical Figma:** Atlas Design System (`6r1KqLmwiB8TUXjyedezom`)  
 **Homepage pilot:** Implemented — see [Homepage Pilot](/docs/architecture/homepage-pilot)  
 **Work route:** Implemented — see [Work Route](/docs/architecture/work-route)  
 **Case study:** Implemented (fixture-first) — see [Case Study Route](/docs/architecture/case-study-route)  
-**Next milestone:** M4 — About + Contact (do not expand beyond Manifest scope)
+**Next milestone:** **M5 — Articles / Editorial Publishing** (do not expand beyond Manifest scope)
+
+---
+
+## Current status (2026-08-11)
+
+| Milestone | Status |
+| --- | --- |
+| **M0 — Governance / Project Foundations** | **COMPLETE** |
+| **M1 — Foundations & Identity** | **COMPLETE** |
+| **M2 — Information Architecture** | **COMPLETE** |
+| **M3 — Layout Architecture** | **COMPLETE** |
+| **M4 — Editorial Brand / Core Route Implementation** | **COMPLETE** |
+| **M5 — Articles / Editorial Publishing** | **NEXT** |
+| Editorial System Freeze Gate | Pending (after M5; not a milestone) |
+| **M6 — Documentation** | Planned |
+| **M7 — Production Assets** | Planned |
+| **M8 — Strapi Integration** | Planned |
+| **M9 — Hardening** | Planned |
+| **M10 — Launch** | Planned |
+
+**Program posture:** Fixture-first until the editorial frontend contract is proven through Articles (M5) and Documentation (M6). Strapi remains at **M8**. Do not reopen M0–M4. Do not begin M5 implementation from this documentation pass.
+
+### Milestone scheme note
+
+Earlier implementation reports used an implementation-local numbering (**M0 Foundations → M1 Home → M2 Work → M3 Case Study**). Those reports remain valid historical proof (Homepage Pilot, Work Route, Case Study Route, Architecture Freeze). As of 2026-08-11 this Build Manifest uses the **program-level** milestone scheme above. That earlier core-route implementation work is completed under **M4 — Editorial Brand / Core Route Implementation**.
 
 ---
 
@@ -34,7 +60,9 @@ If implementation and Figma disagree, **Figma wins** for visuals. If implementat
 | 21 Case Study Template | Canonical article structure |
 | 22 Documentation · 23 Contact | Page family |
 | 24 Navigation System · 25 Editorial Image Direction | Chrome & evidence imagery |
-| 26 Editorial Publishing System | Reusable content patterns |
+| 26 Editorial Publishing System | **Canonical editorial publishing patterns** (figures, callouts, evidence, metadata, code, tables) — primary source for M5/M6 |
+
+Page 26 is the visual authority for the reusable Editorial Publishing System exercised in M5 and reused in M6.
 
 ---
 
@@ -46,10 +74,11 @@ Atlas is the greenfield rebuild of **johnschibelli.dev**: an **engineering publi
 
 ### Goals
 
-- Ship core journeys: Home, Work, Case Study, About, Contact, Documentation landing.
+- Ship core journeys: Home, Work, Case Study, Articles, About, Contact, Documentation.
 - Match frozen editorial design (type, color, surfaces, nav, publishing patterns).
+- Prove the Editorial Publishing System (Page 26) via Articles before Documentation depends on it.
 - Prove engineering through evidence (figures, diagrams, CI, repos) — never decoration.
-- Use shared `apps/cms-strapi` with site key `personal`; isolate from IntraWeb (`intraweb`).
+- Use shared `apps/cms-strapi` with site key `personal` **at M8** after the frontend contract is proven; isolate from IntraWeb (`intraweb`).
 - Stay inside Nexus affected CI / Vercel conventions.
 
 ### Scope (v1 launch)
@@ -131,7 +160,7 @@ flowchart LR
 | CMS mapping | `atlas-web` `lib/strapi/` + `@repo/strapi-client` |
 | Schema changes | `cms-strapi` (with IntraWeb regression) |
 
-### Folder structure (actual — M0–M3)
+### Folder structure (actual — through M4 core routes)
 
 ```text
 apps/atlas-web/src/
@@ -174,10 +203,11 @@ App Router under `app/(site)/…`. No auth middleware for v1 public site. Option
 
 | Kind | Strategy |
 | --- | --- |
-| Home / About structure | Mostly static section components; copy from CMS singles or typed fields |
-| Work index | CMS `project` (+ featured flags) |
-| Case study | CMS `case-study` (extended fields — §6) |
-| Docs landing | Hybrid: static category IA + CMS “recent” articles/notes |
+| Home / About structure | Mostly static section components; copy from fixtures now, CMS singles or typed fields at M8 |
+| Work index | Fixture now; CMS `project` (+ featured flags) at M8 |
+| Case study | Fixture now; CMS `case-study` (extended fields — §6) at M8 |
+| Articles index / article | **M5 fixtures** proving Page 26; CMS `article` at M8 |
+| Docs landing / docs | **M6** on proven primitives; CMS at M8 |
 | Contact | Static UI + server action / API for submit |
 | Nav labels | Hardcoded to match Figma chrome; CMS nav optional later |
 
@@ -192,10 +222,12 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 | `/` | Homepage | Site chrome | Recognition, Featured, Selected, Philosophy, Writing, About teaser, Contact | Nav, Footer, figures, chapter markers | Partial | Site + page | `WebSite` | Journey + a11y + visual | **Implemented** (pilot) |
 | `/work` | Work index | Site chrome | Intro, Featured, Selected, Taxonomy, Contact | Project sections, taxonomy list | Fixture | Collection | `CollectionPage` | Journey + visual | **Implemented** (fixture-first) |
 | `/work/[slug]` | Case study | Site chrome + TOC/progress | Header, TOC, Hero, Overview… Contact (template 21) | Article header, TOC, figures, diagrams, evidence, related | Fixture | Article | `Article` / `TechArticle` | Journey + visual | **Implemented** (Portfolio OS fixture-first) |
-| `/about` | Editorial profile | Site chrome | Opening, Philosophy, Approach, Style, Principles, Timeline, Focus, Reading, Architecture, Notes, Contact | Pull quote, timeline, diagrams | Partial | Profile | `ProfilePage` / `Person` | Journey + visual | Design frozen |
-| `/docs` | Handbook landing | Site chrome | Header, Search UI, Categories, Recently Updated, Progress note | Search field, category cards, list rows | Partial | Collection | `CollectionPage` | Journey | Design frozen |
-| `/docs/[…slug]` | Doc article (v1.1 if needed) | Site chrome + progress | Article patterns from 26 | Editorial primitives | Yes | Article | `TechArticle` | When in scope | Deferred unless launch requires |
-| `/contact` | Conversation starter | Site chrome | Quiet hero + 3-field form | Form controls | Form only | Contact | — | Journey + form | Design frozen |
+| `/articles` | Editorial writing index | Site chrome | Featured writing, chronological writing, editorial metadata, restrained topic nav (Figma authority) | Editorial hierarchy — **not** a card-grid blog | Fixture (M5) | Collection | `CollectionPage` | Journey + visual | **M5 NEXT** |
+| `/articles/[slug]` | Article / publishing proving ground | Site chrome + TOC/progress as designed | Header, title/deck, metadata, prose, figures, code, callouts, evidence, tables, related, prev/next | Page 26 primitives | Fixture (M5) | Article | `Article` / `TechArticle` | Journey + a11y + visual | **M5 NEXT** |
+| `/about` | Editorial profile | Site chrome | Opening, Philosophy, Approach, Style, Principles, Timeline, Focus, Reading, Architecture, Notes, Contact | Pull quote, timeline, diagrams | Partial | Profile | `ProfilePage` / `Person` | Journey + visual | Design frozen (not next; do not reopen M4) |
+| `/docs` | Handbook landing | Site chrome | Header, Search UI, Categories, Recently Updated, Progress note | Search field, category cards, list rows | Fixture → CMS at M8 | Collection | `CollectionPage` | Journey | **M6** (after Editorial System Freeze) |
+| `/docs/[…slug]` | Doc article | Site chrome + progress | Article patterns from Page 26 | Proven editorial primitives from M5 gate | Fixture → CMS at M8 | Article | `TechArticle` | Journey + visual | **M6** |
+| `/contact` | Conversation starter | Site chrome | Quiet hero + 3-field form | Form controls | Form only | Contact | — | Journey + form | Design frozen (not next; do not reopen M4) |
 | `/404` | Not found | Minimal chrome | Message + links home/work | — | No | `noindex` | — | 404 journey | Required |
 | `/robots.txt` | Crawlers | — | — | — | No | — | — | Smoke | Required |
 | `/sitemap.xml` | Index | — | — | — | Derived | — | — | Smoke | Required |
@@ -203,8 +235,10 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 ### Notes
 
 - **`/projects` → `/work`:** prefer `/work` to match Figma; add redirects from legacy URLs (§10).
-- **Articles:** only if launch scope requires; otherwise Docs landing + case studies suffice.
-- **Search on `/docs`:** UI pattern approved; backend may be static filter or deferred pagefind — decide in impl milestone without inventing AI search.
+- **Articles (`/articles`, `/articles/[slug]`):** **M5** is the first production proving ground for the complete Atlas Editorial Publishing System (Figma Page 26). Not a deferred nice-to-have.
+- **About / Contact:** Designs are frozen in Figma (pages 20 / 23). Nav already targets these routes. They are **not** the next implementation milestone; do not describe them as “M4 to begin.” Remaining page implementation stays in launch scope without renumbering M5–M10.
+- **Search on `/docs`:** UI pattern approved; backend may be static filter or deferred pagefind — decide during M6 without inventing AI search.
+- **Anti-generic-blog guardrail:** `/articles` must not regress into a conventional developer-blog card-grid aesthetic. Atlas is an editorial engineering publication — preserve approved hierarchy, metadata, restrained topic navigation, and selective imagery. Figma remains visual authority; do not invent a new index design from this manifest.
 
 ---
 
@@ -334,6 +368,16 @@ Load via `next/font` (self-hosted). No Inter-as-system fallback as the designed 
 
 ## 6. Strapi mapping
 
+### Fixture-first until M8 (architectural constraint)
+
+Atlas intentionally remains **fixture-first** until the editorial frontend contract is sufficiently proven.
+
+- **M5 (Articles)** and **M6 (Documentation)** prove the publishing system and content shapes in the frontend.
+- The publishing implementation determines the content contract first.
+- **Do not** let Strapi drive speculative frontend content modeling.
+- **M8 — Strapi Integration** maps that proven contract into the shared, source-controlled `apps/cms-strapi` architecture.
+- Do not move CMS work earlier than M8.
+
 ### Instance & site
 
 - **Must** use `apps/cms-strapi`.
@@ -394,7 +438,22 @@ Extend `@repo/strapi-client` with any new getters/normalizers; Zod domain types;
 
 ## 7. Asset manifest
 
-Track in a living sheet (or CMS) before launch. Status: **Needed** until captured.
+Track in a living sheet (or CMS) before launch. Status: **Needed** until captured. Production asset/media risk remains **high priority** (see §17).
+
+**Do not create a separate asset milestone beyond M7.** M7 remains the dedicated Production Assets completion pass.
+
+### Opportunistic capture (M5 / M6)
+
+Begin collecting production source material **during M5 and M6** when implementation reveals needed assets. This avoids discovering at M7 that required sources never existed. Examples:
+
+- Screenshots and UI captures
+- Architecture diagrams
+- CI/CD, Playwright, test, coverage, and performance evidence
+- Repository and documentation captures
+- Editorial figures and responsive crops
+- Social / OG imagery
+
+M7 still owns the formal production-asset completion pass (replace fixtures/placeholders; complete the visual/evidence set).
 
 | ID | Asset | Owner | Priority | Aspect | Alt / notes | Responsive | Source |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -477,7 +536,7 @@ Decisions only — no premature optimization.
 | --- | --- | --- |
 | Unit | Strapi mappers, SEO helpers, URL/slug, form validation | P0 |
 | Integration | strapi-client site filters; preview secret | P0 |
-| Playwright | Home, Work, Case, About, Contact, Docs, 404, nav, mobile menu | P0 |
+| Playwright | Home, Work, Case, Articles (M5), Docs (M6), About, Contact, 404, nav, mobile menu | P0 |
 | A11y | Major pages + keyboard | P0 |
 | Visual | Stable pages D/T/M with fixture data | P0 |
 | CMS | Unpublished hidden; site isolation (no intraweb) | P0 |
@@ -542,18 +601,107 @@ Update docs when architecture, CMS, or testing materially changes.
 
 ## 15. Implementation order
 
-| Milestone | Goal | Depends on | Output | Acceptance | Complexity |
-| --- | --- | --- | --- | --- | --- |
-| **M0 — Foundations** | Tokens, fonts, layout shell, Nav/Footer | Manifest approval | `globals.css` tokens, `SiteNav`, `SiteFooter` | Matches chrome Figma; D/T/M | **DONE** |
-| **M1 — Home** | Homepage sections | M0 | `/` complete | Visual QA vs Page 15; a11y | **DONE** — [report](/docs/architecture/homepage-pilot) |
-| **M2 — Work index** | `/work` + project mapping | M0, M1 approval | Work page | Matches Page 18; fixture-first | **DONE** — [report](/docs/architecture/work-route) |
-| **M3 — Case study** | Template 21 + CMS fields | M2, schema extension | `/work/[slug]` | Matches template; evidence figures | **DONE** (fixture-first) — [report](/docs/architecture/case-study-route); Strapi wiring deferred |
-| **M4 — About + Contact** | Profile + form | M0 · architecture freeze | `/about`, `/contact` | Matches 20/23; form delivers | Cleared to start — not started |
-| **M5 — Docs landing** | `/docs` | M0, articles/categories | Docs landing | Matches 22 | S/M |
-| **M6 — SEO + redirects** | Metadata, sitemap, legacy URLs | Content routes | SEO plumbing | Sitemap valid; redirects | S |
-| **M7 — Hardening** | Tests, a11y, visuals, perf, security headers | M1–M6 | CI green | §11–§13 | M |
+### Program milestones (authoritative as of 2026-08-11)
 
-No parallel “framework” milestones. Schema work for case studies starts before or at kickoff of M3.
+| Milestone | Goal | Depends on | Output | Acceptance | Status |
+| --- | --- | --- | --- | --- | --- |
+| **M0 — Governance / Project Foundations** | Cursor governance & project rules | — | `atlas-*` rules, Nexus architecture constraints, no-overengineering | Rules cover product, frontend, design, testing, docs, Strapi, Nexus | **COMPLETE** |
+| **M1 — Foundations & Identity** | Visual / communication / system direction | M0 | Figma identity & foundation work | Identity established in Atlas Design System | **COMPLETE** |
+| **M2 — Information Architecture** | Site IA & narrative decisions | M1 | Approved IA | Proof-before-biography; featured + curated breadth; small primary nav (Work / About / Contact); Articles in publishing system; homepage narrative stages set | **COMPLETE** — do not reopen |
+| **M3 — Layout Architecture** | Homepage layout across breakpoints | M2 | Desktop / Tablet / Mobile homepage architecture | Narrative structure approved at 1440 / 768 / 390 | **COMPLETE** — no pending prerequisite decisions |
+| **M4 — Editorial Brand / Core Route Implementation** | Brand system + core frontend routes | M0–M3, design freeze | Editorial Brand System in Figma; `/`, `/work`, `/work/[slug]` implemented fixture-first | Matches frozen brand + pages 15/18/21; architecture freeze | **COMPLETE** — do not restart |
+| **M5 — Articles / Editorial Publishing** | Prove Editorial Publishing System in production UI | M4 complete | `/articles`, `/articles/[slug]`, representative fixtures, reusable primitives | See **M5 expectations** below + Editorial System Freeze Gate | **NEXT** |
+| *Editorial System Freeze Gate* | Acceptance gate only (not a milestone) | M5 implementation | Primitive classification + visual/a11y/responsive sign-off | See **Editorial System Freeze Gate** below | Pending after M5 |
+| **M6 — Documentation** | Docs experience on proven editorial system | Freeze gate passed | `/docs`, doc articles using **PROVEN** primitives | Matches page 22 + Page 26 proven set | Planned |
+| **M7 — Production Assets** | Formal production visual/evidence asset pass | M5–M6 opportunistic capture underway | Real assets replace fixtures/placeholders | Asset manifest (§7) complete for launch set | Planned |
+| **M8 — Strapi Integration** | Map proven frontend contract → shared CMS | M5–M6 contract proven | `personal` site content via `cms-strapi` + `@repo/strapi-client` | Site isolation; no speculative model drift | Planned |
+| **M9 — Hardening** | Quality gates & release readiness | M5–M8 as required | Tests, a11y, visuals, perf, SEO, security headers | §8–§13 green on affected CI | Planned |
+| **M10 — Launch** | Production release | M9 | johnschibelli.dev cutover | Launch DoD (§1) + checklist | Planned |
+
+No parallel “framework” milestones. Do not renumber milestones to insert the Editorial System Freeze Gate.
+
+### Historical implementation reports (preserved)
+
+| Historical label (reports) | Maps to program milestone | Report |
+| --- | --- | --- |
+| M0 Foundations + M1 Home | **M4** (core route implementation) | [Homepage Pilot](/docs/architecture/homepage-pilot) |
+| M2 Work index | **M4** | [Work Route](/docs/architecture/work-route) |
+| M3 Case study | **M4** | [Case Study Route](/docs/architecture/case-study-route) |
+| Architecture freeze M0–M3 Proven | **M4** complete / frontend v1.0 freeze | [Architecture Freeze](/docs/architecture/architecture-freeze) |
+
+### M5 expectations — Articles / Editorial Publishing
+
+M5 is **not** merely scaffolding `/articles` and `/articles/[slug]`. It is the first production proving ground for the complete **Atlas Editorial Publishing System** (Figma Page 26).
+
+#### Publishing primitives to exercise
+
+At minimum, M5 must validate the system’s ability to support representative primitives (not every primitive in every article):
+
+- Article header; title / deck; article metadata
+- Prose typography; editorial reading rhythm; headings
+- Figures and captions; responsive media
+- Code blocks; callouts; evidence blocks; tables; links
+- Table of contents where appropriate
+- Reading / progress behavior if defined by the approved design
+- Related content; previous / next article navigation where appropriate
+
+**Do not** require every Page 26 primitive to appear artificially in every article. Prove the reusable publishing system — not a component showcase.
+
+#### Representative fixture content (fixture-first)
+
+Atlas remains fixture-first at M5. **Do not** pull Strapi earlier. Fixtures must be realistic enough to expose layout and content-system problems — **not** lorem ipsum as primary validation content.
+
+Require representative article fixtures covering at least:
+
+1. A **substantial technical article** with prose, headings, code, and figures/media.
+2. A **shorter engineering / editorial article**.
+3. Content that exercises **structured editorial primitives** such as tables, callouts, and evidence blocks.
+
+These may remain fixture-driven and need not all be final production articles.
+
+#### `/articles` index guardrail
+
+The Articles index must preserve Atlas editorial hierarchy (e.g. featured writing, chronological writing, editorial metadata, restrained topic/category navigation, selective imagery). **Forbidden shortcut:** regressing into a generic developer-blog / card-grid aesthetic. Figma remains the visual authority.
+
+#### Opportunistic assets during M5
+
+When implementation reveals missing screenshots, diagrams, CI/evidence captures, or editorial figures, begin capture now (see §7). Formal completion remains **M7**.
+
+### Editorial System Freeze Gate (between M5 and M6)
+
+**Not a milestone.** Does not alter M5–M10 numbering.
+
+```text
+M5 Articles  →  Editorial System Freeze Gate  →  M6 Documentation
+```
+
+M5 is not **DONE** until the reusable Editorial Publishing System has been exercised enough to establish production-capable foundations. Both Articles and Documentation depend on the same primitives; the gate prevents Documentation from depending on unproven foundations.
+
+#### Gate requirements
+
+**Visual verification** — representative publishing layouts at **1440 / 768 / 390** using the established visual regression workflow.
+
+**Accessibility** — semantic heading structure; keyboard interaction; focus states; contrast; accessible figures/images; code accessibility; table accessibility; reduced-motion where applicable.
+
+**Responsive behavior** — representative prose, figures, code, tables, callouts, metadata, and navigation across the required viewports.
+
+**Primitive classification** — after M5, classify editorial primitives as:
+
+| Class | Meaning |
+| --- | --- |
+| **PROVEN** | Exercised and validated in M5; safe for Documentation reuse |
+| **ARTICLE-LOCAL** | Acceptable for articles; not yet treated as shared docs foundation |
+| **DEFERRED** | Not required yet; do not implement unused primitives merely to mark them proven |
+
+### Established IA decisions (M2 — do not reopen)
+
+- Proof before biography
+- One featured proof followed by curated breadth
+- Architecture / process primarily demonstrated through case studies, homepage, and documentation
+- Legacy content is optional rather than automatically preserved
+- Primary navigation remains intentionally small; Work, About, and Contact are core destinations
+- Articles are part of the publishing system
+- Homepage narrative stages are established
 
 ---
 
@@ -575,46 +723,47 @@ No parallel “framework” milestones. Schema work for case studies starts befo
 
 ## 17. Risks
 
-| Risk | Likelihood | Impact | Mitigation |
+| Risk | Likelihood | Impact | Status / Mitigation |
 | --- | --- | --- | --- |
-| Case-study schema reshape breaks IntraWeb | M | H | Additive fields or Atlas-specific type; dual-site regression |
-| Missing real evidence assets delay launch | H | H | Asset manifest owners; placeholders labeled; parallel capture |
+| Missing real evidence assets delay launch | **H** | **H** | **Open — high priority.** Asset manifest owners; labeled placeholders; **opportunistic capture in M5/M6**; formal completion in **M7** |
+| Editorial primitives diverge between Articles and Documentation | M | H | **Addressed by Editorial System Freeze Gate** after M5 — classify PROVEN / ARTICLE-LOCAL / DEFERRED before M6 |
+| Case-study / article schema reshape breaks IntraWeb | M | H | Additive fields or Atlas-specific type; dual-site regression — execute at **M8**, not earlier |
 | Scope creep into page builder | M | H | Manifest + no-overengineering rule; reject DZ expansion |
-| Design/impl drift | M | M | Visual regression vs Figma; VRB gate |
-| Strapi outage blanks site | L | H | Graceful empty states; cache/ISR |
-| Preview/draft leakage | L | H | Preview secret; no draft in public queries |
+| Design/impl drift | M | M | Visual regression vs Figma; VRB gate; freeze gate at M5→M6 |
+| Articles index regresses to generic blog card-grid | M | H | Explicit `/articles` guardrail; Figma authority; editorial hierarchy review in M5 |
+| Strapi outage blanks site | L | H | Graceful empty states; cache/ISR (relevant from M8) |
+| Preview/draft leakage | L | H | Preview secret; no draft in public queries (M8+) |
 | Yarn atlas-docs vs pnpm friction | M | L | Keep docs separate until integration decision |
-| Contact spam | M | M | CAPTCHA/honeypot + rate limit |
-| Legacy SEO loss | M | H | Redirect inventory before cutover |
+| Contact spam | M | M | CAPTCHA/honeypot + rate limit when Contact ships |
+| Legacy SEO loss | M | H | Redirect inventory before cutover (M9/M10) |
 | Test flakiness (visual) | M | M | Fixture data; masked dynamic regions |
 
 ---
 
 ## 18. Build readiness checklist
 
-Every item must be **YES** before implementation starts.
+Program foundations through M4 are complete. Checklist below remains the launch readiness contract; items are not a blocker to begin **M5**.
 
 | # | Item | YES/NO |
 | --- | --- | --- |
 | 1 | Design frozen (Figma 15–26) | YES |
 | 2 | Routes defined (§3) | YES |
 | 3 | Components documented (§4) | YES |
-| 4 | Assets tracked (§7) | YES (sheet to be owned) |
-| 5 | CMS mapped (§6) | YES (schema extension plan required for M3) |
+| 4 | Assets tracked (§7) | YES (sheet to be owned; opportunistic capture from M5) |
+| 5 | CMS mapped (§6) | YES (plan only — **fixture-first through M6; integrate at M8**) |
 | 6 | Accessibility planned (§9) | YES |
 | 7 | SEO planned (§10) | YES |
 | 8 | Testing planned (§11) | YES |
 | 9 | CI/CD understood (§12) | YES |
-| 10 | No unresolved architecture questions blocking M0 | YES* |
+| 10 | M0–M4 complete; M5 unambiguously next | YES |
 
-\*Open questions below are **non-blocking for M0**; resolve before M3 schema merge.
+### Open questions (non-blocking for M5; resolve before relevant later milestones)
 
-### Open questions (resolve before/at M3)
-
-1. Extend existing `case-study` vs new Atlas-only type?  
-2. Docs search: client filter vs pagefind vs defer?  
-3. Contact delivery: Resend vs existing Nexus form path?  
-4. Legacy URL inventory completeness for redirects?  
+1. Extend existing `case-study` / `article` vs Atlas-only types? — resolve before **M8** schema merge.  
+2. Docs search: client filter vs pagefind vs defer? — resolve during **M6**.  
+3. Contact delivery: Resend vs existing Nexus form path? — resolve when Contact implementation is scheduled.  
+4. Legacy URL inventory completeness for redirects? — resolve before **M9/M10** cutover.  
+5. About / Contact implementation slot within M6–M10 without renumbering? — decide without reopening M4 or delaying M5.
 
 ---
 
@@ -622,22 +771,25 @@ Every item must be **YES** before implementation starts.
 
 ### Folder (logical)
 
-See §2 folder proposal.
+See §2 folder structure (actual through M4 core routes).
 
-### Sequence (launch)
+### Sequence (program)
 
 ```mermaid
 flowchart TD
-  M0[M0 Foundations] --> M1[M1 Home]
-  M0 --> M2[M2 Work]
-  M2 --> M3[M3 Case Study]
-  M0 --> M4[M4 About + Contact]
-  M0 --> M5[M5 Docs landing]
-  M1 --> M6[M6 SEO + redirects]
-  M3 --> M6
-  M4 --> M6
-  M5 --> M6
-  M6 --> M7[M7 Hardening]
+  M0[M0 Governance] --> M1[M1 Identity]
+  M1 --> M2[M2 Information Architecture]
+  M2 --> M3[M3 Layout Architecture]
+  M3 --> M4[M4 Editorial Brand / Core Routes]
+  M4 --> M5[M5 Articles / Editorial Publishing]
+  M5 --> Gate[Editorial System Freeze Gate]
+  Gate --> M6[M6 Documentation]
+  M6 --> M7[M7 Production Assets]
+  M5 -.->|opportunistic capture| M7
+  M6 -.->|opportunistic capture| M7
+  M7 --> M8[M8 Strapi Integration]
+  M8 --> M9[M9 Hardening]
+  M9 --> M10[M10 Launch]
 ```
 
 ---
@@ -649,11 +801,13 @@ flowchart TD
 - No section registry, no DZ page builder, no shared UI package speculation.
 - Tokens as CSS variables — not a token pipeline product.
 - Explicit section components per page.
+- Fixture-first publishing before CMS (Strapi at M8).
 
 ### Missing abstractions (intentionally deferred)
 
-- Design-system Storybook for atlas-web — add when component count hurts review, not before M0.
-- Full docs article template route — deferred unless launch requires.
+- Design-system Storybook for atlas-web — add when component count hurts review.
+- Full docs article route — **M6** after Editorial System Freeze Gate.
+- Strapi mappers — **M8** after frontend contract proven.
 
 ### Unnecessary abstractions rejected
 
@@ -662,8 +816,9 @@ flowchart TD
 
 ### Maintenance risks
 
-- Case-study field growth could recreate a builder — keep components finite and named after template sections.
+- Case-study / article field growth could recreate a builder — keep components finite and named after template sections.
 - atlas-docs Yarn isolation — document deploy path; don’t half-migrate to pnpm mid-sprint.
+- Shared editorial primitives must stay classified (PROVEN / ARTICLE-LOCAL / DEFERRED) so Documentation does not inherit unproven Article-only patterns.
 
 ### Hidden coupling
 
@@ -672,13 +827,13 @@ flowchart TD
 
 ### CMS / testing / deploy risks
 
-- Additive schema preferred; always run IntraWeb consumer checks.
-- Visual tests need locked fixture content.
+- Additive schema preferred at M8; always run IntraWeb consumer checks.
+- Visual tests need locked fixture content (especially M5 article fixtures).
 - Vercel affected ignoreCommand already scoped — keep Atlas filter tight.
 
 ### Verdict
 
-**M0–M3 are complete and frozen** as Atlas Frontend Architecture v1.0. See [Architecture Freeze](/docs/architecture/architecture-freeze). Strapi additive schema merge remains deferred; fixtures document the planned editorial field shape. M4 may begin under freeze constraints.
+**M0–M4 are complete.** Frontend architecture v1.0 remains frozen for proven core routes; see [Architecture Freeze](/docs/architecture/architecture-freeze) (historical M0–M3 implementation labels). Strapi remains deferred to **M8**; fixtures continue to document editorial field shapes. **M5 — Articles / Editorial Publishing is next.** Do not reopen M0–M4. Do not start Documentation, Strapi, or Launch side quests outside Manifest order.
 
 ---
 
@@ -686,7 +841,7 @@ flowchart TD
 
 Validated only after production implementation, accessibility, responsive, and visual regression approval. Do not mark unimplemented patterns as validated.
 
-### Validated
+### Validated (through M4 core routes)
 
 - ✓ ChapterMarker — Home + Work + Case Study
 - ✓ Figure (+ `tone`, optional `label` / `panels`) — Home, Work, Case Study
@@ -701,7 +856,7 @@ Validated only after production implementation, accessibility, responsive, and v
 - ✓ Fixture-first Strapi-shaped content modules — `homepage.ts`, `work.ts`, `case-study.ts` (types) + `case-studies/*` (data/registry)
 - ✓ RSC default · client islands only for nav active + reading progress
 - ✓ Playwright D/T/M + axe + visual baselines
-- ✓ Architecture freeze (M0–M3) — [report](/docs/architecture/architecture-freeze)
+- ✓ Architecture freeze for core routes — [report](/docs/architecture/architecture-freeze)
 
 ### Intentionally not extracted (yet)
 
@@ -710,12 +865,15 @@ Validated only after production implementation, accessibility, responsive, and v
 - ✗ Decision matrix shell — Case-local until a second case study proves identical
 - ✗ Generic ProjectCard / Card — forbidden; unequal editorial layouts stay in sections
 
-### Deferred (not in Portfolio OS template)
+### Deferred (to prove in M5 / classify at Freeze Gate)
+
+Page 26 publishing primitives still to be exercised in Articles (then classified PROVEN / ARTICLE-LOCAL / DEFERRED):
 
 - Caption as standalone primitive (lives on `Figure` / diagram `figcaption`)
 - PullQuote / Callout / EvidenceBlock / Timeline
 - CodeBlock / TerminalBlock / RepositoryCard / EmbedCard / Footnotes
+- Articles index editorial hierarchy (non-card-grid)
 
 ---
 
-**Architecture frozen at v1.0 (M0–M3).** M4 (About + Contact) may begin. Do not start Docs, additional case studies, or Strapi integration as side quests outside Manifest order.
+**M0–M4 complete. M5 (Articles / Editorial Publishing) is next.** Pass the Editorial System Freeze Gate before M6 Documentation. Keep fixture-first until M8 Strapi. Do not start Docs, Strapi, or additional scope as side quests outside Manifest order.
