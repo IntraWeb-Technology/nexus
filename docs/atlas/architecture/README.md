@@ -4,19 +4,21 @@ Atlas product architecture and the **Build Manifest** (implementation contract) 
 
 → [`apps/atlas-docs/content/architecture/build-manifest.mdx`](../../../apps/atlas-docs/content/architecture/build-manifest.mdx)
 
-**Architecture freeze (M0–M3 Proven — Frontend v1.0):**
+**Current program status (as of 2026-08-11):** M0–M4 **COMPLETE** · **M5 — Articles / Editorial Publishing NEXT** · M6–M10 planned. See the Build Manifest current-status table.
+
+**Architecture freeze (core routes proven — Frontend v1.0):**
 
 → [`apps/atlas-docs/content/architecture/architecture-freeze.mdx`](../../../apps/atlas-docs/content/architecture/architecture-freeze.mdx)
 
-Homepage pilot report (M0/M1 validation):
+Homepage pilot report (historical M0/M1 validation → program M4):
 
 → [`apps/atlas-docs/content/architecture/homepage-pilot.mdx`](../../../apps/atlas-docs/content/architecture/homepage-pilot.mdx)
 
-Work route report (M2 validation):
+Work route report (historical M2 validation → program M4):
 
 → [`apps/atlas-docs/content/architecture/work-route.mdx`](../../../apps/atlas-docs/content/architecture/work-route.mdx)
 
-Case study report (M3 validation — Portfolio OS):
+Case study report (historical M3 validation → program M4 — Portfolio OS):
 
 → [`apps/atlas-docs/content/architecture/case-study-route.mdx`](../../../apps/atlas-docs/content/architecture/case-study-route.mdx)
 
