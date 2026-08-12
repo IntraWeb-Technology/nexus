@@ -100,6 +100,40 @@
     },
     "migrationBatch": {
       "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "themes": {
+      "type": "json"
+    },
+    "statusLabel": {
+      "type": "string"
+    },
+    "layout": {
+      "type": "enumeration",
+      "enum": [
+        "feature",
+        "offset",
+        "band"
+      ]
+    },
+    "sortOrder": {
+      "type": "integer"
+    },
+    "summaryTablet": {
+      "type": "text"
+    },
+    "summaryMobile": {
+      "type": "text"
+    },
+    "ctaLabel": {
+      "type": "string"
+    },
+    "cardMedia": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.media"
     }
   }
 }

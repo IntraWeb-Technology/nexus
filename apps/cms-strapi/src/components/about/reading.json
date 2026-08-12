@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_about_readings",
+  "info": {
+    "displayName": "About Reading",
+    "icon": "book",
+    "description": "About reading section"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "items": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

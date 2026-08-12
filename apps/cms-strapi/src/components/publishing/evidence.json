@@ -1,0 +1,45 @@
+{
+  "collectionName": "components_publishing_evidences",
+  "info": {
+    "displayName": "Evidence Block",
+    "icon": "check",
+    "description": "Engineering evidence"
+  },
+  "options": {},
+  "attributes": {
+    "kind": {
+      "type": "enumeration",
+      "enum": [
+        "ci",
+        "deploy",
+        "test",
+        "coverage",
+        "performance",
+        "a11y",
+        "repository",
+        "documentation"
+      ],
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    },
+    "meta": {
+      "type": "component",
+      "repeatable": true,
+      "component": "publishing.meta-item",
+      "required": true
+    },
+    "href": {
+      "type": "string"
+    },
+    "hrefLabel": {
+      "type": "string"
+    }
+  }
+}

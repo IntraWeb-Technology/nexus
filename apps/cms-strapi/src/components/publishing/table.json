@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_publishing_tables",
+  "info": {
+    "displayName": "Editorial Table",
+    "icon": "grid",
+    "description": "Comparison matrix"
+  },
+  "options": {},
+  "attributes": {
+    "caption": {
+      "type": "string"
+    },
+    "captionCompact": {
+      "type": "string"
+    },
+    "columns": {
+      "type": "json",
+      "required": true
+    },
+    "rows": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

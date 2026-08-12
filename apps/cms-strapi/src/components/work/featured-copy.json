@@ -1,0 +1,63 @@
+{
+  "collectionName": "components_work_featured_copies",
+  "info": {
+    "displayName": "Work Featured Copy",
+    "icon": "star",
+    "description": "Featured project editorial overlay"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "flagshipLabel": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "text"
+    },
+    "summaryMobile": {
+      "type": "text"
+    },
+    "status": {
+      "type": "string"
+    },
+    "timeframe": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "figure": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.media"
+    },
+    "figureCompact": {
+      "type": "component",
+      "repeatable": false,
+      "component": "publishing.media"
+    },
+    "themesLabel": {
+      "type": "string"
+    },
+    "themes": {
+      "type": "json"
+    },
+    "themesCompact": {
+      "type": "string"
+    },
+    "cta": {
+      "type": "component",
+      "repeatable": false,
+      "component": "shared.link"
+    },
+    "ctaNote": {
+      "type": "string"
+    }
+  }
+}

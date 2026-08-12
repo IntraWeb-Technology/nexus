@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_case_overviews",
+  "info": {
+    "displayName": "Case Overview",
+    "icon": "book",
+    "description": "Case overview columns"
+  },
+  "options": {},
+  "attributes": {
+    "chapter": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "titleMobile": {
+      "type": "string"
+    },
+    "columns": {
+      "type": "json",
+      "required": true
+    },
+    "bodyTablet": {
+      "type": "json"
+    },
+    "bodyMobile": {
+      "type": "text"
+    }
+  }
+}
