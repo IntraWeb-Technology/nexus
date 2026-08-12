@@ -36,6 +36,21 @@ test.describe("homepage", () => {
     ).toBeFocused();
   });
 
+  test("in-page hero CTAs do not soft-navigate via RSC", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    const rscRequests: string[] = [];
+    page.on("request", (req) => {
+      if (req.headers()["rsc"] === "1") rscRequests.push(req.url());
+    });
+
+    await page.getByRole("link", { name: "View selected work" }).click();
+    await expect(page).toHaveURL(/\/#selected-work$/);
+    await page.waitForTimeout(300);
+    expect(rscRequests, rscRequests.join("\n")).toEqual([]);
+  });
+
   test("has no serious accessibility violations", async ({ page }) => {
     await page.goto("/");
     const results = await new AxeBuilder({ page })
