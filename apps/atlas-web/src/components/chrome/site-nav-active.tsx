@@ -1,7 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { SiteNav } from "@/components/chrome/site-nav";
+import {
+  SiteNav,
+  type NavActive,
+} from "@/components/chrome/site-nav";
 import type { NavLink } from "@/content/types";
 
 type SiteNavActiveProps = {
@@ -9,13 +12,13 @@ type SiteNavActiveProps = {
   links: NavLink[];
 };
 
-function activeFromPath(
-  pathname: string,
-): "work" | "about" | "contact" | null {
+function activeFromPath(pathname: string): NavActive {
   if (pathname === "/work" || pathname.startsWith("/work/")) return "work";
   if (pathname === "/about" || pathname.startsWith("/about/")) return "about";
   if (pathname === "/contact" || pathname.startsWith("/contact/"))
     return "contact";
+  if (pathname === "/articles" || pathname.startsWith("/articles/"))
+    return "articles";
   return null;
 }
 

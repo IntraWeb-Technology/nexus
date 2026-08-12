@@ -14,6 +14,8 @@ alwaysApply: false
 
 > **Build the smallest coherent solution that satisfies current Atlas requirements.**
 
+Atlas extraction policy (**Rule of Two** / **Rule of Stability**) lives in `atlas-frontend`. This rule covers speculative architecture and task discipline across Atlas-touched code.
+
 ## Forbidden without proven need (mandatory)
 
 - Designing for hypothetical future consumers
@@ -38,12 +40,13 @@ Prefer explicit code when the abstraction would be harder to understand. Prefer 
 
 1. What concrete **current** problem does this solve?
 2. Where does the duplication or complexity exist **now**?
-3. Are there at least **three** legitimate current uses?
+3. Are there at least **two** legitimate current uses (Rule of Two), or a Manifest-required primitive?
 4. Why is an explicit implementation insufficient?
 5. Does this reduce **total** system complexity?
 6. Can the work be deferred until the need is proven?
+7. Would extracting destabilize frozen routes (Rule of Stability)?
 
-**Exceptions** to the three-use guideline: security, correctness, accessibility, framework-required boundaries, critical infrastructure consistency.
+**Exceptions** to the multi-use guideline: security, correctness, accessibility, framework-required boundaries, critical infrastructure consistency, Build Manifest P0 publishing primitives.
 
 ## Task discipline (mandatory)
 
@@ -51,3 +54,4 @@ Prefer explicit code when the abstraction would be harder to understand. Prefer 
 - Do not refactor unrelated code while completing a focused task.
 - When uncertain, choose the simpler reversible implementation.
 - Record deferred ideas in a backlog rather than implementing them.
+- Milestone completion and “no speculative abstractions” are gated by `atlas-definition-of-done`.

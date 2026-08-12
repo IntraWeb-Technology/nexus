@@ -8,7 +8,7 @@
 | Item | Value |
 |---|---|
 | App | `apps/cms-strapi` |
-| Version | Strapi **5.51.1** |
+| Version | Strapi **5.51.2** |
 | Default DB | SQLite (`.tmp/data.db`) |
 | Postgres | Set `DATABASE_CLIENT=postgres` + `DATABASE_*` (see `.env.example`) |
 
@@ -90,7 +90,7 @@ Contracts: [`architecture-contracts.md`](./architecture-contracts.md), [`content
 | Item | Value |
 |---|---|
 | URL | `https://cms.intrawebtech.com` |
-| Version | Strapi **5.51.1** (Elestio `elestio/strapi-production`) |
+| Version | Strapi **5.51.2** (Elestio `elestio/strapi-production`) |
 | VPS | Hostinger id `1343086` (`srv1343086.hstgr.cloud`, Ubuntu 24.04 + Docker) |
 | Compose project | `strapi-mmex` |
 | Containers | `strapi-mmex-strapi-1` (running), `strapi-mmex-db-1` (Postgres 16 Alpine, running) |

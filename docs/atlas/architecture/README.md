@@ -20,6 +20,10 @@ Case study report (M3 validation — Portfolio OS):
 
 → [`apps/atlas-docs/content/architecture/case-study-route.mdx`](../../../apps/atlas-docs/content/architecture/case-study-route.mdx)
 
+About + Contact report (M4):
+
+→ [`apps/atlas-docs/content/architecture/about-contact-route.mdx`](../../../apps/atlas-docs/content/architecture/about-contact-route.mdx)
+
 Nexus-wide monorepo standards remain under [`/docs/architecture`](../../architecture/).
 
 Design exports and review screenshots remain under [`docs/atlas/exports`](../exports/).

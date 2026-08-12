@@ -34,13 +34,17 @@ alwaysApply: false
 - Do not force unlike content into one collection merely to reduce type count.
 - Do not duplicate content types unless fields, workflow, or editorial purpose genuinely differ.
 - Site-specific content should have a required site relationship where appropriate.
-- **Frontend owns layout. Strapi owns structured content.**
+- **Strapi owns structured content.** Frontend owns layout and composition (see `atlas-design` / `atlas-frontend`).
 - Avoid unrestricted dynamic-zone page builders. Prefer structured content types and a small set of controlled reusable components. Existing `Page.sections` blocks are for controlled marketing pages — do not expand them into a free-form builder for Atlas.
 - Add only fields required by approved Atlas designs and editorial workflows.
 - Audit existing schemas before changing them. Do not redesign the entire CMS for Atlas without evidence the model is inadequate.
 - Keep schemas, migrations, seeds, and relevant config source-controlled. No manual production-only schema changes.
 - Preserve IntraWeb compatibility. Schema changes affecting both sites need regression validation for both consumers.
 - Preview, draft, and publication features only to the level current editorial workflows require.
+
+## Fixture → CMS handoff
+
+- Until mappers ship, Atlas remains **fixture-first** (`atlas-frontend`). Mappers must target domain types already used by UI — never push DTOs into components.
 
 ## Site keys (reference)
 

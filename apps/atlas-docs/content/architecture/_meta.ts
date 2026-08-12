@@ -4,4 +4,5 @@ export default {
   'homepage-pilot': 'Homepage Pilot',
   'work-route': 'Work Route',
   'case-study-route': 'Case Study Route',
+  'about-contact-route': 'About + Contact Route',
 };

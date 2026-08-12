@@ -1,5 +1,5 @@
 ---
-description: Atlas visual direction, image strategy, and layout system
+description: Atlas design governance — Figma truth, freeze, no drift
 globs:
   - apps/atlas-web/**
   - apps/atlas-docs/content/**
@@ -10,6 +10,20 @@ alwaysApply: false
 
 # Atlas design
 
+## Source of truth (mandatory)
+
+- **Approved Figma is the visual source of truth.** If implementation and Figma disagree on visuals, Figma wins.
+- Canonical file: Atlas Design System (see Build Manifest for file key and frozen page list).
+- **Atlas Design v1.0 is frozen.** Do not redesign frozen pages during implementation.
+- **Editorial Publishing System (Figma Page 26) is frozen.** Reuse approved patterns; do not invent parallel publishing chrome.
+
+## No design drift (mandatory)
+
+- Implement approved compositions — do not “improve” spacing, type, color, or layout ad hoc.
+- Responsive behavior must match Figma recomposition at **1440 / 768 / 390**, not stacked desktop.
+- Design changes require **review and approval before implementation**. Update Figma (and Manifest notes) first when a change is intentional.
+- Temporary placeholders are allowed only when tracked in an explicit asset inventory before launch.
+
 ## Visual direction (mandatory)
 
 Atlas must feel: modern, distinctive, editorial, technical, premium, restrained, human, memorable, confident without arrogance, and current without trend-chasing.
@@ -18,8 +32,7 @@ Atlas must feel: modern, distinctive, editorial, technical, premium, restrained,
 
 Do not default to:
 
-- Generic SaaS dashboard styling
-- Off-the-shelf Tailwind portfolio templates
+- Generic SaaS dashboard styling or off-the-shelf Tailwind portfolio templates
 - Excessive glassmorphism, neon cyberpunk, animated particles
 - Decorative dot grids everywhere, glowing borders on every component
 - Gradient blobs, floating abstract shapes, random 3D cubes
@@ -32,13 +45,11 @@ Do not default to:
 
 Atlas **cannot** rely only on colors, gradients, lines, and geometric shapes.
 
-Prefer meaningful imagery: real product screenshots, UI close-ups, device compositions, project galleries, before/after, architecture/workflow/system diagrams, sparingly used code/terminal imagery, professional personal photography where appropriate, editorial article imagery, and project-specific artwork only when it adds value.
+Prefer meaningful imagery: real product screenshots, UI close-ups, device compositions, project galleries, before/after, architecture/workflow diagrams, sparingly used code/terminal imagery, professional photography where appropriate, editorial article imagery, and project-specific artwork only when it adds value.
 
-Every image must do at least one of: communicate information, demonstrate real work, establish credibility, add meaningful atmosphere, or improve comprehension.
+Every image must communicate information, demonstrate real work, establish credibility, add meaningful atmosphere, or improve comprehension. Do not use decorative imagery merely to fill space.
 
-Do not use decorative imagery merely to fill space. Temporary placeholders are allowed during implementation, but every placeholder must be tracked in an explicit asset inventory before launch.
-
-## Layout and visual system (mandatory)
+## Layout system (mandatory)
 
 Require: strong hierarchy, intentional whitespace, editorial composition, sophisticated responsive behavior, clear rhythm/alignment, consistent spacing, purposeful asymmetry where appropriate, distinctive project presentation, carefully controlled accents, excellent typography, accessible contrast, visible focus states, and `prefers-reduced-motion` support.
 
@@ -46,4 +57,4 @@ Motion must communicate state or reinforce hierarchy — not decorate.
 
 **The application owns layout. Strapi provides content, not arbitrary page design.**
 
-Document design decisions in `apps/atlas-docs` when they materially affect the visual system.
+Visual QA and a11y gates for milestone completion: `atlas-definition-of-done`. Token/system docs: `atlas-documentation`.

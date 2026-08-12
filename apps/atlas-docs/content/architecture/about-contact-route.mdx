@@ -1,0 +1,152 @@
+# About + Contact Route — Implementation Report
+
+**Status:** Complete — M4  
+**Scope:** `/about`, `/contact` (`apps/atlas-web`)  
+**Date:** 2026-08-08  
+**Authority:** Atlas Design v1.0 · Build Manifest · Architecture Freeze · Figma About / Contact (Pages 20 / 23) · Navigation System · Editorial Brand System
+
+---
+
+## Verdict
+
+| Criterion | Result |
+| --- | --- |
+| `/about` D / T / M vs Figma About | Pass — structure; see intentional differences |
+| `/contact` D / T / M vs Figma Contact | Pass — quiet form composition |
+| Contact delivery | Pass — Resend via `/api/contact` |
+| Validation + honeypot + rate limit | Pass |
+| Accessibility (axe WCAG AA serious+) | Pass |
+| Playwright | Pass — 111/111 (M1–M4) |
+| Speculative abstractions / Strapi | None |
+
+**M5 is cleared to begin** under freeze constraints. Do not start M5 in this report.
+
+---
+
+## Route / component structure
+
+```text
+apps/atlas-web/src/
+├── app/
+│   ├── about/page.tsx
+│   ├── contact/page.tsx
+│   └── api/contact/route.ts
+├── components/sections/
+│   ├── about-opening.tsx
+│   ├── about-philosophy.tsx
+│   ├── about-approach.tsx
+│   ├── about-style.tsx          # desktop-only
+│   ├── about-principles.tsx
+│   ├── about-timeline.tsx
+│   ├── about-focus.tsx
+│   ├── about-reading.tsx        # desktop-only
+│   ├── about-architecture.tsx   # desktop-only
+│   ├── about-notes.tsx          # desktop-only
+│   ├── about-contact.tsx        # page-local bridge
+│   ├── contact-main.tsx
+│   └── contact-form.tsx         # client island
+├── content/
+│   ├── about.ts
+│   └── contact.ts
+└── lib/
+    ├── contact-validation.ts
+    ├── contact-email.ts
+    └── rate-limit.ts
+```
+
+---
+
+## Fixture model
+
+- **`AboutFixture`** — Strapi-shaped editorial profile fields (opening, philosophy, approach, style, principles, timeline, focus, reading, architecture, notes, contact). Condensed copy stored for tablet/mobile recomposition.
+- **`ContactFixture`** — static quiet-page copy + form labels/placeholders + success/failure strings.
+- No Strapi connection. UI consumes fixtures only.
+
+---
+
+## Contact delivery
+
+Smallest Nexus production pattern:
+
+1. **Resend** (`resend` package) — same provider as `iw-portal` / `iw-site-q2`
+2. **Zod** server validation (`name`, `email`, `message`)
+3. **Honeypot** field `company` (silent success when filled)
+4. **In-memory rate limit** — 5 / IP / hour (`checkRateLimit`, same idea as `iw-site-q2/lib/kickoffRateLimit.ts`)
+5. Env (server-only): `RESEND_API_KEY`, `CONTACT_EMAIL`, optional `RESEND_FROM`
+6. E2E / local without Resend: `CONTACT_INSECURE_SKIP_SEND=true`
+
+Rejected for Atlas: HubSpot, n8n, reCAPTCHA Enterprise, multi-step questionnaires.
+
+---
+
+## Accessibility
+
+**Target:** WCAG AA · `@axe-core/playwright` — no serious/critical on `/about` or `/contact`
+
+- One H1 per route; landmarks `navigation` / `main` / `contentinfo`
+- Skip link → `#main`
+- Route-aware `aria-current` on About / Contact
+- Form: explicit labels, `aria-invalid` + `aria-describedby`, `aria-live` status region
+- Muted-token AA response unchanged: readable meta/captions use `atlas-body`
+
+---
+
+## Test results
+
+```text
+pnpm --filter @repo/atlas-web check-types  → pass
+pnpm --filter @repo/atlas-web build        → pass (/, /about, /contact, /work, /work/portfolio-os, /api/contact)
+pnpm --filter @repo/atlas-web test:e2e     → 111 passed (desktop / tablet / mobile)
+```
+
+| Suite | Coverage |
+| --- | --- |
+| About | landmarks, nav active, skip, keyboard CTA, axe, D/T/M visual |
+| Contact | landmarks, nav active, labels, keyboard, validation, success, delivery failure (route mock), honeypot, axe, D/T/M visual |
+| M1–M3 | unchanged — remain green |
+
+Baselines: `e2e/about.spec.ts-snapshots/`, `e2e/contact.spec.ts-snapshots/`
+
+---
+
+## Intentional differences vs Figma
+
+| Item | Figma | Implementation | Why |
+| --- | --- | --- | --- |
+| Muted captions / meta | `#8A847A` | `atlas-body` | Known AA issue — do not silently retoken |
+| Contact bridge chapter on ink | umber | `atlas-secondary` | Same Home/Work ink contrast precedent |
+| Approach / boundary figure chrome | decorative dots / muted captions | sage dots; body-colored captions | AA |
+| Tablet/mobile About | condensed sections | Style / Reading / Architecture / full Notes desktop-only; focus merges condensed personal note | Match Figma recomposition |
+| PullQuote / Timeline primitives | named in Manifest | left page-local | Rule of Two — single consumer |
+
+---
+
+## Rule of Two / Stability
+
+| Candidate | Decision |
+| --- | --- |
+| ContactBridge | **Not extracted** — About bridge still differs from Home/Work/Case |
+| PullQuote | **Not extracted** — About-only italic quotes |
+| Timeline | **Not extracted** — About-only list |
+| Approach / boundary diagrams | **Left local** |
+| Form field primitives | **Left in ContactForm** — single consumer |
+
+---
+
+## Technical debt deferred
+
+- Production Resend domain / `RESEND_FROM` for johnschibelli.dev
+- Real biography / timeline years (fixtures remain placeholder copy from Figma)
+- Production evidence imagery for approach / boundary figures
+- Muted token design review
+- Strapi about-page singleton
+- Durable (Redis) rate limiting if multi-region spam becomes an issue
+- CAPTCHA only if honeypot + rate limit prove insufficient
+
+---
+
+## Files added / changed
+
+**Added:** about/contact routes, sections, fixtures, API + lib, e2e specs, `.env.example`, this report  
+
+**Changed:** `playwright.config.ts` (fresh server + skip-send env), Build Manifest (M4 DONE), architecture `_meta.ts`

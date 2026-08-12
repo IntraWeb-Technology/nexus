@@ -2,7 +2,7 @@
 
 **Status:** Accepted for implementation  
 **Date:** 2026-08-04  
-**Strapi major:** 5.51.1 (`apps/cms-strapi`; align with live branding CMS version)  
+**Strapi major:** 5.51.2 (`apps/cms-strapi`; align with live branding CMS version)  
 **Contracts:** [architecture-contracts.md](./architecture-contracts.md)
 
 ## Schema deviations from baseline prompt (accepted)

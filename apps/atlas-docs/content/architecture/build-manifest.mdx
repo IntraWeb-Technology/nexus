@@ -7,7 +7,8 @@
 **Homepage pilot:** Implemented — see [Homepage Pilot](/docs/architecture/homepage-pilot)  
 **Work route:** Implemented — see [Work Route](/docs/architecture/work-route)  
 **Case study:** Implemented (fixture-first) — see [Case Study Route](/docs/architecture/case-study-route)  
-**Next milestone:** M4 — About + Contact (do not expand beyond Manifest scope)
+**About + Contact:** Implemented — see [About + Contact Route](/docs/architecture/about-contact-route)  
+**Next milestone:** M5 — Articles (Blog) publishing surface (do not expand beyond Manifest scope)
 
 ---
 
@@ -46,7 +47,7 @@ Atlas is the greenfield rebuild of **johnschibelli.dev**: an **engineering publi
 
 ### Goals
 
-- Ship core journeys: Home, Work, Case Study, About, Contact, Documentation landing.
+- Ship core journeys: Home, Work, Case Study, About, Contact, Articles, Documentation.
 - Match frozen editorial design (type, color, surfaces, nav, publishing patterns).
 - Prove engineering through evidence (figures, diagrams, CI, repos) — never decoration.
 - Use shared `apps/cms-strapi` with site key `personal`; isolate from IntraWeb (`intraweb`).
@@ -131,31 +132,38 @@ flowchart LR
 | CMS mapping | `atlas-web` `lib/strapi/` + `@repo/strapi-client` |
 | Schema changes | `cms-strapi` (with IntraWeb regression) |
 
-### Folder structure (actual — M0–M3)
+### Folder structure (actual — M0–M4)
 
 ```text
 apps/atlas-web/src/
 ├── app/
 │   ├── layout.tsx              # fonts, SiteNavActive, SiteFooter
 │   ├── page.tsx                # /
+│   ├── about/page.tsx          # /about
+│   ├── contact/page.tsx        # /contact
+│   ├── api/contact/route.ts    # Resend delivery
 │   └── work/
 │       ├── page.tsx            # /work
 │       └── [slug]/page.tsx     # /work/portfolio-os
 ├── components/
 │   ├── chrome/                 # Nav, Footer, ReadingProgress
 │   ├── editorial/              # ChapterMarker, Figure, MetadataRow, Toc, Table, Diagram
-│   └── sections/               # page-local compositions (home-*, work-*, case-*)
+│   └── sections/               # page-local compositions (home-*, work-*, case-*, about-*, contact-*)
 ├── content/
-│   ├── types.ts                # NavLink, MetaItem
+│   ├── types.ts
 │   ├── homepage.ts
 │   ├── work.ts
-│   ├── case-study.ts           # CaseStudyFixture domain types (Strapi mapping target)
+│   ├── about.ts
+│   ├── contact.ts
+│   ├── case-study.ts
 │   └── case-studies/
-│       ├── index.ts            # slug registry
-│       └── portfolio-os.ts     # fixture data
+├── lib/
+│   ├── contact-validation.ts
+│   ├── contact-email.ts
+│   └── rate-limit.ts
 ├── styles/
-│   └── globals.css             # tokens + utilities
-└── e2e/                        # Playwright (homepage, work, case-study)
+│   └── globals.css
+└── e2e/                        # Playwright (homepage, work, case-study, about, contact)
 ```
 
 No `packages/atlas-*`. No `lib/strapi` yet (deferred until live CMS). Flat `app/` is acceptable; `(site)` group remains optional.
@@ -177,7 +185,8 @@ App Router under `app/(site)/…`. No auth middleware for v1 public site. Option
 | Home / About structure | Mostly static section components; copy from CMS singles or typed fields |
 | Work index | CMS `project` (+ featured flags) |
 | Case study | CMS `case-study` (extended fields — §6) |
-| Docs landing | Hybrid: static category IA + CMS “recent” articles/notes |
+| Articles | Fixture-first chronological publishing surface; CMS `article` later |
+| Documentation | Hybrid: static category IA + CMS “recent” articles/notes |
 | Contact | Static UI + server action / API for submit |
 | Nav labels | Hardcoded to match Figma chrome; CMS nav optional later |
 
@@ -192,10 +201,12 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 | `/` | Homepage | Site chrome | Recognition, Featured, Selected, Philosophy, Writing, About teaser, Contact | Nav, Footer, figures, chapter markers | Partial | Site + page | `WebSite` | Journey + a11y + visual | **Implemented** (pilot) |
 | `/work` | Work index | Site chrome | Intro, Featured, Selected, Taxonomy, Contact | Project sections, taxonomy list | Fixture | Collection | `CollectionPage` | Journey + visual | **Implemented** (fixture-first) |
 | `/work/[slug]` | Case study | Site chrome + TOC/progress | Header, TOC, Hero, Overview… Contact (template 21) | Article header, TOC, figures, diagrams, evidence, related | Fixture | Article | `Article` / `TechArticle` | Journey + visual | **Implemented** (Portfolio OS fixture-first) |
-| `/about` | Editorial profile | Site chrome | Opening, Philosophy, Approach, Style, Principles, Timeline, Focus, Reading, Architecture, Notes, Contact | Pull quote, timeline, diagrams | Partial | Profile | `ProfilePage` / `Person` | Journey + visual | Design frozen |
-| `/docs` | Handbook landing | Site chrome | Header, Search UI, Categories, Recently Updated, Progress note | Search field, category cards, list rows | Partial | Collection | `CollectionPage` | Journey | Design frozen |
-| `/docs/[…slug]` | Doc article (v1.1 if needed) | Site chrome + progress | Article patterns from 26 | Editorial primitives | Yes | Article | `TechArticle` | When in scope | Deferred unless launch requires |
-| `/contact` | Conversation starter | Site chrome | Quiet hero + 3-field form | Form controls | Form only | Contact | — | Journey + form | Design frozen |
+| `/about` | Editorial profile | Site chrome | Opening, Philosophy, Approach, Style, Principles, Timeline, Focus, Reading, Architecture, Notes, Contact | Pull quote, timeline, diagrams | Fixture | Profile | `ProfilePage` / `Person` | Journey + visual | **Implemented** (fixture-first) |
+| `/articles` | Articles index | Site chrome | Header, Featured article, Article list, Topics, Newsletter/contact cue | Article cards, metadata rows, tags | Fixture | Collection | `CollectionPage` | Journey + visual | M5 |
+| `/articles/[slug]` | Article detail | Site chrome + TOC/progress | Article patterns from 26 | Article header, TOC, figures, callouts, related, prev/next | Fixture | Article | `Article` / `TechArticle` | Journey + visual | M5 |
+| `/docs` | Handbook landing | Site chrome | Header, Search UI, Categories, Recently Updated, Progress note | Search field, category cards, list rows | Partial | Collection | `CollectionPage` | Journey | M6 |
+| `/docs/[…slug]` | Doc article | Site chrome + progress | Article patterns from 26 | Editorial primitives | Fixture/CMS later | Article | `TechArticle` | Journey + visual | M6 |
+| `/contact` | Conversation starter | Site chrome | Quiet hero + 3-field form | Form controls | Form only | Contact | — | Journey + form | **Implemented** (Resend delivery) |
 | `/404` | Not found | Minimal chrome | Message + links home/work | — | No | `noindex` | — | 404 journey | Required |
 | `/robots.txt` | Crawlers | — | — | — | No | — | — | Smoke | Required |
 | `/sitemap.xml` | Index | — | — | — | Derived | — | — | Smoke | Required |
@@ -203,7 +214,7 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 ### Notes
 
 - **`/projects` → `/work`:** prefer `/work` to match Figma; add redirects from legacy URLs (§10).
-- **Articles:** only if launch scope requires; otherwise Docs landing + case studies suffice.
+- **Articles:** now launch scope as the chronological engineering publication surface; keep distinct from Documentation.
 - **Search on `/docs`:** UI pattern approved; backend may be static filter or deferred pagefind — decide in impl milestone without inventing AI search.
 
 ---
@@ -216,7 +227,7 @@ Only components justified by Pages 15–26. **Frontend owns layout.** Props are 
 
 | Component | Purpose | Props (conceptual) | A11y | Responsive | CMS? | Images? | Test priority | Extract? | Order |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `SiteNav` | Sticky publication chrome | `active: 'work'\|'about'\|'contact'\|null` | Landmark + current page | D 60 / T 56 / M condensed | No | No | P0 | No | 1 |
+| `SiteNav` | Sticky publication chrome | `active: 'work'\|'about'\|'contact'\|'articles'\|null` | Landmark + current page | D 60 / T 56 / M condensed | No | No | P0 | No | 1 |
 | `SiteFooter` | Footer links + mark | — | Nav list | Same padding scale | No | No | P1 | No | 1 |
 | `ReadingProgress` | Sage track under nav | `value 0–1` | Optional `aria-valuenow` | Case/docs long form | No | No | P1 | No | 4 |
 | `CaseStudyToc` | In-page anchors | `items[]` | Nav | Desktop rail / mobile sheet later | No | No | P1 | No | 4 |
@@ -350,7 +361,7 @@ Load via `next/font` (self-hosted). No Inter-as-system fallback as the designed 
 | `navigation` | Optional; chrome may stay code | Reuse if needed |
 | `project` | Work index cards | Reuse; map taxonomy via tags/categories or enum |
 | `case-study` | Case studies | **Gap** — current fields are marketing (`clientName`, challenge/solution/results) |
-| `article` | Docs / notes / ADRs | Reuse with categories; contentFormat already exists |
+| `article` | Articles / docs / notes / ADRs | Reuse with categories; contentFormat already exists |
 | `page` + `sections` DZ | Marketing blocks | **Do not expand** into Atlas page builder |
 | `technology` | Metadata | Optional |
 | `author` | About / articles | Optional |
@@ -366,7 +377,7 @@ Prefer **structured types + controlled components**, not free-form DZ.
    - Sections as **repeatable components** e.g. `case.overview`, `case.problem`, `case.constraints`, `case.architecture` (media + rich text), `case.decision` (repeatable), `case.artifact` (media + kind + caption), `case.outcome`, `case.lesson`
    - Keep `seo` shared component; `sites` M2M
 2. **`project`** — keep for Work cards; `featured`, summary, image, link to related case study.
-3. **`article`** — Docs categories via `category`; use for engineering notes / ADRs / playbooks. Avoid inventing five collections.
+3. **`article`** — Articles and Documentation categories via `category` / `type`; use for engineering notes / ADRs / playbooks. Avoid inventing five collections.
 4. **Singletons / site-setting** — About body fields or a dedicated `about-page` single type scoped to site if needed.
 5. **Contact** — do not store messages in Strapi unless required; prefer form → email/CRM.
 
@@ -477,7 +488,7 @@ Decisions only — no premature optimization.
 | --- | --- | --- |
 | Unit | Strapi mappers, SEO helpers, URL/slug, form validation | P0 |
 | Integration | strapi-client site filters; preview secret | P0 |
-| Playwright | Home, Work, Case, About, Contact, Docs, 404, nav, mobile menu | P0 |
+| Playwright | Home, Work, Case, About, Contact, Articles, Docs, 404, nav, mobile menu | P0 |
 | A11y | Major pages + keyboard | P0 |
 | Visual | Stable pages D/T/M with fixture data | P0 |
 | CMS | Unpublished hidden; site isolation (no intraweb) | P0 |
@@ -548,10 +559,13 @@ Update docs when architecture, CMS, or testing materially changes.
 | **M1 — Home** | Homepage sections | M0 | `/` complete | Visual QA vs Page 15; a11y | **DONE** — [report](/docs/architecture/homepage-pilot) |
 | **M2 — Work index** | `/work` + project mapping | M0, M1 approval | Work page | Matches Page 18; fixture-first | **DONE** — [report](/docs/architecture/work-route) |
 | **M3 — Case study** | Template 21 + CMS fields | M2, schema extension | `/work/[slug]` | Matches template; evidence figures | **DONE** (fixture-first) — [report](/docs/architecture/case-study-route); Strapi wiring deferred |
-| **M4 — About + Contact** | Profile + form | M0 · architecture freeze | `/about`, `/contact` | Matches 20/23; form delivers | Cleared to start — not started |
-| **M5 — Docs landing** | `/docs` | M0, articles/categories | Docs landing | Matches 22 | S/M |
-| **M6 — SEO + redirects** | Metadata, sitemap, legacy URLs | Content routes | SEO plumbing | Sitemap valid; redirects | S |
-| **M7 — Hardening** | Tests, a11y, visuals, perf, security headers | M1–M6 | CI green | §11–§13 | M |
+| **M4 — About + Contact** | Profile + form | M0 · architecture freeze | `/about`, `/contact` | Matches 20/23; form delivers | **DONE** — [report](/docs/architecture/about-contact-route) |
+| **M5 — Articles (Blog)** | `/articles` + `/articles/[slug]` | M0, editorial primitives | Articles publishing surface | Chronological index and article detail match Page 26 patterns; fixture-first | M |
+| **M6 — Documentation** | `/docs` + `/docs/[…slug]` | M5 editorial primitives, article categories | Documentation system | Matches Page 22; docs articles prove metadata, TOC, nav, related, prev/next | M |
+| **M7 — Production assets** | Evidence imagery, OG, favicon, editorial media | M1–M6 | Asset manifest complete | P0 assets captured; no placeholder launch blockers | S/M |
+| **M8 — Strapi integration** | CMS wiring for production content | M3, M5, M6, schema decisions | `personal` content via `@repo/strapi-client` | Site isolation; draft safety; fixtures remain testable | M/H |
+| **M9 — Production hardening** | Tests, a11y, visuals, perf, security headers, SEO + redirects | M1–M8 | CI green + launch checks | §10–§13; sitemap valid; redirects verified | M |
+| **M10 — Launch** | Production release | M9 | johnschibelli.dev launch | Build readiness checklist all YES | S |
 
 No parallel “framework” milestones. Schema work for case studies starts before or at kickoff of M3.
 
@@ -613,8 +627,8 @@ Every item must be **YES** before implementation starts.
 
 1. Extend existing `case-study` vs new Atlas-only type?  
 2. Docs search: client filter vs pagefind vs defer?  
-3. Contact delivery: Resend vs existing Nexus form path?  
-4. Legacy URL inventory completeness for redirects?  
+3. Contact delivery: Resend via `/api/contact` (honeypot + rate limit; no HubSpot/reCAPTCHA Enterprise) — **resolved in M4**  
+4. Legacy URL inventory completeness for redirects? 
 
 ---
 
@@ -632,12 +646,15 @@ flowchart TD
   M0 --> M2[M2 Work]
   M2 --> M3[M3 Case Study]
   M0 --> M4[M4 About + Contact]
-  M0 --> M5[M5 Docs landing]
-  M1 --> M6[M6 SEO + redirects]
-  M3 --> M6
-  M4 --> M6
-  M5 --> M6
-  M6 --> M7[M7 Hardening]
+  M0 --> M5[M5 Articles]
+  M5 --> M6[M6 Documentation]
+  M1 --> M7[M7 Production assets]
+  M3 --> M7
+  M4 --> M7
+  M6 --> M7
+  M7 --> M8[M8 Strapi integration]
+  M8 --> M9[M9 Production hardening]
+  M9 --> M10[M10 Launch]
 ```
 
 ---
@@ -653,7 +670,7 @@ flowchart TD
 ### Missing abstractions (intentionally deferred)
 
 - Design-system Storybook for atlas-web — add when component count hurts review, not before M0.
-- Full docs article template route — deferred unless launch requires.
+- Full docs article template route — scheduled for M6 after Articles proves the shared editorial primitives.
 
 ### Unnecessary abstractions rejected
 
@@ -705,10 +722,11 @@ Validated only after production implementation, accessibility, responsive, and v
 
 ### Intentionally not extracted (yet)
 
-- ✗ ContactBridge — Home/Work/Case compositions differ; extract when a true shared shell exists
+- ✗ ContactBridge — Home/Work/Case/About compositions still differ; extract when a true shared shell exists
 - ✗ StageRule — Work desktop-only annotation
 - ✗ Decision matrix shell — Case-local until a second case study proves identical
 - ✗ Generic ProjectCard / Card — forbidden; unequal editorial layouts stay in sections
+- ✗ PullQuote / Timeline — About-only this milestone; leave local until a second consumer
 
 ### Deferred (not in Portfolio OS template)
 
@@ -718,4 +736,5 @@ Validated only after production implementation, accessibility, responsive, and v
 
 ---
 
-**Architecture frozen at v1.0 (M0–M3).** M4 (About + Contact) may begin. Do not start Docs, additional case studies, or Strapi integration as side quests outside Manifest order.
+**Architecture frozen at v1.0 (M0–M3).** M4 (About + Contact) is **DONE**. M5 (Articles / Blog) may begin. Do not start Documentation, additional case studies, or Strapi integration as side quests outside Manifest order.
+

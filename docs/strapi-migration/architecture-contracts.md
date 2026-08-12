@@ -21,7 +21,7 @@ All specialized agents must follow these contracts. Do not invent incompatible s
 
 | Environment | Instance | Notes |
 |---|---|---|
-| Local / schema development | `apps/cms-strapi` (Strapi **5.51.1**) | SQLite by default; Postgres via `DATABASE_CLIENT=postgres` |
+| Local / schema development | `apps/cms-strapi` (Strapi **5.51.2**) | SQLite by default; Postgres via `DATABASE_CLIENT=postgres` |
 | Production candidate A | Dedicated content Strapi (preferred until live inventory clears) | Same major as branding CMS |
 | Production candidate B | `https://cms.intrawebtech.com` | Only after backup + content-type inventory + explicit approval |
 

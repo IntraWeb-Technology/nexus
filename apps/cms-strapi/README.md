@@ -1,6 +1,6 @@
 # cms-strapi
 
-Multi-site editorial CMS for **IntraWeb Technology**, built on Strapi 5.51.1
+Multi-site editorial CMS for **IntraWeb Technology**, built on Strapi 5.51.2
 (TypeScript). It is the single source of truth for editorial content
 (pages, articles, projects, case studies, services, FAQs, testimonials,
 navigation, redirects) shared across the `personal` (johnschibelli.dev)

@@ -18,6 +18,11 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    env: {
+      ...process.env,
+      // E2E: deliver without Resend credentials (server-only skip flag)
+      CONTACT_INSECURE_SKIP_SEND: "true",
+    },
   },
   projects: [
     {

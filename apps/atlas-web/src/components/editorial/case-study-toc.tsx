@@ -6,15 +6,24 @@ type TocItem = {
 
 type CaseStudyTocProps = {
   items: TocItem[];
+  /** Accessible name — case study default; articles pass "Article contents". */
+  ariaLabel?: string;
   /** Desktop: discrete links. Tablet: single wrapped line. Mobile: stacked. */
 };
 
 /**
  * In-page contents. Anchors only — no mobile sheet this milestone.
+ * Shared by case study and article detail (Rule of Two / Manifest TOC).
  */
-export function CaseStudyToc({ items }: CaseStudyTocProps) {
+export function CaseStudyToc({
+  items,
+  ariaLabel = "Case study contents",
+}: CaseStudyTocProps) {
   return (
-    <nav aria-label="Case study contents" className="atlas-pad-x pb-6 pt-2 desktop:pb-8">
+    <nav
+      aria-label={ariaLabel}
+      className="atlas-pad-x pb-6 pt-2 desktop:pb-8"
+    >
       <p className="m-0 mb-2.5 font-sans text-[10px] font-medium tracking-[0.16em] text-atlas-body uppercase desktop:mb-2.5">
         Contents
       </p>

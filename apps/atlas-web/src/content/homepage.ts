@@ -87,6 +87,7 @@ export const homepageFixture: HomepageFixture = {
       { label: "Work", href: "/work" },
       { label: "About", href: "/about" },
       { label: "Contact", href: "/contact" },
+      { label: "Articles", href: "/articles" },
     ],
   },
   hero: {
@@ -168,14 +169,14 @@ export const homepageFixture: HomepageFixture = {
     chapter: "DOCUMENTATION  ·  WRITING",
     items: [
       {
-        title: "Article title one",
-        note: "Supporting evidence only",
-        href: "/docs",
+        title: "Why We Chose React Server Components",
+        note: "Architecture · decision record",
+        href: "/articles/why-we-chose-react-server-components",
       },
       {
-        title: "Article title two",
-        note: "Supporting evidence only",
-        href: "/docs",
+        title: "Playwright at Scale",
+        note: "Testing · fixture strategy",
+        href: "/articles/playwright-at-scale",
       },
     ],
   },
@@ -197,6 +198,7 @@ export const homepageFixture: HomepageFixture = {
       { label: "Work", href: "/work" },
       { label: "About", href: "/about" },
       { label: "Contact", href: "/contact" },
+      { label: "Articles", href: "/articles" },
     ],
     mark: "Atlas",
   },

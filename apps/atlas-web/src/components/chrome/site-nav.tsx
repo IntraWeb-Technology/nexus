@@ -1,12 +1,23 @@
 import Link from "next/link";
 import type { NavLink } from "@/content/types";
 
+export type NavActive = "work" | "about" | "contact" | "articles" | null;
+
 type SiteNavProps = {
   brand: NavLink;
   links: NavLink[];
-  /** Current page — homepage has no active Work/About/Contact */
-  active?: "work" | "about" | "contact" | null;
+  /** Current section — homepage has no active Work/About/Contact/Articles */
+  active?: NavActive;
 };
+
+function isActiveLink(active: NavActive, href: string): boolean {
+  if (!active) return false;
+  if (active === "work") return href === "/work";
+  if (active === "about") return href === "/about";
+  if (active === "contact") return href === "/contact";
+  if (active === "articles") return href === "/articles";
+  return false;
+}
 
 export function SiteNav({ brand, links, active = null }: SiteNavProps) {
   return (
@@ -31,10 +42,7 @@ export function SiteNav({ brand, links, active = null }: SiteNavProps) {
         {/* Tablet + desktop: discrete links */}
         <ul className="hidden list-none items-center gap-7 p-0 tablet:flex desktop:gap-8">
           {links.map((link) => {
-            const isActive =
-              (active === "work" && link.href === "/work") ||
-              (active === "about" && link.href === "/about") ||
-              (active === "contact" && link.href === "/contact");
+            const isActive = isActiveLink(active, link.href);
             return (
               <li key={link.href}>
                 <Link
@@ -56,10 +64,7 @@ export function SiteNav({ brand, links, active = null }: SiteNavProps) {
         {/* Mobile: condensed string (Navigation System) */}
         <p className="m-0 font-sans text-[11px] text-atlas-body tablet:hidden">
           {links.map((l, i) => {
-            const isActive =
-              (active === "work" && l.href === "/work") ||
-              (active === "about" && l.href === "/about") ||
-              (active === "contact" && l.href === "/contact");
+            const isActive = isActiveLink(active, l.href);
             return (
               <span key={l.href}>
                 {i > 0 ? " · " : null}

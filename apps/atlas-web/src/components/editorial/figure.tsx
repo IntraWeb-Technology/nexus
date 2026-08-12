@@ -8,6 +8,8 @@ type FigureProps = {
   tone?: "secondary" | "ink";
   /** Mono overlay labeling future media type (Image Direction). */
   label?: string;
+  /** Label placement — articles center; case studies default end. */
+  labelAlign?: "center" | "end";
   /** Optional hero panel layout for application screenshots */
   panels?: boolean;
 };
@@ -23,6 +25,7 @@ export function Figure({
   mediaClassName = "",
   tone = "secondary",
   label,
+  labelAlign = "end",
   panels = false,
 }: FigureProps) {
   const mediaTone =
@@ -31,14 +34,16 @@ export function Figure({
       : "bg-atlas-secondary";
 
   const padded = Boolean(label || panels);
+  const alignClass =
+    labelAlign === "center"
+      ? "flex flex-col items-center justify-center p-3 tablet:p-3.5 desktop:p-7"
+      : "flex flex-col justify-end p-3 tablet:p-3.5 desktop:p-7";
 
   return (
     <figure className={className}>
       <div
         className={`relative overflow-hidden ${
-          padded
-            ? "flex flex-col justify-end p-3 tablet:p-3.5 desktop:p-7"
-            : ""
+          padded ? alignClass : ""
         } ${mediaTone} ${mediaClassName}`.trim()}
         role="img"
         aria-label={alt}

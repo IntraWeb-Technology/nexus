@@ -43,7 +43,7 @@ M4 (About + Contact) may begin. Do not expand scope beyond the Build Manifest mi
 | Issue | Severity | Disposition |
 | --- | --- | --- |
 | Case domain types lived inside `portfolio-os.ts`; editorial/sections imported the fixture module | Architecture boundary | **Fixed** — types → `content/case-study.ts`; registry → `content/case-studies/index.ts` |
-| Case study skip target was `<article id="main">` (no `main` landmark; Home/Work use `<main>`) | Accessibility consistency | **Fixed** — `<main id="main"><article>…` |
+| Case study skip target was `article#main` (no `main` landmark; Home/Work use `main`) | Accessibility consistency | **Fixed** — wrap with `main#main` then nested `article` |
 | Nav / footer link to `/about`, `/contact` (404 until M4) | Expected | Deferred — M4 |
 | `MetadataRow` has one production consumer | Rule of Two tension | **KEEP** — Build Manifest P0 publishing primitive; extract was intentional |
 | Contact bridges differ across Home / Work / Case | Stability | Intentional — not extracted |
