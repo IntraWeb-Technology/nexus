@@ -185,9 +185,22 @@ jobs:
           mkdir -p ~/.ssh
           umask 077
           printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/hostinger_key
-          ssh -i ~/.ssh/hostinger_key -o StrictHostKeyChecking=accept-new \
+          # Connectivity probe only — compose pull/up is still operator-owned.
+          # Do not fail the job when the host is unreachable from Actions runners.
+          if ! ssh -i ~/.ssh/hostinger_key \
+            -o StrictHostKeyChecking=accept-new \
+            -o ConnectTimeout=15 \
+            -o BatchMode=yes \
             "${HOSTINGER_SSH_USER}@${HOSTINGER_SSH_HOST}" \
-            "echo Connected for cms-strapi deploy; echo IMAGE_TAG=${IMAGE_TAG}; echo Wire compose pull/up for the content Strapi service here."
+            "echo Connected for cms-strapi deploy; echo IMAGE_TAG=${IMAGE_TAG}; echo Wire compose pull/up for the content Strapi service here."; then
+            {
+              echo "## Hostinger apply (optional)"
+              echo ""
+              echo "SSH to Hostinger failed or timed out; Strapi image was still built on the runner."
+              echo "Compose wiring remains operator-owned — this step must not fail Deploy Gate."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           echo "Hostinger SSH step completed (compose wiring still operator-owned)." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Image summary
