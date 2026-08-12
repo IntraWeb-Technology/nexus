@@ -1,0 +1,224 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: Treat all deployables as affected
+        type: boolean
+        default: false
+      app:
+        description: Deploy only this app (empty = use affected detection)
+        type: choice
+        options:
+          - ""
+          - iw-portal
+          - iw-site-q2
+          - cms-strapi
+        default: ""
+      force_deploy:
+        description: Deploy even if unaffected (requires app)
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    name: Detect affected deployables
+    runs-on: ubuntu-latest
+    outputs:
+      base_sha: ${{ steps.affected.outputs.base_sha }}
+      head_sha: ${{ steps.affected.outputs.head_sha }}
+      deploy_strapi: ${{ steps.matrix.outputs.deploy_strapi }}
+      selected_apps_json: ${{ steps.matrix.outputs.selected_apps_json }}
+      skipped_apps_json: ${{ steps.affected.outputs.skipped_apps_json }}
+      detection_failed: ${{ steps.affected.outputs.detection_failed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Fetch base refs
+        run: git fetch origin main --prune || true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
+      - name: Get pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Detect affected packages
+        id: affected
+        env:
+          FORCE_ALL: ${{ inputs.force_all || false }}
+        run: node .github/scripts/affected.mjs
+
+      - name: Resolve deploy targets
+        id: matrix
+        shell: bash
+        env:
+          SELECTED_JSON: ${{ steps.affected.outputs.selected_apps_json }}
+          APP: ${{ inputs.app }}
+          FORCE_DEPLOY: ${{ inputs.force_deploy }}
+          DET_FAILED: ${{ steps.affected.outputs.detection_failed }}
+        run: |
+          set -euo pipefail
+          SELECTED="$SELECTED_JSON"
+
+          if [ -n "${APP}" ]; then
+            case "$APP" in
+              cms-strapi)
+                SELECTED='[{"app":"cms-strapi","path":"apps/cms-strapi","dockerfile":"apps/cms-strapi/Dockerfile","deploy":"hostinger","package":"cms-strapi","reason":"manual_override"}]'
+                ;;
+              iw-portal)
+                SELECTED='[{"app":"iw-portal","path":"apps/iw-portal","dockerfile":"","deploy":"vercel","package":"@repo/iw-portal","reason":"manual_override"}]'
+                ;;
+              iw-site-q2)
+                SELECTED='[{"app":"iw-site-q2","path":"apps/iw-site-q2","dockerfile":"","deploy":"vercel","package":"@repo/iw-site-q2","reason":"manual_override"}]'
+                ;;
+            esac
+          elif [ "${FORCE_DEPLOY}" = "true" ]; then
+            echo "force_deploy requires a specific app input" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          DEPLOY_STRAPI=false
+          if echo "$SELECTED" | jq -e '.[] | select(.app=="cms-strapi")' >/dev/null; then
+            DEPLOY_STRAPI=true
+          fi
+
+          {
+            echo "## Deploy detection"
+            echo ""
+            echo "- Manual app: \`${APP:-none}\`"
+            echo "- Detection failed: \`${DET_FAILED}\`"
+            echo "- Deploy Strapi image: \`${DEPLOY_STRAPI}\`"
+            echo "- Selected: \`${SELECTED}\`"
+            echo ""
+            echo "Next.js apps continue to deploy through Vercel; ignoreCommand skips unaffected projects."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "deploy_strapi=${DEPLOY_STRAPI}" >> "$GITHUB_OUTPUT"
+          echo "selected_apps_json=${SELECTED}" >> "$GITHUB_OUTPUT"
+
+  docker-strapi:
+    name: Docker cms-strapi
+    needs: detect
+    if: needs.detect.outputs.deploy_strapi == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack and prepare pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.33.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prune cms-strapi for Docker
+        run: pnpm exec turbo prune cms-strapi --docker
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Strapi image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/cms-strapi/Dockerfile
+          push: false
+          load: true
+          tags: |
+            cms-strapi:${{ github.sha }}
+            cms-strapi:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Optional Hostinger apply
+        env:
+          HOSTINGER_SSH_HOST: ${{ secrets.HOSTINGER_SSH_HOST }}
+          HOSTINGER_SSH_USER: ${{ secrets.HOSTINGER_SSH_USER }}
+          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HOSTINGER_SSH_HOST:-}" ] || [ -z "${HOSTINGER_SSH_USER:-}" ] || [ -z "${HOSTINGER_SSH_KEY:-}" ]; then
+            echo "Hostinger SSH secrets not configured; image built locally on the runner only." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          umask 077
+          printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/hostinger_key
+          ssh -i ~/.ssh/hostinger_key -o StrictHostKeyChecking=accept-new \
+            "${HOSTINGER_SSH_USER}@${HOSTINGER_SSH_HOST}" \
+            "echo Connected for cms-strapi deploy; echo IMAGE_TAG=${IMAGE_TAG}; echo Wire compose pull/up for the content Strapi service here."
+          echo "Hostinger SSH step completed (compose wiring still operator-owned)." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Image summary
+        run: |
+          {
+            echo "## Strapi image"
+            echo ""
+            echo "- Built \`cms-strapi:${{ github.sha }}\`"
+            echo "- Push/registry publish not enabled yet (build verification only)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-gate:
+    name: Deploy Gate
+    needs: [detect, docker-strapi]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Gate
+        run: |
+          echo "detect=${{ needs.detect.result }}"
+          echo "docker=${{ needs.docker-strapi.result }}"
+          if [ "${{ needs.detect.result }}" != "success" ]; then
+            exit 1
+          fi
+          if [ "${{ needs.docker-strapi.result }}" != "success" ] && [ "${{ needs.docker-strapi.result }}" != "skipped" ]; then
+            exit 1
+          fi
+          {
+            echo "## Deploy gate"
+            echo ""
+            echo "- Selected: \`${{ needs.detect.outputs.selected_apps_json }}\`"
+            echo "- Skipped: \`${{ needs.detect.outputs.skipped_apps_json }}\`"
+            echo "- Strapi docker: \`${{ needs.docker-strapi.result }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

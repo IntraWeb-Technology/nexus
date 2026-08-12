@@ -437,3 +437,15 @@ export interface HubSpotCrmEntityRow {
   created_at: string
   updated_at: string
 }
+
+export type {
+  CanonicalContentRow,
+  PlatformPublicationRow,
+  ReviewItemRow,
+  ReviewActionRow,
+  OutboxEventRow,
+  ReviewItemStatus,
+  ReviewActionType,
+  ReviewRiskLevel,
+  PublicationStatus,
+} from '@/lib/social-ops/types'

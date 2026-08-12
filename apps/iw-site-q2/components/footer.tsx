@@ -1,9 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode, SVGProps } from "react";
-import { companyLegalName, contactEmail, navLinks, systemsCallUrl } from "@/lib/site";
+import { companyLegalName, contactEmail, navLinks as defaultNavLinks, systemsCallUrl } from "@/lib/site";
+import type { SiteNavLink } from "@/lib/cms-content-types";
 import { IntraWebLogo } from "@/components/intraweb-logo";
 import { Ic } from "@/components/icons";
+
+type FooterProps = {
+  /** Optional CMS/header links; defaults to hardcoded `navLinks` from `lib/site`. */
+  links?: SiteNavLink[];
+};
 
 function IconSq({ href, label, children }: { href: string; label: string; children: ReactNode }) {
   return (
@@ -91,7 +97,8 @@ const industries = [
   { label: "Services", type: "services" },
 ] as const;
 
-export function Footer() {
+export function Footer({ links }: FooterProps = {}) {
+  const navLinks = links?.length ? links : defaultNavLinks;
   return (
     <footer className="relative z-[2] overflow-hidden border-t border-[#1f2b36] bg-[#03070c] text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(860px_420px_at_18%_8%,rgba(31,43,54,0.28),transparent_64%),linear-gradient(180deg,#071019_0%,#03070c_100%)]" />

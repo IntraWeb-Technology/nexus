@@ -8,7 +8,7 @@ Use these steps for routine maintenance, incident response, and release handoff.
 
 - Workflow JSON source of truth: `packages/n8n-workflows/`
 - Canonical scripts: `packages/n8n-workflows/scripts/`
-- Legacy `apps/iw-site/scripts/*n8n*` entry points are deprecated wrappers/hard-stops.
+- Legacy `apps/iw-site` was removed from this monorepo; use `packages/n8n-workflows` scripts only.
 
 ## Prerequisites
 
@@ -75,7 +75,7 @@ Notes:
 ## Guardrails
 
 - Do not use name-based bulk push flows.
-- Do not create workflows from legacy scripts under `apps/iw-site/scripts`.
+- Do not recreate workflows from retired marketing-site script entry points.
 - Do not change workflow ids in curated JSON.
 - Do not bypass secret/signature requirements documented in app webhook routes.
 

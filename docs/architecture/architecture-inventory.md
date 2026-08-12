@@ -9,7 +9,7 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | `apps/iw-portal` | `@repo/iw-portal` | Next.js 16, Clerk, Supabase, Stripe, Resend, Tailwind v4 |
 | `apps/iw-site-q2` | `@repo/iw-site-q2` | Next.js 16, reCAPTCHA Enterprise, Cal.com, Resend, Anthropic SDK, Tailwind v4 |
 
-**Excluded from workspace:** `apps/iw-site` (legacy marketing app; see §13).
+**Active marketing app:** `apps/iw-site-q2` (legacy `apps/iw-site` removed from this monorepo).
 
 ## 2. Package list
 
@@ -171,7 +171,7 @@ Site URLs: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SCHEDULE_URL`, `NEXT_PUBLIC_ACCO
 
 ### `packages/n8n-workflows` (scripts)
 
-`N8N_API_KEY`, `N8N_API_URL` or `N8N_BASE_URL`, `N8N_WORKFLOWS_PROJECT_ID`, `N8N_WORKFLOWS_RE_PUBLISH`. Scripts also load `.env.local` from repo root, `apps/iw-portal`, and **`apps/iw-site`** (legacy path) for local runs — confirm on disk when debugging env loading.
+`N8N_API_KEY`, `N8N_API_URL` or `N8N_BASE_URL`, `N8N_WORKFLOWS_PROJECT_ID`, `N8N_WORKFLOWS_RE_PUBLISH`. Scripts also load `.env.local` from repo root, `apps/iw-portal`, and `apps/iw-site-q2` for local runs.
 
 ## 6. API routes and webhook routes
 
@@ -241,10 +241,10 @@ Site URLs: `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SCHEDULE_URL`, `NEXT_PUBLIC_ACCO
 
 ## 13. Known legacy / deprecated paths
 
-- **`apps/iw-site`:** excluded from `pnpm-workspace.yaml`; contains deprecated n8n script wrappers and legacy marketing code. Do not treat as active workspace package.
+- **`apps/iw-site`:** removed from this monorepo (relocated elsewhere). Marketing is `apps/iw-site-q2` only.
 - **`apps/iw-portal/src/proxy.ts`:** references `LEGACY_PORTAL_HOST` (`portal.intrawebtech.com`) for redirect behavior.
 - **HubSpot tokens:** code comments note `HUBSPOT_TOKEN` as legacy alias alongside `HUBSPOT_ACCESS_TOKEN` / private app token.
-- **n8n:** `packages/n8n-workflows/RUNBOOK.md` documents retirement of legacy `apps/iw-site/scripts/*n8n*` entry points.
+- **n8n:** use `packages/n8n-workflows` scripts only (retired marketing-site script entry points).
 
 ## 14. Current build / lint / typecheck commands
 

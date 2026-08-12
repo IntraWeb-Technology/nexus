@@ -1,13 +1,23 @@
 "use client";
 
 import { geoFaqItems } from "@/lib/geo-faq";
+import type { GeoFaqPair } from "@/lib/cms-content-types";
 
-type Props = { className?: string; id?: string };
+type Props = {
+  className?: string;
+  id?: string;
+  /** CMS or hardcoded FAQ pairs; defaults to `geoFaqItems`. */
+  items?: GeoFaqPair[];
+};
 
 /**
  * FAQ content matching FAQPage JSON-LD — collapsible rows (native `details` / `summary`).
  */
-export function GeoFaqBlock({ className, id }: Props) {
+export function GeoFaqBlock({ className, id, items }: Props) {
+  const faqItems = items?.length
+    ? items
+    : geoFaqItems.map((item) => ({ q: item.q, a: item.a }));
+
   return (
     <section
       {...(id ? { id } : {})}
@@ -27,7 +37,7 @@ export function GeoFaqBlock({ className, id }: Props) {
           Common questions
         </h2>
         <div className="geo-faq-accordion">
-          {geoFaqItems.map((item) => (
+          {faqItems.map((item) => (
             <details key={item.q} className="geo-faq-accordion__item" name="geo-faq-accordion">
               <summary className="geo-faq-accordion__summary">{item.q}</summary>
               <p className="geo-faq-accordion__body">{item.a}</p>

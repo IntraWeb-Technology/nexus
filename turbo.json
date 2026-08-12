@@ -18,7 +18,10 @@
     "SUPABASE_SERVICE_ROLE_KEY",
     "RESEND_API_KEY",
     "DATABASE_URL",
-    "NEXTAUTH_SECRET"
+    "NEXTAUTH_SECRET",
+    "STRAPI_API_TOKEN",
+    "STRAPI_PREVIEW_SECRET",
+    "STRAPI_WEBHOOK_SECRET"
   ],
   "tasks": {
     "build": {
@@ -72,6 +75,8 @@
         "RECAPTCHA_SKIP_IN_DEV",
         "STACK_SECRET_SERVER_KEY",
         "STAFF_EMAIL",
+        "STRAPI_CONTENT_ENABLED",
+        "STRAPI_URL",
         "STRIPE_WEBHOOK_SECRET",
         "SUPABASE_ANON_KEY",
         "SUPABASE_ACCESS_TOKEN",
@@ -83,10 +88,17 @@
       ]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "inputs": ["$TURBO_DEFAULT$"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": []
     },
     "dev": {
       "cache": false,

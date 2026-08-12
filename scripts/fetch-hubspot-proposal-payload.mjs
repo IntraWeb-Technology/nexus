@@ -3,7 +3,7 @@
  * Build a JSON body for n8n SYS 03 — Proposal and Contract Delivery
  * (POST /webhook/hubspot-deal-proposal-stage): `{ id, properties }`.
  *
- * Loads token from repo root / apps/iw-portal / apps/iw-site .env.local (first wins for unset keys).
+ * Loads token from repo root / apps/iw-portal / apps/iw-site-q2 .env.local (first wins for unset keys).
  *
  * Usage:
  *   node scripts/fetch-hubspot-proposal-payload.mjs
@@ -28,7 +28,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, "..");
 
-/** Same internal names as apps/iw-site/lib/mapWebsiteIntakeToHubSpotContactProperties.ts */
+/** Same internal names as apps/iw-site-q2 HubSpot website-intake contact properties */
 const WEBSITE_INTAKE_CONTACT_PROPERTY_NAMES = [
   "website_intake_audience",
   "website_intake_brand_colors",
@@ -144,7 +144,7 @@ function hubspotJsonProperty() {
 loadEnvFile(path.join(repoRoot, ".env.local"));
 loadEnvFile(path.join(repoRoot, ".env"));
 loadEnvFile(path.join(repoRoot, "apps", "iw-portal", ".env.local"));
-loadEnvFile(path.join(repoRoot, "apps", "iw-site", ".env.local"));
+loadEnvFile(path.join(repoRoot, "apps", "iw-site-q2", ".env.local"));
 
 const token = (
   process.env.HUBSPOT_PRIVATE_APP_TOKEN?.trim() ||
