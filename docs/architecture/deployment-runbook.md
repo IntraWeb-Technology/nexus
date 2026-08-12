@@ -71,6 +71,7 @@ pnpm check-types
 
 - Two projects (or one monorepo with two app roots) for `iw-portal` and `iw-site-q2`.
 - For **`nexus-iw-portal`**, the dashboard setting **Include files outside the root directory** must be enabled so `apps/iw-portal/vercel.json` can `cd ../..` and run the monorepo `pnpm install` / `turbo` build.
+- **`nexua-atlas-docs`** (Vercel project for `apps/atlas-docs`): Root Directory must be `apps/atlas-docs`. This app is **Yarn 4**, excluded from the pnpm workspace. Do **not** use `pnpm install` — Vercel’s Turbo detection would pick the repo-root lockfile and fall back to pnpm 6 (`ERR_INVALID_THIS` on Node 24). [`apps/atlas-docs/vercel.json`](../../apps/atlas-docs/vercel.json) runs the vendored Yarn 4 binary (`yarn install --immutable` / `yarn build`). Node **24.x** matches `apps/atlas-docs/.nvmrc`.
 - Environment variables set per project to match [environment-contract.md](./environment-contract.md).
 - `turbo.json` uses `envMode: strict` — any env var read at build time should appear on the `build` task `env` list or `globalPassThroughEnv` where applicable, or builds may not see values when cached.
 

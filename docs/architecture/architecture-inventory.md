@@ -9,6 +9,7 @@ Generated from repository inspection (Phase 0). Unknown items are called out exp
 | `apps/iw-portal` | `@repo/iw-portal` | Next.js 16, Clerk, Supabase, Stripe, Resend, Tailwind v4 |
 | `apps/iw-site-q2` | `@repo/iw-site-q2` | Next.js 16, reCAPTCHA Enterprise, Cal.com, Resend, Anthropic SDK, Tailwind v4 |
 | `apps/atlas-web` | `@repo/atlas-web` | Next.js 16, React 19, Tailwind v4 (scaffold) |
+| `apps/atlas-docs` | `mantine-next-nextra-template` | Next.js 16, Mantine 9, Nextra 4 (Yarn 4 — not in pnpm workspace) |
 
 **Active marketing app:** `apps/iw-site-q2` (legacy `apps/iw-site` removed from this monorepo).
 
