@@ -89,6 +89,32 @@ test.describe("articles index", () => {
     ).toBeVisible();
   });
 
+  test("topic row is informational taxonomy with All current", async ({
+    page,
+  }) => {
+    await page.goto("/articles");
+    const topics = page.getByLabel("Topics");
+    await expect(topics).toBeVisible();
+    await expect(
+      topics.getByText("All", { exact: true }).first(),
+    ).toHaveAttribute("aria-current", "true");
+    // Not interactive filtering in M5 — labels are spans, not buttons/links
+    await expect(topics.getByRole("button")).toHaveCount(0);
+    await expect(topics.locator("a")).toHaveCount(0);
+  });
+
+  test("article list links resolve to detail routes", async ({ page }) => {
+    await page.goto("/articles");
+    await page
+      .getByRole("link", { name: /Playwright at Scale/i })
+      .first()
+      .click();
+    await expect(page).toHaveURL(/\/articles\/playwright-at-scale$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Playwright at Scale" }),
+    ).toBeVisible();
+  });
+
   test("navigates from featured to article detail", async ({ page }) => {
     await page.goto("/articles");
     await page.getByRole("link", { name: "Read article →" }).click();

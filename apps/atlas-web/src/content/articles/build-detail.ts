@@ -1,6 +1,7 @@
 /**
  * Helper — build a concise article detail from a summary.
- * Full publishing primitives live on the featured RSC fixture; others stay readable stubs.
+ * Representative M5 fixtures (featured RSC, Playwright, AI workflows) are hand-authored.
+ * Remaining chronological notes stay readable via this shell.
  */
 
 import type { ArticleDetail, ArticleSummary } from "@/content/article";

@@ -2,6 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 const FEATURED = "/articles/why-we-chose-react-server-components";
+const STRUCTURED = "/articles/playwright-at-scale";
+const SHORT = "/articles/ai-assisted-engineering-workflows";
 
 test.describe("article detail — Why We Chose React Server Components", () => {
   test("renders primary landmarks and publishing primitives", async ({
@@ -29,6 +31,7 @@ test.describe("article detail — Why We Chose React Server Components", () => {
 
     await expect(page.getByText("TRADEOFF")).toBeVisible();
     await expect(page.getByText("TYPESCRIPT")).toBeVisible();
+    await expect(page.getByText("YAML")).toBeVisible();
     await expect(page.getByText("TERMINAL")).toBeVisible();
     await expect(
       page.getByRole("heading", {
@@ -138,5 +141,110 @@ test.describe("article detail — Why We Chose React Server Components", () => {
         maxDiffPixelRatio: 0.02,
       },
     );
+  });
+});
+
+test.describe("article detail — Playwright at Scale (structured)", () => {
+  test("renders table, callout, and evidence primitives", async ({ page }) => {
+    await page.goto(STRUCTURED);
+
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Playwright at Scale" }),
+    ).toBeVisible();
+
+    await expect(page.getByText("NOTE")).toBeVisible();
+    await expect(
+      page.getByRole("table"),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: "Layer" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: "Owns" }),
+    ).toBeVisible();
+    await expect(page.getByLabel("TEST evidence")).toBeVisible();
+    await expect(page.getByText("Passing — 3 viewports")).toBeVisible();
+    await expect(page.getByText("TYPESCRIPT")).toBeVisible();
+    await expect(page.getByText("TERMINAL")).toBeVisible();
+  });
+
+  test("evidence link resolves to Documentation", async ({ page }) => {
+    await page.goto(STRUCTURED);
+    await expect(
+      page.getByRole("link", { name: "Documentation handbook →" }),
+    ).toHaveAttribute("href", "/docs");
+  });
+
+  test("prev/next bookends resolve", async ({ page }) => {
+    await page.goto(STRUCTURED);
+    const adjacent = page.getByRole("navigation", {
+      name: "Adjacent articles",
+    });
+    await expect(
+      adjacent.getByRole("link", { name: /Why We Chose React Server Components/i }),
+    ).toBeVisible();
+    await expect(
+      adjacent.getByRole("link", { name: /Lessons from Building Atlas/i }),
+    ).toBeVisible();
+  });
+
+  test("has no serious accessibility violations", async ({ page }) => {
+    await page.goto(STRUCTURED);
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+
+    const serious = results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
+  });
+
+  test("visual regression — full page", async ({ page }, testInfo) => {
+    await page.goto(STRUCTURED);
+    await page.waitForLoadState("networkidle");
+    await expect(page).toHaveScreenshot(
+      `article-structured-${testInfo.project.name}.png`,
+      {
+        fullPage: true,
+        maxDiffPixelRatio: 0.02,
+      },
+    );
+  });
+});
+
+test.describe("article detail — AI-Assisted Engineering Workflows (short)", () => {
+  test("renders concise editorial shape without empty chrome", async ({
+    page,
+  }) => {
+    await page.goto(SHORT);
+
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "AI-Assisted Engineering Workflows",
+      }),
+    ).toBeVisible();
+    await expect(page.locator("#bound")).toBeVisible();
+    await expect(page.locator("#review")).toBeVisible();
+    await expect(page.getByText("WARNING")).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: "Continue in the same register.",
+      }),
+    ).toBeVisible();
+  });
+
+  test("has no serious accessibility violations", async ({ page }) => {
+    await page.goto(SHORT);
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+
+    const serious = results.violations.filter(
+      (v) => v.impact === "serious" || v.impact === "critical",
+    );
+    expect(serious, JSON.stringify(serious, null, 2)).toEqual([]);
   });
 });
