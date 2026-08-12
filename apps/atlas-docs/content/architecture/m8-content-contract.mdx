@@ -1,0 +1,965 @@
+# M8 Content Contract — Strapi Integration Lock (M8A)
+
+**Status:** LOCKED — implementation-ready  
+**Phase:** M8A (read-only contract lock)  
+**Date:** 2026-08-12  
+**Base branch:** `atlas-rebuild` @ `5a2f52ad9aaa903faeedbbcbaf44e9479274d1fd`  
+**Canonical M7 SHA:** `e0acda782175ccf235e5b29c1b9a148fbf6d4ea0` (ancestor of HEAD; PR [#27](https://github.com/IntraWeb-Technology/nexus/pull/27) merged)  
+**Atlas site key:** `personal`  
+**Shared CMS:** `apps/cms-strapi`  
+**Authority:** Build Manifest §6 · M7 Production Asset Freeze · Atlas frontend domain types · existing shared Strapi schemas · `@repo/strapi-client`
+
+This document is the **implementation contract for M8B**. M8B must execute it mechanically. Do not invent new content architecture during coding.
+
+---
+
+## A. Executive Verdict
+
+### `GO — M8 READY FOR IMPLEMENTATION`
+
+Evidence:
+
+| Gate | Result |
+| --- | --- |
+| M7 COMPLETE | Yes — merge `5a2f52a` includes M7 closure `e0acda7` |
+| Production Asset Freeze | **PASS** (A-05 **DEFERRED / NON-BLOCKING**) |
+| Shared CMS foundations | Present — Site, project, case-study shell, article shell, SEO, redirects, draft/publish, `@repo/strapi-client` |
+| Three contract gaps | Resolved below (case study, article blocks, Home/About) |
+| No schema/code/content migration in M8A | Confirmed — docs-only deliverable |
+
+**Discrepancy (non-blocking):** No standalone file titled “M8 Strapi Content Contract Readiness Audit” exists in the repository. Authoritative readiness inputs used instead:
+
+1. Build Manifest §6 (“Existing collections (audit)” + recommended additive model)
+2. M8A task brief §4 (Gap 1–3)
+3. Live confirmation against `apps/cms-strapi` schemas and `apps/atlas-web/src/content/*` domain types
+
+Current repository state **does not contradict** those findings. Gaps 1–3 remain accurate.
+
+---
+
+## B. Current-State Confirmation
+
+### Shared Strapi capabilities (reuse — do not replace)
+
+| Capability | Location | Atlas use |
+| --- | --- | --- |
+| Site tenancy (`key` unique) | `api::site.site` | Filter all Atlas queries by `personal` |
+| Site settings + default SEO | `api::site-setting.site-setting` | Site defaults; do not migrate favicon/mark into CMS for Atlas |
+| Navigation collection | `api::navigation.navigation` | **Not used by Atlas v1** (chrome stays application-static) |
+| Project shell | `api::project.project` | Canonical Work identity |
+| Case study shell | `api::case-study.case-study` | Extend additively (Gap 1) |
+| Article shell | `api::article.article` | Extend with structured sections (Gap 2); also Documentation surface |
+| SEO component | `shared.seo` | Reuse on all Atlas entries |
+| Redirects | `api::redirect.redirect` | Reuse (site-scoped) |
+| Draft/publish | Collection `options.draftAndPublish` | Preserve; public = published only |
+| Typed client | `packages/strapi-client` | Extend getters/normalizers; never bypass site filters |
+| Boot seed sites | `apps/cms-strapi/src/index.ts` | Already seeds `personal` + `intraweb` |
+| Migration tooling | `apps/cms-strapi/scripts/migrate/` | Pattern for Atlas import scripts |
+
+### Explicitly out of Atlas v1 CMS scope
+
+`service`, `faq-item`, `testimonial`, unrestricted expansion of `page.sections` dynamic zone.
+
+### IntraWeb compatibility rule
+
+All schema changes affecting shared collections (`project`, `case-study`, `article`, components) must be **additive**. Do not remove or rename IntraWeb-consumed fields (`challenge`, `solution`, `results`, markdown `body`, Hashnode provenance fields).
+
+---
+
+## C. Final Content Architecture
+
+### Content types
+
+| Type | Existing / new | Purpose | Tenancy | Draft/publish | Key relationships |
+| --- | --- | --- | --- | --- | --- |
+| `site` | Existing | Tenancy root | self | No | — |
+| `site-setting` | Existing | Site defaults / default SEO | `site` 1:1 | Yes | `defaultSeo` |
+| `project` | Existing + additive fields | Canonical Work identity + selected-work cards | `sites` M2M | Yes | technologies; inverse case-study |
+| `case-study` | Existing + additive components | Editorial case study narrative | `sites` M2M | Yes | `relatedProject` → project (required for Atlas) |
+| `article` | Existing + additive fields/sections | Writing **and** Documentation | `sites` M2M | Yes | author, categories, tags |
+| `home-page` | **New** | Site-scoped Home composition (not a page builder) | `site` 1:1 required | Yes | featured project; selected projects; writing articles |
+| `about-page` | **New** | Site-scoped About composition (fixed sections) | `site` 1:1 required | Yes | — |
+| `work-page` | **New** | Site-scoped Work index chrome copy | `site` 1:1 required | Yes | featured project relation |
+| `contact-page` | **New** | Editorial Contact copy only | `site` 1:1 required | Yes | — |
+| `redirect` | Existing | Legacy URL redirects | `site` M2O | No | — |
+| `category` / `tag` / `technology` / `author` | Existing (global) | Taxonomy / byline | none (global pools) | No | Used by article/project |
+| `navigation` | Existing | Unused by Atlas v1 | site | Yes | — |
+| `page` | Existing | IntraWeb marketing only | site | Yes | **Do not use for Atlas** |
+
+### Reusable components (new unless noted)
+
+| Component | Existing / new | Purpose |
+| --- | --- | --- |
+| `shared.seo` | Existing | Entry SEO |
+| `shared.link` | Existing | Label + href CTAs |
+| `publishing.media` | **New** | CMS media + alt/caption/kind/evidenceClass/composedKey |
+| `publishing.section` | **New** | Article/Doc chapter with optional primitives |
+| `publishing.callout` | **New** | Semantic callout |
+| `publishing.code` | **New** | Code evidence |
+| `publishing.terminal` | **New** | Terminal evidence |
+| `publishing.table` | **New** | Comparison matrix |
+| `publishing.evidence` | **New** | CI/deploy/test proof |
+| `publishing.meta-item` | **New** | Label · value pair |
+| `case.overview` | **New** | Case overview columns |
+| `case.prose-section` | **New** | Problem / implementation prose chapters |
+| `case.row-section` | **New** | Constraints / delivery / lessons row matrices |
+| `case.architecture` | **New** | Architecture narrative + node paths (composed diagram data) |
+| `case.decision` | **New** | Decision matrix item (repeatable) |
+| `case.outcomes` | **New** | Outcomes chapter |
+| `case.figure-slot` | **New** | Named figure slot → publishing.media |
+| `home.hero` | **New** | Home hero copy + media |
+| `home.featured` | **New** | Featured proof copy (problem/outcome) |
+| `home.selected-item` | **New** | Selected-work slot (project + layout + outcome) |
+| `home.philosophy` | **New** | Philosophy quote + principle list |
+| `home.bridge` | **New** | About/contact/writing bridge copy |
+| `about.opening` … `about.notes` | **New** | Fixed About section components |
+| `work.intro` | **New** | Work index intro |
+| `work.taxonomy` | **New** | Taxonomy band copy |
+| `contact.copy` | **New** | Contact editorial strings |
+
+---
+
+## D. Exact Schema Contract
+
+### D.1 Enums (controlled vocabularies)
+
+| Enum | Values | Used by |
+| --- | --- | --- |
+| `evidenceClass` | `production`, `composed` | `publishing.media` |
+| `figureKind` | `application-screenshot`, `architecture-diagram`, `workflow-diagram`, `browser-capture`, `figma-artifact`, `ci-pipeline`, `repository-structure`, `terminal-output`, `code-comparison` | `publishing.media.kind` |
+| `composedKey` | `architecture-diagram`, `content-map-render`, `rsc-request-path`, `atlas-boundaries`, `about-approach`, `about-architecture`, `home-philosophy` | `publishing.media.composedKey` (app-owned renderers) |
+| `projectLayout` | `feature`, `offset`, `band` | `project.layout`, `home.selected-item.layout` |
+| `articleSurface` | `writing`, `documentation` | `article.surface` |
+| `editorialType` | `essay`, `decision`, `note` | `article.editorialType` (writing) |
+| `docKind` | `guide`, `adr`, `playbook`, `procedure`, `reference` | `article.docKind` (documentation) |
+| `calloutVariant` | `tradeoff`, `note`, `warning` | `publishing.callout.variant` |
+| `evidenceKind` | `ci`, `deploy`, `test`, `coverage`, `performance`, `a11y`, `repository`, `documentation` | `publishing.evidence.kind` |
+| `caseFigureSlot` | `hero`, `architecture`, `implementationPrimary`, `implementationUi`, `implementationWorkflow`, `implementationTablet`, `implementationMobile` | `case.figure-slot.slot` |
+
+**Do not add `deferred` to `evidenceClass`.** Deferred assets are represented by **absence** of media (A-05, PA-DOC2–5).
+
+### D.2 `publishing.media` (new component)
+
+| Field | Type | Req | Repeat | Notes |
+| --- | --- | --- | --- | --- |
+| `asset` | media (images, single) | No | — | Required when `evidenceClass=production` unless intentionally empty slot |
+| `alt` | string | Yes | — | Accessibility; required even for composed when exposed as figure |
+| `caption` | text | No | — | |
+| `captionShort` | string | No | — | Tablet/mobile |
+| `label` | string | No | — | Mono overlay label (legacy placeholder support) |
+| `kind` | enum `figureKind` | Yes | — | Semantic media type |
+| `evidenceClass` | enum `evidenceClass` | Yes | — | `production` \| `composed` |
+| `composedKey` | enum `composedKey` | No | — | Required when `evidenceClass=composed` and no `asset` |
+| `sizes` | string | No | — | next/image sizes hint only (semantic presentation, not layout CSS) |
+
+**Validation:** If `evidenceClass=composed` and `asset` empty → `composedKey` required. If `evidenceClass=production` → `asset` required when the slot is published as a figure. Do not invent width/height fields; use Strapi media metadata + mapper.
+
+### D.3 Publishing blocks (new components)
+
+#### `publishing.meta-item`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `label` | string | Yes |
+| `value` | string | Yes |
+
+#### `publishing.callout`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `variant` | enum `calloutVariant` | Yes |
+| `title` | string | Yes |
+| `body` | text | Yes |
+| `bodyCompact` | text | No |
+
+#### `publishing.code`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `language` | string | Yes |
+| `caption` | string | No |
+| `captionCompact` | string | No |
+| `code` | text | Yes |
+
+#### `publishing.terminal`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `caption` | string | No |
+| `captionCompact` | string | No |
+| `lines` | json (string[]) | Yes |
+
+#### `publishing.table`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `caption` | string | No |
+| `captionCompact` | string | No |
+| `columns` | json (string[]) | Yes |
+| `rows` | json (`{id, cells[]}[]`) | Yes |
+
+#### `publishing.evidence`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `kind` | enum `evidenceKind` | Yes |
+| `title` | string | Yes |
+| `status` | string | Yes |
+| `meta` | component `publishing.meta-item` repeatable | Yes |
+| `href` | string | No |
+| `hrefLabel` | string | No |
+
+#### `publishing.section` (repeatable on article)
+
+| Field | Type | Req | Reason |
+| --- | --- | --- | --- |
+| `sectionId` | string | Yes | Stable TOC/anchor id |
+| `chapter` | string | Yes | Chapter marker |
+| `title` | string | Yes | Section heading |
+| `paragraphs` | json (string[]) | Yes | Matches Atlas `ArticleSection.paragraphs` |
+| `paragraphsTablet` | json (string[]) | No | Responsive copy |
+| `bodyMobile` | text | No | Mobile condensation |
+| `figure` | component `publishing.media` | No | Optional figure |
+| `callout` | component `publishing.callout` | No | |
+| `code` | component `publishing.code` | No | |
+| `terminal` | component `publishing.terminal` | No | |
+| `table` | component `publishing.table` | No | |
+| `evidence` | component `publishing.evidence` | No | |
+
+**Why not a free-form dynamic zone of dozens of blocks?** Atlas sections are chapter units with optional companions — this matches the proven frontend contract with fewer invalid compositions.
+
+### D.4 `project` — additive fields only
+
+Keep all existing fields. Add:
+
+| Field | Type | Req | Reason |
+| --- | --- | --- | --- |
+| `category` | string | No | Work/Home eyebrow taxonomy |
+| `themes` | json (string[]) | No | Editorial themes (not tenancy) |
+| `statusLabel` | string | No | Display status (“In progress”, etc.) |
+| `layout` | enum `projectLayout` | No | Selected-work composition variant |
+| `sortOrder` | integer | No | Work index ordering |
+| `summaryTablet` | text | No | Responsive summary |
+| `summaryMobile` | text | No | Responsive summary |
+| `ctaLabel` | string | No | Card CTA label |
+| `cardMedia` | component `publishing.media` | No | Selected/Work card media (A-03/A-04); empty for A-05 |
+
+**Canonical identity:** `slug` + `sites ∋ personal`. Home and Work must reference this record — never duplicate project identity.
+
+### D.5 `case-study` — additive extension (selected architecture)
+
+Keep existing marketing fields: `title`, `slug`, `sites`, `clientName`, `summary`, `challenge`, `solution`, `results`, `technologies`, `relatedProject`, `featuredImage`, `gallery`, `seo`, `migrationBatch`.
+
+Add:
+
+| Field | Type | Req | Reason |
+| --- | --- | --- | --- |
+| `role` | string | No | Hero meta |
+| `year` | string | No | Hero meta |
+| `stackLine` | string | No | Hero stack line |
+| `deck` | text | No | Hero deck |
+| `deckTablet` | text | No | |
+| `deckMobile` | text | No | |
+| `heroMeta` | `publishing.meta-item` repeatable | No | Structured meta row |
+| `metaLineTablet` | string | No | Compact meta |
+| `metaLineMobileYear` | string | No | |
+| `metaLineMobileRole` | string | No | |
+| `toc` | json (`{id,label,href}[]`) | No | Explicit TOC; frontend may derive if absent |
+| `overview` | component `case.overview` | No | Atlas section |
+| `problem` | component `case.prose-section` | No | |
+| `constraints` | component `case.row-section` | No | |
+| `architecture` | component `case.architecture` | No | |
+| `decisions` | component `case.decision` repeatable | No | |
+| `implementation` | component `case.prose-section` | No | |
+| `delivery` | component `case.row-section` | No | |
+| `outcomes` | component `case.outcomes` | No | |
+| `lessons` | component `case.row-section` | No | |
+| `figureSlots` | component `case.figure-slot` repeatable | No | Named media slots |
+| `relatedNote` | text | No | Related band summary override |
+| `contactBridge` | component `home.bridge` | No | Page-local contact CTA copy |
+
+#### `case.overview`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `chapter` | string | Yes |
+| `title` | string | Yes |
+| `titleMobile` | string | No |
+| `columns` | json (`{id,label,body}[]`) | Yes |
+| `bodyTablet` | json (string[]) | No |
+| `bodyMobile` | text | No |
+
+#### `case.prose-section`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `chapter` | string | Yes |
+| `title` | string | Yes |
+| `titleMobile` | string | No |
+| `paragraphs` | json (string[]) | Yes |
+| `paragraphsTablet` | json (string[]) | No |
+| `bodyMobile` | text | No |
+| `intro` | text | No | Used by implementation |
+
+#### `case.row-section`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `chapter` | string | Yes |
+| `title` | string | Yes |
+| `titleMobile` | string | No |
+| `rows` | json (`{id,label,body}[]`) | Yes |
+| `summaryTablet` | text | No |
+| `summaryMobile` | text | No |
+
+#### `case.architecture`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `chapter` | string | Yes |
+| `title` | string | Yes |
+| `intro` | text | Yes |
+| `requestPath` | json (`ArchitectureNode[]`) | Yes |
+| `deliveryPath` | json (`ArchitectureNode[]`) | Yes |
+| `tabletRequest` | json | No |
+| `tabletDelivery` | json | No |
+| `mobileNodes` | json | No |
+| `legend` | json (string[]) | No |
+
+Frontend continues to own `ArchitectureDiagram` rendering (A-07 composed).
+
+#### `case.decision`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `decisionId` | string | Yes |
+| `statement` | text | Yes |
+| `statementTablet` | text | No |
+| `statementMobile` | text | No |
+| `context` | text | Yes |
+| `choice` | text | Yes |
+| `tradeoff` | text | Yes |
+| `consequence` | text | Yes |
+
+#### `case.outcomes`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `chapter` | string | Yes |
+| `title` | string | Yes |
+| `titleMobile` | string | No |
+| `intro` | text | Yes |
+| `items` | json (`{id,title,body}[]`) | Yes |
+| `note` | text | No |
+| `summaryTablet` | text | No |
+| `summaryMobile` | text | No |
+
+#### `case.figure-slot`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `slot` | enum `caseFigureSlot` | Yes |
+| `media` | component `publishing.media` | Yes |
+
+**Atlas publish rule:** `relatedProject` required when `sites` includes `personal` and Atlas structured sections are populated. Lifecycle validation in M8B.
+
+### D.6 `article` — additive fields
+
+Keep existing fields including `body` + `contentFormat`.
+
+Add:
+
+| Field | Type | Req | Reason |
+| --- | --- | --- | --- |
+| `surface` | enum `articleSurface` | Yes (default `writing`) | Distinguishes `/articles` vs `/docs` |
+| `editorialType` | enum `editorialType` | No | Writing only |
+| `docKind` | enum `docKind` | No | Documentation only |
+| `readingTime` | string | No | Display meta |
+| `dek` | text | No | Header deck (may equal excerpt) |
+| `dekCompact` | text | No | |
+| `headerChapter` | string | No | Header chapter marker |
+| `headerMeta` | `publishing.meta-item` repeatable | No | |
+| `sections` | component `publishing.section` repeatable | No | Structured publishing body |
+| `contactBridge` | component `home.bridge` | No | Page-local contact |
+
+**Atlas rule:** When `surface=writing|documentation` and `sites∋personal`, set `contentFormat=blocks` and populate `sections`. Leave legacy `body` empty or unused for Atlas entries. IntraWeb markdown articles continue using `body`.
+
+**Categories:**
+
+| Surface | Category names (seed) |
+| --- | --- |
+| writing | Architecture, Delivery, Platform, Testing, Tooling |
+| documentation | Architecture, Design System, Frontend, Testing, Publishing |
+
+Mapper maps first matching category → `ArticleTopic` / `DocCategory`.
+
+### D.7 `home-page` (new collection; site 1:1)
+
+| Field | Type | Req | Reason |
+| --- | --- | --- | --- |
+| `site` | relation oneToOne → site | Yes | Tenancy; lifecycle uniqueness |
+| `seo` | `shared.seo` | No | Optional page SEO override |
+| `hero` | `home.hero` | Yes | |
+| `featured` | `home.featured` | Yes | |
+| `featuredProject` | relation manyToOne → project | Yes | Canonical featured identity |
+| `selected` | `home.selected-item` repeatable | Yes | Ordered selected work |
+| `philosophy` | `home.philosophy` | Yes | |
+| `writing` | component with article relations + notes | Yes | Explicit article selections |
+| `aboutTeaser` | `home.bridge` | Yes | |
+| `contactBridge` | `home.bridge` | Yes | |
+
+#### `home.hero`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `chapter` | string | Yes |
+| `title` | text | Yes |
+| `deck` | text | Yes |
+| `primaryCta` | `shared.link` | Yes |
+| `secondaryCta` | `shared.link` | Yes |
+| `media` | `publishing.media` | No | A-01 when present |
+| `mediaNote` | string | No | |
+
+#### `home.featured`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `chapter` | string | Yes |
+| `title` | string | Yes |
+| `meta` | string | No |
+| `status` | string | No |
+| `problemLabel` | string | Yes |
+| `problem` | text | Yes |
+| `outcomeLabel` | string | Yes |
+| `outcome` | text | Yes |
+| `highlightsLabel` | string | No |
+| `highlights` | json (string[]) | No |
+| `cta` | `shared.link` | Yes |
+| `figure` | `publishing.media` | No | PA-HF |
+
+#### `home.selected-item`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `project` | relation → project | Yes | Canonical identity |
+| `layout` | enum `projectLayout` | Yes | Slot composition |
+| `eyebrow` | string | No | May default from project.category |
+| `outcome` | text | Yes | Home-specific short outcome |
+| `ctaLabel` | string | No | |
+
+**No arbitrary section reordering.** Section sequence is owned by `apps/atlas-web` Home page components.
+
+#### `home.philosophy`
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `chapter` | string | Yes |
+| `quote` | text | Yes |
+| `diagramCaption` | string | No |
+| `stages` | json (string[]) | Yes |
+| `principles` | json (`{title,body}[]`) | Yes |
+
+Diagram remains application-composed (`composedKey=home-philosophy`).
+
+#### Writing selections (fields on `home-page`)
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `writingChapter` | string | Yes |
+| `writingItems` | component repeatable: `article` relation + `note` string | Yes |
+
+### D.8 `about-page` (new collection; site 1:1)
+
+Fixed named section components — **not** a dynamic zone:
+
+| Field | Component / type | Req |
+| --- | --- | --- |
+| `site` | relation 1:1 | Yes |
+| `seo` | `shared.seo` | Yes |
+| `opening` | `about.opening` | Yes |
+| `philosophy` | `about.philosophy` | Yes |
+| `approach` | `about.approach` | Yes |
+| `style` | `about.style` | Yes |
+| `principles` | `about.principles` | Yes |
+| `timeline` | `about.timeline` | Yes |
+| `focus` | `about.focus` | Yes |
+| `reading` | `about.reading` | Yes |
+| `architecture` | `about.architecture` | Yes |
+| `notes` | `about.notes` | Yes |
+| `contactBridge` | `home.bridge` | Yes |
+
+Each `about.*` component mirrors the corresponding `AboutFixture` section fields (including `*Condensed` text fields). Approach/architecture figure captions may reference `composedKey` (`about-approach`, `about-architecture`); diagrams stay application-owned.
+
+### D.9 `work-page` (new collection; site 1:1)
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `site` | relation 1:1 | Yes |
+| `seo` | `shared.seo` | Yes |
+| `intro` | `work.intro` | Yes |
+| `featuredProject` | relation → project | Yes |
+| `featuredCopy` | component: chapter, flagshipLabel, figure (`publishing.media`), themes overrides, ctaNote | Yes |
+| `selectedChapter` | string | Yes |
+| `selectedHeadline` | string | Yes |
+| `selectedDeck` | text | Yes |
+| `taxonomy` | `work.taxonomy` | Yes |
+| `contactBridge` | `home.bridge` | Yes |
+
+**Selected projects** are **not** duplicated here — query `project` where `sites∋personal`, ordered by `sortOrder`, excluding or including featured per frontend rules. Featured composition uses `featuredProject` + `featuredCopy`.
+
+Stage-rule spacers remain **application-static** (design chrome, not CMS).
+
+### D.10 `contact-page` (new collection; site 1:1)
+
+| Field | Type | Req |
+| --- | --- | --- |
+| `site` | relation 1:1 | Yes |
+| `seo` | `shared.seo` | Yes |
+| `chapter` | string | Yes |
+| `title` | string | Yes |
+| `body` | text | Yes |
+| `nameLabel` / `namePlaceholder` | string | Yes |
+| `emailLabel` / `emailPlaceholder` | string | Yes |
+| `messageLabel` / `messagePlaceholder` | string | Yes |
+| `submitLabel` | string | Yes |
+| `meta` | string | No |
+| `successTitle` / `successBody` | string/text | Yes |
+| `failureTitle` / `failureBody` | string/text | Yes |
+
+**Not in Strapi:** form validation, honeypot, rate limit, Resend delivery (`/api/contact`).
+
+### D.11 Site / SEO / Navigation / Redirects
+
+| Domain | Decision |
+| --- | --- |
+| Site | No new Atlas-only site fields required. Use existing `personal` key. |
+| Default SEO | `site-setting.defaultSeo`; Atlas root layout may keep application default OG (`/og/default.png`) |
+| Per-entry SEO | `shared.seo` on home/about/work/contact/project/case-study/article |
+| Per-entry OG | Optional `seo.ogImage`; if absent → application default OG (do not migrate A-13 into Strapi) |
+| Navigation | **Application-static** — Figma-frozen chrome; no editorial reason to CMS in M8 |
+| Redirects | Existing `redirect` collection; seed Atlas legacy paths as inventory becomes available (full legacy inventory is M9/M10) |
+
+### D.12 Fields forbidden in Strapi
+
+Do not store: CSS, Tailwind classes, grid definitions, spacing tokens, layout coordinates, breakpoints, arbitrary page-builder sections for Atlas routes.
+
+---
+
+## E. Publishing Block Contract
+
+### Vocabulary (final)
+
+| Block | Strapi component | Frontend domain | Renderer |
+| --- | --- | --- | --- |
+| Section / prose | `publishing.section` | `ArticleSection` / `DocSection` | `ArticleBody` / `DocBody` |
+| Figure | `publishing.media` on section | `ArticleFigureBlock` / `DocFigureBlock` | `Figure` (+ composed diagram switch) |
+| Callout | `publishing.callout` | `ArticleCallout` / `DocCallout` | `Callout` |
+| Code | `publishing.code` | `ArticleCodeBlock` | `CodeBlock` |
+| Terminal | `publishing.terminal` | `ArticleTerminalBlock` | `TerminalBlock` |
+| Table | `publishing.table` | `ArticleTableBlock` | `EditorialTable` |
+| Evidence | `publishing.evidence` | `ArticleEvidenceBlock` | `EvidenceBlock` |
+| Meta row | `publishing.meta-item[]` | `MetaItem[]` | `MetadataRow` |
+
+### Composed media mapping
+
+| `composedKey` | Application renderer | M7 ID |
+| --- | --- | --- |
+| `rsc-request-path` | `RscRequestPathDiagram` | PA-ART1 |
+| `atlas-boundaries` | `AtlasBoundaryDiagram` | PA-DOC1 |
+| `architecture-diagram` | `ArchitectureDiagram` | A-07 |
+| `content-map-render` | `ContentMapRenderDiagram` | A-08 |
+| `home-philosophy` | Home philosophy diagram | composed |
+| `about-approach` / `about-architecture` | About diagrams | A-15 |
+
+### Content format rule
+
+| Consumer | `contentFormat` | Body source |
+| --- | --- | --- |
+| Atlas writing/docs | `blocks` | `sections` |
+| IntraWeb / legacy markdown | `markdown` / `html` | `body` |
+
+---
+
+## F. Case Study Resolution
+
+### Selected architecture
+
+**Extend the shared `case-study` model with reusable structured components + keep `relatedProject` → canonical `project`.**
+
+Not selected:
+
+1. ~~Fold narrative into `project`~~ — overloads Work cards; harms IntraWeb/project list UX  
+2. ~~Atlas-only parallel type~~ — unnecessary split; dual collections for one concept  
+3. ~~Replace marketing fields~~ — breaks IntraWeb  
+
+### Why this wins
+
+| Criterion | Assessment |
+| --- | --- |
+| Multi-site reuse | IntraWeb keeps `challenge/solution/results`; Atlas fills structured components |
+| Query complexity | One collection; populate named components; filter `sites.key=personal` |
+| Editorial usability | Fixed named sections match the frozen case template (no free reorder) |
+| Frontend type safety | Mapper → existing `CaseStudyFixture` |
+| Migration complexity | Additive schema + import from `portfolio-os.ts` |
+| Extensibility | Second case study = new entry + components; no page builder |
+| Overengineering risk | Low — no new collection; components mirror proven fixture |
+
+### Canonical ownership
+
+- **Project** owns identity, summary, status, card media, Work ordering  
+- **Case study** owns long-form narrative + figure slots  
+- **Work/Home** never store a second copy of project name/slug  
+
+---
+
+## G. Home / About Resolution
+
+### Selected architecture
+
+**Site-scoped singleton collections** (`home-page`, `about-page`, `work-page`, `contact-page`) with **required `site` 1:1** and **named section components**.
+
+### Rejected
+
+- Generic `page` + `sections` DZ for Atlas — forbidden page builder  
+- Stuffing Home/About into `site-setting` — settings blob becomes unmaintainable  
+- Fully static Home/About forever — blocks editorial updates for CMS-worthy copy  
+
+### Why
+
+| Property | How ensured |
+| --- | --- |
+| Design-system control | React section components own layout/order |
+| Editorial control | Named fields for copy, media, relations |
+| Tenancy | `site` required + lifecycle uniqueness |
+| TypeScript contracts | Mapper → existing fixtures’ domain types |
+| Invalid compositions hard | No DZ; editors cannot invent new Home sections |
+
+Philosophy / About diagrams remain composed UI; CMS stores captions + optional `composedKey` only.
+
+---
+
+## H. Media Mapping
+
+### M7 → CMS
+
+| ID | Class | CMS representation |
+| --- | --- | --- |
+| A-01 | PRODUCTION | `home-page.hero.media` → Strapi upload |
+| A-02 | PRODUCTION | `work-page.featuredCopy.figure` |
+| A-03 | PRODUCTION | `project(shared-strapi-cms).cardMedia` |
+| A-04 | PRODUCTION | `project(intraweb-automation).cardMedia` |
+| **A-05** | **DEFERRED** | **No media object. `cardMedia` absent on `vehicle-maintenance`. Do not fabricate.** |
+| A-06 | PRODUCTION | `case-study.figureSlots[hero]` |
+| A-07 | COMPOSED | `composedKey=architecture-diagram` (no raster) |
+| A-08 | COMPOSED | `composedKey=content-map-render` |
+| A-09–A-11 | CONDITIONAL OMIT | No media entries |
+| A-12 | PRODUCTION | Optional docs figure upload when a doc section references it; not forced sitewide |
+| A-13 | PRODUCTION | **Application-static** `/og/default.png` |
+| A-14 | PRODUCTION | **Application-static** favicon + atlas-mark |
+| A-15 | COMPOSED | About `composedKey`s |
+| PA-HF | PRODUCTION | `home-page.featured.figure` |
+| PA-HS | PRODUCTION | Uses A-03 on Home selected feature slot |
+| PA-CS3 / PA-CS4 | PRODUCTION | Case `figureSlots` implementation* |
+| PA-ART1 | COMPOSED | Article section figure `composedKey=rsc-request-path` |
+| PA-DOC1 | COMPOSED | Doc section figure `composedKey=atlas-boundaries` |
+| PA-DOC2–5 | DEFERRED | No media; placeholders remain until real figures authored |
+
+### Ownership metadata
+
+`evidenceClass` + `composedKey` is the smallest useful CMS representation of PRODUCTION vs COMPOSED. Do not add owner/provenance free-text fields in M8 unless migration tooling needs a private `migrationBatch` (already exists on collections).
+
+### Application-static (never migrate for consistency)
+
+- `public/favicon.svg`  
+- `public/images/brand/atlas-mark.svg`  
+- `public/og/default.png`  
+
+---
+
+## I. TypeScript / Mapper Contract
+
+### Boundary (mandatory)
+
+```text
+Strapi REST response
+  → @repo/strapi-client (Zod validate + shape*)
+  → apps/atlas-web/src/lib/strapi/* (Atlas assemblers)
+  → domain types in apps/atlas-web/src/content/*.ts
+  → section / editorial components
+```
+
+**Forbidden:** importing Strapi DTOs into `components/**`.
+
+### Reuse from `@repo/strapi-client`
+
+| Existing | Action |
+| --- | --- |
+| `SiteKey`, `siteFilter` / `sitesFilter` | Reuse |
+| `createStrapiClient`, `statusFromPreview`, `verifyPreviewSecret` | Reuse |
+| `shapeProject`, `shapeCaseStudy`, `shapeArticle`, SEO/media shapers | **Extend** for new fields |
+| `getProject*`, `getCaseStudy*`, `getArticle*`, `getRedirects`, site settings | Extend + add home/about/work/contact getters |
+
+### New / extended domain types (Atlas)
+
+Keep UI domain types in `apps/atlas-web/src/content/` as the stable contract:
+
+- `HomepageFixture`, `WorkFixture`, `WorkProject`, `CaseStudyFixture`, `AboutFixture`, `ContactFixture`, `ArticleDetail`, `DocDetail`, index fixtures
+
+`@repo/strapi-client` may expose broader CMS domain types; Atlas assemblers map those → Atlas fixtures’ shapes (including deriving `href`, TOC, prev/next, related).
+
+### Normalization responsibilities
+
+| Layer | Responsibility |
+| --- | --- |
+| strapi-client Zod | Transport safety; siteKeys; media URLs; enum parsing |
+| Atlas assembler | Build page compositions; resolve project relations; attach composed render keys; compute hrefs; filter surface=writing|documentation |
+| UI | Render only |
+
+### Preview types
+
+Public assemblers accept `preview?: boolean`. Default `false` → published only.
+
+---
+
+## J. Query Matrix
+
+All list/detail queries: `filters[sites][key][$eq]=personal` or `filters[site][key][$eq]=personal` as appropriate. Populate only listed relations. Sort explicitly. Public status = published unless preview.
+
+| Surface | Strapi query | Mapper | Domain model | Renderer |
+| --- | --- | --- | --- | --- |
+| Site bootstrap | `GET /sites?filters[key][$eq]=personal` | identity | `{key,name}` | layout |
+| Root SEO defaults | `GET /site-settings?filters[site][key][$eq]=personal&populate=defaultSeo` | `shapeSiteSettings` | default SEO | `layout.tsx` metadata |
+| `/` Home | `GET /home-pages?filters[site][key][$eq]=personal` + populate hero.media, featured, featuredProject, selected.project.cardMedia, philosophy, writingItems.article, bridges | `toHomepageFixture` | `HomepageFixture` | `home-*` sections |
+| `/work` | `GET /work-pages?…` + `GET /projects?filters[sites][key][$eq]=personal&sort=sortOrder:asc` populate cardMedia, seo | `toWorkFixture` | `WorkFixture` | `work-*` sections |
+| `/work/[slug]` | `GET /case-studies?filters[slug][$eq]=&filters[sites][key][$eq]=personal` populate relatedProject, figureSlots.media, all case.* components, seo | `toCaseStudyFixture` | `CaseStudyFixture` | `case-*` sections |
+| `/articles` | `GET /articles?filters[sites][key][$eq]=personal&filters[surface][$eq]=writing&sort=publishedDate:desc` populate categories, seo | `toArticlesIndex` | `ArticlesIndexFixture` | articles index sections |
+| `/articles/[slug]` | article by slug + surface=writing; populate sections.*, seo, categories | `toArticleDetail` (+ related/prevNext queries) | `ArticleDetail` | article sections |
+| `/docs` | articles `surface=documentation` (+ category aggregations) | `toDocsIndex` | `DocsIndexFixture` | docs landing |
+| `/docs/[…slug]` | article by slug + surface=documentation; populate sections | `toDocDetail` | `DocDetail` | doc sections |
+| `/about` | `GET /about-pages?filters[site][key][$eq]=personal` populate all about.* | `toAboutFixture` | `AboutFixture` | about sections |
+| `/contact` | `GET /contact-pages?…` | `toContactFixture` | `ContactFixture` | contact UI |
+| Redirects | `GET /redirects?filters[site][key][$eq]=personal&filters[enabled][$eq]=true` | `shapeRedirect` | `Redirect[]` | next.config / middleware (M8B/M9) |
+
+### Draft/publish expectations
+
+| Context | Behavior |
+| --- | --- |
+| Production | Published only |
+| Preview (`?preview` + secret) | `status=draft` via existing client helpers — **implement basic wiring in M8B**; polish UX may continue in M9 |
+| Unpublished project | Omitted from Work/Home selections; if featured missing → configuration error |
+| Unpublished case study | `/work/[slug]` → 404 |
+| Unpublished article/doc | Index omit; detail → 404 |
+| Unpublished home/about/work/contact | Configuration error (fail build or explicit error page — not silent fixture fallback) |
+
+---
+
+## K. Migration Matrix
+
+**Method:** Source-controlled import script under `apps/cms-strapi/scripts/migrate-atlas/` (or extend `scripts/migrate` with an Atlas source module). Dry-run default; `--write` upserts by site+slug. **Not** primary Admin UI data entry.
+
+| Current source | Canonical Strapi destination | Migration method | Validation |
+| --- | --- | --- | --- |
+| `content/work.ts` projects | `project` (`personal`) | Upsert by slug; upload cardMedia for A-03/A-04; skip media for vehicle-maintenance | Slugs, sortOrder, layout, A-05 absence |
+| `content/case-studies/portfolio-os.ts` | `case-study` + figureSlots uploads | Upsert; link `relatedProject=portfolio-os`; upload Portfolio OS WebPs | Slug `portfolio-os`; all slots; SEO |
+| `content/homepage.ts` | `home-page` | Upsert singleton; relations to projects/articles; upload A-01/PA-HF | Selected ids match Work; no duplicated names |
+| `content/about.ts` | `about-page` | Upsert singleton | Section field parity |
+| `content/work.ts` page chrome | `work-page` | Upsert singleton; featured → portfolio-os | Featured relation |
+| `content/contact.ts` | `contact-page` | Upsert singleton | Labels/placeholders |
+| `content/articles/*.ts` | `article` surface=writing | Upsert; sections from ArticleSection[]; categories; PA-ART1 as composed | 6 slugs; featured flag |
+| `content/docs/*.ts` | `article` surface=documentation | Upsert; sections; docKind; categories; PA-DOC1 composed | 5 slugs |
+| `media.ts` / `public/images/**` CMS-bound | Strapi Media Library | Upload + retain path map for idempotent re-run | Hash/filename map |
+| Application-static brand/OG | — | **Skip** | Still served from `public/` |
+| Nav/footer | — | **Skip** (application-static) | Chrome unchanged |
+| Contact API behavior | — | **Skip** | App-owned |
+
+### Identity preservation
+
+| Identity | Required stable value |
+| --- | --- |
+| Projects | `portfolio-os`, `shared-strapi-cms`, `intraweb-automation`, `vehicle-maintenance` |
+| Case study | `portfolio-os` |
+| Articles | existing six slugs |
+| Docs | existing five slugs |
+| URLs | `/work/[slug]`, `/articles/[slug]`, `/docs/[slug]` unchanged |
+
+### No-duplication ownership (canonical)
+
+| Fact | Canonical owner |
+| --- | --- |
+| Project name/slug/status/card media | `project` |
+| Home selected outcomes / layout slots | `home-page.selected` (references project) |
+| Work selected list | query `project` |
+| Case narrative | `case-study` |
+| Article body | `article.sections` |
+| Doc body | same `article` with `surface=documentation` |
+| SEO | `shared.seo` on entry (not recopied into multiple fixtures) |
+| Default OG / favicon / mark | Application static |
+
+---
+
+## L. File-Level Implementation Plan (M8B)
+
+### Add
+
+| Path | Purpose |
+| --- | --- |
+| `apps/cms-strapi/src/components/publishing/*.json` | Media + section + primitives |
+| `apps/cms-strapi/src/components/case/*.json` | Case structured sections |
+| `apps/cms-strapi/src/components/home/*.json` | Home components |
+| `apps/cms-strapi/src/components/about/*.json` | About components |
+| `apps/cms-strapi/src/components/work/*.json` | Work intro/taxonomy |
+| `apps/cms-strapi/src/api/home-page/**` | Home singleton API |
+| `apps/cms-strapi/src/api/about-page/**` | About singleton API |
+| `apps/cms-strapi/src/api/work-page/**` | Work singleton API |
+| `apps/cms-strapi/src/api/contact-page/**` | Contact singleton API |
+| `apps/cms-strapi/scripts/migrate-atlas/**` | Deterministic import from fixtures + media |
+| `packages/strapi-client/src/normalize/atlas*.ts` (or extend `content.ts`) | New shapers |
+| `packages/strapi-client/src/schemas/*` | Zod for new fields |
+| `apps/atlas-web/src/lib/strapi/**` | Client bootstrap, assemblers, error mapping |
+| `apps/atlas-web/src/lib/strapi/*.test.ts` | Mapper unit tests |
+| `apps/atlas-web/e2e/*` updates / CMS smoke as needed | Route + missing-media proofs |
+| `apps/atlas-docs/content/architecture/m8-strapi-integration.mdx` | M8B implementation report (after coding) |
+
+### Modify
+
+| Path | Purpose |
+| --- | --- |
+| `apps/cms-strapi/src/api/project/content-types/project/schema.json` | Additive fields |
+| `apps/cms-strapi/src/api/case-study/content-types/case-study/schema.json` | Additive components |
+| `apps/cms-strapi/src/api/article/content-types/article/schema.json` | surface, sections, enums |
+| Case-study / article / new-type lifecycles | Site uniqueness + Atlas required-relation rules |
+| `packages/strapi-client/src/{client,query,types,normalize}/*` | Getters, POPULATE, types |
+| `apps/atlas-web/src/app/**/page.tsx` | Swap fixture import → assembler (keep domain types) |
+| `apps/atlas-web/package.json` | Depend on `@repo/strapi-client` |
+| `apps/atlas-docs/content/architecture/build-manifest.mdx` | M8 status progression |
+| Env samples / `docs/architecture/environment-contract.md` | Atlas Strapi env keys if needed |
+
+### Leave untouched (unless defect)
+
+| Path | Why |
+| --- | --- |
+| `apps/atlas-web/src/components/**` section & editorial implementations | Layout ownership frozen |
+| `apps/atlas-web/src/styles/**` | Tokens frozen |
+| Composed diagram components | Application-owned media |
+| `public/favicon.svg`, `public/og/**`, `public/images/brand/**` | Application-static |
+| `apps/iw-site-q2/**`, `apps/iw-portal/**` | Unrelated apps |
+| `Page.sections` block schemas for marketing | Do not expand into Atlas builder |
+| Vehicle Maintenance production media | A-05 deferred — none |
+| PA-DOC2–5 media files | Deferred |
+
+### Fixtures after cutover
+
+Keep `src/content/**` fixtures as **test doubles / offline fallback for unit tests only** if needed — **not** as invisible production fallback. Production path must use CMS assemblers when `STRAPI_URL` configured.
+
+---
+
+## M. Test Plan (M8B gates)
+
+| Gate | Requirement |
+| --- | --- |
+| Schema validation | Strapi builds; content-type load; lifecycle tests for site uniqueness |
+| Mapper unit tests | Each assembler: happy path + missing optional media + A-05 absence |
+| Query tests | strapi-client filters always include site key; populate allowlists |
+| Migration validation | Dry-run + write against local Strapi; slug/URL/media assertions; idempotent re-run |
+| Route rendering | Home, Work, Case, Articles, Article, Docs, Doc, About, Contact |
+| Missing-media | Vehicle Maintenance band has no media plane |
+| 404 | Unknown case/article/doc slug → notFound |
+| Accessibility | axe serious+ clear on covered routes |
+| Visual regression | Compare to M7 baselines; **any diff must be justified** (CMS must not redesign) |
+| Production build | `pnpm` affected build for `atlas-web`, `cms-strapi`, `strapi-client` |
+| Typecheck / lint | Pass affected packages |
+| Playwright | Existing journeys green; add CMS-backed smoke where stable |
+| Dual-site regression | IntraWeb project/case-study/article reads still valid |
+
+---
+
+## N. Risks
+
+| Risk | Mitigation |
+| --- | --- |
+| Additive case-study fields confuse IntraWeb editors | Keep marketing fields primary in Admin view order; Atlas components collapsed/optional; document in cms-strapi-docs |
+| `sites` not required allows unscoped entries | Atlas import always sets `personal`; client refuses to shape entries missing requested site; consider lifecycle warning |
+| Global categories collide across sites | Seed Atlas category names carefully; prefer exact label match in mapper; do not delete IntraWeb categories |
+| Home selected ↔ Work identity drift | Home selected items are relations only; migration asserts id/slug equality |
+| Deep populate payload bloat | Strict POPULATE constants per query; no `populate=*` |
+| Silent fixture fallback hides CMS outages | Explicit error classes: `StrapiUnavailable`, `SiteMissing`, `SingletonMissing` → fail build or dedicated error UI |
+| Preview secret leakage | Reuse `verifyPreviewSecret`; never `NEXT_PUBLIC` token |
+| Schema drift during M8B coding | This contract is authoritative; PRs that invent DZ page builders or Atlas-only CMS forks are out of scope |
+| A-05 fabricated during import | Migration test asserts `vehicle-maintenance` has null/absent `cardMedia` |
+| Visual redesign via content reflow | No layout fields in CMS; visual regression vs M7 |
+
+---
+
+## O. Implementation Sequence (M8B)
+
+Hand this sequence to the implementation agent:
+
+1. **Branch** from `atlas-rebuild` (`cursor/atlas-m8b-strapi-integration-*`).
+2. **Schemas first (cms-strapi):** add `publishing.*`, `case.*`, `home.*`, `about.*`, `work.*` components; additive fields on `project` / `case-study` / `article`; create `home-page`, `about-page`, `work-page`, `contact-page` with site 1:1 lifecycles.
+3. **Regenerate types** / confirm Strapi boot with `personal` + `intraweb` seeds intact.
+4. **Extend `@repo/strapi-client`:** Zod schemas, POPULATE maps, getters, shapers; unit tests; no browser export.
+5. **Atlas data layer:** `apps/atlas-web/src/lib/strapi` client + assemblers targeting existing domain types; error taxonomy; env wiring.
+6. **Migration script:** import media (CMS-bound only) → projects → case study → articles/docs → singletons; dry-run CI job optional.
+7. **Wire routes one surface at a time:** Work/Project → Case Study → Home → Articles → Docs → About → Contact. Keep components unchanged.
+8. **Redirects:** seed known Atlas redirects if inventory ready; otherwise stub helper for M9.
+9. **Preview:** wire `statusFromPreview` + secret check on detail routes.
+10. **Tests:** mapper + migration validation + Playwright + visual baselines review.
+11. **Docs:** M8 implementation report; Build Manifest → M8 COMPLETE when gates pass.
+12. **Do not:** fabricate A-05/PA-DOC2–5; expand Page DZ; move nav/favicon/OG into CMS; put operational contact messages in Strapi.
+
+---
+
+## Fallback Contract (normative)
+
+| Condition | Classification | Behavior |
+| --- | --- | --- |
+| Strapi unreachable | Infrastructure failure | Build-time: fail generate for CMS-backed pages. Runtime ISR/error: show explicit unavailable state — **no silent fixture swap in production** |
+| Site `personal` missing | Configuration error | Fail fast |
+| home/about/work/contact singleton missing | Configuration error | Fail fast |
+| Project slug missing from Work query | Optional absence | Omit card |
+| Case study slug unknown / unpublished | 404 | `notFound()` |
+| Article/doc unknown | 404 | `notFound()` |
+| Optional block/media absent | Legitimate optional absence | Render without that primitive |
+| A-05 / deferred media | Legitimate absence | No media plane |
+| Required field malformed (Zod fail) | Configuration error | Log + treat entry as unavailable (404 for detail; omit from lists) |
+
+---
+
+## Draft / Publish & Preview (summary)
+
+- Preserve Strapi draft/publish on all Atlas collections/singletons listed above.  
+- Production queries: published only.  
+- **Basic preview belongs in M8B** (existing `STRAPI_PREVIEW_SECRET` + client `preview` option).  
+- Full preview chrome / editorial workflow polish may continue into M9 if needed — not a reason to block M8B schema/migration.
+
+---
+
+## Scope control (reaffirmed)
+
+Out of M8:
+
+- Dynamic OG platform  
+- Broad browser expansion / observability / unrelated perf  
+- Vehicle Maintenance production media; PA-DOC2–5 media  
+- Unrestricted page builder  
+- Operational application data in Strapi  
+- Arbitrary visual configuration in CMS  
+- Refactors of unrelated Nexus apps  
+
+---
+
+## M8A Definition of Done checklist
+
+- [x] Repository state verified (`atlas-rebuild`, M7 SHA ancestor)  
+- [x] M7 remains COMPLETE; Production Asset Freeze PASS  
+- [x] Existing M8 readiness findings used (Manifest §6 + brief); no broad rediscovery  
+- [x] Shared Strapi capabilities identified  
+- [x] Case Study / Article blocks / Home / About / Media ownership resolved  
+- [x] M7 assets mapped; A-05 remains deferred with no fabricated media  
+- [x] Canonical ownership, TS boundary, queries, migration, draft/publish, failures, tests specified  
+- [x] Exact schema fields specified; file-level M8B plan + sequence written  
+- [x] No production code, Strapi schema, or content migration performed in M8A  
+
+---
+
+### `GO — M8 READY FOR IMPLEMENTATION`
