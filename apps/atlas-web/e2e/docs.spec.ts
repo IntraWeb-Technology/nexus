@@ -105,7 +105,11 @@ test.describe("docs index", () => {
     ).toHaveCount(0);
   });
 
-  test("keyboard shortcut focuses search", async ({ page }) => {
+  test("keyboard shortcut focuses search", async ({ page }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "⌘/Ctrl+K is a desktop keyboard affordance",
+    );
     await page.goto("/docs");
     const modifier = process.platform === "darwin" ? "Meta" : "Control";
     await page.keyboard.press(`${modifier}+k`);
