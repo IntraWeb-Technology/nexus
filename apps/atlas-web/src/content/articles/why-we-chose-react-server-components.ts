@@ -77,6 +77,7 @@ export const whyWeChoseRscArticle: ArticleDetail = {
           "Fig. 1 — Request path for an Atlas article: server composition, tagged cache entries, and the client islands that remain interactive.",
         captionCompact:
           "Fig. 1 — Request path for an Atlas article: server composition, tagged cache entries, and remaining client islands.",
+        composed: "rsc-request-path",
       },
     },
     {

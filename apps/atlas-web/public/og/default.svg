@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#F3F0E9"/>
+  <rect x="64" y="64" width="1072" height="502" fill="none" stroke="#D4CEC2" stroke-width="1.5"/>
+  <text x="96" y="140" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" letter-spacing="0.12em" fill="#5A554C">ATLAS</text>
+  <path d="M96 220 L148 100 L200 220" fill="none" stroke="#1A1814" stroke-width="4" stroke-linecap="square"/>
+  <path d="M118 175 H178" fill="none" stroke="#1A1814" stroke-width="4" stroke-linecap="square"/>
+  <text x="96" y="320" font-family="Georgia, 'Times New Roman', serif" font-size="56" fill="#1A1814">Systems that earn trust</text>
+  <text x="96" y="380" font-family="Inter, system-ui, sans-serif" font-size="22" fill="#5A554C">Platforms and operating systems  not a résumé opener.</text>
+  <text x="96" y="500" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" fill="#8A847A">johnschibelli.dev  ·  Portfolio OS</text>
+</svg>

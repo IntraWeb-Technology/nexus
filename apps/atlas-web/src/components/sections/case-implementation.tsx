@@ -1,4 +1,5 @@
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
+import { ContentMapRenderDiagram } from "@/components/editorial/content-map-render-diagram";
 import { Figure } from "@/components/editorial/figure";
 import type { CaseStudyFixture } from "@/content/case-study";
 
@@ -34,13 +35,15 @@ export function CaseImplementation({ data, figures }: CaseImplementationProps) {
         </p>
       </div>
 
-      {/* Desktop 2-column figure grid */}
       <div className="hidden gap-6 desktop:flex">
         <Figure
           tone={figures.implementationPrimary.tone}
           alt={figures.implementationPrimary.alt}
           caption={figures.implementationPrimary.caption}
-          label={figures.implementationPrimary.label}
+          src={figures.implementationPrimary.src}
+          width={figures.implementationPrimary.width}
+          height={figures.implementationPrimary.height}
+          sizes={figures.implementationPrimary.sizes}
           className="min-w-0 flex-[840]"
           mediaClassName="min-h-[420px] w-full"
         />
@@ -49,35 +52,39 @@ export function CaseImplementation({ data, figures }: CaseImplementationProps) {
             tone={figures.implementationUi.tone}
             alt={figures.implementationUi.alt}
             caption={figures.implementationUi.caption}
-            label={figures.implementationUi.label}
+            src={figures.implementationUi.src}
+            width={figures.implementationUi.width}
+            height={figures.implementationUi.height}
+            sizes={figures.implementationUi.sizes}
             mediaClassName="min-h-[200px] w-full"
           />
-          <Figure
-            tone={figures.implementationWorkflow.tone}
-            alt={figures.implementationWorkflow.alt}
+          <ContentMapRenderDiagram
             caption={figures.implementationWorkflow.caption}
-            label={figures.implementationWorkflow.label}
-            mediaClassName="min-h-[180px] w-full"
+            captionShort={figures.implementationWorkflow.captionShort}
           />
         </div>
       </div>
 
-      {/* Tablet single figure */}
       <Figure
         tone={figures.implementationTablet.tone}
         alt={figures.implementationTablet.alt}
         caption={figures.implementationTablet.caption}
-        label={figures.implementationTablet.label}
+        src={figures.implementationTablet.src}
+        width={figures.implementationTablet.width}
+        height={figures.implementationTablet.height}
+        sizes={figures.implementationTablet.sizes}
         className="mt-3 hidden tablet:block desktop:hidden"
         mediaClassName="min-h-[240px] w-full"
       />
 
-      {/* Mobile single figure */}
       <Figure
         tone={figures.implementationMobile.tone}
         alt={figures.implementationMobile.alt}
         caption={figures.implementationMobile.caption}
-        label={figures.implementationMobile.label}
+        src={figures.implementationMobile.src}
+        width={figures.implementationMobile.width}
+        height={figures.implementationMobile.height}
+        sizes={figures.implementationMobile.sizes}
         className="mt-3 tablet:hidden"
         mediaClassName="min-h-[160px] w-full"
       />

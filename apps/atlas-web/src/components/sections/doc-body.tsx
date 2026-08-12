@@ -1,3 +1,4 @@
+import { AtlasBoundaryDiagram } from "@/components/editorial/atlas-boundary-diagram";
 import { Callout } from "@/components/editorial/callout";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import { CodeBlock } from "@/components/editorial/code-block";
@@ -11,6 +12,33 @@ type DocBodyProps = {
   sections: DocDetail["sections"];
 };
 
+function DocFigure({ section }: { section: DocSection }) {
+  if (!section.figure) return null;
+  const figure = section.figure;
+  if (figure.composed === "atlas-boundaries") {
+    return (
+      <AtlasBoundaryDiagram
+        caption={figure.caption}
+        captionCompact={figure.captionCompact}
+      />
+    );
+  }
+  return (
+    <Figure
+      alt={figure.alt}
+      caption={figure.captionCompact ?? figure.caption}
+      label={figure.labelCompact ?? figure.label}
+      labelAlign="center"
+      src={figure.src}
+      width={figure.width}
+      height={figure.height}
+      sizes={figure.sizes}
+      className="w-full"
+      mediaClassName="min-h-[220px] w-full tablet:min-h-[260px] desktop:h-[360px]"
+    />
+  );
+}
+
 function FigureOnly({ section }: { section: DocSection }) {
   if (!section.figure) return null;
   return (
@@ -20,14 +48,7 @@ function FigureOnly({ section }: { section: DocSection }) {
       className="mx-auto max-w-[var(--atlas-page)]"
     >
       <div className="atlas-pad-x pt-2 pb-10 tablet:pt-1 tablet:pb-8 desktop:pt-2 desktop:pb-10">
-        <Figure
-          alt={section.figure.alt}
-          caption={section.figure.caption}
-          label={section.figure.label}
-          labelAlign="center"
-          className="w-full"
-          mediaClassName="min-h-[220px] w-full tablet:min-h-[260px] desktop:h-[360px]"
-        />
+        <DocFigure section={section} />
       </div>
     </section>
   );
@@ -77,16 +98,7 @@ function SectionBlock({ section }: { section: DocSection }) {
           ))}
         </div>
 
-        {section.figure ? (
-          <Figure
-            alt={section.figure.alt}
-            caption={section.figure.caption}
-            label={section.figure.label}
-            labelAlign="center"
-            className="w-full"
-            mediaClassName="min-h-[220px] w-full tablet:min-h-[260px] desktop:h-[360px]"
-          />
-        ) : null}
+        {section.figure ? <DocFigure section={section} /> : null}
 
         {section.callout ? (
           <Callout
