@@ -106,6 +106,25 @@ export function asBoolean(value: unknown, fallback = false): boolean {
   return fallback;
 }
 
+export function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+export function asJsonArray(value: unknown): unknown[] {
+  if (!Array.isArray(value)) return [];
+  return value;
+}
+
+export function parseEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+): T | null {
+  const raw = asString(value);
+  if (!raw) return null;
+  return (allowed as readonly string[]).includes(raw) ? (raw as T) : null;
+}
+
 export function documentIdOf(entry: FlatEntry): string {
   const id = asString(entry.documentId) ?? (entry.id != null ? String(entry.id) : null);
   if (!id) throw new Error("Entry is missing documentId/id");

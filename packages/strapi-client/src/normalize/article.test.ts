@@ -70,6 +70,49 @@ describe("shapeArticle", () => {
     assert.equal(article.seo?.metaTitle, "SEO title");
     assert.equal(article.hashnodeId, "cuid123");
     assert.equal(article.featured, true);
+    assert.equal(article.surface, "writing");
+    assert.deepEqual(article.headerMeta, []);
+    assert.deepEqual(article.sections, []);
+    assert.equal(article.contactBridge, null);
+  });
+
+  it("normalizes Atlas article fields with sections and surface filter", () => {
+    const raw = {
+      documentId: "art_doc_2",
+      title: "Atlas boundaries",
+      slug: "atlas-boundaries",
+      surface: "documentation",
+      docKind: "guide",
+      readingTime: "8 min",
+      dek: "How Atlas scopes CMS content.",
+      headerChapter: "01",
+      headerMeta: [{ label: "Kind", value: "Guide" }],
+      sections: [
+        {
+          sectionId: "intro",
+          chapter: "01",
+          title: "Introduction",
+          paragraphs: ["First paragraph."],
+          figure: {
+            alt: "Boundary diagram",
+            kind: "architecture-diagram",
+            evidenceClass: "composed",
+            composedKey: "atlas-boundaries",
+          },
+        },
+      ],
+      sites: [{ key: "personal", name: "Personal" }],
+    };
+
+    const article = shapeArticle(raw, "personal");
+    assert.ok(article);
+    assert.equal(article.surface, "documentation");
+    assert.equal(article.docKind, "guide");
+    assert.equal(article.readingTime, "8 min");
+    assert.equal(article.dek, "How Atlas scopes CMS content.");
+    assert.equal(article.headerMeta[0]?.label, "Kind");
+    assert.equal(article.sections[0]?.sectionId, "intro");
+    assert.equal(article.sections[0]?.figure?.composedKey, "atlas-boundaries");
   });
 
   it("supports v4-style attributes wrapper", () => {

@@ -1,5 +1,39 @@
 import { z } from "zod";
 import {
+  aboutApproachSchema,
+  aboutArchitectureSchema,
+  aboutFocusSchema,
+  aboutNotesSchema,
+  aboutOpeningSchema,
+  aboutPhilosophySchema,
+  aboutPrinciplesSchema,
+  aboutReadingSchema,
+  aboutStyleSchema,
+  aboutTimelineSchema,
+  articleSurfaceSchema,
+  caseArchitectureSchema,
+  caseDecisionSchema,
+  caseFigureSlotItemSchema,
+  caseOutcomesSchema,
+  caseOverviewSchema,
+  caseProseSectionSchema,
+  caseRowSectionSchema,
+  caseTocItemSchema,
+  docKindSchema,
+  editorialTypeSchema,
+  homeBridgeSchema,
+  homeFeaturedSchema,
+  homeHeroSchema,
+  homePhilosophySchema,
+  homeSelectedItemSchema,
+  homeWritingItemSchema,
+  projectCardRefSchema,
+  projectLayoutSchema,
+  workFeaturedCopySchema,
+  workIntroSchema,
+  workTaxonomySchema,
+} from "./atlas.js";
+import {
   contactInformationSchema,
   featureSchema,
   linkSchema,
@@ -10,6 +44,7 @@ import {
   statItemSchema,
 } from "./components.js";
 import { mediaAssetSchema } from "./media.js";
+import { publishingMediaSchema, publishingMetaItemSchema, publishingSectionSchema } from "./publishing.js";
 
 // api::site.site (referenced, never fetched directly by this client)
 export const siteRefSchema = z.object({
@@ -165,6 +200,16 @@ export const articleSchema = z.object({
   featured: z.boolean(),
   canonicalUrl: z.string().nullable(),
   hashnodeId: z.string().nullable(),
+  surface: articleSurfaceSchema,
+  editorialType: editorialTypeSchema.nullable(),
+  docKind: docKindSchema.nullable(),
+  readingTime: z.string().nullable(),
+  dek: z.string().nullable(),
+  dekCompact: z.string().nullable(),
+  headerChapter: z.string().nullable(),
+  headerMeta: z.array(publishingMetaItemSchema),
+  sections: z.array(publishingSectionSchema),
+  contactBridge: homeBridgeSchema.nullable(),
 });
 
 // Minimal reference used by CaseStudy.relatedProject (api::project.project, manyToOne)
@@ -198,6 +243,15 @@ export const projectSchema = z.object({
   featured: z.boolean(),
   seo: seoSchema.nullable(),
   publishedAt: z.string().nullable(),
+  category: z.string().nullable(),
+  themes: z.array(z.string()).nullable(),
+  statusLabel: z.string().nullable(),
+  layout: projectLayoutSchema.nullable(),
+  sortOrder: z.number().nullable(),
+  summaryTablet: z.string().nullable(),
+  summaryMobile: z.string().nullable(),
+  ctaLabel: z.string().nullable(),
+  cardMedia: publishingMediaSchema.nullable(),
 });
 
 // api::case-study.case-study (relation: `sites` manyToMany, `relatedProject` manyToOne)
@@ -217,6 +271,100 @@ export const caseStudySchema = z.object({
   gallery: z.array(mediaAssetSchema),
   seo: seoSchema.nullable(),
   publishedAt: z.string().nullable(),
+  role: z.string().nullable(),
+  year: z.string().nullable(),
+  stackLine: z.string().nullable(),
+  deck: z.string().nullable(),
+  deckTablet: z.string().nullable(),
+  deckMobile: z.string().nullable(),
+  heroMeta: z.array(publishingMetaItemSchema),
+  metaLineTablet: z.string().nullable(),
+  metaLineMobileYear: z.string().nullable(),
+  metaLineMobileRole: z.string().nullable(),
+  toc: z.array(caseTocItemSchema).nullable(),
+  overview: caseOverviewSchema.nullable(),
+  problem: caseProseSectionSchema.nullable(),
+  constraints: caseRowSectionSchema.nullable(),
+  architecture: caseArchitectureSchema.nullable(),
+  decisions: z.array(caseDecisionSchema),
+  implementation: caseProseSectionSchema.nullable(),
+  delivery: caseRowSectionSchema.nullable(),
+  outcomes: caseOutcomesSchema.nullable(),
+  lessons: caseRowSectionSchema.nullable(),
+  figureSlots: z.array(caseFigureSlotItemSchema),
+  relatedNote: z.string().nullable(),
+  contactBridge: homeBridgeSchema.nullable(),
+});
+
+// api::home-page.home-page (relation: `site` oneToOne)
+export const homePageSchema = z.object({
+  documentId: z.string(),
+  siteKey: siteKeySchema,
+  seo: seoSchema.nullable(),
+  hero: homeHeroSchema,
+  featured: homeFeaturedSchema,
+  featuredProject: projectRefSchema,
+  selected: z.array(homeSelectedItemSchema),
+  philosophy: homePhilosophySchema,
+  writingChapter: z.string(),
+  writingItems: z.array(homeWritingItemSchema),
+  aboutTeaser: homeBridgeSchema,
+  contactBridge: homeBridgeSchema,
+});
+
+// api::about-page.about-page (relation: `site` oneToOne)
+export const aboutPageSchema = z.object({
+  documentId: z.string(),
+  siteKey: siteKeySchema,
+  seo: seoSchema,
+  opening: aboutOpeningSchema,
+  philosophy: aboutPhilosophySchema,
+  approach: aboutApproachSchema,
+  style: aboutStyleSchema,
+  principles: aboutPrinciplesSchema,
+  timeline: aboutTimelineSchema,
+  focus: aboutFocusSchema,
+  reading: aboutReadingSchema,
+  architecture: aboutArchitectureSchema,
+  notes: aboutNotesSchema,
+  contactBridge: homeBridgeSchema,
+});
+
+// api::work-page.work-page (relation: `site` oneToOne)
+export const workPageSchema = z.object({
+  documentId: z.string(),
+  siteKey: siteKeySchema,
+  seo: seoSchema,
+  intro: workIntroSchema,
+  featuredProject: projectCardRefSchema,
+  featuredCopy: workFeaturedCopySchema,
+  selectedChapter: z.string(),
+  selectedHeadline: z.string(),
+  selectedDeck: z.string(),
+  taxonomy: workTaxonomySchema,
+  contactBridge: homeBridgeSchema,
+});
+
+// api::contact-page.contact-page (relation: `site` oneToOne)
+export const contactPageSchema = z.object({
+  documentId: z.string(),
+  siteKey: siteKeySchema,
+  seo: seoSchema,
+  chapter: z.string(),
+  title: z.string(),
+  body: z.string(),
+  nameLabel: z.string(),
+  namePlaceholder: z.string(),
+  emailLabel: z.string(),
+  emailPlaceholder: z.string(),
+  messageLabel: z.string(),
+  messagePlaceholder: z.string(),
+  submitLabel: z.string(),
+  meta: z.string().nullable(),
+  successTitle: z.string(),
+  successBody: z.string(),
+  failureTitle: z.string(),
+  failureBody: z.string(),
 });
 
 // api::service.service (relation: `site` manyToOne — single site, not multi)

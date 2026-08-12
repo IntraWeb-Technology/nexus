@@ -32,17 +32,27 @@ export {
 export {
   shapeArticle,
   normalizeArticle,
+  shapeProject,
+  shapeCaseStudy,
+  shapeHomePage,
+  shapeAboutPage,
+  shapeWorkPage,
+  shapeContactPage,
 } from "./normalize/index.js";
 
 export type {
+  AboutPage,
   Article,
   Author,
   CaseStudy,
   Category,
   CollectionOptions,
   ContactInformation,
+  ContactPage,
   FaqItem,
   Feature,
+  HomeBridge,
+  HomePage,
   Link,
   ListOptions,
   MediaAsset,
@@ -56,6 +66,9 @@ export type {
   Project,
   ProjectRef,
   PublicationStatus,
+  PublishingMedia,
+  PublishingMetaItem,
+  PublishingSection,
   Redirect,
   RequestOptions,
   Seo,
@@ -69,4 +82,5 @@ export type {
   Tag,
   Technology,
   Testimonial,
+  WorkPage,
 } from "./types.js";

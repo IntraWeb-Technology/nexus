@@ -18,6 +18,12 @@ import {
   type NormalizeContext,
 } from "./normalize/content.js";
 import {
+  shapeAboutPage,
+  shapeContactPage,
+  shapeHomePage,
+  shapeWorkPage,
+} from "./normalize/atlas.js";
+import {
   API_PATHS,
   POPULATE,
   bySlugQuery,
@@ -29,9 +35,12 @@ import {
   sitesFilter,
 } from "./query.js";
 import {
+  aboutPageSchema,
   articleSchema,
   caseStudySchema,
+  contactPageSchema,
   faqItemSchema,
+  homePageSchema,
   navigationSchema,
   pageSchema,
   projectSchema,
@@ -39,20 +48,26 @@ import {
   serviceSchema,
   siteSettingsSchema,
   testimonialSchema,
+  workPageSchema,
 } from "./schemas/domain.js";
 import { strapiListResponseSchema } from "./schemas/common.js";
 import type {
+  AboutPage,
   Article,
   CaseStudy,
   CollectionOptions,
+  ContactPage,
   FaqItem,
+  HomePage,
   ListOptions,
   Paginated,
   Project,
   RequestOptions,
   Service,
+  SiteKey,
   StrapiClient,
   Testimonial,
+  WorkPage,
 } from "./types.js";
 
 function validate<Schema extends z.ZodTypeAny>(
@@ -249,6 +264,70 @@ export function createStrapiClient(options: CreateStrapiClientOptions): StrapiCl
     return validate(redirectSchema, candidate, path);
   };
 
+  const getSingletonBySite = async <Schema extends z.ZodTypeAny>(
+    apiPath: (typeof API_PATHS)[keyof typeof API_PATHS],
+    populate: unknown,
+    schema: Schema,
+    shaper: (
+      raw: unknown,
+      siteKey: SiteKey,
+      ctx: NormalizeContext,
+    ) => z.input<Schema> | null,
+    siteKey: SiteKey,
+    requestOptions?: RequestOptions,
+  ): Promise<z.infer<Schema> | null> => {
+    const query = buildQueryString({
+      filters: siteFilter(siteKey),
+      populate,
+      pagination: { page: 1, pageSize: 1 },
+      status: requestOptions?.preview ? "draft" : "published",
+    });
+    const { data } = await fetchEnvelope(config, apiPath, query, requestOptions);
+    const candidate = shaper(data[0], siteKey, ctx);
+    if (!candidate) return null;
+    return validate(schema, candidate, apiPath);
+  };
+
+  const getHomePage: StrapiClient["getHomePage"] = async (siteKey, requestOptions) =>
+    getSingletonBySite(
+      API_PATHS.homePages,
+      POPULATE.homePage,
+      homePageSchema,
+      shapeHomePage,
+      siteKey,
+      requestOptions,
+    );
+
+  const getAboutPage: StrapiClient["getAboutPage"] = async (siteKey, requestOptions) =>
+    getSingletonBySite(
+      API_PATHS.aboutPages,
+      POPULATE.aboutPage,
+      aboutPageSchema,
+      shapeAboutPage,
+      siteKey,
+      requestOptions,
+    );
+
+  const getWorkPage: StrapiClient["getWorkPage"] = async (siteKey, requestOptions) =>
+    getSingletonBySite(
+      API_PATHS.workPages,
+      POPULATE.workPage,
+      workPageSchema,
+      shapeWorkPage,
+      siteKey,
+      requestOptions,
+    );
+
+  const getContactPage: StrapiClient["getContactPage"] = async (siteKey, requestOptions) =>
+    getSingletonBySite(
+      API_PATHS.contactPages,
+      POPULATE.contactPage,
+      contactPageSchema,
+      shapeContactPage,
+      siteKey,
+      requestOptions,
+    );
+
   return {
     verifyPreviewSecret: (secret) => verifyPreviewSecretImpl(config, secret),
     getSiteSettings,
@@ -264,5 +343,9 @@ export function createStrapiClient(options: CreateStrapiClientOptions): StrapiCl
     getTestimonials,
     getFaqItems,
     getRedirect,
+    getHomePage,
+    getAboutPage,
+    getWorkPage,
+    getContactPage,
   } satisfies StrapiClient;
 }
