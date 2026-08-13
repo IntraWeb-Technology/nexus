@@ -82,11 +82,13 @@ export default function RootLayout({
         <SiteNavActive
           brand={siteChrome.brand}
           links={siteChrome.navLinks}
+          socialLinks={siteChrome.socialLinks}
         />
         {children}
         <SiteFooter
           links={siteChrome.footerLinks}
-          mark={siteChrome.mark}
+          copyright={siteChrome.copyright}
+          socialLinks={siteChrome.socialLinks}
         />
       </body>
     </html>
