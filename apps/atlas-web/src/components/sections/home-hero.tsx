@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { AppLink } from "@/components/chrome/app-link";
+import { AtlasPrimaryButton } from "@/components/editorial/atlas-button";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import type { HomepageFixture } from "@/content/homepage";
 
@@ -46,16 +47,13 @@ export function HomeHero({ data }: HomeHeroProps) {
         <p className="m-0 max-w-[29rem] font-sans text-sm leading-relaxed text-atlas-body">
           {data.deck}
         </p>
-        <div className="flex flex-wrap items-center gap-5 pt-2">
-          <AppLink
-            href={data.primaryCta.href}
-            className="font-sans text-xs font-medium text-atlas-ink no-underline"
-          >
+        <div className="flex flex-col items-start gap-2.5 pt-2">
+          <AtlasPrimaryButton href={data.primaryCta.href}>
             {data.primaryCta.label}
-          </AppLink>
+          </AtlasPrimaryButton>
           <AppLink
             href={data.secondaryCta.href}
-            className="font-sans text-xs text-atlas-body no-underline"
+            className="inline-flex items-center justify-center rounded-[3px] border border-[#cfc7ba] px-[18px] py-3 text-center font-sans text-xs font-normal text-atlas-ink no-underline"
           >
             {data.secondaryCta.label}
           </AppLink>

@@ -33,7 +33,7 @@ export function ArticleRelated({ data }: ArticleRelatedProps) {
                   <p className="m-0 font-display text-lg leading-6 font-semibold text-atlas-ink">
                     {item.title}
                   </p>
-                  <p className="m-0 font-mono text-[11px] text-atlas-body whitespace-pre">
+                  <p className="m-0 font-mono text-[11px] text-atlas-sage whitespace-pre">
                     {item.topic}
                     {"  ·  "}
                     {item.readingTime}
@@ -52,7 +52,7 @@ export function ArticleRelated({ data }: ArticleRelatedProps) {
                 <p className="m-0 font-display text-base leading-[22px] font-semibold text-atlas-ink tablet:text-lg tablet:leading-[22px]">
                   {item.title}
                 </p>
-                <p className="m-0 font-mono text-[11px] text-atlas-body">
+                <p className="m-0 font-mono text-[11px] text-atlas-sage">
                   {item.topic} · {item.readingTime} · Read →
                 </p>
               </Link>

@@ -3,7 +3,10 @@
  * Exercises table, callout, evidence block, code, and terminal under realistic prose.
  */
 
-import type { ArticleDetail } from "@/content/article";
+import {
+  ATLAS_DEFAULT_AUTHOR,
+  type ArticleDetail,
+} from "@/content/article";
 import {
   articleSummaries,
   toNavLink,
@@ -39,11 +42,11 @@ export const playwrightAtScaleArticle: ArticleDetail = {
     title: self.title,
     dek: self.excerpt,
     dekCompact: self.excerptCompact,
+    author: ATLAS_DEFAULT_AUTHOR,
     meta: [
       { label: "DATE", value: self.publishedDate },
       { label: "TOPIC", value: self.topic },
       { label: "READING", value: self.readingTime },
-      { label: "STATUS", value: "Published" },
     ],
   },
   toc: [

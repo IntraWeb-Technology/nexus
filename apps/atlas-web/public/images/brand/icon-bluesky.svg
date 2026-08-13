@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon / Bluesky">
+<rect x="0.5" y="0.5" width="27" height="27" rx="13.5" stroke="#BFB7AA"/>
+<ellipse id="Wing left" cx="8.08952" cy="14.1283" rx="4" ry="6" transform="rotate(25 8.08952 14.1283)" fill="#252A26"/>
+<ellipse id="Wing right" cx="19.1609" cy="10.7474" rx="4" ry="6" transform="rotate(-25 19.1609 10.7474)" fill="#252A26"/>
+</g>
+</svg>
