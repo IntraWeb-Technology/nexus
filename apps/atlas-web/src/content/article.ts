@@ -19,6 +19,22 @@ export type ArticleType = "Essay" | "Decision" | "Note";
 
 export type ArticleStatus = "Published" | "Draft";
 
+/** Author lockup — map from Strapi `author` when present. */
+export type ArticleAuthor = {
+  name: string;
+  portraitSrc: string;
+  portraitAlt: string;
+};
+
+/** Featured / hero media for index and detail compositions. */
+export type ArticleFeaturedMedia = {
+  src: string;
+  alt: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+};
+
 /** Index / list card — mirrors Strapi article collection fields used on `/articles`. */
 export type ArticleSummary = {
   id: string;
@@ -133,6 +149,15 @@ export type ArticleNavLink = {
   href: string;
 };
 
+export type ArticlesPagination = {
+  label: string;
+  currentPage: number;
+  totalPages: number;
+  pages: number[];
+  newerHref: string | null;
+  olderHref: string | null;
+};
+
 export type ArticleDetail = {
   site: { key: "personal"; name: string };
   seo: {
@@ -159,7 +184,9 @@ export type ArticleDetail = {
     title: string;
     dek: string;
     dekCompact?: string;
+    author: ArticleAuthor;
     meta: MetaItem[];
+    featuredImage?: ArticleFeaturedMedia;
   };
   toc: ArticleTocItem[];
   sections: ArticleSection[];
@@ -201,18 +228,28 @@ export type ArticlesIndexFixture = {
   featured: {
     chapter: string;
     article: ArticleSummary;
-    ctaLabel: string;
+    author: ArticleAuthor;
+    image: ArticleFeaturedMedia;
   };
   list: {
     chapter: string;
     headline: string;
     articles: ArticleSummary[];
   };
+  pagination: ArticlesPagination;
   cue: {
     chapter: string;
     title: string;
     body: string;
     bodyCompact: string;
-    links: NavLink[];
+    cta: NavLink;
+    workLink: NavLink;
   };
+};
+
+/** Default publishing identity when CMS author is absent. */
+export const ATLAS_DEFAULT_AUTHOR: ArticleAuthor = {
+  name: "John Schibelli",
+  portraitSrc: "/images/brand/john-schibelli-portrait.png",
+  portraitAlt: "Portrait of John Schibelli",
 };

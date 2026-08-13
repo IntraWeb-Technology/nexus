@@ -1,7 +1,64 @@
 import Link from "next/link";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import type { ArticleSummary, ArticlesIndexFixture } from "@/content/article";
-import { summaryMetaCompact } from "@/content/articles/summaries";
+import { archiveMetaLine } from "@/content/articles/summaries";
+
+type EvidenceThumbProps = {
+  topic: ArticleSummary["topic"];
+};
+
+/**
+ * Decorative geometric evidence placeholder keyed by topic — not stock photos.
+ */
+function EvidenceThumb({ topic }: EvidenceThumbProps) {
+  return (
+    <div
+      aria-hidden="true"
+      className="relative h-[70px] w-[112px] shrink-0 overflow-hidden rounded-[4px] border border-atlas-border bg-atlas-secondary"
+    >
+      {topic === "Testing" ? (
+        <div className="absolute inset-0 flex flex-col justify-center gap-2 px-2.5">
+          <span className="block h-0.5 w-full bg-atlas-sage" />
+          <span className="block h-0.5 w-full bg-atlas-border" />
+          <span className="block h-0.5 w-full bg-atlas-sage" />
+          <span className="block h-0.5 w-full bg-atlas-border" />
+          <span className="block h-0.5 w-full bg-atlas-sage" />
+        </div>
+      ) : null}
+      {topic === "Architecture" ? (
+        <>
+          <span className="absolute top-[15px] left-[11px] h-3.5 w-[22px] rounded-[2px] border border-atlas-umber bg-atlas-paper" />
+          <span className="absolute top-[33px] left-[45px] h-3.5 w-[22px] rounded-[2px] border border-atlas-umber bg-atlas-paper" />
+          <span className="absolute top-[15px] left-[79px] h-3.5 w-[22px] rounded-[2px] border border-atlas-umber bg-atlas-paper" />
+          <span className="absolute top-[27px] left-[33px] h-px w-[70px] bg-atlas-umber" />
+        </>
+      ) : null}
+      {topic === "Platform" ? (
+        <div className="absolute inset-0 flex items-center justify-center gap-2.5 px-2.5">
+          <span className="h-[46px] w-[22px] border border-atlas-border bg-atlas-paper" />
+          <span className="h-[46px] w-[22px] border border-atlas-border bg-[#949e8a]" />
+          <span className="h-[46px] w-[22px] border border-atlas-border bg-atlas-paper" />
+        </div>
+      ) : null}
+      {topic === "Tooling" ? (
+        <>
+          <span className="absolute top-[17px] left-[9px] h-2 w-5 border border-atlas-border bg-atlas-paper" />
+          <span className="absolute top-[35px] left-[37px] h-2 w-5 border border-atlas-border bg-atlas-paper" />
+          <span className="absolute top-[17px] left-[65px] h-2 w-5 border border-atlas-border bg-[#7d7363]" />
+          <span className="absolute top-[35px] left-[93px] h-2 w-5 border border-atlas-border bg-atlas-paper" />
+        </>
+      ) : null}
+      {topic === "Delivery" ? (
+        <div className="absolute inset-0 flex flex-col justify-center gap-1.5 px-2.5">
+          <span className="block h-[5px] w-[40%] bg-atlas-border" />
+          <span className="block h-[5px] w-[52%] bg-atlas-border" />
+          <span className="block h-[5px] w-[62%] bg-atlas-border" />
+          <span className="block h-[5px] w-[74%] bg-atlas-sage" />
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 type ArticlesListRowProps = {
   article: ArticleSummary;
@@ -10,50 +67,22 @@ type ArticlesListRowProps = {
 export function ArticlesListRow({ article }: ArticlesListRowProps) {
   return (
     <li className="border-t border-atlas-border">
-      {/* Desktop: date | title+excerpt | meta */}
       <Link
         href={article.href}
-        className="hidden items-start gap-6 py-5 no-underline desktop:flex"
+        className="flex items-start gap-4 py-5 no-underline tablet:gap-6 desktop:gap-8"
       >
-        <time
-          dateTime={article.publishedDate}
-          className="w-24 shrink-0 font-mono text-xs text-atlas-body"
-        >
-          {article.publishedDate}
-        </time>
+        <EvidenceThumb topic={article.topic} />
         <div className="min-w-0 flex-1 space-y-1.5">
-          <p className="m-0 font-display text-xl leading-[26px] font-semibold text-atlas-ink">
+          <p className="m-0 font-display text-lg leading-6 font-semibold text-atlas-ink tablet:text-[1.375rem] tablet:leading-[31px] desktop:text-[1.4375rem]">
             {article.title}
           </p>
-          <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body">
-            {article.excerpt}
+          <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body tablet:text-sm tablet:leading-[19px]">
+            {article.excerptCompact ?? article.excerpt}
+          </p>
+          <p className="m-0 font-sans text-xs leading-4 text-atlas-sage whitespace-pre">
+            {archiveMetaLine(article)}
           </p>
         </div>
-        <p className="m-0 shrink-0 font-mono text-[11px] text-atlas-body whitespace-pre">
-          {summaryMetaCompact(article)}
-        </p>
-      </Link>
-
-      {/* Tablet + mobile: stacked */}
-      <Link
-        href={article.href}
-        className="block space-y-2 py-[18px] no-underline desktop:hidden"
-      >
-        <time
-          dateTime={article.publishedDate}
-          className="font-mono text-[11px] text-atlas-body"
-        >
-          {article.publishedDate}
-        </time>
-        <p className="m-0 font-display text-lg leading-6 font-semibold text-atlas-ink tablet:text-xl tablet:leading-6">
-          {article.title}
-        </p>
-        <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body">
-          {article.excerptCompact ?? article.excerpt}
-        </p>
-        <p className="m-0 font-mono text-[11px] text-atlas-body">
-          {summaryMetaCompact(article)}
-        </p>
       </Link>
     </li>
   );
@@ -69,12 +98,12 @@ export function ArticlesList({ data }: ArticlesListProps) {
       aria-labelledby="articles-list-title"
       className="mx-auto max-w-[var(--atlas-page)]"
     >
-      <div className="atlas-pad-x pt-2 pb-12 tablet:pb-10 desktop:pb-12">
-        <div className="mb-4 space-y-2 tablet:mb-4 desktop:mb-4">
+      <div className="atlas-pad-x pt-8 pb-6 tablet:pt-9 tablet:pb-6 desktop:pt-10 desktop:pb-6">
+        <div className="mb-4 space-y-2">
           <ChapterMarker>{data.chapter}</ChapterMarker>
           <h2
             id="articles-list-title"
-            className="m-0 font-display text-[1.375rem] leading-7 font-semibold text-atlas-ink tablet:text-2xl tablet:leading-7 desktop:text-2xl desktop:leading-[30px]"
+            className="m-0 font-display text-[1.375rem] leading-7 font-semibold text-atlas-ink tablet:text-2xl tablet:leading-7 desktop:text-[1.75rem] desktop:leading-[38px]"
           >
             {data.headline}
           </h2>
@@ -85,8 +114,6 @@ export function ArticlesList({ data }: ArticlesListProps) {
             <ArticlesListRow key={article.id} article={article} />
           ))}
         </ul>
-
-        <hr className="atlas-hairline" />
       </div>
     </section>
   );

@@ -3,7 +3,10 @@
  * Distinct from Documentation. No live CMS this milestone.
  */
 
-import type { ArticlesIndexFixture } from "@/content/article";
+import {
+  ATLAS_DEFAULT_AUTHOR,
+  type ArticlesIndexFixture,
+} from "@/content/article";
 import { articleSummaries } from "@/content/articles/summaries";
 
 const featured = articleSummaries.find((a) => a.featured)!;
@@ -37,12 +40,26 @@ export const articlesIndexFixture: ArticlesIndexFixture = {
   featured: {
     chapter: "FEATURED",
     article: featured,
-    ctaLabel: "Read article →",
+    author: ATLAS_DEFAULT_AUTHOR,
+    image: {
+      src: "/images/articles/featured-rsc.png",
+      alt: "Network infrastructure cables — featured article atmosphere",
+      width: 1420,
+      height: 840,
+    },
   },
   list: {
     chapter: "ALL ARTICLES",
     headline: "Newest first.",
     articles: listArticles,
+  },
+  pagination: {
+    label: "ARCHIVE PAGES",
+    currentPage: 1,
+    totalPages: 3,
+    pages: [1, 2, 3],
+    newerHref: null,
+    olderHref: "?page=2",
   },
   cue: {
     chapter: "CONTINUE",
@@ -50,9 +67,7 @@ export const articlesIndexFixture: ArticlesIndexFixture = {
     body: "For qualified questions about systems, delivery, or Atlas itself — use Contact. Documentation remains the handbook for procedures and ADRs.",
     bodyCompact:
       "For qualified questions — use Contact. Documentation remains the handbook.",
-    links: [
-      { label: "Contact →", href: "/contact" },
-      { label: "Work →", href: "/work" },
-    ],
+    cta: { label: "Start a conversation", href: "/contact" },
+    workLink: { label: "or browse Work →", href: "/work" },
   },
 };

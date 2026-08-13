@@ -3,7 +3,10 @@
  * Proves concise writing without empty stubs or over-designed chrome.
  */
 
-import type { ArticleDetail } from "@/content/article";
+import {
+  ATLAS_DEFAULT_AUTHOR,
+  type ArticleDetail,
+} from "@/content/article";
 import {
   articleSummaries,
   toNavLink,
@@ -40,11 +43,11 @@ export const aiAssistedWorkflowsArticle: ArticleDetail = {
     chapter: "ARTICLE",
     title: self.title,
     dek: self.excerpt,
+    author: ATLAS_DEFAULT_AUTHOR,
     meta: [
       { label: "DATE", value: self.publishedDate },
       { label: "TOPIC", value: self.topic },
       { label: "READING", value: self.readingTime },
-      { label: "STATUS", value: "Published" },
     ],
   },
   toc: [

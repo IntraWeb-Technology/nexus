@@ -2,7 +2,10 @@
  * Featured article fixture — proves editorial publishing primitives for M5/M6.
  */
 
-import type { ArticleDetail } from "@/content/article";
+import {
+  ATLAS_DEFAULT_AUTHOR,
+  type ArticleDetail,
+} from "@/content/article";
 import {
   articleSummaries,
   toNavLink,
@@ -37,12 +40,20 @@ export const whyWeChoseRscArticle: ArticleDetail = {
     chapter: "ARTICLE",
     title: self.title,
     dek: self.excerpt,
+    author: ATLAS_DEFAULT_AUTHOR,
     meta: [
       { label: "DATE", value: self.publishedDate },
       { label: "TOPIC", value: self.topic },
       { label: "READING", value: self.readingTime },
-      { label: "STATUS", value: "Published" },
     ],
+    featuredImage: {
+      src: "/images/articles/featured-rsc.png",
+      alt: "Network infrastructure cables — featured article atmosphere",
+      caption:
+        "Featured image · Network infrastructure sets the atmosphere; diagrams stay in the article body.",
+      width: 1420,
+      height: 840,
+    },
   },
   toc: [
     { id: "context", label: "01 Context", href: "#context" },

@@ -4,7 +4,11 @@
  * Remaining chronological notes stay readable via this shell.
  */
 
-import type { ArticleDetail, ArticleSummary } from "@/content/article";
+import {
+  ATLAS_DEFAULT_AUTHOR,
+  type ArticleDetail,
+  type ArticleSummary,
+} from "@/content/article";
 import {
   articleSummaries,
   toNavLink,
@@ -71,11 +75,11 @@ export function buildArticleDetail(
       title: summary.title,
       dek: summary.excerpt,
       dekCompact: summary.excerptCompact,
+      author: ATLAS_DEFAULT_AUTHOR,
       meta: [
         { label: "DATE", value: summary.publishedDate },
         { label: "TOPIC", value: summary.topic },
         { label: "READING", value: summary.readingTime },
-        { label: "STATUS", value: "Published" },
       ],
     },
     toc: [
