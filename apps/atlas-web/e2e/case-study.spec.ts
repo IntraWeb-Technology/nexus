@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { expectCurrentNavLink } from "./helpers/nav";
 
 test.describe("case study — Portfolio OS", () => {
   test("renders primary landmarks and required sections", async ({ page }) => {
@@ -30,13 +31,9 @@ test.describe("case study — Portfolio OS", () => {
     }
   });
 
-  test("marks Work as the current nav item", async ({ page }) => {
+  test("marks Work as the current nav item", async ({ page }, testInfo) => {
     await page.goto("/work/portfolio-os");
-    await expect(
-      page
-        .getByRole("navigation", { name: "Primary" })
-        .getByRole("link", { name: "Work" }),
-    ).toHaveAttribute("aria-current", "page");
+    await expectCurrentNavLink(page, "Work", testInfo.project.name);
   });
 
   test("navigates from work index to case study", async ({ page }) => {
@@ -102,5 +99,17 @@ test.describe("case study — Portfolio OS", () => {
         maxDiffPixelRatio: 0.02,
       },
     );
+  });
+
+  test("visual regression — mobile menu open", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Mobile hamburger only");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/work/portfolio-os");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page).toHaveScreenshot("case-study-mobile-menu-open.png", {
+      fullPage: false,
+      maxDiffPixelRatio: 0.02,
+    });
   });
 });

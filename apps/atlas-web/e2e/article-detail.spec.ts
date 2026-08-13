@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { expectCurrentNavLink } from "./helpers/nav";
 
 const FEATURED = "/articles/why-we-chose-react-server-components";
 const STRUCTURED = "/articles/playwright-at-scale";
@@ -46,16 +47,14 @@ test.describe("article detail — Why We Chose React Server Components", () => {
     ).toBeVisible();
   });
 
-  test("marks Articles as the current nav item", async ({ page }) => {
+  test("marks Articles as the current nav item", async ({ page }, testInfo) => {
     await page.goto(FEATURED);
-    await expect(
-      page
-        .getByRole("navigation", { name: "Primary" })
-        .getByRole("link", { name: "Articles" }),
-    ).toHaveAttribute("aria-current", "page");
+    await expectCurrentNavLink(page, "Articles", testInfo.project.name);
   });
 
-  test("shows DATE / TOPIC / READING / STATUS metadata", async ({ page }) => {
+  test("shows DATE / TOPIC / READING metadata without Status", async ({
+    page,
+  }) => {
     await page.goto(FEATURED);
     const header = page.locator("header").filter({
       has: page.getByRole("heading", { level: 1 }),
@@ -63,11 +62,45 @@ test.describe("article detail — Why We Chose React Server Components", () => {
     await expect(header.getByText("DATE")).toBeVisible();
     await expect(header.getByText("TOPIC")).toBeVisible();
     await expect(header.getByText("READING")).toBeVisible();
-    await expect(header.getByText("STATUS")).toBeVisible();
+    await expect(header.getByText("STATUS")).toHaveCount(0);
     await expect(header.getByText("2025-04-02")).toBeVisible();
     await expect(header.getByText("Architecture")).toBeVisible();
     await expect(header.getByText("14 min")).toBeVisible();
-    await expect(header.getByText("Published")).toBeVisible();
+    await expect(header.getByText("Published")).toHaveCount(0);
+    await expect(header.getByText("John Schibelli")).toBeVisible();
+  });
+
+  test("mobile prev/next are separate full-width card targets", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(FEATURED);
+    const adjacent = page.getByRole("navigation", {
+      name: "Adjacent articles",
+    });
+    const cards = adjacent.locator("a");
+    await expect(cards).toHaveCount(2);
+    for (const card of await cards.all()) {
+      const box = await card.boundingBox();
+      expect(box).toBeTruthy();
+      expect(box!.width).toBeGreaterThan(280);
+    }
+  });
+
+  test("contact bridge links to Contact and Work without social", async ({
+    page,
+  }) => {
+    await page.goto(FEATURED);
+    const contact = page.locator("#contact");
+    await expect(
+      contact.getByRole("link", { name: "Start a conversation" }),
+    ).toHaveAttribute("href", "/contact");
+    await expect(
+      contact.getByRole("link", { name: /browse Work/i }),
+    ).toHaveAttribute("href", "/work");
+    await expect(
+      contact.getByRole("link", { name: /LinkedIn|Facebook|Bluesky|Upwork/i }),
+    ).toHaveCount(0);
   });
 
   test("TOC anchors scroll to sections", async ({ page }) => {
@@ -106,16 +139,6 @@ test.describe("article detail — Why We Chose React Server Components", () => {
     await expect(page).toHaveURL(/\/articles\/lessons-from-building-atlas$/);
   });
 
-  test("contact bridge links to Contact and Work", async ({ page }) => {
-    await page.goto(FEATURED);
-    await expect(
-      page.getByRole("link", { name: "Start a conversation" }),
-    ).toHaveAttribute("href", "/contact");
-    await expect(
-      page.getByRole("link", { name: /browse Work/i }),
-    ).toHaveAttribute("href", "/work");
-  });
-
   test("unknown slug returns 404", async ({ page }) => {
     const response = await page.goto("/articles/does-not-exist");
     expect(response?.status()).toBe(404);
@@ -143,6 +166,18 @@ test.describe("article detail — Why We Chose React Server Components", () => {
         maxDiffPixelRatio: 0.02,
       },
     );
+  });
+
+  test("visual regression — mobile menu open", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Mobile hamburger only");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(FEATURED);
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page).toHaveScreenshot("article-detail-mobile-menu-open.png", {
+      fullPage: false,
+      maxDiffPixelRatio: 0.02,
+    });
   });
 });
 

@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { expectCurrentNavLink } from "./helpers/nav";
 
 test.describe("contact", () => {
   test("renders primary landmarks and form fields", async ({ page }) => {
@@ -22,13 +23,9 @@ test.describe("contact", () => {
     await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
   });
 
-  test("marks Contact as the current nav item", async ({ page }) => {
+  test("marks Contact as the current nav item", async ({ page }, testInfo) => {
     await page.goto("/contact");
-    await expect(
-      page
-        .getByRole("navigation", { name: "Primary" })
-        .getByRole("link", { name: "Contact" }),
-    ).toHaveAttribute("aria-current", "page");
+    await expectCurrentNavLink(page, "Contact", testInfo.project.name);
   });
 
   test("skip link moves focus to main", async ({ page }) => {
@@ -131,6 +128,18 @@ test.describe("contact", () => {
     await page.waitForLoadState("networkidle");
     await expect(page).toHaveScreenshot(`contact-${testInfo.project.name}.png`, {
       fullPage: true,
+      maxDiffPixelRatio: 0.02,
+    });
+  });
+
+  test("visual regression — mobile menu open", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Mobile hamburger only");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/contact");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page).toHaveScreenshot("contact-mobile-menu-open.png", {
+      fullPage: false,
       maxDiffPixelRatio: 0.02,
     });
   });
