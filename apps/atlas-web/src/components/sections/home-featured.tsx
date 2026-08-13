@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AtlasPrimaryButton } from "@/components/editorial/atlas-button";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import { Figure } from "@/components/editorial/figure";
 import type { HomepageFixture } from "@/content/homepage";
@@ -66,12 +66,9 @@ export function HomeFeatured({ data }: HomeFeaturedProps) {
       </div>
 
       <div className="atlas-pad-x pt-2 pb-10">
-        <Link
-          href={data.cta.href}
-          className="font-sans text-xs font-medium text-atlas-ink no-underline"
-        >
+        <AtlasPrimaryButton href={data.cta.href}>
           {data.cta.label}
-        </Link>
+        </AtlasPrimaryButton>
       </div>
     </section>
   );
