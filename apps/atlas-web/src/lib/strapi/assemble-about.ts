@@ -87,6 +87,7 @@ export function assembleAbout(about: AboutPage): AboutFixture {
       body: bridge.body ?? "",
       bodyCondensed: bridge.bodyCompact ?? bridge.body ?? "",
       cta: bridge.cta ?? { label: "Start a conversation", href: "/contact" },
+      secondaryCta: { label: "Browse Work →", href: "/work" },
       meta: bridge.meta ?? "",
     },
   };

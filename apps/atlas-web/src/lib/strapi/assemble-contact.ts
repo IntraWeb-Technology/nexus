@@ -1,5 +1,6 @@
 import type { ContactPage } from "@repo/strapi-client";
 import type { ContactFixture } from "@/content/contact";
+import { contactFixture } from "@/content/contact";
 
 /** CMS ContactPage → ContactFixture domain model. */
 export function assembleContact(contact: ContactPage): ContactFixture {
@@ -17,6 +18,8 @@ export function assembleContact(contact: ContactPage): ContactFixture {
         label: contact.emailLabel,
         placeholder: contact.emailPlaceholder,
       },
+      // Context field not yet in Strapi ContactPage — preserve approved fixture copy.
+      context: contactFixture.fields.context,
       message: {
         label: contact.messageLabel,
         placeholder: contact.messagePlaceholder,
@@ -24,6 +27,7 @@ export function assembleContact(contact: ContactPage): ContactFixture {
     },
     submitLabel: contact.submitLabel,
     meta: contact.meta ?? "",
+    panels: contactFixture.panels,
     success: {
       title: contact.successTitle,
       body: contact.successBody,

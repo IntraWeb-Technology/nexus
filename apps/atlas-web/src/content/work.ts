@@ -296,6 +296,6 @@ export const workFixture: WorkFixture = {
     body: "Expectation-setting placeholder. Qualified conversation.",
     bodyMobile: "Qualified conversation.",
     cta: { label: "Start a conversation", href: "/contact" },
-    meta: "email · form · calendar (TBD)",
+    meta: "email · form · calendar",
   },
 };

@@ -1,8 +1,6 @@
 /**
- * About fixture — mirrors planned Strapi about-page / site-setting fields.
- * No live CMS this sprint. UI consumes this shape only (no DTOs).
- *
- * Copy matches Figma About (Page 20) desktop / tablet / mobile compositions.
+ * About fixture — Approved — About (Figma production).
+ * Shape kept compatible with assemble-about / Strapi AboutPage.
  */
 
 import type { NavLink } from "@/content/types";
@@ -83,6 +81,7 @@ export type AboutFixture = {
     body: string;
     bodyCondensed: string;
     cta: NavLink;
+    secondaryCta?: NavLink;
     meta: string;
   };
 };
@@ -91,43 +90,44 @@ export const aboutFixture: AboutFixture = {
   seo: {
     title: "About",
     description:
-      "An engineer’s editorial profile — practice, principles, and how systems stay inspectable.",
+      "John Schibelli — senior software engineer working across product development, architecture, testing, and automation.",
   },
   opening: {
     chapter: "ABOUT",
-    title: "An engineer’s editorial profile.",
-    deck: "Placeholder — a short statement of practice: how systems are designed, how decisions are recorded, and how delivery stays inspectable.",
-    deckCondensed:
-      "Placeholder — how systems are designed, decisions recorded, delivery kept inspectable.",
-    meta: "Role  ·  Lead Engineer (placeholder)    ·    Focus  ·  Product systems & platform architecture",
-    metaCondensed: "Lead Engineer · Product systems (placeholder)",
+    title:
+      "I’m a senior software engineer working across product development, architecture, testing, and automation.",
+    deck: "John Schibelli",
+    deckCondensed: "John Schibelli",
+    meta: "John Schibelli",
+    metaCondensed: "Senior Software Engineer · IntraWeb Technologies",
     marginNote: {
-      label: "MARGIN NOTE",
-      body: "Placeholder — authenticity note. Personal context that frames the engineering voice without résumé language.",
+      label: "ROLE",
+      body: "Senior Software Engineer · IntraWeb Technologies",
     },
   },
   philosophy: {
     chapter: "ENGINEERING PHILOSOPHY",
     quote:
-      "“Systems should remain legible under pressure — architecture, delivery, and documentation as one continuous record.”",
-    quoteCondensed: "“Systems should remain legible under pressure.”",
-    attribution: "— Placeholder principle statement",
-    body: "Placeholder body — expand on how clarity, constraints, and inspectability guide day-to-day engineering judgment. Prefer evidence over narrative polish.",
+      "Good systems reduce ambiguity: the next correct action should be visible, testable, and documented.",
+    quoteCondensed:
+      "Good systems reduce ambiguity: the next correct action should be visible, testable, and documented.",
+    attribution: "— Practice",
+    body: "Architecture, delivery, and documentation stay close enough that another engineer can maintain, question, or revise the decision.",
   },
   approach: {
     chapter: "HOW PROBLEMS ARE APPROACHED",
     chapterCondensed: "APPROACH",
-    title: "Observe → Bound → Decide → Prove.",
-    body: "Placeholder — describe the working method: surface constraints early, keep options reversible where cost allows, and leave a trail that another engineer can audit.",
+    title: "Boundaries before features.",
+    body: "Define system boundaries and ownership before expanding features. Treat testing, CI, and review artifacts as part of implementation.",
     bodyCondensed:
-      "Placeholder — surface constraints early; leave an audit trail.",
+      "Define boundaries before expanding features. Treat tests and CI as part of delivery.",
     stages: [
-      { id: "01", label: "Observe" },
-      { id: "02", label: "Bound" },
-      { id: "03", label: "Decide" },
-      { id: "04", label: "Prove" },
+      { id: "01", label: "Bound" },
+      { id: "02", label: "Decide" },
+      { id: "03", label: "Prove" },
+      { id: "04", label: "Document" },
     ],
-    figureCaption: "Fig. 1 — Problem approach loop. Observe → Bound → Decide → Prove.",
+    figureCaption: "Working method — bound, decide, prove, document.",
   },
   style: {
     chapter: "WORKING STYLE",
@@ -135,130 +135,125 @@ export const aboutFixture: AboutFixture = {
     items: [
       {
         title: "Async-first",
-        body: "Placeholder — prefer written briefs, clear owners, and reviewable diffs over status theater.",
+        body: "Prefer written briefs, clear owners, and reviewable diffs over status theater.",
       },
       {
         title: "Evidence-led",
-        body: "Placeholder — demos, logs, diagrams, and ADRs carry more weight than slide narrative.",
+        body: "Demos, logs, diagrams, and ADRs carry more weight than slide narrative.",
       },
       {
         title: "Boundary-aware",
-        body: "Placeholder — protect site and service boundaries; make coupling intentional and named.",
+        body: "Protect site and service boundaries; make coupling intentional and named.",
       },
     ],
   },
   principles: {
-    chapter: "PRINCIPLES",
-    title: "Non-negotiables for how work ships.",
+    chapter: "HOW I WORK",
+    title: "",
     items: [
       {
         id: "01",
-        title: "Prefer reversible decisions",
-        body: "Placeholder — keep migration paths and feature flags when uncertainty is high.",
+        title: "ARCHITECTURE",
+        body: "I define system boundaries and ownership before expanding features.",
       },
       {
         id: "02",
-        title: "Document the why",
-        body: "Placeholder — ADRs and margin notes exist so future readers can recover intent.",
+        title: "DELIVERY",
+        body: "I treat testing, CI, and review artifacts as part of implementation.",
       },
       {
         id: "03",
-        title: "Make failure inspectable",
-        body: "Placeholder — logs, traces, and runbooks are part of the product surface.",
-      },
-      {
-        id: "04",
-        title: "Design for operators",
-        body: "Placeholder — the next engineer is a first-class user of the system.",
-      },
-      {
-        id: "05",
-        title: "Ship the smallest honest increment",
-        body: "Placeholder — scope to learning, not theater.",
+        title: "COMMUNICATION",
+        body: "I document the reasoning so another engineer can maintain, question, or revise the decision.",
       },
     ],
   },
   timeline: {
-    chapter: "TIMELINE",
-    title: "A selective record of practice — not a CV.",
+    chapter: "CAREER ARC",
+    title: "",
     entries: [
       {
-        period: "YYYY — Present",
-        title: "Lead / Principal engineering (placeholder)",
-        note: "Product systems, platform boundaries, delivery architecture.",
+        period: "2005 — 2009",
+        title: "Teaching and program leadership",
+        note: "Developed web-development curriculum and led eight instructors across four campuses.",
       },
       {
-        period: "YYYY — YYYY",
-        title: "Platform & product engineering (placeholder)",
-        note: "Multi-surface delivery, CMS architecture, automation.",
+        period: "2009 — 2016",
+        title: "Agency and client development",
+        note: "Built websites, interfaces, and content systems for small businesses, agencies, financial teams, and pharmaceutical clients.",
       },
       {
-        period: "YYYY — YYYY",
-        title: "Engineering practice (placeholder)",
-        note: "Foundations in systems thinking and operator-aware design.",
+        period: "2016 — 2020",
+        title: "Operational web systems",
+        note: "Connected customer booking and front-end experiences to reservation, scheduling, and dispatch systems.",
+      },
+      {
+        period: "2020 — PRESENT",
+        title: "Architecture, automation, and product engineering",
+        note: "At IntraWeb Technologies, I design and build web applications, shared platforms, delivery tooling, and operational automation. My 2024 work at ColorStreet focused on e-commerce, Playwright, CI, API validation, and SQL Server.",
       },
     ],
   },
   focus: {
     chapter: "CURRENT FOCUS",
-    title: "Atlas — editorial systems for engineering proof.",
-    body: "Placeholder — current work concentrates on publication-grade case studies, documentation architecture, and inspectable delivery surfaces. Specifics TBD.",
+    title: "",
+    body: "I’m currently focused on product engineering, shared content platforms, automated testing, and operational workflows. I prefer work where technical decisions stay close to implementation and can be reviewed through code, tests, and documentation.",
     bodyCondensed:
-      "Placeholder — publication-grade case studies, documentation architecture, inspectable delivery.",
+      "Product engineering, shared content platforms, automated testing, and operational workflows — with decisions close to implementation.",
     statusLabel: "STATUS",
-    status: "In progress",
+    status: "Active",
     themesLabel: "Themes",
-    themes: "Architecture · Documentation · Delivery · DX",
+    themes: "Product · Platforms · Testing · Automation",
   },
   reading: {
-    chapter: "READING  /  DOCUMENTATION",
+    chapter: "READING",
     title: "How knowledge is kept usable.",
     items: [
       {
         label: "ADRS",
-        body: "Placeholder — architecture decisions recorded with context, options, and consequences.",
+        body: "Architecture decisions recorded with context, options, and consequences.",
       },
       {
         label: "RUNBOOKS",
-        body: "Placeholder — operational truth over tribal knowledge; kept near the code.",
+        body: "Operational truth over tribal knowledge; kept near the code.",
       },
       {
         label: "CASE NOTES",
-        body: "Placeholder — post-delivery writeups that preserve tradeoffs, not just outcomes.",
+        body: "Post-delivery writeups that preserve tradeoffs, not just outcomes.",
       },
       {
         label: "EXTERNAL READING",
-        body: "Placeholder — systems papers, design essays, operator literature. List TBD.",
+        body: "Systems papers, design essays, and operator literature.",
       },
     ],
   },
   architecture: {
     chapter: "ARCHITECTURE MINDSET",
     title: "Boundaries first. Interfaces second. Implementation last.",
-    body: "Placeholder — architecture is treated as a communication medium: named boundaries, explicit contracts, and diagrams that survive contact with production. Prefer boring primitives with clear ownership over clever centralization.",
+    body: "Architecture is treated as a communication medium: named boundaries, explicit contracts, and diagrams that survive contact with production.",
     layers: [
       { name: "Surface", note: "sites / apps" },
       { name: "Contract", note: "APIs / events" },
       { name: "Capability", note: "domains" },
       { name: "Platform", note: "shared infra" },
     ],
-    figureCaption: "Fig. 2 — Layered boundary model. Surface → Contract → Capability → Platform.",
+    figureCaption:
+      "Layered boundary model. Surface → Contract → Capability → Platform.",
   },
   notes: {
     chapter: "PERSONAL NOTES",
-    pullQuote:
-      "Placeholder pull quote — a human register that keeps the profile from becoming corporate biography.",
-    body: "Placeholder — short personal notes: what draws attention outside delivery, how craft is practiced, what “done” feels like when the system is quiet and the documentation still holds.",
-    bodyCondensed:
-      "Placeholder personal note — authenticity without résumé language.",
+    pullQuote: "Evidence over résumé language.",
+    body: "Craft stays close to the work: quiet systems, readable decisions, documentation that still holds after the release is forgotten.",
+    bodyCondensed: "Quiet systems, readable decisions, durable documentation.",
   },
   contact: {
     chapter: "CONTACT",
-    title: "A conversation, not a pitch.",
-    body: "Placeholder — qualified conversations about product systems, architecture, and delivery. Expectation-setting copy TBD.",
+    title: "Let’s talk about the work.",
+    body: "Questions about architecture, product development, automation, or delivery are welcome.",
     bodyCondensed:
-      "Placeholder — qualified conversations. Expectation-setting copy TBD.",
+      "Questions about architecture, product development, automation, or delivery are welcome.",
     cta: { label: "Start a conversation", href: "/contact" },
-    meta: "email · form · calendar (TBD)",
+    secondaryCta: { label: "Browse Work →", href: "/work" },
+    meta: "form",
   },
 };

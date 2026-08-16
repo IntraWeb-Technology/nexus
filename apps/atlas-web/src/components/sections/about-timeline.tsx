@@ -5,37 +5,42 @@ type AboutTimelineProps = {
   data: AboutFixture["timeline"];
 };
 
+/** Career Arc — date / title / detail columns per approved About. */
 export function AboutTimeline({ data }: AboutTimelineProps) {
   return (
     <section
-      aria-labelledby="about-timeline-title"
+      aria-labelledby="about-career-arc"
       className="mx-auto max-w-[var(--atlas-page)]"
     >
-      <div className="atlas-pad-x space-y-5 py-8 tablet:py-10 desktop:space-y-6 desktop:py-12">
+      <div className="atlas-pad-x space-y-6 py-10 tablet:py-12 desktop:py-14">
         <ChapterMarker>{data.chapter}</ChapterMarker>
-        <h2
-          id="about-timeline-title"
-          className="m-0 hidden font-display text-[1.625rem] leading-8 font-medium text-atlas-ink desktop:block"
-        >
-          {data.title}
-        </h2>
-        <ol className="m-0 list-none space-y-0 p-0">
+        {data.title ? (
+          <h2
+            id="about-career-arc"
+            className="m-0 font-display text-[1.625rem] leading-8 font-medium text-atlas-ink"
+          >
+            {data.title}
+          </h2>
+        ) : (
+          <h2 id="about-career-arc" className="sr-only">
+            Career arc
+          </h2>
+        )}
+        <ol className="m-0 list-none space-y-0 border-t border-atlas-border p-0">
           {data.entries.map((entry) => (
             <li
               key={`${entry.period}-${entry.title}`}
-              className="flex flex-col gap-2 border-t border-atlas-border py-4 tablet:flex-row tablet:gap-6 desktop:gap-8 desktop:py-5"
+              className="grid gap-2 border-b border-atlas-border py-5 tablet:grid-cols-[11rem_minmax(0,22.5rem)_minmax(0,1fr)] tablet:gap-8 desktop:py-6"
             >
-              <span className="shrink-0 font-mono text-xs text-atlas-sage tablet:w-[12.5rem]">
+              <span className="font-mono text-xs text-atlas-sage">
                 {entry.period}
               </span>
-              <div className="min-w-0 space-y-1.5">
-                <p className="m-0 font-sans text-sm font-semibold text-atlas-ink desktop:text-[15px]">
-                  {entry.title}
-                </p>
-                <p className="m-0 hidden font-sans text-sm leading-[22px] text-atlas-body desktop:block">
-                  {entry.note}
-                </p>
-              </div>
+              <p className="m-0 font-sans text-sm font-semibold text-atlas-ink desktop:text-[15px]">
+                {entry.title}
+              </p>
+              <p className="m-0 font-sans text-sm leading-[22px] text-atlas-body">
+                {entry.note}
+              </p>
             </li>
           ))}
         </ol>

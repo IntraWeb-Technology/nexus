@@ -10,13 +10,36 @@ test.describe("homepage", () => {
     await expect(page.getByRole("contentinfo")).toBeVisible();
 
     await expect(
-      page.getByRole("heading", { level: 1, name: /Systems that\s+earn trust/i }),
+      page.getByRole("heading", { level: 1, name: /I design and build software systems/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 2, name: "Portfolio OS" }),
+      page.getByRole("heading", { level: 2, name: "Atlas" }),
     ).toBeVisible();
     await expect(page.locator("#selected-work")).toBeVisible();
     await expect(page.locator("#contact")).toBeVisible();
+  });
+
+  test("mobile menu opens with approved overlay", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Menu overlay is mobile-only");
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "Work", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "Articles", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "About", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "Contact", exact: true }),
+    ).toBeVisible();
+    await expect(page).toHaveScreenshot(`homepage-mobile-menu-open-${testInfo.project.name}.png`, {
+      fullPage: false,
+      maxDiffPixelRatio: 0.02,
+    });
   });
 
   test("skip link moves focus to main", async ({ page }) => {
