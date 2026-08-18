@@ -2,7 +2,9 @@
 
 Production frontend for Atlas — the ground-up rebuild of [johnschibelli.dev](https://johnschibelli.dev).
 
-**Current milestone:** Home (`/`) + Work (`/work`) + Case Study (`/work/portfolio-os`). Other routes are not implemented.
+**Current milestone:** M9 Hardening (M9D art-direction slice implemented). Public routes: `/`, `/work`, `/work/[slug]`, `/about`, `/contact`, `/articles`, `/articles/[slug]`, `/docs`, `/docs/[...slug]`.
+
+**Content source:** `ATLAS_CONTENT_SOURCE=fixture` for local development, Playwright, and explicit demos. Strapi mode when `STRAPI_URL` is set — fail-closed with no silent fixture fallback. M8 implemented schemas, client contract, assemblers, and integration code; **authentic frontend-visible CMS delivery remains unverified** until populated Strapi content is traced through Atlas.
 
 ## Stack
 
@@ -18,20 +20,19 @@ Production frontend for Atlas — the ground-up rebuild of [johnschibelli.dev](h
 
 ```text
 src/
-├── app/                 # layout, `/`, `/work`, `/work/[slug]`
+├── app/                 # layout + public routes
 ├── components/
 │   ├── chrome/          # SiteNav, SiteNavActive, SiteFooter, ReadingProgress
 │   ├── editorial/       # ChapterMarker, Figure, MetadataRow, Toc, Table, Diagram
-│   └── sections/        # page compositions (home-* / work-* / case-*)
-├── content/             # fixtures (Strapi-shaped)
+│   └── sections/        # page compositions
+├── content/             # domain types + fixtures
+├── lib/
+│   ├── content/         # content loaders (fixture | strapi)
+│   └── strapi/          # CMS assemblers (M8)
 └── styles/              # tokens + globals
 ```
 
-Reports:
-
-- Homepage: [`apps/atlas-docs/content/architecture/homepage-pilot.mdx`](../atlas-docs/content/architecture/homepage-pilot.mdx)
-- Work: [`apps/atlas-docs/content/architecture/work-route.mdx`](../atlas-docs/content/architecture/work-route.mdx)
-- Case Study: [`apps/atlas-docs/content/architecture/case-study-route.mdx`](../atlas-docs/content/architecture/case-study-route.mdx)
+Canonical contract: [`apps/atlas-docs/content/architecture/build-manifest.mdx`](../atlas-docs/content/architecture/build-manifest.mdx)
 
 ## Development
 
@@ -52,10 +53,12 @@ Local URL: [http://localhost:3020](http://localhost:3020)
 | `start` | `next start --port 3020` |
 | `lint` | `eslint` |
 | `check-types` | `tsc --noEmit` |
-| `test` | `check-types` (unit suite TBD) |
+| `test` | Node unit tests (`src/lib/strapi/**/*.test.ts`) |
+| `test:unit` | Same as `test` |
 | `test:e2e` | Playwright D/T/M + axe + visual |
+| `test:e2e:functional` | Playwright functional/a11y only (no visual regression) |
 | `test:e2e:update` | Refresh visual baselines (`--update-snapshots=changed`) |
 
 ## Vercel
 
-Set the Vercel project **Root Directory** to `apps/atlas-web` and enable **Include files outside the root directory in the Build Step**. See [`vercel.json`](./vercel.json).
+Set the Vercel project **Root Directory** to `apps/atlas-web` and enable **Include files outside the root directory in the Build Step**. See [`vercel.json`](./vercel.json). Production must declare its content-source mode explicitly.

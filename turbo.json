@@ -100,6 +100,13 @@
       "inputs": ["$TURBO_DEFAULT$"],
       "outputs": []
     },
+    "test:e2e:functional": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": [],
+      "env": ["ATLAS_CONTENT_SOURCE", "CONTACT_INSECURE_SKIP_SEND"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

@@ -1,6 +1,6 @@
 /**
  * Homepage fixture — mirrors future Strapi / site-keyed content shape.
- * No live CMS in this sprint. Component props should stay stable when Strapi lands.
+ * Copy aligned to Approved — Homepage (Figma production).
  */
 
 import type { NavLink } from "@/content/types";
@@ -94,42 +94,44 @@ export type HomepageFixture = {
   };
 };
 
+const navOrder = [
+  { label: "Work", href: "/work" },
+  { label: "Articles", href: "/articles" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
+] satisfies NavLink[];
+
 export const homepageFixture: HomepageFixture = {
   site: { key: "personal", name: "Atlas" },
   nav: {
     brand: { label: "ATLAS", href: "/" },
-    links: [
-      { label: "Work", href: "/work" },
-      { label: "About", href: "/about" },
-      { label: "Contact", href: "/contact" },
-      { label: "Articles", href: "/articles" },
-    ],
+    links: navOrder,
   },
   hero: {
-    mediaLabel: "PORTFOLIO OS",
-    mediaNote: "Production handbook surface · answers what is built",
+    mediaLabel: "ATLAS",
+    mediaNote: "Engineering publication · decisions and evidence",
     mediaAlt:
-      "Atlas Portfolio OS documentation handbook — categories, search, and recently updated engineering guides",
+      "Desk workspace with a laptop showing a minimal interface — Atlas editorial context",
     mediaSrc:
       "/images/case-studies/portfolio-os/portfolio-os-home-hero-desktop.webp",
     mediaWidth: 1760,
     mediaHeight: 1100,
     mediaSizes: "(min-width: 1440px) 880px, 100vw",
-    chapter: "MOMENT ONE",
-    title: "Systems that\nearn trust",
-    deck: "What this engineer builds — platforms and operating systems, not a résumé opener.",
+    chapter: "JOHN SCHIBELLI · SENIOR SOFTWARE ENGINEER",
+    title: "I design and build software systems.",
+    deck: "My work spans web platforms, automation, architecture, testing, and documentation. This site presents selected projects through their decisions, tradeoffs, and supporting evidence.",
     primaryCta: { label: "View selected work", href: "#selected-work" },
     secondaryCta: { label: "Contact", href: "#contact" },
   },
   featured: {
-    chapter: "MOMENT TWO  ·  CASE STUDY",
-    title: "Portfolio OS",
+    chapter: "FEATURED CASE STUDY",
+    title: "Atlas",
     meta: "flagship",
     status: "IN PRODUCTION",
     figureAlt:
-      "Portfolio OS engineering philosophy stage — Discover, Architect, Deliver, Measure on the production homepage",
+      "Data center corridor — Atlas production surface and evidence-led case studies",
     figureCaption:
-      "Visual anchor — Portfolio OS philosophy composition from the production surface.",
+      "A1 · production surface · responsive routes · evidence-led case studies",
     figureSrc:
       "/images/case-studies/portfolio-os/portfolio-os-home-featured-desktop.webp",
     figureWidth: 2400,
@@ -137,29 +139,30 @@ export const homepageFixture: HomepageFixture = {
     figureSizes: "(min-width: 1440px) 1376px, 100vw",
     problemLabel: "PROBLEM",
     problem:
-      "Problem framing placeholder — the constraint that made the system necessary.",
+      "The previous portfolio reduced complex engineering work to project summaries, leaving the decisions, constraints, and proof out of view.",
     outcomeLabel: "OUTCOME",
     outcome:
-      "Outcome placeholder — what changed because the work shipped.",
+      "Atlas rebuilds the site as an engineering publication with structured case studies, shared CMS content, documented architecture, and tested responsive routes.",
     highlightsLabel: "TECHNICAL HIGHLIGHTS",
     highlights: [
-      "Architecture decision",
-      "Systems / delivery",
-      "Quality / testing",
+      "Next.js monorepo",
+      "Shared Strapi contract",
+      "Playwright regression suite",
     ],
     cta: { label: "Read case study", href: "/work/portfolio-os" },
   },
   selected: {
     chapter: "SELECTED WORK",
-    headline: "Three roles. One sequence.",
+    headline: "Systems with visible operating evidence.",
     projects: [
       {
         id: "shared-strapi-cms",
         layout: "feature",
         eyebrow: "PLATFORM",
-        title: "Shared Strapi CMS / Atlas",
-        outcome: "One CMS. Explicit site boundaries.",
-        href: "/work/shared-strapi-cms",
+        title: "Shared Strapi CMS",
+        outcome:
+          "One content platform serves Atlas and IntraWeb through explicit site tenancy, versioned schemas, and route-level filtering.",
+        href: "/work",
         ctaLabel: "View project →",
         mediaAlt:
           "Shared Strapi architecture — Atlas, atlas-docs, and IntraWeb consumers under site-key tenancy",
@@ -171,11 +174,17 @@ export const homepageFixture: HomepageFixture = {
       {
         id: "intraweb-automation",
         layout: "offset",
-        eyebrow: "AUTOMATION",
+        eyebrow: "SELECTED · OFFSET",
         title: "IntraWeb Automation Platform",
-        outcome: "Inspectable pipelines for internal operations.",
-        href: "/work/intraweb-automation",
+        outcome:
+          "Operational workflows coordinate lead, sales, delivery, and reporting across n8n, HubSpot, Stripe, Resend, and Drive—with documented handoffs.",
+        href: "/work",
         ctaLabel: "View project →",
+        mediaAlt: "Automation workflow diagram for IntraWeb operations",
+        mediaSrc: "/images/work/intraweb-automation-workflow.svg",
+        mediaWidth: 640,
+        mediaHeight: 440,
+        mediaSizes: "(min-width: 1440px) 320px, 50vw",
       },
       {
         id: "vehicle-maintenance",
@@ -183,58 +192,68 @@ export const homepageFixture: HomepageFixture = {
         eyebrow: "PRODUCT ENGINEERING",
         title: "Vehicle Maintenance Platform",
         outcome: "Operational product for maintenance cycles.",
-        href: "/work/vehicle-maintenance",
+        href: "/work",
         ctaLabel: "View →",
       },
     ],
   },
   philosophy: {
-    chapter: "MOMENT THREE  ·  ENGINEERING PHILOSOPHY",
+    chapter: "ENGINEERING PHILOSOPHY",
     quote:
-      "“Systems should make the next correct decision easier than the wrong one.”",
+      "Good systems reduce ambiguity: the next correct action should be visible, testable, and documented.",
     diagramCaption:
-      "Dominant visual — principles orbit; quote remains the verbal anchor.",
-    stages: ["Discover", "Architect", "Deliver", "Measure"],
+      "Workflow evidence — architecture stays close to delivery.",
+    stages: ["Architecture", "Quality", "Automation", "Documentation"],
     principles: [
-      { title: "Architecture", body: "Structure before features." },
-      { title: "Quality", body: "Proof is part of the product." },
+      {
+        title: "Architecture",
+        body: "Define boundaries before expanding features.",
+      },
+      {
+        title: "Quality",
+        body: "Treat tests and review artifacts as part of delivery.",
+      },
+      {
+        title: "Automation",
+        body: "Automate repeated work without hiding how it runs.",
+      },
+      {
+        title: "Documentation",
+        body: "Record decisions close to the system they govern.",
+      },
     ],
   },
   writing: {
-    chapter: "DOCUMENTATION  ·  WRITING",
+    chapter: "ARTICLES",
     items: [
       {
-        title: "Why We Chose React Server Components",
-        note: "Architecture · decision record",
-        href: "/articles/why-we-chose-react-server-components",
+        title: "Lessons from Building Atlas",
+        note: "What held up, what changed, and what the system made visible.",
+        href: "/articles/lessons-from-building-atlas",
       },
       {
-        title: "Playwright at Scale",
-        note: "Testing · fixture strategy",
-        href: "/articles/playwright-at-scale",
+        title: "Migrating from Contentful to Strapi",
+        note: "Moving to a shared, self-hosted content platform.",
+        href: "/articles/migrating-from-contentful-to-strapi",
       },
     ],
   },
   about: {
     chapter: "ABOUT",
-    summary: "Short human summary — authentic, not a résumé.",
+    summary:
+      "I’m a senior software engineer focused on architecture, product delivery, automation, and the evidence that makes complex work easier to evaluate.",
     href: "/about",
-    ctaLabel: "About →",
+    ctaLabel: "Read the profile →",
   },
   contact: {
     chapter: "CONTACT",
     title: "Let’s talk about the work.",
-    body: "Expectation-setting placeholder. Qualified conversation.",
+    body: "For qualified conversations about product systems, architecture, and delivery.",
     cta: { label: "Start a conversation", href: "/contact" },
-    meta: "email · form · calendar (TBD)",
+    meta: "email · form · calendar",
   },
   footer: {
-    links: [
-      { label: "Work", href: "/work" },
-      { label: "About", href: "/about" },
-      { label: "Contact", href: "/contact" },
-      { label: "Articles", href: "/articles" },
-    ],
-    mark: "Atlas",
+    links: navOrder,
+    mark: "ATLAS",
   },
 };

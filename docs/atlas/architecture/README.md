@@ -4,11 +4,13 @@ Atlas product architecture and the **Build Manifest** (implementation contract) 
 
 → [`apps/atlas-docs/content/architecture/build-manifest.mdx`](../../../apps/atlas-docs/content/architecture/build-manifest.mdx)
 
-**Current program status (as of 2026-08-12):** M0–M8 **COMPLETE** · Production Asset Freeze **PASS** · **M9 — Hardening NEXT**. See the Build Manifest current-status table.
+**Current program status (as of 2026-08-15):** M0–M8 **contract/integration-code complete** · M9D **implemented** · **M9 — Hardening continues** · **M10 — Launch planned**. See the Build Manifest current-status table.
+
+**M8 status:** Schemas, client contract, content assemblers, and integration code are implemented. **Authentic frontend-visible CMS delivery remains unverified** until a reachable Strapi instance is populated and traced through Atlas.
 
 **M8 Content Contract (locked) + implementation report:**
 
-→ [`apps/atlas-docs/content/architecture/m8-content-contract.mdx`](../../../apps/atlas-docs/content/architecture/m8-content-contract.mdx)  
+→ [`apps/atlas-docs/content/architecture/m8-content-contract.mdx`](../../../apps/atlas-docs/content/architecture/m8-content-contract.mdx)
 → [`apps/atlas-docs/content/architecture/m8-strapi-integration.mdx`](../../../apps/atlas-docs/content/architecture/m8-strapi-integration.mdx)
 
 **Architecture freeze (core routes proven — Frontend v1.0):**
@@ -34,6 +36,3 @@ About + Contact report (M4):
 Nexus-wide monorepo standards remain under [`/docs/architecture`](../../architecture/).
 
 Design exports and review screenshots remain under [`docs/atlas/exports`](../exports/).
-Homepage pilot visual baselines (review copies): [`docs/atlas/exports/homepage-pilot`](../exports/homepage-pilot/).
-Work route visual baselines (review copies): [`docs/atlas/exports/work-route`](../exports/work-route/).
-Case study visual baselines (review copies): [`docs/atlas/exports/case-study`](../exports/case-study/).

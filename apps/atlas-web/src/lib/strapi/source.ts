@@ -2,10 +2,14 @@
  * Content source resolution (M8A fallback contract).
  *
  * - `strapi`: production/CMS path — failures are errors, never silent fixture swap
- * - `fixture`: explicit test/dev mode when CMS is not configured
+ * - `fixture`: explicit test/demo/local mode when CMS is not configured
  *
  * Set `ATLAS_CONTENT_SOURCE=fixture|strapi` to force. Otherwise:
  * Strapi when `STRAPI_URL` / `STRAPI_API_URL` is set; fixture otherwise.
+ *
+ * Production deployments must declare their content-source mode explicitly.
+ * Fixture mode is intentional for local development, Playwright, and demos —
+ * it is not proof of live CMS delivery.
  */
 
 export type AtlasContentSource = "strapi" | "fixture";

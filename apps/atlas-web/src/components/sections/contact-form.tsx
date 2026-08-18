@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState, type FormEvent } from "react";
+import { atlasPrimaryButtonClassName } from "@/components/editorial/atlas-button";
 import type { ContactFixture } from "@/content/contact";
 import type { ContactFieldErrors } from "@/lib/contact-validation";
 
@@ -206,7 +207,7 @@ export function ContactForm({ data }: ContactFormProps) {
       <button
         type="submit"
         disabled={status === "submitting"}
-        className="inline-flex w-fit rounded-[2px] bg-atlas-ink px-[18px] py-3 font-sans text-[13px] font-medium text-atlas-elevated disabled:opacity-60"
+        className={`${atlasPrimaryButtonClassName} w-fit`}
       >
         {status === "submitting" ? "Sending…" : data.submitLabel}
       </button>

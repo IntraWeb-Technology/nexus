@@ -1,9 +1,12 @@
 import type { Article } from "@repo/strapi-client";
-import type {
-  ArticleDetail,
-  ArticleNavLink,
-  ArticlesIndexFixture,
-  ArticleSummary,
+import {
+  ATLAS_DEFAULT_AUTHOR,
+  type ArticleAuthor,
+  type ArticleDetail,
+  type ArticleFeaturedMedia,
+  type ArticleNavLink,
+  type ArticlesIndexFixture,
+  type ArticleSummary,
 } from "@/content/article";
 import {
   ATLAS_SITE,
@@ -12,6 +15,36 @@ import {
   mapEditorialType,
   mapPublishingSections,
 } from "@/lib/strapi/assemble-shared";
+
+function toAuthor(article: Article): ArticleAuthor {
+  const name = article.author?.name?.trim() || ATLAS_DEFAULT_AUTHOR.name;
+  const portraitSrc =
+    article.author?.avatar?.url || ATLAS_DEFAULT_AUTHOR.portraitSrc;
+  const portraitAlt =
+    article.author?.avatar?.alternativeText?.trim() ||
+    `Portrait of ${name}`;
+  return { name, portraitSrc, portraitAlt };
+}
+
+function toFeaturedMedia(
+  article: Article,
+): ArticleFeaturedMedia | undefined {
+  if (!article.featuredImage?.url) return undefined;
+  return {
+    src: article.featuredImage.url,
+    alt:
+      article.featuredImage.alternativeText?.trim() ||
+      `${article.title} featured image`,
+    width: article.featuredImage.width ?? undefined,
+    height: article.featuredImage.height ?? undefined,
+  };
+}
+
+function withoutStatusMeta(
+  items: Array<{ label: string; value: string }>,
+) {
+  return items.filter((item) => item.label.toUpperCase() !== "STATUS");
+}
 
 function toSummary(article: Article): ArticleSummary {
   const topic = mapArticleTopic(article.categories);
@@ -49,6 +82,14 @@ export function assembleArticlesIndex(articles: Article[]): ArticlesIndexFixture
   const featuredArticle =
     summaries.find((a) => a.featured) ?? summaries[0]!;
   const listArticles = summaries.filter((a) => !a.featured);
+  const featuredSource =
+    articles.find((a) => a.slug === featuredArticle.slug) ?? articles[0]!;
+  const featuredImage = toFeaturedMedia(featuredSource) ?? {
+    src: "/images/articles/featured-rsc.png",
+    alt: `${featuredArticle.title} featured image`,
+    width: 1420,
+    height: 840,
+  };
 
   return {
     site: ATLAS_SITE,
@@ -78,7 +119,8 @@ export function assembleArticlesIndex(articles: Article[]): ArticlesIndexFixture
     featured: {
       chapter: "FEATURED",
       article: featuredArticle,
-      ctaLabel: "Read article →",
+      author: toAuthor(featuredSource),
+      image: featuredImage,
     },
     list: {
       chapter: "ALL ARTICLES",
@@ -91,10 +133,8 @@ export function assembleArticlesIndex(articles: Article[]): ArticlesIndexFixture
       body: "For qualified questions about systems, delivery, or Atlas itself — use Contact. Documentation remains the handbook for procedures and ADRs.",
       bodyCompact:
         "For qualified questions — use Contact. Documentation remains the handbook.",
-      links: [
-        { label: "Contact →", href: "/contact" },
-        { label: "Work →", href: "/work" },
-      ],
+      cta: { label: "Start a conversation", href: "/contact" },
+      workLink: { label: "or browse Work →", href: "/work" },
     },
   };
 }
@@ -130,6 +170,11 @@ export function assembleArticleDetail(
     .map(toNavLink);
 
   const bridge = article.contactBridge;
+  const defaultMeta = [
+    { label: "DATE", value: article.publishedDate ?? "" },
+    { label: "TOPIC", value: summary.topic },
+    { label: "READING", value: article.readingTime ?? "" },
+  ];
 
   return {
     site: ATLAS_SITE,
@@ -156,15 +201,11 @@ export function assembleArticleDetail(
       title: article.title,
       dek: article.dek ?? article.excerpt ?? "",
       dekCompact: article.dekCompact ?? undefined,
-      meta:
-        article.headerMeta.length > 0
-          ? article.headerMeta
-          : [
-              { label: "DATE", value: article.publishedDate ?? "" },
-              { label: "TOPIC", value: summary.topic },
-              { label: "READING", value: article.readingTime ?? "" },
-              { label: "STATUS", value: "Published" },
-            ],
+      author: toAuthor(article),
+      meta: withoutStatusMeta(
+        article.headerMeta.length > 0 ? article.headerMeta : defaultMeta,
+      ),
+      featuredImage: toFeaturedMedia(article),
     },
     toc,
     sections,
@@ -180,7 +221,10 @@ export function assembleArticleDetail(
       body: bridge?.body ?? "",
       bodyCompact: bridge?.bodyCompact ?? undefined,
       cta: bridge?.cta ?? { label: "Start a conversation", href: "/contact" },
-      workLink: bridge?.workLink ?? { label: "or browse Work →", href: "/work" },
+      workLink: bridge?.workLink ?? {
+        label: "or browse Work →",
+        href: "/work",
+      },
     },
   };
 }

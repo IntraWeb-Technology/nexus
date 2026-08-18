@@ -14,15 +14,16 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "pnpm build && pnpm exec next start --port 3020",
+    command:
+      process.env.CI
+        ? "pnpm build && pnpm exec next start --port 3020"
+        : "pnpm exec next start --port 3020",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
     env: {
       ...process.env,
-      // E2E: deliver without Resend credentials (server-only skip flag)
       CONTACT_INSECURE_SKIP_SEND: "true",
-      // Explicit fixture source — never hit live Strapi during visual gates
       ATLAS_CONTENT_SOURCE: "fixture",
     },
   },

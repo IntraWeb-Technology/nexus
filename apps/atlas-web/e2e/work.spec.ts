@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { clickPrimaryNavLink, expectCurrentNavLink } from "./helpers/nav";
 
 test.describe("work index", () => {
   test("renders primary landmarks and sections", async ({ page }) => {
@@ -30,22 +31,14 @@ test.describe("work index", () => {
     await expect(page.locator("#contact")).toBeVisible();
   });
 
-  test("marks Work as the current nav item", async ({ page }) => {
+  test("marks Work as the current nav item", async ({ page }, testInfo) => {
     await page.goto("/work");
-    await expect(
-      page
-        .getByRole("navigation", { name: "Primary" })
-        .getByRole("link", { name: "Work" }),
-    ).toHaveAttribute("aria-current", "page");
+    await expectCurrentNavLink(page, "Work", testInfo.project.name);
   });
 
-  test("navigates from homepage to work", async ({ page }) => {
+  test("navigates from homepage to work", async ({ page }, testInfo) => {
     await page.goto("/");
-    await page
-      .getByRole("navigation", { name: "Primary" })
-      .getByRole("link", { name: "Work" })
-      .first()
-      .click();
+    await clickPrimaryNavLink(page, "Work", testInfo.project.name);
     await expect(page).toHaveURL(/\/work$/);
     await expect(
       page.getByRole("heading", {
@@ -69,6 +62,34 @@ test.describe("work index", () => {
     const cta = page.getByRole("link", { name: "Read case study" }).first();
     await cta.focus();
     await expect(cta).toBeFocused();
+  });
+
+  test("selected work links only resolve to implemented case studies", async ({
+    page,
+  }) => {
+    await page.goto("/work");
+
+    await expect(page.getByRole("link", { name: "Read case study" })).toHaveAttribute(
+      "href",
+      "/work/portfolio-os",
+    );
+
+    for (const href of [
+      "/work/shared-strapi-cms",
+      "/work/intraweb-automation",
+      "/work/vehicle-maintenance",
+    ]) {
+      await expect(page.locator(`a[href="${href}"]`)).toHaveCount(0);
+    }
+  });
+
+  test("portfolio-os case study resolves from featured CTA", async ({ page }) => {
+    await page.goto("/work");
+    await page.getByRole("link", { name: "Read case study" }).first().click();
+    await expect(page).toHaveURL(/\/work\/portfolio-os$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Portfolio OS/i }),
+    ).toBeVisible();
   });
 
   test("has no serious accessibility violations", async ({ page }) => {

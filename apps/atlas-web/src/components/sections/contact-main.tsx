@@ -23,7 +23,28 @@ export function ContactMain({ data }: ContactMainProps) {
         <p className="m-0 max-w-[35rem] font-sans text-[15px] leading-7 text-atlas-body tablet:text-[17px]">
           {data.body}
         </p>
-        <ContactForm data={data} />
+
+        <div className="flex flex-col gap-12 desktop:flex-row desktop:items-start desktop:gap-[6.25rem]">
+          <ContactForm data={data} />
+
+          <aside className="flex w-full max-w-[28.75rem] flex-col gap-8 desktop:pt-1">
+            {data.panels.map((panel, i) => (
+              <div
+                key={panel.label}
+                className={
+                  i > 0 ? "border-t border-atlas-border pt-8" : undefined
+                }
+              >
+                <p className="m-0 font-mono text-[11px] tracking-[0.08em] text-atlas-sage uppercase">
+                  {panel.label}
+                </p>
+                <p className="mt-2.5 mb-0 font-sans text-sm leading-[22px] text-atlas-body">
+                  {panel.body}
+                </p>
+              </div>
+            ))}
+          </aside>
+        </div>
       </div>
     </section>
   );

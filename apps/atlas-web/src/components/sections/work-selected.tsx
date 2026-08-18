@@ -41,15 +41,27 @@ function ProjectMedia({
   );
 }
 
-function ProjectLink({ project }: { project: WorkProject }) {
-  return (
-    <Link
-      href={project.href}
-      className="font-sans text-xs font-medium text-atlas-umber no-underline"
-    >
-      {project.ctaLabel}
-    </Link>
-  );
+function ProjectCta({ project }: { project: WorkProject }) {
+  if (project.href && project.ctaLabel) {
+    return (
+      <Link
+        href={project.href}
+        className="font-sans text-xs font-medium text-atlas-umber no-underline"
+      >
+        {project.ctaLabel}
+      </Link>
+    );
+  }
+
+  if (project.statusLabel) {
+    return (
+      <p className="m-0 font-mono text-[11px] text-atlas-body">
+        {project.statusLabel}
+      </p>
+    );
+  }
+
+  return null;
 }
 
 export function WorkSelected({ data }: WorkSelectedProps) {
@@ -102,7 +114,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                     {feature.statusLabel}
                   </p>
                 </div>
-                <ProjectLink project={feature} />
+                <ProjectCta project={feature} />
               </div>
             </article>
 
@@ -130,7 +142,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                     feature.summaryTablet ??
                     feature.summary}
                 </p>
-                <ProjectLink project={feature} />
+                <ProjectCta project={feature} />
               </div>
             </article>
           </>
@@ -151,7 +163,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                   Theme{"  ·  "}
                   {offset.themes.join(" · ")}
                 </p>
-                <ProjectLink project={offset} />
+                <ProjectCta project={offset} />
               </div>
               <ProjectMedia
                 project={offset}
@@ -181,7 +193,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                   />
                 </div>
               ) : null}
-              <ProjectLink project={offset} />
+              <ProjectCta project={offset} />
             </article>
 
             <article className="bg-atlas-elevated tablet:hidden">
@@ -206,7 +218,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                 <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body">
                   {offset.summaryMobile ?? offset.summary}
                 </p>
-                <ProjectLink project={offset} />
+                <ProjectCta project={offset} />
               </div>
             </article>
           </>
@@ -229,7 +241,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-2">
-                <ProjectLink project={band} />
+                <ProjectCta project={band} />
                 {band.metaNote ? (
                   <p className="m-0 font-mono text-[10px] text-atlas-body">
                     {band.metaNote}
@@ -257,7 +269,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
                 <h3 className="m-0 font-display text-base font-semibold text-atlas-ink">
                   {band.name}
                 </h3>
-                <ProjectLink project={band} />
+                <ProjectCta project={band} />
               </div>
             </article>
 
@@ -269,7 +281,7 @@ export function WorkSelected({ data }: WorkSelectedProps) {
               <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body">
                 {band.summaryMobile ?? band.summary}
               </p>
-              <ProjectLink project={band} />
+              <ProjectCta project={band} />
             </article>
           </>
         ) : null}

@@ -54,7 +54,7 @@ export function HomeSelected({ data }: HomeSelectedProps) {
           </p>
           <Link
             href={feature.href}
-            className="font-sans text-xs text-atlas-ink no-underline"
+            className="font-sans text-xs font-medium text-atlas-umber no-underline"
           >
             {feature.ctaLabel}
           </Link>
@@ -72,7 +72,7 @@ export function HomeSelected({ data }: HomeSelectedProps) {
           </p>
           <Link
             href={offset.href}
-            className="font-sans text-xs text-atlas-ink no-underline"
+            className="font-sans text-xs font-medium text-atlas-umber no-underline"
           >
             {offset.ctaLabel}
           </Link>
@@ -89,7 +89,7 @@ export function HomeSelected({ data }: HomeSelectedProps) {
           </div>
           <Link
             href={band.href}
-            className="shrink-0 font-sans text-xs text-atlas-ink no-underline"
+            className="shrink-0 font-sans text-xs font-medium text-atlas-umber no-underline"
           >
             {band.ctaLabel}
           </Link>

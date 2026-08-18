@@ -123,10 +123,11 @@ const sharedStrapi: Project = {
 
 describe("assembleWork", () => {
   it("A-05 vehicle-maintenance has no mediaSrc when cardMedia absent", () => {
-    const fixture = assembleWork(baseWorkPage, [
-      vehicleMaintenance,
-      sharedStrapi,
-    ]);
+    const fixture = assembleWork(
+      baseWorkPage,
+      [vehicleMaintenance, sharedStrapi],
+      new Set(["portfolio-os"]),
+    );
 
     const vm = fixture.selected.projects.find(
       (p) => p.slug === "vehicle-maintenance",
@@ -134,11 +135,26 @@ describe("assembleWork", () => {
     assert.ok(vm, "vehicle-maintenance project present");
     assert.equal(vm.mediaSrc, undefined);
     assert.equal(vm.mediaLabel, undefined);
+    assert.equal(vm.href, undefined);
 
     const withMedia = fixture.selected.projects.find(
       (p) => p.slug === "shared-strapi-cms",
     );
     assert.ok(withMedia?.mediaSrc);
+    assert.equal(withMedia.href, undefined);
+  });
+
+  it("links selected projects only when case study slug is implemented", () => {
+    const fixture = assembleWork(
+      baseWorkPage,
+      [sharedStrapi],
+      new Set(["shared-strapi-cms"]),
+    );
+    const linked = fixture.selected.projects.find(
+      (p) => p.slug === "shared-strapi-cms",
+    );
+    assert.equal(linked?.href, "/work/shared-strapi-cms");
+    assert.equal(linked?.ctaLabel, "View →");
   });
 
   it("keeps application-static stageRules from workFixture", () => {

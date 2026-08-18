@@ -27,10 +27,16 @@ function parseTaxonomyGroups(
     );
 }
 
-function projectToWorkProject(project: Project): WorkProject {
+function projectToWorkProject(
+  project: Project,
+  caseStudySlugs: ReadonlySet<string>,
+): WorkProject {
   const card = mediaFields(project.cardMedia);
   const layout = project.layout ?? "feature";
   const projectStatus = project.status ?? "planned";
+  const href = caseStudySlugs.has(project.slug)
+    ? `/work/${project.slug}`
+    : undefined;
 
   const base: WorkProject = {
     id: project.slug,
@@ -45,8 +51,9 @@ function projectToWorkProject(project: Project): WorkProject {
     statusLabel: project.statusLabel ?? "",
     featured: project.featured,
     layout,
-    href: `/work/${project.slug}`,
-    ctaLabel: project.ctaLabel ?? "View →",
+    ...(href
+      ? { href, ctaLabel: project.ctaLabel ?? "View →" }
+      : {}),
   };
 
   if (project.cardMedia && card.src) {
@@ -67,6 +74,7 @@ function projectToWorkProject(project: Project): WorkProject {
 export function assembleWork(
   workPage: WorkPage,
   projects: Project[],
+  caseStudySlugs: ReadonlySet<string> = new Set(),
 ): WorkFixture {
   const featuredSlug = workPage.featuredProject.slug;
   const featuredFigure = mediaFields(workPage.featuredCopy.figure);
@@ -76,7 +84,7 @@ export function assembleWork(
   const selectedProjects = projects
     .filter((p) => p.slug !== featuredSlug)
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-    .map(projectToWorkProject);
+    .map((project) => projectToWorkProject(project, caseStudySlugs));
 
   const bridge = workPage.contactBridge;
 

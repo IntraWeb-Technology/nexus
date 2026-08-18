@@ -421,6 +421,6 @@ export const portfolioOsCaseStudy: CaseStudyFixture = {
     title: "Let’s talk about the work.",
     body: "Expectation-setting placeholder. Qualified conversation.",
     cta: { label: "Start a conversation", href: "/contact" },
-    meta: "email · form · calendar (TBD)",
+    meta: "email · form · calendar",
   },
 };

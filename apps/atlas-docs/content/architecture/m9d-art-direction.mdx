@@ -1,0 +1,121 @@
+# M9D — Approved Art Direction Frontend Implementation
+
+**Status:** Implemented on branch `atlas/m9d-art-direction`  
+**As of:** 2026-08-13  
+**Figma file:** Atlas Design System (`6r1KqLmwiB8TUXjyedezom`)  
+**Design authority:** Page `27 — Art Direction` → section `29 — Approval Polish`  
+**Notes frame:** `213:2112` / notes text `213:2114`
+
+## Scope
+
+Bring Atlas production frontend (`apps/atlas-web`) into visual and responsive alignment with Approval Polish frames for:
+
+- Global navigation + mobile menu-open
+- Centered footer + icon-only socials
+- Homepage
+- Flagship case study (`/work/portfolio-os`)
+- Articles landing + article detail
+- About + Contact
+- Shared primary buttons, metadata color (tech sage), author identity
+
+Out of scope: Strapi schema changes, CMS migrations, docs-route redesign, inventing content.
+
+## Approved Figma node IDs
+
+| Surface | Desktop | Tablet | Mobile | Mobile menu open |
+| --- | --- | --- | --- | --- |
+| Homepage | `213:3` | `213:250` | `213:330` | `213:1670` |
+| Flagship case study | `213:437` | `213:840` | `213:977` | `213:1777` |
+| Articles landing | `235:2` | `235:64` | `235:126` | `235:215` |
+| Article detail | `213:1135` | `213:1342` | `213:1493` | `213:1935` |
+| About | `215:2` | `215:46` | `215:85` | `217:2` |
+| Contact | `215:151` | `215:193` | `215:229` | `217:68` |
+
+## Design tokens
+
+| Token | Value | Notes |
+| --- | --- | --- |
+| `--atlas-paper` | `#F3F0E9` | Warm paper |
+| `--atlas-ink` | `#1A1814` | Ink |
+| `--atlas-umber` | `#5E4A38` | Primary CTA brown (updated from `#5c4a3a`) |
+| `--atlas-sage` | `#4A5C56` | Metadata / technical labels |
+
+Typography unchanged: Newsreader / Inter / JetBrains Mono via layout fonts.
+
+## Components changed
+
+### Chrome
+- `site-nav.tsx` — desktop/tablet link order Work · Articles · About · Contact; mobile custom hamburger + accessible dialog (Escape, focus restore, body scroll lock, social row)
+- `site-nav-active.tsx` — passes social links
+- `site-footer.tsx` — centered stack: nav · © 2026 johnschibelli.dev · icon-only socials
+- `social-icons.tsx` — LinkedIn / Facebook / Upwork / Bluesky with accessible names
+
+### Editorial
+- `atlas-button.tsx` — primary CTA + CTA pair
+- `author-identity.tsx` — portrait + name lockup
+
+### Articles
+- Featured image-led band through author + sage metadata (no Published / Read CTA)
+- Topic chips (interactive appearance; All selected)
+- Archive rows with geometric evidence thumbs; whole-row links; chronological sage meta
+- Pagination (centered, `aria-current`)
+- Cue: primary Start a conversation + Work secondary
+- Article header: author lockup; DATE / TOPIC / READING only (no STATUS)
+- Mobile prev/next: bordered full-width cards
+
+### Home / Case / About / Contact
+- Umber primary CTAs; elevated contact bridges on Home / Case / About
+- Contact form submit uses primary umber treatment
+
+## Content / CMS
+
+- Fixtures remain the e2e content source (`ATLAS_CONTENT_SOURCE=fixture`).
+- Live Strapi path preserved via existing assemblers; STATUS removed from **rendered** header meta while domain `status` field may still exist for CMS.
+- Fallback fixtures not retired.
+- Featured image: `/images/articles/featured-rsc.png` (Approval Polish export).
+- Author portrait: `/images/brand/john-schibelli-portrait.png`.
+
+## Strapi verification (this run)
+
+| Mode | Used? |
+| --- | --- |
+| Fixture (`ATLAS_CONTENT_SOURCE=fixture`) | **Yes** — Playwright + local gates |
+| Live Strapi | **Not verified** — treat as unresolved external dependency |
+| Preview | Not exercised in this milestone |
+
+Do not claim live CMS parity until network requests and rendered values prove it.
+
+## Accessibility decisions
+
+- Mobile menu: `role="dialog"`, `aria-modal`, Escape closes, focus moves into panel then restores to trigger, backdrop closes, body scroll locked while open
+- Footer socials: icon-only with `aria-label`
+- Pagination: `aria-current="page"` on current page control
+- Archive / featured: single interactive target per card (no nested Read links)
+- Primary buttons expose visible focus-visible outlines
+
+## Tests
+
+- Unit: Strapi assemble / source resolution — **pass**
+- Typecheck / lint — **pass**
+- Playwright (fixture source): **335 passed**, 16 skipped — journeys, axe AA, visual D/T/M, mobile menu-open
+- Assertions added for Publication Shape absence, no Published in featured/detail, no Read article / Proof in archive, pagination current page, footer order/socials, mobile menu order, horizontal overflow (homepage)
+- Visual baselines updated for **win32** local runners; **linux** baselines remain for CI agents to refresh if pixel drift exceeds threshold
+
+## Known deviations
+
+1. Social profile URLs for Facebook / Upwork / Bluesky are best-effort application-owned destinations; LinkedIn is confirmed `linkedin.com/in/johnschibelli`. Confirm remaining URLs before launch.
+2. Work / Docs contact bridges may still use legacy ink-inverted surfaces (not in Approval Polish page set for this pass).
+3. Article archive evidence thumbs are CSS geometric placeholders keyed by topic (matches Figma abstract diagrams), not photography.
+4. Author portrait export is small (Figma 36px source); acceptable for lockup sizes; replace with higher-res CMS asset when available.
+5. Homepage/case visual compositions largely preserve prior M4 structure with chrome/CTA/token alignment; pixel-perfect parity to every Approval Polish home/case frame may still need a follow-up pass after visual baseline review.
+
+## Remaining blockers
+
+- Live Strapi content verification
+- Confirm social destination URLs
+- Optional: Work/Docs bridge CTA unification
+- Human visual QA of updated Playwright baselines against Figma frames
+
+## GO / NO-GO
+
+**Conditional GO** for merge after PR review: automated gates are green on Windows (fixture content). Confirm social destination URLs and refresh linux visual baselines in CI if needed. Live Strapi verification remains deferred.

@@ -36,16 +36,17 @@ A shared extract is allowed only when it **does not destabilize** frozen routes.
 
 ## Fixture First (mandatory)
 
-- Ship routes against typed fixtures in `src/content/` until approved Strapi mappers exist.
+- Default to typed fixtures in `src/content/` when `ATLAS_CONTENT_SOURCE=fixture` or when Strapi is not configured — intentional for local development, Playwright, and explicit demos.
+- Approved Strapi mappers and assemblers exist in `src/lib/strapi/` (M8). When Strapi is required, failures must remain visible — **no silent fallback to fixtures** after a request failure.
 - Fixtures must mirror the planned CMS/domain shape so mappers target types — not reinvent props.
-- Do not couple UI to live CMS before the mapping layer is ready.
+- Do not couple UI to raw CMS DTOs.
 
 ## Domain model boundary (mandatory)
 
 - UI consumes **normalized domain types** only — never raw Strapi/CMS DTOs.
 - Keep transport shapes behind a data-access / mapping layer (prefer extending `@repo/strapi-client`).
 - Domain types live in `content/` (or dedicated type modules), not inside fixture data files that sections import as “the model.”
-- Production/CMS failures must degrade gracefully.
+- Production/CMS failures must remain visible when Strapi is required — use restrained error UI; do not silently swap to fixtures.
 
 ## Component structure (mandatory)
 

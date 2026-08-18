@@ -5,11 +5,13 @@ import {
   SiteNav,
   type NavActive,
 } from "@/components/chrome/site-nav";
+import type { SocialLink } from "@/content/chrome";
 import type { NavLink } from "@/content/types";
 
 type SiteNavActiveProps = {
   brand: NavLink;
   links: NavLink[];
+  socialLinks: readonly SocialLink[];
 };
 
 function activeFromPath(pathname: string): NavActive {
@@ -22,10 +24,19 @@ function activeFromPath(pathname: string): NavActive {
   return null;
 }
 
-/** Client island — route-derived aria-current only. */
-export function SiteNavActive({ brand, links }: SiteNavActiveProps) {
+/** Client island — route-derived aria-current + mobile menu. */
+export function SiteNavActive({
+  brand,
+  links,
+  socialLinks,
+}: SiteNavActiveProps) {
   const pathname = usePathname();
   return (
-    <SiteNav brand={brand} links={links} active={activeFromPath(pathname)} />
+    <SiteNav
+      brand={brand}
+      links={links}
+      socialLinks={socialLinks}
+      active={activeFromPath(pathname)}
+    />
   );
 }

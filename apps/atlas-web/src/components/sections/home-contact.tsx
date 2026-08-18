@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AtlasPrimaryButton } from "@/components/editorial/atlas-button";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import type { HomepageFixture } from "@/content/homepage";
 
@@ -6,36 +6,35 @@ type HomeContactProps = {
   data: HomepageFixture["contact"];
 };
 
+/**
+ * Home contact bridge — elevated paper field + umber primary (M9D).
+ * Fixture copy unchanged; visual treatment only.
+ */
 export function HomeContact({ data }: HomeContactProps) {
   return (
     <section
       id="contact"
       aria-labelledby="contact-title"
-      className="bg-atlas-ink text-atlas-elevated"
+      className="border-y border-[#c8beaa] bg-atlas-elevated"
     >
-      <div className="atlas-pad-x mx-auto flex max-w-[var(--atlas-page)] flex-col gap-8 py-14 tablet:flex-row tablet:items-end tablet:justify-between tablet:gap-12 desktop:py-20">
-        <div className="max-w-3xl">
-          <ChapterMarker className="mb-4 !text-atlas-secondary">
-            {data.chapter}
-          </ChapterMarker>
+      <div className="atlas-pad-x mx-auto flex max-w-[var(--atlas-page)] flex-col gap-8 py-14 tablet:flex-row tablet:items-center tablet:justify-between tablet:gap-12 desktop:py-[4.5rem]">
+        <div className="max-w-3xl space-y-3.5">
+          <ChapterMarker className="!text-atlas-sage">{data.chapter}</ChapterMarker>
           <h2
             id="contact-title"
-            className="m-0 font-display text-[1.5rem] leading-snug font-semibold text-atlas-elevated desktop:text-[1.625rem]"
+            className="m-0 font-display text-[1.5rem] leading-snug font-semibold text-atlas-ink desktop:text-[1.625rem] desktop:leading-8"
           >
             {data.title}
           </h2>
-          <p className="mt-4 mb-0 max-w-xl font-sans text-sm leading-relaxed text-atlas-secondary">
+          <p className="m-0 max-w-xl font-sans text-sm leading-relaxed text-atlas-body">
             {data.body}
           </p>
         </div>
-        <div className="flex flex-col gap-3">
-          <Link
-            href={data.cta.href}
-            className="inline-flex w-fit bg-atlas-elevated px-4 py-3 font-sans text-[13px] font-medium text-atlas-ink no-underline"
-          >
+        <div className="flex flex-col items-start gap-3">
+          <AtlasPrimaryButton href={data.cta.href} className="py-3.5">
             {data.cta.label}
-          </Link>
-          <p className="m-0 font-mono text-[11px] text-atlas-secondary">{data.meta}</p>
+          </AtlasPrimaryButton>
+          <p className="m-0 font-sans text-xs text-atlas-body">{data.meta}</p>
         </div>
       </div>
     </section>

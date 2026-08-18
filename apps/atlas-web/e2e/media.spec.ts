@@ -15,7 +15,7 @@ test.describe("production media (M7)", () => {
   test("home selected work uses real project identities", async ({ page }) => {
     await page.goto("/");
     await expect(
-      page.getByRole("heading", { name: "Shared Strapi CMS / Atlas" }),
+      page.getByRole("heading", { name: "Shared Strapi CMS" }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "IntraWeb Automation Platform" }),

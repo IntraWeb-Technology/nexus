@@ -109,7 +109,7 @@ export function ContentMapRenderDiagram({
             ))}
           </div>
           <p className="m-0 font-mono text-[11px] text-atlas-body">
-            Strapi mappers replace fixtures at M8 — domain types stay stable.
+            M8 assemblers map CMS → domain types — fixtures remain the explicit test/demo path.
           </p>
         </div>
       </div>

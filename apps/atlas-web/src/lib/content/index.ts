@@ -65,7 +65,7 @@ export async function getWorkContent(options?: ContentOptions) {
 
   const client = getAtlasStrapiClient();
   const req = requestOptions(options);
-  const [work, projects] = await Promise.all([
+  const [work, projects, caseStudies] = await Promise.all([
     withStrapi(() => client.getWorkPage(ATLAS_SITE_KEY, req)),
     withStrapi(() =>
       client.getProjects(ATLAS_SITE_KEY, {
@@ -74,9 +74,14 @@ export async function getWorkContent(options?: ContentOptions) {
         ...req,
       }),
     ),
+    withStrapi(() =>
+      client.getCaseStudies(ATLAS_SITE_KEY, { pageSize: 100, ...req }),
+    ),
   ]);
 
-  return assembleWork(requireWorkPage(work), projects.items);
+  const caseStudySlugs = new Set(caseStudies.items.map((item) => item.slug));
+
+  return assembleWork(requireWorkPage(work), projects.items, caseStudySlugs);
 }
 
 export async function getCaseStudyContent(

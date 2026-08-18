@@ -1,9 +1,9 @@
 # Atlas Build Manifest
 
 **Status:** Approved — implementation contract  
-**As of:** 2026-08-12  
+**As of:** 2026-08-13  
 **Frontend architecture:** **v1.0 frozen** — core routes proven; see [Architecture Freeze](/docs/architecture/architecture-freeze)  
-**Design status:** Atlas Design v1.0 frozen (Editorial Brand System + page family)  
+**Design status:** Atlas Design v1.0 frozen (Editorial Brand System + page family); **Approval Polish (Page 27 / §29) implemented in frontend** — see [M9D Art Direction](/docs/architecture/m9d-art-direction)  
 **Canonical Figma:** Atlas Design System (`6r1KqLmwiB8TUXjyedezom`)  
 **Homepage pilot:** Implemented — see [Homepage Pilot](/docs/architecture/homepage-pilot)  
 **Work route:** Implemented — see [Work Route](/docs/architecture/work-route)  
@@ -11,11 +11,11 @@
 **About + Contact:** Implemented — see [About + Contact Route](/docs/architecture/about-contact-route)  
 **Articles / Editorial Publishing:** Implemented — see [Editorial Publishing (M5)](/docs/architecture/editorial-publishing)  
 **Documentation:** Implemented — see [Documentation System (M6)](/docs/architecture/documentation-system)  
-**Next milestone:** **M9 — Hardening** (after M8 COMPLETE; A-05 remains deferred)
+**Next milestone:** **M9 — Hardening** (M9D art-direction slice implemented; A-05 remains deferred)
 
 ---
 
-## Current status (2026-08-12)
+## Current status (2026-08-13)
 
 | Milestone | Status |
 | --- | --- |
@@ -31,10 +31,10 @@
 | **M7 — Production Assets** | **COMPLETE** — Freeze **PASS** |
 | Production Asset Freeze | **PASS** (A-05 **DEFERRED / NON-BLOCKING**) |
 | **M8 — Strapi Integration** | **COMPLETE** — see [M8 Strapi Integration](/docs/architecture/m8-strapi-integration) |
-| **M9 — Hardening** | Planned |
+| **M9 — Hardening** | **In progress** — **M9D Art Direction** implemented ([report](/docs/architecture/m9d-art-direction)); remaining hardening gates continue |
 | **M10 — Launch** | Planned |
 
-**Program posture:** M8 CMS contract implemented. Documentation Freeze **PASSED**. Production Asset Freeze **PASS**. Content source: Strapi when `STRAPI_URL` is set; explicit fixture mode for tests (`ATLAS_CONTENT_SOURCE=fixture`). **A-05 Vehicle Maintenance** media remains **deferred** (no approved production source; substitute evidence forbidden). Do not reopen M0–M8 without a material defect. Next: **M9 — Hardening**.
+**Program posture:** M8 implemented the Strapi schemas, client contract, content assemblers, and integration code in `apps/atlas-web/src/lib/strapi/` and `@repo/strapi-client`. **Authentic frontend-visible CMS delivery remains unverified** until a reachable Strapi instance is populated and traced through Atlas. **M9D** brings Approval Polish into `atlas-web` chrome, Articles, and shared CTAs. Content source: Strapi when `STRAPI_URL` is set (fail-closed — no silent fixture fallback); explicit fixture mode for local development, Playwright, and demos (`ATLAS_CONTENT_SOURCE=fixture`). **A-05 Vehicle Maintenance** media remains **deferred**.
 
 ### Milestone scheme note
 
@@ -46,7 +46,7 @@ Earlier implementation reports used an implementation-local numbering (**M0 Foun
 
 | Layer | Source of truth |
 | --- | --- |
-| Visual identity & page composition | Figma pages 15–26 (frozen) |
+| Visual identity & page composition | Figma pages 15–26 (frozen) + **Page 27 Approval Polish (§29)** for M9D chrome/Articles polish |
 | Product / CMS / frontend rules | Nexus Cursor rules (`atlas-*`, `no-overengineering`, `nexus-architecture`) |
 | Implementation contract | **This Build Manifest** |
 | Monorepo CI / deploy | `/docs/architecture/*` |
@@ -205,7 +205,7 @@ apps/atlas-web/src/
 └── e2e/                        # Playwright (homepage, work, case-study, about, contact)
 ```
 
-No `packages/atlas-*`. No `lib/strapi` yet (deferred until live CMS). Flat `app/` is acceptable; `(site)` group remains optional.
+No `packages/atlas-*`. `lib/strapi/` assemblers and content loaders are implemented (M8). Flat `app/` is acceptable; `(site)` group remains optional.
 
 ### Route structure
 
@@ -678,9 +678,9 @@ At minimum, M5 must validate the system’s ability to support representative pr
 
 **Do not** require every Page 26 primitive to appear artificially in every article. Prove the reusable publishing system — not a component showcase.
 
-#### Representative fixture content (fixture-first)
+#### Representative fixture content (historical — pre-M8)
 
-Atlas remains fixture-first at M5. **Do not** pull Strapi earlier. Fixtures must be realistic enough to expose layout and content-system problems — **not** lorem ipsum as primary validation content.
+**Historical snapshot (pre-M8):** Atlas was fixture-first through M7. Fixtures remain the explicit test/demo path and must mirror the CMS/domain shape. They are not proof of live CMS delivery when `ATLAS_CONTENT_SOURCE=fixture` or when `STRAPI_URL` is unset.
 
 Require representative article fixtures covering at least:
 
@@ -865,7 +865,7 @@ flowchart TD
 
 ### Verdict
 
-**M0–M7 are complete.** Editorial System Freeze Gate **PASSED**. Documentation Freeze **PASSED**. Production Asset Freeze **PASS**. Frontend architecture v1.0 remains frozen for proven core routes; see [Architecture Freeze](/docs/architecture/architecture-freeze). Articles publishing report: [Editorial Publishing (M5)](/docs/architecture/editorial-publishing). Documentation report: [Documentation System (M6)](/docs/architecture/documentation-system). Production assets report: [Production Assets (M7)](/docs/architecture/production-assets). **A-05** is consciously **DEFERRED / NON-BLOCKING**. Strapi remains deferred to **M8**; fixtures continue to document editorial field shapes. Do not reopen M0–M7 without a material defect. Do not start Strapi or Launch side quests outside Manifest order.
+**M0–M7 are complete.** Editorial System Freeze Gate **PASSED**. Documentation Freeze **PASSED**. Production Asset Freeze **PASS**. Frontend architecture v1.0 remains frozen for proven core routes; see [Architecture Freeze](/docs/architecture/architecture-freeze). **M8 — Strapi Integration** is **contract and integration-code complete** — schemas, client, assemblers, and loaders ship in-repo; **authentic frontend-visible CMS delivery remains unverified** until populated Strapi content is traced through Atlas. **M9 — Hardening** continues (M9D implemented; full program not complete). **A-05** is consciously **DEFERRED / NON-BLOCKING**. Do not reopen M0–M7 without a material defect.
 
 ---
 
