@@ -13,6 +13,10 @@ import {
   mapDocKind,
   mapDocPublishingSections,
 } from "@/lib/strapi/assemble-shared";
+import {
+  buildHandbookCategoryItems,
+  DOCS_CROSS_LINK_ITEMS,
+} from "@/lib/strapi/docs-index-categories";
 
 function toDocSummary(article: Article): DocSummary {
   const category = mapDocCategory(article.categories);
@@ -49,6 +53,8 @@ export function assembleDocsIndex(articles: Article[]): DocsIndexFixture {
     .sort((a, b) =>
       a.updatedDate < b.updatedDate ? 1 : a.updatedDate > b.updatedDate ? -1 : 0,
     );
+  const handbookSummaries =
+    recentlyUpdated.length > 0 ? recentlyUpdated : docsByUpdatedDesc();
 
   return {
     site: ATLAS_SITE,
@@ -71,68 +77,13 @@ export function assembleDocsIndex(articles: Article[]): DocsIndexFixture {
     categories: {
       chapter: "CATEGORIES",
       items: [
-        {
-          id: "architecture",
-          eyebrow: "SECTION",
-          title: "Architecture",
-          description: "System boundaries, contracts, diagrams",
-          href: "/docs/atlas-architecture",
-        },
-        {
-          id: "design-system",
-          eyebrow: "SECTION",
-          title: "Design System",
-          description: "Tokens, type, surfaces, motion",
-          href: "/docs/design-system",
-        },
-        {
-          id: "frontend",
-          eyebrow: "SECTION",
-          title: "Frontend",
-          description: "App Router, fixtures, islands",
-          href: "/docs/frontend-architecture",
-        },
-        {
-          id: "testing",
-          eyebrow: "SECTION",
-          title: "Testing",
-          description: "Playwright, a11y, CI proof",
-          href: "/docs/testing-strategy",
-        },
-        {
-          id: "publishing",
-          eyebrow: "SECTION",
-          title: "Publishing",
-          description: "Editorial primitives and IA",
-          href: "/docs/editorial-system",
-        },
-        {
-          id: "articles",
-          eyebrow: "SECTION",
-          title: "Articles",
-          description: "Chronological engineering journal",
-          href: "/articles",
-        },
-        {
-          id: "work",
-          eyebrow: "SECTION",
-          title: "Case Studies",
-          description: "Evidence-based project records",
-          href: "/work",
-        },
-        {
-          id: "recent",
-          eyebrow: "SECTION",
-          title: "Recently Updated",
-          description: "Changelog of handbook pages",
-          href: "#recently-updated",
-        },
+        ...buildHandbookCategoryItems(handbookSummaries),
+        ...DOCS_CROSS_LINK_ITEMS,
       ],
     },
     recentlyUpdated: {
       chapter: "RECENTLY UPDATED",
-      items:
-        recentlyUpdated.length > 0 ? recentlyUpdated : docsByUpdatedDesc(),
+      items: handbookSummaries,
     },
     progressNote: {
       chapter: "READING PROGRESS",
