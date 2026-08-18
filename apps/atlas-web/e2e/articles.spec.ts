@@ -87,22 +87,14 @@ test.describe("articles index", () => {
     ).toBeVisible();
   });
 
-  test("topic chips are interactive with All selected by default", async ({
-    page,
-  }) => {
+  test("topic labels are noninteractive taxonomy", async ({ page }) => {
     await page.goto("/articles");
     const topics = page.getByLabel("Topics");
     await expect(topics).toBeVisible();
-    const all = topics.getByRole("button", { name: "All" });
-    await expect(all).toHaveAttribute("aria-pressed", "true");
-    await expect(all).toHaveAttribute("aria-current", "true");
-    await expect(topics.getByRole("button")).toHaveCount(6);
-
-    await topics.getByRole("button", { name: "Architecture" }).click();
-    await expect(
-      topics.getByRole("button", { name: "Architecture" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await expect(all).toHaveAttribute("aria-pressed", "false");
+    await expect(topics.getByRole("button")).toHaveCount(0);
+    await expect(topics.getByRole("link")).toHaveCount(0);
+    await expect(topics.locator("li")).toHaveCount(6);
+    await expect(topics.locator("li").first()).toContainText("All");
   });
 
   test("featured metadata has no Published status", async ({ page }) => {
@@ -177,14 +169,12 @@ test.describe("articles index", () => {
     await expect(cue.getByRole("link", { name: /LinkedIn|Facebook|Bluesky|Upwork/i })).toHaveCount(0);
   });
 
-  test("pagination exposes current page accessibly", async ({ page }) => {
+  test("does not advertise fictional archive pagination", async ({ page }) => {
     await page.goto("/articles");
-    const pagination = page.getByRole("navigation", { name: "ARCHIVE PAGES" });
-    await expect(pagination).toBeVisible();
     await expect(
-      pagination.getByRole("link", { name: "Page 1" }),
-    ).toHaveAttribute("aria-current", "page");
-    await expect(pagination).toContainText("Page 1 of 3");
+      page.getByRole("navigation", { name: "ARCHIVE PAGES" }),
+    ).toHaveCount(0);
+    await expect(page.getByText("Page 1 of 3")).toHaveCount(0);
   });
 
   test("skip link moves focus to main", async ({ page }) => {
@@ -226,7 +216,7 @@ test.describe("articles index", () => {
     await page.goto("/articles");
     await page.getByRole("button", { name: "Open menu" }).click();
     await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
-    await expect(page).toHaveScreenshot("articles-mobile-menu-open.png", {
+    await expect(page).toHaveScreenshot(`articles-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,
     });

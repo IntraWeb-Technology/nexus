@@ -1,21 +1,11 @@
-"use client";
-
-import { useState } from "react";
 import type { ArticlesIndexFixture } from "@/content/article";
 
 type ArticlesTopicRowProps = {
   data: ArticlesIndexFixture["topics"];
 };
 
-/**
- * Interactive topic chips — selected state is visual-only for M9D.
- * Filtering against CMS taxonomy waits for a later milestone.
- */
+/** Editorial taxonomy labels — noninteractive until filtering ships. */
 export function ArticlesTopicRow({ data }: ArticlesTopicRowProps) {
-  const defaultId =
-    data.items.find((item) => item.active)?.id ?? data.items[0]?.id ?? "all";
-  const [selectedId, setSelectedId] = useState(defaultId);
-
   return (
     <section
       aria-label="Topics"
@@ -26,31 +16,16 @@ export function ArticlesTopicRow({ data }: ArticlesTopicRowProps) {
           {data.label}
         </p>
 
-        <div
-          role="group"
-          aria-label="Filter by topic"
-          className="flex flex-wrap gap-2"
-        >
-          {data.items.map((item) => {
-            const selected = item.id === selectedId;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={selected}
-                aria-current={selected ? "true" : undefined}
-                onClick={() => setSelectedId(item.id)}
-                className={
-                  selected
-                    ? "rounded-full border border-atlas-umber bg-atlas-umber px-3.5 py-1.5 font-sans text-xs font-medium text-atlas-paper"
-                    : "rounded-full border border-atlas-border bg-atlas-paper px-3.5 py-1.5 font-sans text-xs font-medium text-atlas-ink"
-                }
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
+        <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
+          {data.items.map((item) => (
+            <li
+              key={item.id}
+              className="rounded-full border border-atlas-border bg-atlas-paper px-3.5 py-1.5 font-sans text-xs font-medium text-atlas-ink"
+            >
+              {item.label}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

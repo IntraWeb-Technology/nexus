@@ -24,7 +24,9 @@ export default async function ArticlesPage() {
       <ArticlesTopicRow data={data.topics} />
       <ArticlesFeatured data={data.featured} />
       <ArticlesList data={data.list} />
-      <ArticlesPaginationNav data={data.pagination} />
+      {data.pagination ? (
+        <ArticlesPaginationNav data={data.pagination} />
+      ) : null}
       <ArticlesCue data={data.cue} />
     </main>
   );

@@ -53,14 +53,6 @@ export const articlesIndexFixture: ArticlesIndexFixture = {
     headline: "Newest first.",
     articles: listArticles,
   },
-  pagination: {
-    label: "ARCHIVE PAGES",
-    currentPage: 1,
-    totalPages: 3,
-    pages: [1, 2, 3],
-    newerHref: null,
-    olderHref: "?page=2",
-  },
   cue: {
     chapter: "CONTINUE",
     title: "Prefer a conversation over a list.",

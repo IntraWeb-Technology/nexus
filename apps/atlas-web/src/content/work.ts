@@ -34,8 +34,10 @@ export type WorkProject = {
   mediaWidth?: number;
   mediaHeight?: number;
   mediaSizes?: string;
-  href: string;
-  ctaLabel: string;
+  /** Set only when `/work/[slug]` case study is implemented. */
+  href?: string;
+  /** Navigation CTA — rendered only when `href` is set. */
+  ctaLabel?: string;
   metaNote?: string;
 };
 
@@ -206,8 +208,6 @@ export const workFixture: WorkFixture = {
         mediaWidth: 1520,
         mediaHeight: 860,
         mediaSizes: "(min-width: 1440px) 760px, 100vw",
-        href: "/work/shared-strapi-cms",
-        ctaLabel: "View project →",
       },
       {
         id: "intraweb-automation",
@@ -229,8 +229,6 @@ export const workFixture: WorkFixture = {
         mediaWidth: 1120,
         mediaHeight: 640,
         mediaSizes: "(min-width: 1440px) 560px, 100vw",
-        href: "/work/intraweb-automation",
-        ctaLabel: "View project →",
       },
       {
         id: "vehicle-maintenance",
@@ -247,8 +245,6 @@ export const workFixture: WorkFixture = {
         featured: false,
         layout: "band",
         // A-05 deferred — no approved production source; intentional no-media band.
-        href: "/work/vehicle-maintenance",
-        ctaLabel: "View →",
         metaNote: "systems note",
       },
     ],

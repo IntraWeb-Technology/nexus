@@ -236,7 +236,7 @@ export type ArticlesIndexFixture = {
     headline: string;
     articles: ArticleSummary[];
   };
-  pagination: ArticlesPagination;
+  pagination?: ArticlesPagination | null;
   cue: {
     chapter: string;
     title: string;

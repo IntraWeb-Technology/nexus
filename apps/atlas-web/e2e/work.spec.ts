@@ -64,6 +64,34 @@ test.describe("work index", () => {
     await expect(cta).toBeFocused();
   });
 
+  test("selected work links only resolve to implemented case studies", async ({
+    page,
+  }) => {
+    await page.goto("/work");
+
+    await expect(page.getByRole("link", { name: "Read case study" })).toHaveAttribute(
+      "href",
+      "/work/portfolio-os",
+    );
+
+    for (const href of [
+      "/work/shared-strapi-cms",
+      "/work/intraweb-automation",
+      "/work/vehicle-maintenance",
+    ]) {
+      await expect(page.locator(`a[href="${href}"]`)).toHaveCount(0);
+    }
+  });
+
+  test("portfolio-os case study resolves from featured CTA", async ({ page }) => {
+    await page.goto("/work");
+    await page.getByRole("link", { name: "Read case study" }).first().click();
+    await expect(page).toHaveURL(/\/work\/portfolio-os$/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: /Portfolio OS/i }),
+    ).toBeVisible();
+  });
+
   test("has no serious accessibility violations", async ({ page }) => {
     await page.goto("/work");
     const results = await new AxeBuilder({ page })
