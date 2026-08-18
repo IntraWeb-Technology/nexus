@@ -19,8 +19,8 @@ test.describe("contact", () => {
 
     await expect(page.getByLabel("NAME")).toBeVisible();
     await expect(page.getByLabel("EMAIL")).toBeVisible();
-    await expect(page.getByLabel("MESSAGE")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Send" })).toBeVisible();
+    await expect(page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send inquiry" })).toBeVisible();
   });
 
   test("marks Contact as the current nav item", async ({ page }, testInfo) => {
@@ -48,7 +48,7 @@ test.describe("contact", () => {
 
   test("shows validation errors on empty submit", async ({ page }) => {
     await page.goto("/contact");
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByRole("button", { name: "Send inquiry" }).click();
 
     await expect(page.getByRole("alert").first()).toBeVisible();
     await expect(page.getByText(/required|valid email/i).first()).toBeVisible();
@@ -66,8 +66,10 @@ test.describe("contact", () => {
     await page.goto("/contact");
     await page.getByLabel("NAME").fill("Test Visitor");
     await page.getByLabel("EMAIL").fill("visitor@example.com");
-    await page.getByLabel("MESSAGE").fill("Hello — checking the Atlas contact path.");
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?").fill(
+      "Hello — checking the Atlas contact path.",
+    );
+    await page.getByRole("button", { name: "Send inquiry" }).click();
 
     await expect(page.getByRole("status")).toContainText("Message sent.");
   });
@@ -88,8 +90,8 @@ test.describe("contact", () => {
     await page.goto("/contact");
     await page.getByLabel("NAME").fill("Test Visitor");
     await page.getByLabel("EMAIL").fill("visitor@example.com");
-    await page.getByLabel("MESSAGE").fill("Force failure path.");
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?").fill("Force failure path.");
+    await page.getByRole("button", { name: "Send inquiry" }).click();
 
     await expect(
       page.getByRole("main").getByRole("alert").filter({
@@ -102,12 +104,11 @@ test.describe("contact", () => {
     await page.goto("/contact");
     await page.getByLabel("NAME").fill("Bot");
     await page.getByLabel("EMAIL").fill("bot@example.com");
-    await page.getByLabel("MESSAGE").fill("Spam payload");
-    // Fill honeypot via DOM (visually hidden)
+    await page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?").fill("Spam payload");
     await page.locator('input[name="company"]').evaluate((el: HTMLInputElement) => {
       el.value = "http://spam.example";
     });
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByRole("button", { name: "Send inquiry" }).click();
     await expect(page.getByRole("status")).toContainText("Message sent.");
   });
 
@@ -138,7 +139,7 @@ test.describe("contact", () => {
     await page.goto("/contact");
     await page.getByRole("button", { name: "Open menu" }).click();
     await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
-    await expect(page).toHaveScreenshot("contact-mobile-menu-open.png", {
+    await expect(page).toHaveScreenshot(`contact-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,
     });

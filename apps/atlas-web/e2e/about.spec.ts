@@ -2,27 +2,26 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { expectCurrentNavLink } from "./helpers/nav";
 
+const APPROVED_HEADLINE =
+  "I’m a senior software engineer working across product development, architecture, testing, and automation.";
+
 test.describe("about", () => {
-  test("renders primary landmarks and sections", async ({ page }) => {
+  test("renders primary landmarks and approved sections", async ({ page }) => {
     await page.goto("/about");
 
     await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("contentinfo")).toBeVisible();
 
-    await expect(
-      page.getByRole("heading", {
-        level: 1,
-        name: "An engineer’s editorial profile.",
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", {
-        level: 2,
-        name: "Observe → Bound → Decide → Prove.",
-      }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: APPROVED_HEADLINE })).toBeVisible();
+
+    await expect(page.getByText("CAREER ARC", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("HOW I WORK", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("CURRENT FOCUS", { exact: true }).first()).toBeVisible();
     await expect(page.locator("#contact")).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Start a conversation" }),
+    ).toBeVisible();
   });
 
   test("marks About as the current nav item", async ({ page }, testInfo) => {
@@ -73,7 +72,7 @@ test.describe("about", () => {
     await page.goto("/about");
     await page.getByRole("button", { name: "Open menu" }).click();
     await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
-    await expect(page).toHaveScreenshot("about-mobile-menu-open.png", {
+    await expect(page).toHaveScreenshot(`about-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,
     });

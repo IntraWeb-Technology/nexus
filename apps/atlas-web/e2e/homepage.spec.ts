@@ -36,6 +36,14 @@ test.describe("homepage", () => {
     await expect(
       page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "Contact", exact: true }),
     ).toBeVisible();
+  });
+
+  test("visual regression — mobile menu open", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "Mobile hamburger only");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
     await expect(page).toHaveScreenshot(`homepage-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,
@@ -126,18 +134,6 @@ test.describe("homepage", () => {
     await page.waitForLoadState("networkidle");
     await expect(page).toHaveScreenshot(`homepage-${testInfo.project.name}.png`, {
       fullPage: true,
-      maxDiffPixelRatio: 0.02,
-    });
-  });
-
-  test("visual regression — mobile menu open", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== "mobile", "Mobile hamburger only");
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
-    await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
-    await expect(page).toHaveScreenshot("homepage-mobile-menu-open.png", {
-      fullPage: false,
       maxDiffPixelRatio: 0.02,
     });
   });
