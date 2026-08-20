@@ -37,6 +37,60 @@ const APPLICATION_STATIC_SKIP = [
 
 const DEFERRED_MEDIA = new Set(["A-05", "PA-DOC2", "PA-DOC3", "PA-DOC4", "PA-DOC5"]);
 
+function mapCaseDecisions(
+  decisions: unknown,
+): Array<Record<string, string | undefined>> | undefined {
+  if (!decisions || typeof decisions !== "object") return undefined;
+  const items = (decisions as { items?: unknown[] }).items;
+  if (!Array.isArray(items)) return undefined;
+  return items.map((item) => {
+    const row = item as Record<string, string | undefined>;
+    return {
+      decisionId: row.id ?? "",
+      statement: row.statement ?? "",
+      statementTablet: row.statementTablet,
+      statementMobile: row.statementMobile,
+      context: row.context ?? "",
+      choice: row.choice ?? "",
+      tradeoff: row.tradeoff ?? "",
+      consequence: row.consequence ?? "",
+    };
+  });
+}
+
+function mapProseSection(section: unknown): Record<string, unknown> | undefined {
+  if (!section || typeof section !== "object") return undefined;
+  const s = section as Record<string, unknown>;
+  const paragraphs =
+    s.paragraphs ?? (typeof s.intro === "string" ? [s.intro] : undefined);
+  if (!paragraphs) return undefined;
+  const mapped: Record<string, unknown> = {
+    chapter: s.chapter,
+    title: s.title,
+    paragraphs,
+  };
+  if (s.titleMobile) mapped.titleMobile = s.titleMobile;
+  if (s.paragraphsTablet) mapped.paragraphsTablet = s.paragraphsTablet;
+  else if (s.introTablet) mapped.paragraphsTablet = [s.introTablet];
+  if (s.bodyMobile) mapped.bodyMobile = s.bodyMobile;
+  else if (s.introMobile) mapped.bodyMobile = s.introMobile;
+  if (s.intro) mapped.intro = s.intro;
+  return mapped;
+}
+
+function mapSeo(seo: unknown): Record<string, string> | undefined {
+  if (!seo || typeof seo !== "object") return undefined;
+  const s = seo as Record<string, unknown>;
+  const metaTitle = s.metaTitle ?? s.title;
+  const metaDescription = s.metaDescription ?? s.description;
+  if (!metaTitle && !metaDescription) return undefined;
+  const mapped: Record<string, string> = {};
+  if (metaTitle) mapped.metaTitle = String(metaTitle);
+  if (metaDescription) mapped.metaDescription = String(metaDescription);
+  if (s.canonicalUrl) mapped.canonicalUrl = String(s.canonicalUrl);
+  return mapped;
+}
+
 function productionMedia(input: {
   alt: string;
   kind: string;
@@ -143,21 +197,108 @@ function mapFigureBlock(block: Record<string, unknown> | undefined): PublishingM
   return undefined;
 }
 
+function mapPublishingSection(section: unknown, omitFigureWhenMissing = false): Record<string, unknown> {
+  const s = { ...(section as Record<string, unknown>) };
+  if (s.id && !s.sectionId) {
+    s.sectionId = s.id;
+    delete s.id;
+  }
+  const figure = mapFigureBlock(s.figure as Record<string, unknown> | undefined);
+  if (figure) s.figure = figure;
+  else if (omitFigureWhenMissing) delete s.figure;
+  return s;
+}
+
 function mapArticleSections(sections: unknown[]): unknown[] {
-  return sections.map((section) => {
-    const s = section as Record<string, unknown>;
-    const figure = mapFigureBlock(s.figure as Record<string, unknown> | undefined);
-    return figure ? { ...s, figure: { media: figure } } : s;
-  });
+  return sections.map((section) => mapPublishingSection(section));
 }
 
 function mapDocSections(sections: unknown[]): unknown[] {
-  return sections.map((section) => {
-    const s = section as Record<string, unknown>;
-    const figure = mapFigureBlock(s.figure as Record<string, unknown> | undefined);
-    // PA-DOC2–5 deferred — omit figure media when no src/composed key is present
-    return figure ? { ...s, figure: { media: figure } } : { ...s, figure: undefined };
-  });
+  return sections.map((section) => mapPublishingSection(section, true));
+}
+
+function mapWorkTaxonomy(taxonomy: unknown): Record<string, unknown> {
+  const t = { ...(taxonomy as Record<string, unknown>) };
+  if (t.categories && !t.groups) {
+    t.groups = t.categories;
+    delete t.categories;
+  }
+  return t;
+}
+
+function mapWorkIntro(intro: unknown): Record<string, unknown> {
+  const i = { ...(intro as Record<string, unknown>) };
+  const note = i.editorialNote as { label?: string; body?: string } | undefined;
+  delete i.editorialNote;
+  if (note?.label) i.editorialNoteLabel = note.label;
+  if (note?.body) i.editorialNoteBody = note.body;
+  return i;
+}
+
+function mapBridge(bridge: unknown): Record<string, unknown> {
+  const b = { ...(bridge as Record<string, unknown>) };
+  if (b.bodyCondensed && !b.bodyCompact) b.bodyCompact = b.bodyCondensed;
+  if (b.bodyMobile && !b.bodyCompact) b.bodyCompact = b.bodyMobile;
+  delete b.bodyCondensed;
+  delete b.bodyMobile;
+  if (b.secondaryCta && !b.workLink) {
+    b.workLink = b.secondaryCta;
+    delete b.secondaryCta;
+  }
+  return b;
+}
+
+function mapAboutOpening(opening: unknown): Record<string, unknown> {
+  const o = { ...(opening as Record<string, unknown>) };
+  const margin = o.marginNote as { label?: string; body?: string } | undefined;
+  delete o.marginNote;
+  if (margin?.label) o.marginNoteLabel = margin.label;
+  if (margin?.body) o.marginNoteBody = margin.body;
+  return o;
+}
+
+function mapFeaturedWithFigure(
+  source: Record<string, unknown>,
+): Record<string, unknown> {
+  const {
+    figureAlt,
+    figureCaption,
+    figureCaptionShort,
+    figureSrc,
+    figureSizes,
+    figureWidth,
+    figureHeight,
+    figureCompactAlt,
+    figureCompactCaption,
+    figureCompactSrc,
+    figureSrcCompact,
+    figureCompactSizes,
+    figureWidthCompact,
+    figureHeightCompact,
+    ...rest
+  } = source;
+  const mapped: Record<string, unknown> = { ...rest };
+  const compactSrc = figureCompactSrc ?? figureSrcCompact;
+  if (figureSrc) {
+    mapped.figure = productionMedia({
+      alt: String(figureAlt ?? ""),
+      kind: "application-screenshot",
+      caption: figureCaption ? String(figureCaption) : undefined,
+      captionShort: figureCaptionShort ? String(figureCaptionShort) : undefined,
+      sizes: figureSizes ? String(figureSizes) : undefined,
+      sourcePath: String(figureSrc),
+    });
+  }
+  if (compactSrc) {
+    mapped.figureCompact = productionMedia({
+      alt: String(figureCompactAlt ?? figureAlt ?? ""),
+      kind: "application-screenshot",
+      caption: figureCompactCaption ? String(figureCompactCaption) : undefined,
+      sizes: figureCompactSizes ? String(figureCompactSizes) : undefined,
+      sourcePath: String(compactSrc),
+    });
+  }
+  return mapped;
 }
 
 function slugFromWorkFeatured(work: AtlasFixtures["workFixture"]): string {
@@ -367,17 +508,17 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
         heroMeta: (caseStudy.hero as { meta?: unknown[] })?.meta,
         toc: caseStudy.toc,
         overview: caseStudy.overview,
-        problem: caseStudy.problem,
+        problem: mapProseSection(caseStudy.problem),
         constraints: caseStudy.constraints,
         architecture: caseStudy.architecture,
-        decisions: caseStudy.decisions,
-        implementation: caseStudy.implementation,
+        decisions: mapCaseDecisions(caseStudy.decisions),
+        implementation: mapProseSection(caseStudy.implementation),
         delivery: caseStudy.delivery,
         outcomes: caseStudy.outcomes,
         lessons: caseStudy.lessons,
         figureSlots,
         sites: [{ key: ATLAS_SITE_KEY }],
-        seo: caseStudy.seo,
+        seo: mapSeo(caseStudy.seo),
         migrationBatch: batchId,
       },
     });
@@ -404,9 +545,9 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
         dek: (detail.header as { dek?: string })?.dek,
         headerMeta: (detail.header as { meta?: unknown[] })?.meta,
         sections: mapArticleSections((detail.sections as unknown[]) ?? []),
-        contactBridge: detail.contact,
+        contactBridge: mapBridge(detail.contact),
         sites: [{ key: ATLAS_SITE_KEY }],
-        seo: detail.seo,
+        seo: mapSeo(detail.seo),
         migrationBatch: batchId,
       },
     });
@@ -431,9 +572,9 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
         headerChapter: (detail.header as { chapter?: string })?.chapter,
         dek: (detail.header as { dek?: string })?.dek,
         sections: mapDocSections((detail.sections as unknown[]) ?? []),
-        contactBridge: detail.contact,
+        contactBridge: mapBridge(detail.contact),
         sites: [{ key: ATLAS_SITE_KEY }],
-        seo: detail.seo,
+        seo: mapSeo(detail.seo),
         migrationBatch: batchId,
       },
     });
@@ -445,7 +586,7 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
     key: ATLAS_SITE_KEY,
     payload: {
       site: { key: ATLAS_SITE_KEY },
-      seo: homepage.seo ?? { metaTitle: "Atlas", metaDescription: "Atlas home" },
+      seo: mapSeo(homepage.seo) ?? { metaTitle: "Atlas", metaDescription: "Atlas home" },
       hero: {
         chapter: homepage.hero.chapter,
         title: homepage.hero.title,
@@ -465,20 +606,7 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
             }
           : {}),
       },
-      featured: {
-        ...(homepage.featured as Record<string, unknown>),
-        ...(homepage.featured.figureSrc
-          ? {
-              figure: productionMedia({
-                alt: homepage.featured.figureAlt,
-                kind: "application-screenshot",
-                caption: homepage.featured.figureCaption,
-                sizes: homepage.featured.figureSizes,
-                sourcePath: homepage.featured.figureSrc,
-              }),
-            }
-          : {}),
-      },
+      featured: mapFeaturedWithFigure(homepage.featured as Record<string, unknown>),
       featuredProject: { slug: flagshipSlug },
       selected: homepage.selected.projects.map((p) => ({
         layout: p.layout,
@@ -486,23 +614,20 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
         outcome: p.outcome,
         ctaLabel: p.ctaLabel,
         project: { slug: p.id },
-        ...(p.mediaSrc
-          ? {
-              media: productionMedia({
-                alt: p.mediaAlt ?? p.title,
-                kind: "architecture-diagram",
-                sizes: p.mediaSizes,
-                sourcePath: p.mediaSrc,
-              }),
-            }
-          : {}),
       })),
       philosophy: homepage.philosophy,
       writingChapter: homepage.writing.chapter,
-      writingItems: homepage.writing.items,
-      aboutTeaser: homepage.about,
-      contactBridge: homepage.contact,
-      migrationBatch: batchId,
+      writingItems: homepage.writing.items.map((item) => ({
+        note: item.note,
+        article: { slug: item.href.replace(/^\/articles\//, "") },
+      })),
+      aboutTeaser: {
+        chapter: homepage.about.chapter,
+        summary: homepage.about.summary,
+        href: homepage.about.href,
+        cta: link(homepage.about.ctaLabel, homepage.about.href),
+      },
+      contactBridge: mapBridge(homepage.contact),
     },
   });
 
@@ -512,8 +637,8 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
     key: ATLAS_SITE_KEY,
     payload: {
       site: { key: ATLAS_SITE_KEY },
-      seo: about.seo,
-      opening: about.opening,
+      seo: mapSeo(about.seo),
+      opening: mapAboutOpening(about.opening),
       philosophy: about.philosophy,
       approach: {
         ...(about.approach as Record<string, unknown>),
@@ -539,8 +664,7 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
         }),
       },
       notes: about.notes,
-      contactBridge: about.contact,
-      migrationBatch: batchId,
+      contactBridge: mapBridge(about.contact),
     },
   });
 
@@ -549,30 +673,15 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
     key: ATLAS_SITE_KEY,
     payload: {
       site: { key: ATLAS_SITE_KEY },
-      seo: work.seo,
-      intro: work.intro,
+      seo: mapSeo(work.seo),
+      intro: mapWorkIntro(work.intro),
       featuredProject: { slug: flagshipSlug },
-      featuredCopy: {
-        ...(work.featured as Record<string, unknown>),
-        ...(work.featured.figureSrc
-          ? {
-              figure: productionMedia({
-                alt: work.featured.figureAlt,
-                kind: "application-screenshot",
-                caption: work.featured.figureCaption,
-                captionShort: work.featured.figureCaptionShort,
-                sizes: work.featured.figureSizes,
-                sourcePath: work.featured.figureSrc,
-              }),
-            }
-          : {}),
-      },
+      featuredCopy: mapFeaturedWithFigure(work.featured as Record<string, unknown>),
       selectedChapter: (work.selected as { chapter?: string }).chapter,
       selectedHeadline: (work.selected as { headline?: string }).headline,
       selectedDeck: (work.selected as { deck?: string }).deck,
-      taxonomy: work.taxonomy,
-      contactBridge: work.contact,
-      migrationBatch: batchId,
+      taxonomy: mapWorkTaxonomy(work.taxonomy),
+      contactBridge: mapBridge(work.contact),
     },
   });
 
@@ -582,7 +691,7 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
     key: ATLAS_SITE_KEY,
     payload: {
       site: { key: ATLAS_SITE_KEY },
-      seo: contact.seo,
+      seo: mapSeo(contact.seo),
       chapter: contact.chapter,
       title: contact.title,
       body: contact.body,
@@ -598,7 +707,6 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
       successBody: (contact.success as { body: string }).body,
       failureTitle: (contact.failure as { title: string }).title,
       failureBody: (contact.failure as { body: string }).body,
-      migrationBatch: batchId,
     },
   });
 
