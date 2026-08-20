@@ -74,10 +74,18 @@ async function attachSiteRelations(
           const project = await findOne("projects", { slug: { $eq: slug } });
           if (project?.documentId) copy.project = project.documentId;
         }
-        if (copy.media && typeof copy.media === "object") {
-          const media = { ...(copy.media as Record<string, unknown>) };
-          delete media._sourcePath;
-          copy.media = media;
+        return copy;
+      }),
+    );
+  }
+  if (Array.isArray(next.writingItems)) {
+    next.writingItems = await Promise.all(
+      (next.writingItems as Array<Record<string, unknown>>).map(async (item) => {
+        const copy = { ...item };
+        if (copy.article && typeof copy.article === "object" && "slug" in (copy.article as object)) {
+          const slug = (copy.article as { slug: string }).slug;
+          const article = await findOne("articles", { slug: { $eq: slug } });
+          if (article?.documentId) copy.article = article.documentId;
         }
         return copy;
       }),
