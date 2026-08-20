@@ -103,7 +103,7 @@ test.describe("articles index", () => {
       level: 2,
       name: "Why We Chose React Server Components",
     }).locator("..");
-    await expect(featured).toContainText(/2025-04-02/);
+    await expect(featured).toContainText(/Apr 2, 2025/);
     await expect(featured).toContainText(/Architecture/);
     await expect(featured).toContainText(/14 min/);
     await expect(featured).not.toContainText(/Published/i);
