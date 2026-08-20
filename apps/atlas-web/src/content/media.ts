@@ -20,8 +20,8 @@ export const mediaAssets = {
   /** A-01 — Home hero Portfolio OS surface */
   homeHeroDesktop: {
     src: "/images/case-studies/portfolio-os/portfolio-os-home-hero-desktop.webp",
-    width: 1760,
-    height: 1100,
+    width: 4480,
+    height: 6720,
     sizes: "(min-width: 1440px) 880px, 100vw",
     priority: true,
   },
@@ -42,8 +42,8 @@ export const mediaAssets = {
   /** PA-HF / A-02 family */
   workFeaturedDesktop: {
     src: "/images/case-studies/portfolio-os/portfolio-os-work-featured-desktop.webp",
-    width: 2400,
-    height: 1350,
+    width: 2688,
+    height: 1240,
     sizes: "(min-width: 1440px) 1216px, 100vw",
   },
   workFeaturedCompact: {
@@ -54,8 +54,8 @@ export const mediaAssets = {
   },
   homeFeatured: {
     src: "/images/case-studies/portfolio-os/portfolio-os-home-featured-desktop.webp",
-    width: 2400,
-    height: 1350,
+    width: 3000,
+    height: 1725,
     sizes: "(min-width: 1440px) 1376px, 100vw",
   },
   /** A-06 case hero */

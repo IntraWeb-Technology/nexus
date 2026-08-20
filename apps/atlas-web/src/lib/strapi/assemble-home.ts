@@ -1,5 +1,6 @@
 import type { HomePage, Project } from "@repo/strapi-client";
 import type { HomepageFixture } from "@/content/homepage";
+import { homepageFixture } from "@/content/homepage";
 import { siteChrome } from "@/content/chrome";
 import { mediaFields } from "@/lib/strapi/media";
 import { AtlasContentError } from "@/lib/strapi/errors";
@@ -15,6 +16,8 @@ export function assembleHomepage(
 ): HomepageFixture {
   const heroMedia = mediaFields(home.hero.media);
   const featuredMedia = mediaFields(home.featured.figure);
+  const heroFallback = homepageFixture.hero;
+  const featuredFallback = homepageFixture.featured;
 
   return {
     site: { key: "personal", name: "Atlas" },
@@ -23,13 +26,14 @@ export function assembleHomepage(
       links: [...siteChrome.navLinks],
     },
     hero: {
-      mediaLabel: heroMedia.label ?? "PORTFOLIO OS",
-      mediaNote: home.hero.mediaNote ?? "",
-      mediaAlt: heroMedia.alt ?? home.hero.media?.alt ?? "",
-      mediaSrc: heroMedia.src,
-      mediaWidth: heroMedia.width,
-      mediaHeight: heroMedia.height,
-      mediaSizes: heroMedia.sizes,
+      mediaLabel: heroMedia.label ?? heroFallback.mediaLabel,
+      mediaNote: home.hero.mediaNote ?? heroFallback.mediaNote,
+      mediaAlt:
+        heroMedia.alt ?? home.hero.media?.alt ?? heroFallback.mediaAlt,
+      mediaSrc: heroMedia.src ?? heroFallback.mediaSrc,
+      mediaWidth: heroMedia.width ?? heroFallback.mediaWidth,
+      mediaHeight: heroMedia.height ?? heroFallback.mediaHeight,
+      mediaSizes: heroMedia.sizes ?? heroFallback.mediaSizes,
       chapter: home.hero.chapter,
       title: home.hero.title,
       deck: home.hero.deck,
@@ -47,12 +51,15 @@ export function assembleHomepage(
       title: home.featured.title,
       meta: home.featured.meta ?? "",
       status: home.featured.status ?? "",
-      figureAlt: featuredMedia.alt ?? home.featured.figure?.alt ?? "",
-      figureCaption: featuredMedia.caption ?? "",
-      figureSrc: featuredMedia.src,
-      figureWidth: featuredMedia.width,
-      figureHeight: featuredMedia.height,
-      figureSizes: featuredMedia.sizes,
+      figureAlt:
+        featuredMedia.alt ??
+        home.featured.figure?.alt ??
+        featuredFallback.figureAlt,
+      figureCaption: featuredMedia.caption ?? featuredFallback.figureCaption,
+      figureSrc: featuredMedia.src ?? featuredFallback.figureSrc,
+      figureWidth: featuredMedia.width ?? featuredFallback.figureWidth,
+      figureHeight: featuredMedia.height ?? featuredFallback.figureHeight,
+      figureSizes: featuredMedia.sizes ?? featuredFallback.figureSizes,
       problemLabel: home.featured.problemLabel,
       problem: home.featured.problem,
       outcomeLabel: home.featured.outcomeLabel,

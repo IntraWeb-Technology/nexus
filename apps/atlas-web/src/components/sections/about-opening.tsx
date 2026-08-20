@@ -1,10 +1,15 @@
+import Image from "next/image";
 import type { AboutFixture } from "@/content/about";
 
 type AboutOpeningProps = {
   data: AboutFixture["opening"];
 };
 
-/** Approved About opening — headline + identity + quiet headshot plane. */
+const PORTRAIT_SRC = "/images/brand/john-schibelli-portrait.png";
+const PORTRAIT_WIDTH = 450;
+const PORTRAIT_HEIGHT = 495;
+
+/** Approved About opening — headline + identity + headshot (Figma 507:3). */
 export function AboutOpening({ data }: AboutOpeningProps) {
   return (
     <header className="mx-auto max-w-[var(--atlas-page)]">
@@ -23,11 +28,17 @@ export function AboutOpening({ data }: AboutOpeningProps) {
           </div>
         </div>
 
-        <div
-          className="hidden h-80 w-72 shrink-0 rounded-[2px] border border-[#c8beaa] bg-atlas-secondary desktop:block"
-          role="img"
-          aria-label="Portrait placeholder for John Schibelli"
-        />
+        <div className="relative hidden h-80 w-72 shrink-0 overflow-hidden rounded-[2px] border border-[#c8beaa] bg-atlas-secondary desktop:block">
+          <Image
+            src={PORTRAIT_SRC}
+            alt={`Portrait of ${data.meta}`}
+            width={PORTRAIT_WIDTH}
+            height={PORTRAIT_HEIGHT}
+            sizes="288px"
+            className="h-full w-full object-cover object-top"
+            priority
+          />
+        </div>
       </div>
     </header>
   );

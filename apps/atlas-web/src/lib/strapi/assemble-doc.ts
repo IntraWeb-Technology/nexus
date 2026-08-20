@@ -5,6 +5,7 @@ import type {
   DocsIndexFixture,
   DocSummary,
 } from "@/content/doc";
+import { formatArchiveDate } from "@/content/articles/summaries";
 import { docsByUpdatedDesc } from "@/content/docs/summaries";
 import {
   ATLAS_SITE,
@@ -150,9 +151,16 @@ export function assembleDocDetail(
       dekCompact: article.dekCompact ?? undefined,
       meta:
         article.headerMeta.length > 0
-          ? article.headerMeta
+          ? article.headerMeta.map((item) =>
+              item.label.toUpperCase() === "UPDATED"
+                ? { ...item, value: formatArchiveDate(item.value) || item.value }
+                : item,
+            )
           : [
-              { label: "UPDATED", value: summary.updatedDate },
+              {
+                label: "UPDATED",
+                value: formatArchiveDate(summary.updatedDate) || summary.updatedDate,
+              },
               { label: "CATEGORY", value: summary.category },
               { label: "READING", value: article.readingTime ?? "" },
               { label: "KIND", value: summary.kind },

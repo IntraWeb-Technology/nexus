@@ -45,7 +45,7 @@ function EvidenceThumb({ topic }: EvidenceThumbProps) {
           <span className="absolute top-[17px] left-[9px] h-2 w-5 border border-atlas-border bg-atlas-paper" />
           <span className="absolute top-[35px] left-[37px] h-2 w-5 border border-atlas-border bg-atlas-paper" />
           <span className="absolute top-[17px] left-[65px] h-2 w-5 border border-atlas-border bg-[#7d7363]" />
-          <span className="absolute top-[35px] left-[93px] h-2 w-5 border border-atlas-border bg-atlas-paper" />
+          <span className="absolute top-[35px] left-[81px] h-2 w-5 border border-atlas-border bg-atlas-paper" />
         </>
       ) : null}
       {topic === "Delivery" ? (
@@ -79,7 +79,7 @@ export function ArticlesListRow({ article }: ArticlesListRowProps) {
           <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body tablet:text-sm tablet:leading-[19px]">
             {article.excerptCompact ?? article.excerpt}
           </p>
-          <p className="m-0 font-sans text-xs leading-4 text-atlas-sage whitespace-pre">
+          <p className="m-0 font-sans text-xs leading-4 text-atlas-sage break-words whitespace-normal tablet:whitespace-pre">
             {archiveMetaLine(article)}
           </p>
         </div>

@@ -165,8 +165,8 @@ export const workFixture: WorkFixture = {
     figureCaptionShort: "Fig. 1 — Portfolio OS production surface.",
     figureSrc:
       "/images/case-studies/portfolio-os/portfolio-os-work-featured-desktop.webp",
-    figureWidth: 2400,
-    figureHeight: 1350,
+    figureWidth: 2688,
+    figureHeight: 1240,
     figureSizes: "(min-width: 1440px) 1216px, 100vw",
     figureSrcCompact:
       "/images/case-studies/portfolio-os/portfolio-os-work-featured-compact.webp",
@@ -289,8 +289,9 @@ export const workFixture: WorkFixture = {
   contact: {
     chapter: "CONTACT",
     title: "Let’s talk about the work.",
-    body: "Expectation-setting placeholder. Qualified conversation.",
-    bodyMobile: "Qualified conversation.",
+    body: "For qualified conversations about product systems, architecture, and delivery.",
+    bodyMobile:
+      "For qualified conversations about product systems, architecture, and delivery.",
     cta: { label: "Start a conversation", href: "/contact" },
     meta: "email · form · calendar",
   },

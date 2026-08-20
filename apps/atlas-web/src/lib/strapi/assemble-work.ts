@@ -80,6 +80,7 @@ export function assembleWork(
   const featuredFigure = mediaFields(workPage.featuredCopy.figure);
   const featuredFigureCompact = mediaFields(workPage.featuredCopy.figureCompact);
   const copy = workPage.featuredCopy;
+  const featuredFallback = workFixture.featured;
 
   const selectedProjects = projects
     .filter((p) => p.slug !== featuredSlug)
@@ -115,16 +116,24 @@ export function assembleWork(
       status: copy.status ?? "",
       timeframe: copy.timeframe ?? "",
       role: copy.role ?? "",
-      figureAlt: featuredFigure.alt ?? copy.figure?.alt ?? "",
-      figureCaption: featuredFigure.caption ?? "",
-      figureCaptionShort: featuredFigure.captionShort ?? "",
-      figureSrc: featuredFigure.src,
-      figureWidth: featuredFigure.width,
-      figureHeight: featuredFigure.height,
-      figureSizes: featuredFigure.sizes,
-      figureSrcCompact: featuredFigureCompact.src,
-      figureWidthCompact: featuredFigureCompact.width,
-      figureHeightCompact: featuredFigureCompact.height,
+      figureAlt:
+        featuredFigure.alt ??
+        copy.figure?.alt ??
+        featuredFallback.figureAlt,
+      figureCaption:
+        featuredFigure.caption ?? featuredFallback.figureCaption,
+      figureCaptionShort:
+        featuredFigure.captionShort ?? featuredFallback.figureCaptionShort,
+      figureSrc: featuredFigure.src ?? featuredFallback.figureSrc,
+      figureWidth: featuredFigure.width ?? featuredFallback.figureWidth,
+      figureHeight: featuredFigure.height ?? featuredFallback.figureHeight,
+      figureSizes: featuredFigure.sizes ?? featuredFallback.figureSizes,
+      figureSrcCompact:
+        featuredFigureCompact.src ?? featuredFallback.figureSrcCompact,
+      figureWidthCompact:
+        featuredFigureCompact.width ?? featuredFallback.figureWidthCompact,
+      figureHeightCompact:
+        featuredFigureCompact.height ?? featuredFallback.figureHeightCompact,
       themesLabel: copy.themesLabel ?? "ENGINEERING THEMES",
       themes: copy.themes ?? [],
       themesCompact: copy.themesCompact ?? "",
