@@ -20,7 +20,7 @@ export function ArticlesTopicRow({ data }: ArticlesTopicRowProps) {
           {data.items.map((item) => (
             <li
               key={item.id}
-              className="rounded-full border border-atlas-border bg-atlas-paper px-3.5 py-1.5 font-sans text-xs font-medium text-atlas-ink"
+              className="max-w-full rounded-full border border-atlas-border bg-atlas-paper px-3.5 py-1.5 font-sans text-xs font-medium break-words text-atlas-ink"
             >
               {item.label}
             </li>

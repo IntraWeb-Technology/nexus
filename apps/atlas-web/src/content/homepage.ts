@@ -114,8 +114,8 @@ export const homepageFixture: HomepageFixture = {
       "Desk workspace with a laptop showing a minimal interface — Atlas editorial context",
     mediaSrc:
       "/images/case-studies/portfolio-os/portfolio-os-home-hero-desktop.webp",
-    mediaWidth: 1760,
-    mediaHeight: 1100,
+    mediaWidth: 4480,
+    mediaHeight: 6720,
     mediaSizes: "(min-width: 1440px) 880px, 100vw",
     chapter: "JOHN SCHIBELLI · SENIOR SOFTWARE ENGINEER",
     title: "I design and build software systems.",
@@ -134,8 +134,8 @@ export const homepageFixture: HomepageFixture = {
       "A1 · production surface · responsive routes · evidence-led case studies",
     figureSrc:
       "/images/case-studies/portfolio-os/portfolio-os-home-featured-desktop.webp",
-    figureWidth: 2400,
-    figureHeight: 1350,
+    figureWidth: 3000,
+    figureHeight: 1725,
     figureSizes: "(min-width: 1440px) 1376px, 100vw",
     problemLabel: "PROBLEM",
     problem:

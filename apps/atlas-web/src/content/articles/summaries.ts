@@ -93,7 +93,7 @@ export const articleSummaries: ArticleSummary[] = [
 
 /** Featured hero metadata — date · topic · reading (no type / status). */
 export function featuredMetaLine(article: ArticleSummary): string {
-  return `${article.publishedDate}  ·  ${article.topic}  ·  ${article.readingTime}`;
+  return `${formatArchiveDate(article.publishedDate)}  ·  ${article.topic}  ·  ${article.readingTime}`;
 }
 
 /** Archive row metadata — Topic · reading · type · date. */

@@ -419,7 +419,7 @@ export const portfolioOsCaseStudy: CaseStudyFixture = {
   contact: {
     chapter: "CONTACT",
     title: "Let’s talk about the work.",
-    body: "Expectation-setting placeholder. Qualified conversation.",
+    body: "For qualified conversations about product systems, architecture, and delivery.",
     cta: { label: "Start a conversation", href: "/contact" },
     meta: "email · form · calendar",
   },

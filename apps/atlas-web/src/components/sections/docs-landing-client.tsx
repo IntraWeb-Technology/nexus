@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import { DocsCategories } from "@/components/sections/docs-categories";
 import { DocsProgressNote } from "@/components/sections/docs-progress-note";
+import { formatArchiveDate } from "@/content/articles/summaries";
 import type { DocSummary, DocsIndexFixture } from "@/content/doc";
 
 type DocsLandingClientProps = {
@@ -108,9 +109,9 @@ export function DocsLandingClient({ data }: DocsLandingClientProps) {
                 >
                   <time
                     dateTime={doc.updatedDate}
-                    className="w-[5.5rem] shrink-0 font-mono text-[11px] text-atlas-body"
+                    className="w-[6.5rem] shrink-0 font-mono text-[11px] text-atlas-body"
                   >
-                    {doc.updatedDate}
+                    {formatArchiveDate(doc.updatedDate)}
                   </time>
                   <span className="min-w-0 flex-1 font-sans text-sm leading-[18px] font-medium text-atlas-ink">
                     {doc.title}

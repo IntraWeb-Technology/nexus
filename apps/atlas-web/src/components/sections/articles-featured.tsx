@@ -52,7 +52,7 @@ export function ArticlesFeatured({ data }: ArticlesFeaturedProps) {
 
             <div className="mt-2 flex flex-col gap-4 tablet:flex-row tablet:items-center tablet:justify-between tablet:gap-6">
               <AuthorIdentity author={author} size={36} />
-              <p className="m-0 font-sans text-[13px] leading-[18px] text-atlas-sage whitespace-pre">
+              <p className="m-0 max-w-full font-sans text-[13px] leading-[18px] text-atlas-sage break-words whitespace-normal tablet:whitespace-pre">
                 {featuredMetaLine(article)}
               </p>
             </div>
