@@ -18,6 +18,7 @@ import {
 import { assembleWork, requireWorkPage } from "@/lib/strapi/assemble-work";
 import { ATLAS_SITE_KEY, getAtlasStrapiClient } from "@/lib/strapi/client";
 import { AtlasContentError } from "@/lib/strapi/errors";
+import { mergePreviewOptions } from "@/lib/strapi/preview";
 import { resolveContentSource } from "@/lib/strapi/source";
 
 export type ContentOptions = {
@@ -42,6 +43,7 @@ function requestOptions(options?: ContentOptions) {
 }
 
 export async function getHomepageContent(options?: ContentOptions) {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return homepageFixture;
   }
@@ -59,6 +61,7 @@ export async function getHomepageContent(options?: ContentOptions) {
 }
 
 export async function getWorkContent(options?: ContentOptions) {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return workFixture;
   }
@@ -88,6 +91,7 @@ export async function getCaseStudyContent(
   slug: string,
   options?: ContentOptions,
 ): Promise<ReturnType<typeof assembleCaseStudy> | null> {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return getCaseStudy(slug) ?? null;
   }
@@ -100,19 +104,24 @@ export async function getCaseStudyContent(
   return assembleCaseStudy(study);
 }
 
-export async function getCaseStudySlugs(): Promise<string[]> {
+export async function getCaseStudySlugs(options?: ContentOptions): Promise<string[]> {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return Object.keys(caseStudyBySlug);
   }
 
   const client = getAtlasStrapiClient();
   const result = await withStrapi(() =>
-    client.getCaseStudies(ATLAS_SITE_KEY, { pageSize: 100 }),
+    client.getCaseStudies(ATLAS_SITE_KEY, {
+      pageSize: 100,
+      ...requestOptions(options),
+    }),
   );
   return result.items.map((item) => item.slug);
 }
 
 export async function getAboutContent(options?: ContentOptions) {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return aboutFixture;
   }
@@ -131,6 +140,7 @@ export async function getAboutContent(options?: ContentOptions) {
 }
 
 export async function getContactContent(options?: ContentOptions) {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return contactFixture;
   }
@@ -177,6 +187,7 @@ async function fetchDocumentationArticles(options?: ContentOptions) {
 }
 
 export async function getArticlesIndexContent(options?: ContentOptions) {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return articlesIndexFixture;
   }
@@ -186,6 +197,7 @@ export async function getArticlesIndexContent(options?: ContentOptions) {
 }
 
 export async function getArticleContent(slug: string, options?: ContentOptions) {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return articleBySlug[slug] ?? null;
   }
@@ -202,16 +214,18 @@ export async function getArticleContent(slug: string, options?: ContentOptions) 
   return assembleArticleDetail(article, allWriting);
 }
 
-export async function getArticleSlugs(): Promise<string[]> {
+export async function getArticleSlugs(options?: ContentOptions): Promise<string[]> {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return Object.keys(articleBySlug);
   }
 
-  const articles = await fetchWritingArticles();
+  const articles = await fetchWritingArticles(options);
   return articles.map((a) => a.slug);
 }
 
 export async function getDocsIndexContent(options?: ContentOptions) {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return docsIndexFixture;
   }
@@ -221,6 +235,7 @@ export async function getDocsIndexContent(options?: ContentOptions) {
 }
 
 export async function getDocContent(slug: string, options?: ContentOptions) {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return docBySlug[slug] ?? null;
   }
@@ -237,11 +252,12 @@ export async function getDocContent(slug: string, options?: ContentOptions) {
   return assembleDocDetail(article, allDocs);
 }
 
-export async function getDocSlugs(): Promise<string[]> {
+export async function getDocSlugs(options?: ContentOptions): Promise<string[]> {
+  options = await mergePreviewOptions(options);
   if (resolveContentSource() === "fixture") {
     return Object.keys(docBySlug);
   }
 
-  const articles = await fetchDocumentationArticles();
+  const articles = await fetchDocumentationArticles(options);
   return articles.map((a) => a.slug);
 }
