@@ -427,7 +427,7 @@ export function shapeAboutPrinciples(
   const chapter = asString(entry.chapter);
   const title = asString(entry.title);
   const items = shapePrincipleItems(entry.items);
-  if (!chapter || !title || items.length === 0) return null;
+  if (!chapter || title === null || items.length === 0) return null;
   return { chapter, title, items };
 }
 
@@ -463,7 +463,7 @@ export function shapeAboutTimeline(raw: unknown): z.input<typeof aboutTimelineSc
   const chapter = asString(entry.chapter);
   const title = asString(entry.title);
   const entries = shapeTimelineEntries(entry.entries);
-  if (!chapter || !title || entries.length === 0) return null;
+  if (!chapter || title === null || entries.length === 0) return null;
   return { chapter, title, entries };
 }
 
@@ -484,7 +484,7 @@ export function shapeAboutFocus(raw: unknown): z.input<typeof aboutFocusSchema> 
   const chapter = asString(entry.chapter);
   const title = asString(entry.title);
   const body = asString(entry.body);
-  if (!chapter || !title || !body) return null;
+  if (!chapter || title === null || !body) return null;
   return {
     chapter,
     title,
