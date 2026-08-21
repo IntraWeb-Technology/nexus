@@ -118,7 +118,7 @@ test.describe("articles index", () => {
       .locator("xpath=ancestor::section[1]");
     await expect(list).not.toContainText(/Read article/i);
     await expect(list).not.toContainText(/Proof:/i);
-    await expect(list).toContainText(/Testing\s+·\s+11 min\s+·\s+Essay/);
+    await expect(list).toContainText(/Architecture\s+·\s+11 min\s+·\s+Essay/);
   });
 
   test("article list links resolve to detail routes", async ({ page }) => {
@@ -220,6 +220,17 @@ test.describe("articles index", () => {
       fullPage: false,
       maxDiffPixelRatio: 0.02,
     });
+  });
+
+  test("no horizontal overflow at viewport", async ({ page }, testInfo) => {
+    await page.goto("/articles");
+    const overflow = await page.evaluate(() => {
+      const doc = document.documentElement;
+      return doc.scrollWidth > doc.clientWidth + 1;
+    });
+    expect(overflow, `horizontal overflow on ${testInfo.project.name}`).toBe(
+      false,
+    );
   });
 
   test("no Publication Shape panel", async ({ page }) => {

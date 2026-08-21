@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   isStrapiRequired,
   resolveContentSource,
+  usesStrapiFor,
 } from "./source.js";
 
 describe("resolveContentSource", () => {
@@ -44,5 +45,31 @@ describe("isStrapiRequired", () => {
     assert.equal(isStrapiRequired({ ATLAS_CONTENT_SOURCE: "strapi" }), true);
     assert.equal(isStrapiRequired({ ATLAS_CONTENT_SOURCE: "fixture" }), false);
     assert.equal(isStrapiRequired({}), false);
+  });
+});
+
+describe("usesStrapiFor", () => {
+  it("never uses Strapi for static core pages", () => {
+    assert.equal(
+      usesStrapiFor("static", { ATLAS_CONTENT_SOURCE: "strapi" }),
+      false,
+    );
+    assert.equal(
+      usesStrapiFor("static", { STRAPI_URL: "http://localhost:1337" }),
+      false,
+    );
+    assert.equal(usesStrapiFor("static", {}), false);
+  });
+
+  it("uses Strapi for cms family only when source is strapi", () => {
+    assert.equal(
+      usesStrapiFor("cms", { ATLAS_CONTENT_SOURCE: "strapi" }),
+      true,
+    );
+    assert.equal(
+      usesStrapiFor("cms", { ATLAS_CONTENT_SOURCE: "fixture" }),
+      false,
+    );
+    assert.equal(usesStrapiFor("cms", {}), false);
   });
 });

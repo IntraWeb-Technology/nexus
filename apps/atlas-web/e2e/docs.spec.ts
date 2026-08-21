@@ -51,6 +51,13 @@ test.describe("docs index", () => {
     ).toBeVisible();
   });
 
+  test("recently updated dates are editorial, not raw ISO", async ({ page }) => {
+    await page.goto("/docs");
+    const recent = page.locator("#recently-updated");
+    await expect(recent.getByText(/Apr 8, 2025/)).toBeVisible();
+    await expect(recent).not.toContainText(/2025-04-08T/);
+  });
+
   test("lists required handbook fixtures", async ({ page }) => {
     await page.goto("/docs");
     await expect(
