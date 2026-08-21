@@ -4,7 +4,9 @@ Production frontend for Atlas — the ground-up rebuild of [johnschibelli.dev](h
 
 **Current milestone:** M9 Hardening (M9D art-direction slice implemented). Public routes: `/`, `/work`, `/work/[slug]`, `/about`, `/contact`, `/articles`, `/articles/[slug]`, `/docs`, `/docs/[...slug]`.
 
-**Content source:** `ATLAS_CONTENT_SOURCE=fixture` for local development, Playwright, and explicit demos. Strapi mode when `STRAPI_URL` is set — fail-closed with no silent fixture fallback. M8 implemented schemas, client contract, assemblers, and integration code; **authentic frontend-visible CMS delivery remains unverified** until populated Strapi content is traced through Atlas.
+**Content architecture (v1):** Hybrid. **Articles** and **Documentation** handbook pages are Strapi-managed when CMS mode is active (fail-closed). **Homepage, Work, case studies, About, Contact, and chrome** are always code-managed from committed `src/content/*` and `public/images/*` — Strapi outage must not break those routes. Full-site CMS is deferred. See [`v1-content-architecture.mdx`](../atlas-docs/content/architecture/v1-content-architecture.mdx).
+
+**Content source (CMS surfaces only):** `ATLAS_CONTENT_SOURCE=fixture` for local development, Playwright, and demos. Strapi mode when `ATLAS_CONTENT_SOURCE=strapi` or `STRAPI_URL` is set.
 
 ## Stack
 

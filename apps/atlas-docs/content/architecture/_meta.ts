@@ -1,6 +1,7 @@
 export default {
   'build-manifest': 'Build Manifest',
   'architecture-freeze': 'Architecture Freeze',
+  'v1-content-architecture': 'V1 Content Architecture',
   'homepage-pilot': 'Homepage Pilot',
   'work-route': 'Work Route',
   'case-study-route': 'Case Study Route',

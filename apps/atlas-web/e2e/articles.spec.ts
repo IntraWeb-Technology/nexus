@@ -222,6 +222,17 @@ test.describe("articles index", () => {
     });
   });
 
+  test("no horizontal overflow at viewport", async ({ page }, testInfo) => {
+    await page.goto("/articles");
+    const overflow = await page.evaluate(() => {
+      const doc = document.documentElement;
+      return doc.scrollWidth > doc.clientWidth + 1;
+    });
+    expect(overflow, `horizontal overflow on ${testInfo.project.name}`).toBe(
+      false,
+    );
+  });
+
   test("no Publication Shape panel", async ({ page }) => {
     await page.goto("/articles");
     await expect(page.getByRole("main")).not.toContainText("Publication Shape");

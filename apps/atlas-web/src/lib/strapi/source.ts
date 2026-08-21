@@ -1,18 +1,28 @@
 /**
- * Content source resolution (M8A fallback contract).
+ * Content source resolution — Atlas v1 hybrid architecture.
  *
- * - `strapi`: production/CMS path — failures are errors, never silent fixture swap
- * - `fixture`: explicit test/demo/local mode when CMS is not configured
+ * Surfaces:
+ * - **static (committed):** Homepage, Work, case studies, About, Contact, chrome
+ *   Always load from `src/content/*`. Never call Strapi at build/runtime for these.
+ * - **cms:** Articles (+ Documentation handbook pages as Article surface=documentation)
+ *   Use Strapi when content source resolves to `strapi`; fixture for Playwright/local demos.
  *
- * Set `ATLAS_CONTENT_SOURCE=fixture|strapi` to force. Otherwise:
- * Strapi when `STRAPI_URL` / `STRAPI_API_URL` is set; fixture otherwise.
+ * `ATLAS_CONTENT_SOURCE=fixture|strapi` forces the CMS-surface mode.
+ * Otherwise: Strapi when `STRAPI_URL` / `STRAPI_API_URL` is set; fixture otherwise.
  *
- * Production deployments must declare their content-source mode explicitly.
- * Fixture mode is intentional for local development, Playwright, and demos —
- * it is not proof of live CMS delivery.
+ * Production: declare CMS mode explicitly. Fixture mode is intentional for local
+ * development, Playwright, and demos — it is not proof of live CMS delivery.
+ *
+ * Gates:
+ * - ARTICLES_CMS_REQUIRED = YES
+ * - STATIC_CORE_PAGES_REQUIRED = YES
+ * - FULL_SITE_CMS_REQUIRED = NO
  */
 
 export type AtlasContentSource = "strapi" | "fixture";
+
+/** Routes that must stay code-managed for Atlas v1 launch. */
+export type AtlasContentFamily = "static" | "cms";
 
 export type ContentSourceEnv = {
   ATLAS_CONTENT_SOURCE?: string;
@@ -32,6 +42,21 @@ export function resolveContentSource(
   return "fixture";
 }
 
-export function isStrapiRequired(env: ContentSourceEnv = process.env as ContentSourceEnv): boolean {
+/**
+ * Whether Strapi is required for CMS-managed surfaces (articles / docs).
+ * Static core pages never require Strapi in v1.
+ */
+export function isStrapiRequired(
+  env: ContentSourceEnv = process.env as ContentSourceEnv,
+): boolean {
+  return resolveContentSource(env) === "strapi";
+}
+
+/** True when this content family should load from Strapi for the current source. */
+export function usesStrapiFor(
+  family: AtlasContentFamily,
+  env: ContentSourceEnv = process.env as ContentSourceEnv,
+): boolean {
+  if (family === "static") return false;
   return resolveContentSource(env) === "strapi";
 }

@@ -34,7 +34,7 @@
 | **M9 — Hardening** | **In progress** — **M9D Art Direction** implemented ([report](/docs/architecture/m9d-art-direction)); remaining hardening gates continue |
 | **M10 — Launch** | Planned |
 
-**Program posture:** M8 implemented the Strapi schemas, client contract, content assemblers, and integration code in `apps/atlas-web/src/lib/strapi/` and `@repo/strapi-client`. **Authentic frontend-visible CMS delivery remains unverified** until a reachable Strapi instance is populated and traced through Atlas. **M9D** brings Approval Polish into `atlas-web` chrome, Articles, and shared CTAs. Content source: Strapi when `STRAPI_URL` is set (fail-closed — no silent fixture fallback); explicit fixture mode for local development, Playwright, and demos (`ATLAS_CONTENT_SOURCE=fixture`). **A-05 Vehicle Maintenance** media remains **deferred**.
+**Program posture:** **Atlas v1 content architecture is hybrid** — see [V1 Content Architecture](/docs/architecture/v1-content-architecture). Articles (and Documentation handbook pages) are Strapi-managed when CMS mode is active (fail-closed). Homepage, Work, case studies, About, Contact, and chrome are **always** code-managed from committed content; Strapi outage must not break those builds. Full-site CMS is deferred. M8 implemented schemas, client contract, assemblers, and integration code for CMS surfaces. **M9D** brings Approval Polish into `atlas-web` chrome, Articles, and shared CTAs. Fixture mode (`ATLAS_CONTENT_SOURCE=fixture`) remains the Playwright / local demo path for CMS surfaces. **A-05 Vehicle Maintenance** media remains **deferred**.
 
 ### Milestone scheme note
 

@@ -1,0 +1,45 @@
+# Atlas v1 Content Architecture
+
+**Status:** ACTIVE — launch scope  
+**Date:** 2026-08-20  
+**Applies to:** `apps/atlas-web` production validation / public launch
+
+## Decision
+
+Atlas v1 uses a **hybrid content architecture**:
+
+```text
+ARTICLES_CMS_REQUIRED = YES
+STATIC_CORE_PAGES_REQUIRED = YES
+FULL_SITE_CMS_REQUIRED = NO
+```
+
+| Surface | Owner | Runtime source |
+| --- | --- | --- |
+| `/articles`, article detail | Strapi (`Article`, `surface=writing`) | CMS when `ATLAS_CONTENT_SOURCE=strapi` (or Strapi URL present) |
+| `/docs`, doc detail | Strapi (`Article`, `surface=documentation`) | Same CMS mode as Articles |
+| `/`, `/work`, `/work/[slug]`, `/about`, `/contact` | Committed `src/content/*` + `public/images/*` | Always static — never Strapi |
+| Navigation / footer | `src/content/chrome.ts` | Always static |
+
+## Why
+
+Core brand and product pages are highly art-directed: bespoke layout, evidence compositions, screenshots, diagrams, and responsive treatments. Forcing them through Strapi models before launch blurred the release gate and coupled SSG builds to CMS availability for pages that do not need editorial CMS workflows yet.
+
+Articles (and documentation handbook pages as the same Article collection) are the CMS product for v1: title, slug, excerpt, dates, topics, surface/type, reading time, and SEO.
+
+## Failure behavior
+
+- **Static core pages:** Strapi outage must not break Homepage / Work / About / Contact / case-study builds or renders.
+- **Articles / Docs:** When CMS mode is active, Strapi failure is **fail-closed** (no silent fixture swap).
+
+## Deferred
+
+- Full-site CMS migration (Home, Work, About, Contact singletons as live production sources)
+- Case-study CMS when there are multiple real studies and a stable content model
+- Navigation collection (already out of Atlas v1 CMS scope)
+
+## Related
+
+- Content loaders: `apps/atlas-web/src/lib/content/index.ts`
+- Source helpers: `apps/atlas-web/src/lib/strapi/source.ts`
+- Historical M8 contract: [M8 Content Contract](/docs/architecture/m8-content-contract)
