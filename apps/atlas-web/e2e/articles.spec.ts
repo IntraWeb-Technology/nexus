@@ -13,7 +13,7 @@ test.describe("articles index", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Engineering writing.",
+        name: "Writing on architecture, testing, and the craft of building.",
       }),
     ).toBeVisible();
     await expect(page.getByLabel("Topics")).toBeVisible();
@@ -24,7 +24,7 @@ test.describe("articles index", () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 2, name: "Newest first." }),
+      page.getByRole("heading", { level: 2, name: "More writing" }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", {
@@ -46,7 +46,7 @@ test.describe("articles index", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Engineering writing.",
+        name: "Writing on architecture, testing, and the craft of building.",
       }),
     ).toBeVisible();
   });
@@ -114,11 +114,11 @@ test.describe("articles index", () => {
     page,
   }) => {
     await page.goto("/articles");
-    const list = page.getByRole("heading", { level: 2, name: "Newest first." })
+    const list = page.getByRole("heading", { level: 2, name: "More writing" })
       .locator("xpath=ancestor::section[1]");
     await expect(list).not.toContainText(/Read article/i);
     await expect(list).not.toContainText(/Proof:/i);
-    await expect(list).toContainText(/Testing\s+·\s+11 min\s+·\s+Essay/);
+    await expect(list).toContainText(/Testing/);
   });
 
   test("article list links resolve to detail routes", async ({ page }) => {

@@ -25,7 +25,7 @@ function activeFromPath(pathname: string): NavActive {
   return null;
 }
 
-/** Client island — route-derived aria-current + mobile menu. */
+/** Client island — route-derived aria-current + mobile menu + homepage inverse tone. */
 export function SiteNavActive({
   brand,
   brandMark,
@@ -33,6 +33,8 @@ export function SiteNavActive({
   socialLinks,
 }: SiteNavActiveProps) {
   const pathname = usePathname();
+  const tone = pathname === "/" ? "inverse" : "paper";
+
   return (
     <SiteNav
       brand={brand}
@@ -40,6 +42,7 @@ export function SiteNavActive({
       links={links}
       socialLinks={socialLinks}
       active={activeFromPath(pathname)}
+      tone={tone}
     />
   );
 }

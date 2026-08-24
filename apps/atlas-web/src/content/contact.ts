@@ -1,5 +1,5 @@
 /**
- * Contact fixture — Approved — Contact (Figma production).
+ * Contact fixture — Story-First Contact (Figma page 28).
  * Form delivery is handled by `/api/contact` (Resend); no CMS.
  */
 
@@ -25,21 +25,21 @@ export const contactFixture: ContactFixture = {
   seo: {
     title: "Contact",
     description:
-      "Start a conversation about product systems, architecture, content infrastructure, automation, and design-to-build implementation.",
+      "Start a conversation about product systems, CMS architecture, automation, or design-to-build work.",
   },
   chapter: "CONTACT",
   title: "Start a conversation.",
-  body: "Use this form for product systems, content infrastructure, technical architecture, or design-to-build implementation work.",
+  body: "For product systems, CMS architecture, automation, or design-to-build work, send a little context and what you're hoping to improve.",
   fields: {
     name: { label: "NAME", placeholder: "Your name" },
-    email: { label: "EMAIL", placeholder: "you@example.com" },
+    email: { label: "EMAIL", placeholder: "you@company.com" },
     context: {
       label: "PROJECT CONTEXT",
-      placeholder: "Existing stack, current bottleneck, desired outcome",
+      placeholder: "Product, platform, or architecture",
     },
     message: {
       label: "WHAT ARE YOU TRYING TO IMPROVE?",
-      placeholder: "What is already built, and where is it getting stuck?",
+      placeholder: "Tell me a bit about it…",
     },
   },
   submitLabel: "Send inquiry",
@@ -47,15 +47,11 @@ export const contactFixture: ContactFixture = {
   panels: [
     {
       label: "GOOD FIT",
-      body: "Product systems, CMS and content infrastructure, technical architecture, design-to-build implementation.",
-    },
-    {
-      label: "HELPFUL CONTEXT",
-      body: "A useful note usually includes the product context, what is already built, where the system is getting stuck, and what kind of outcome you need.",
+      body: "Product systems, content platforms, technical architecture.",
     },
     {
       label: "NEXT STEP",
-      body: "If there is a fit, expect a short reply with a suggested path forward — not a pitch deck.",
+      body: "A short reply, usually within one business day.",
     },
   ],
   success: {

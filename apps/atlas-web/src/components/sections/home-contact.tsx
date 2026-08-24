@@ -1,5 +1,5 @@
-import { AtlasPrimaryButton } from "@/components/editorial/atlas-button";
-import { ChapterMarker } from "@/components/editorial/chapter-marker";
+import { AppLink } from "@/components/chrome/app-link";
+import { atlasStoryInverseButtonClassName } from "@/components/editorial/atlas-button";
 import type { HomepageFixture } from "@/content/homepage";
 
 type HomeContactProps = {
@@ -7,35 +7,32 @@ type HomeContactProps = {
 };
 
 /**
- * Home contact bridge — elevated paper field + umber primary (M9D).
- * Fixture copy unchanged; visual treatment only.
+ * Story-First contact invite — full-bleed rust band, white title,
+ * blush/cream body, white inverse CTA.
  */
 export function HomeContact({ data }: HomeContactProps) {
   return (
     <section
       id="contact"
       aria-labelledby="contact-title"
-      className="border-y border-[#c8beaa] bg-atlas-elevated"
+      className="bg-atlas-rust"
     >
-      <div className="atlas-pad-x mx-auto flex max-w-[var(--atlas-page)] flex-col gap-8 py-14 tablet:flex-row tablet:items-center tablet:justify-between tablet:gap-12 desktop:py-[4.5rem]">
-        <div className="max-w-3xl space-y-3.5">
-          <ChapterMarker className="!text-atlas-sage">{data.chapter}</ChapterMarker>
-          <h2
-            id="contact-title"
-            className="m-0 font-display text-[1.5rem] leading-snug font-semibold text-atlas-ink desktop:text-[1.625rem] desktop:leading-8"
-          >
-            {data.title}
-          </h2>
-          <p className="m-0 max-w-xl font-sans text-sm leading-relaxed text-atlas-body">
-            {data.body}
-          </p>
-        </div>
-        <div className="flex flex-col items-start gap-3">
-          <AtlasPrimaryButton href={data.cta.href} className="py-3.5">
-            {data.cta.label}
-          </AtlasPrimaryButton>
-          <p className="m-0 font-sans text-xs text-atlas-body">{data.meta}</p>
-        </div>
+      <div className="atlas-pad-x mx-auto flex max-w-[var(--atlas-page)] flex-col items-center gap-5 py-16 text-center tablet:py-20 desktop:gap-6 desktop:py-[6.5rem]">
+        <h2
+          id="contact-title"
+          className="m-0 max-w-[40rem] font-display text-[1.75rem] leading-snug font-semibold text-white tablet:text-[2rem] desktop:text-[2.5rem]"
+        >
+          {data.title}
+        </h2>
+        <p className="m-0 max-w-[32.5rem] font-sans text-[15px] leading-relaxed text-atlas-cream tablet:text-base">
+          {data.body}
+        </p>
+        <AppLink
+          href={data.cta.href}
+          className={`${atlasStoryInverseButtonClassName} mt-2`}
+        >
+          {data.cta.label}
+        </AppLink>
       </div>
     </section>
   );

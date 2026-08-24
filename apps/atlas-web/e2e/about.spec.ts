@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { expectCurrentNavLink } from "./helpers/nav";
 
 const APPROVED_HEADLINE =
-  "I’m a senior software engineer working across product development, architecture, testing, and automation.";
+  "I build software systems with the reasoning left in.";
 
 test.describe("about", () => {
   test("renders primary landmarks and approved sections", async ({ page }) => {
@@ -13,14 +13,12 @@ test.describe("about", () => {
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("contentinfo")).toBeVisible();
 
-    await expect(page.getByRole("heading", { level: 1, name: APPROVED_HEADLINE })).toBeVisible();
-
-    await expect(page.getByText("CAREER ARC", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("HOW I WORK", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("CURRENT FOCUS", { exact: true }).first()).toBeVisible();
-    await expect(page.locator("#contact")).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Start a conversation" }),
+      page.getByRole("heading", { level: 1, name: APPROVED_HEADLINE }),
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", { level: 2, name: "What shaped my craft" }),
     ).toBeVisible();
   });
 
@@ -36,13 +34,6 @@ test.describe("about", () => {
     await expect(skip).toBeFocused();
     await skip.press("Enter");
     await expect(page.locator("#main")).toBeFocused();
-  });
-
-  test("keyboard can reach contact CTA", async ({ page }) => {
-    await page.goto("/about");
-    const cta = page.getByRole("link", { name: "Start a conversation" });
-    await cta.focus();
-    await expect(cta).toBeFocused();
   });
 
   test("has no serious accessibility violations", async ({ page }) => {

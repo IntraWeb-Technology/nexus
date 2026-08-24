@@ -1,63 +1,77 @@
 import Image from "next/image";
 import { AppLink } from "@/components/chrome/app-link";
-import { AtlasPrimaryButton } from "@/components/editorial/atlas-button";
-import { ChapterMarker } from "@/components/editorial/chapter-marker";
+import {
+  atlasStoryPrimaryButtonClassName,
+  atlasStorySecondaryOnDarkButtonClassName,
+} from "@/components/editorial/atlas-button";
 import type { HomepageFixture } from "@/content/homepage";
 
 type HomeHeroProps = {
   data: HomepageFixture["hero"];
 };
 
+/**
+ * Story-First homepage hero — full-bleed ink-blue band, gold chapter,
+ * white Newsreader title, cream deck, rust + cream-outline CTAs,
+ * media on the right (desktop) with gradient fallback.
+ */
 export function HomeHero({ data }: HomeHeroProps) {
   const hasMedia = Boolean(data.mediaSrc && data.mediaWidth && data.mediaHeight);
 
   return (
     <section
       aria-labelledby="hero-title"
-      className="mx-auto grid max-w-[var(--atlas-page)] grid-cols-1 desktop:grid-cols-[minmax(0,880px)_minmax(0,560px)]"
+      className="bg-atlas-ink-blue text-white"
     >
-      {hasMedia ? (
-        <div className="relative min-h-[320px] overflow-hidden bg-atlas-secondary tablet:min-h-[420px] desktop:min-h-[680px]">
-          <Image
-            src={data.mediaSrc!}
-            alt={data.mediaAlt}
-            width={data.mediaWidth}
-            height={data.mediaHeight}
-            sizes={data.mediaSizes}
-            priority
-            className="h-full w-full object-cover object-top"
-          />
-        </div>
-      ) : (
-        <div
-          className="min-h-[320px] bg-atlas-secondary tablet:min-h-[420px] desktop:min-h-[680px]"
-          role="img"
-          aria-label={`${data.mediaLabel}. ${data.mediaNote.replace(/\n/g, " ")}`}
-        />
-      )}
-
-      <div className="atlas-pad-x flex flex-col justify-end gap-5 py-10 desktop:px-10 desktop:pt-0 desktop:pb-14 desktop:pl-10">
-        <ChapterMarker>{data.chapter}</ChapterMarker>
-        <h1
-          id="hero-title"
-          className="m-0 font-display text-[1.75rem] leading-[1.15] font-semibold tracking-tight whitespace-pre-line text-atlas-ink tablet:text-[2rem] desktop:text-[2.25rem]"
-        >
-          {data.title}
-        </h1>
-        <p className="m-0 max-w-[29rem] font-sans text-sm leading-relaxed text-atlas-body">
-          {data.deck}
-        </p>
-        <div className="flex flex-col items-start gap-2.5 pt-2">
-          <AtlasPrimaryButton href={data.primaryCta.href}>
-            {data.primaryCta.label}
-          </AtlasPrimaryButton>
-          <AppLink
-            href={data.secondaryCta.href}
-            className="inline-flex items-center justify-center rounded-[3px] border border-[#cfc7ba] px-[18px] py-3 text-center font-sans text-xs font-normal text-atlas-ink no-underline"
+      <div className="atlas-pad-x mx-auto grid max-w-[var(--atlas-page)] grid-cols-1 items-center gap-10 py-16 tablet:gap-12 tablet:py-20 desktop:grid-cols-[minmax(0,1fr)_minmax(0,560px)] desktop:gap-16 desktop:py-24">
+        <div className="flex max-w-[37.5rem] flex-col gap-5 desktop:gap-6">
+          <p className="m-0 font-sans text-[13px] leading-4 font-medium tracking-[0.04em] text-atlas-gold">
+            {data.chapter}
+          </p>
+          <h1
+            id="hero-title"
+            className="m-0 font-display text-[2rem] leading-[1.15] font-semibold tracking-tight text-white tablet:text-[2.5rem] desktop:text-[3.25rem] desktop:leading-[1.12]"
           >
-            {data.secondaryCta.label}
-          </AppLink>
+            {data.title}
+          </h1>
+          <p className="m-0 max-w-[35rem] font-sans text-[15px] leading-relaxed text-atlas-cream tablet:text-base">
+            {data.deck}
+          </p>
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <AppLink
+              href={data.primaryCta.href}
+              className={atlasStoryPrimaryButtonClassName}
+            >
+              {data.primaryCta.label}
+            </AppLink>
+            <AppLink
+              href={data.secondaryCta.href}
+              className={atlasStorySecondaryOnDarkButtonClassName}
+            >
+              {data.secondaryCta.label}
+            </AppLink>
+          </div>
         </div>
+
+        {hasMedia ? (
+          <div className="relative min-h-[280px] overflow-hidden rounded-[2px] bg-gradient-to-br from-atlas-ink-blue via-[#24344d] to-atlas-moss tablet:min-h-[360px] desktop:min-h-[520px]">
+            <Image
+              src={data.mediaSrc!}
+              alt={data.mediaAlt}
+              width={data.mediaWidth}
+              height={data.mediaHeight}
+              sizes={data.mediaSizes}
+              priority
+              className="h-full w-full object-cover object-top opacity-90"
+            />
+          </div>
+        ) : (
+          <div
+            className="min-h-[280px] rounded-[2px] bg-gradient-to-br from-[#24344d] via-atlas-ink-blue to-atlas-moss tablet:min-h-[360px] desktop:min-h-[520px]"
+            role="img"
+            aria-label={`${data.mediaLabel}. ${data.mediaNote.replace(/\n/g, " ")}`}
+          />
+        )}
       </div>
     </section>
   );

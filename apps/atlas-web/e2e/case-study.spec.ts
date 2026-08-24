@@ -3,11 +3,10 @@ import { expect, test } from "@playwright/test";
 import { expectCurrentNavLink } from "./helpers/nav";
 
 test.describe("case study — Portfolio OS", () => {
-  test("renders primary landmarks and required sections", async ({ page }) => {
+  test("renders Story-First landmarks and sections", async ({ page }) => {
     await page.goto("/work/portfolio-os");
 
     await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
-    await expect(page.getByRole("navigation", { name: "Case study contents" })).toBeVisible();
     await expect(page.locator("#main")).toBeVisible();
     await expect(page.getByRole("contentinfo")).toBeVisible();
 
@@ -15,20 +14,21 @@ test.describe("case study — Portfolio OS", () => {
       page.getByRole("heading", { level: 1, name: "Portfolio OS" }),
     ).toBeVisible();
 
-    for (const id of [
-      "overview",
-      "problem",
-      "constraints",
-      "architecture",
-      "decisions",
-      "implementation",
-      "delivery",
-      "outcomes",
-      "lessons",
-      "contact",
-    ]) {
-      await expect(page.locator(`#${id}`)).toBeVisible();
-    }
+    await expect(page.getByRole("heading", { level: 2, name: "Overview" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What was built" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Why it mattered" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What I owned" })).toBeVisible();
+
+    await expect(page.locator("#under-the-hood")).toBeVisible();
+    await expect(page.getByText("CONSTRAINT", { exact: true })).toBeVisible();
+    await expect(page.getByText("DECISION", { exact: true })).toBeVisible();
+    await expect(page.getByText("DELIVERY", { exact: true })).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Outcomes & lessons" }),
+    ).toBeVisible();
+
+    await expect(page.getByRole("navigation", { name: "Case study contents" })).toHaveCount(0);
   });
 
   test("marks Work as the current nav item", async ({ page }, testInfo) => {
@@ -38,29 +38,11 @@ test.describe("case study — Portfolio OS", () => {
 
   test("navigates from work index to case study", async ({ page }) => {
     await page.goto("/work");
-    await page.getByRole("link", { name: "Read case study" }).first().click();
+    await page.getByRole("link", { name: "Read the case study →" }).first().click();
     await expect(page).toHaveURL(/\/work\/portfolio-os$/);
     await expect(
       page.getByRole("heading", { level: 1, name: "Portfolio OS" }),
     ).toBeVisible();
-  });
-
-  test("TOC anchors scroll to sections", async ({ page }) => {
-    await page.goto("/work/portfolio-os");
-    await page
-      .getByRole("navigation", { name: "Case study contents" })
-      .getByRole("link", { name: /Architecture/i })
-      .first()
-      .click();
-    await expect(page.locator("#architecture")).toBeInViewport();
-  });
-
-  test("reading progress exposes progressbar", async ({ page }) => {
-    await page.goto("/work/portfolio-os");
-    const bar = page.getByRole("progressbar", { name: "Reading progress" });
-    await expect(bar).toBeVisible();
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
-    await expect(bar).toHaveAttribute("aria-valuenow", /\d+/);
   });
 
   test("skip link moves focus to main", async ({ page }) => {

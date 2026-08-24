@@ -19,6 +19,8 @@ type SiteNavProps = {
   socialLinks: readonly SocialLink[];
   /** Current section — homepage has no active Work/About/Contact/Articles */
   active?: NavActive;
+  /** paper = default elevated; inverse = ink-blue over homepage hero */
+  tone?: "paper" | "inverse";
 };
 
 function isActiveLink(active: NavActive, href: string): boolean {
@@ -33,21 +35,28 @@ function isActiveLink(active: NavActive, href: string): boolean {
 /**
  * Custom hamburger — three uneven strokes (M9D Approval Polish).
  */
-function MenuIcon({ open }: { open: boolean }) {
+function MenuIcon({
+  open,
+  inverse = false,
+}: {
+  open: boolean;
+  inverse?: boolean;
+}) {
+  const stroke = inverse ? "bg-white" : "bg-atlas-ink";
   return (
     <span className="relative block size-[22px]" aria-hidden="true">
       <span
-        className={`absolute top-[5px] left-[1px] h-px rounded-full bg-atlas-ink transition-transform duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] ${
+        className={`absolute top-[5px] left-[1px] h-px rounded-full ${stroke} transition-transform duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] ${
           open ? "w-[22px] translate-y-[7px] rotate-45" : "w-[22px]"
         }`}
       />
       <span
-        className={`absolute top-[12px] left-[9px] h-px w-[14px] rounded-full bg-atlas-ink transition-opacity duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] ${
+        className={`absolute top-[12px] left-[9px] h-px w-[14px] rounded-full ${stroke} transition-opacity duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] ${
           open ? "opacity-0" : "opacity-100"
         }`}
       />
       <span
-        className={`absolute top-[19px] left-0 h-px rounded-full bg-atlas-ink transition-transform duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] ${
+        className={`absolute top-[19px] left-0 h-px rounded-full ${stroke} transition-transform duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] ${
           open ? "left-[1px] w-[22px] -translate-y-[7px] -rotate-45" : "w-[26px]"
         }`}
       />
@@ -55,10 +64,20 @@ function MenuIcon({ open }: { open: boolean }) {
   );
 }
 
-function BrandMark({ mark }: { mark: string }) {
+function BrandMark({
+  mark,
+  inverse = false,
+}: {
+  mark: string;
+  inverse?: boolean;
+}) {
   return (
     <span
-      className="inline-flex size-[22px] shrink-0 items-center justify-center rounded-full border border-atlas-ink/40 font-display text-[9px] font-semibold text-atlas-ink tablet:size-[24px] tablet:text-[10px] desktop:size-[26px] desktop:text-[11px]"
+      className={`inline-flex size-[22px] shrink-0 items-center justify-center rounded-full border font-display text-[9px] font-semibold tablet:size-[24px] tablet:text-[10px] desktop:size-[26px] desktop:text-[11px] ${
+        inverse
+          ? "border-white/50 text-white"
+          : "border-atlas-ink/40 text-atlas-ink"
+      }`}
       aria-hidden="true"
     >
       {mark}
@@ -72,7 +91,9 @@ export function SiteNav({
   links,
   socialLinks,
   active = null,
+  tone = "paper",
 }: SiteNavProps) {
+  const inverse = tone === "inverse";
   const [open, setOpen] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -133,10 +154,20 @@ export function SiteNav({
   }, [open, rendered, close]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-atlas-border bg-atlas-paper">
+    <header
+      className={`sticky top-0 z-40 border-b ${
+        inverse
+          ? "border-white/10 bg-atlas-ink-blue"
+          : "border-atlas-border bg-atlas-paper"
+      }`}
+    >
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-4 focus:z-50 focus:bg-atlas-elevated focus:px-3 focus:py-2 focus:text-sm focus:text-atlas-ink"
+        className={`sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-4 focus:z-50 focus:px-3 focus:py-2 focus:text-sm ${
+          inverse
+            ? "focus:bg-white focus:text-atlas-ink-blue"
+            : "focus:bg-atlas-elevated focus:text-atlas-ink"
+        }`}
       >
         Skip to content
       </a>
@@ -146,10 +177,12 @@ export function SiteNav({
       >
         <Link
           href={brand.href}
-          className="inline-flex items-center gap-2.5 font-sans text-[13px] font-semibold tracking-[0.4px] text-atlas-ink no-underline tablet:text-[14px] desktop:text-[15px]"
+          className={`inline-flex items-center gap-2.5 font-sans text-[13px] font-semibold tracking-[0.4px] no-underline tablet:text-[14px] desktop:text-[15px] ${
+            inverse ? "text-white" : "text-atlas-ink"
+          }`}
           onClick={() => setOpen(false)}
         >
-          <BrandMark mark={brandMark} />
+          <BrandMark mark={brandMark} inverse={inverse} />
           <span>{brand.label}</span>
         </Link>
 
@@ -161,9 +194,13 @@ export function SiteNav({
                 <Link
                   href={link.href}
                   className={`font-sans text-[14px] no-underline transition-colors duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] desktop:text-[15px] ${
-                    isActive
-                      ? "font-semibold text-atlas-ink"
-                      : "font-medium text-atlas-umber hover:text-atlas-ink"
+                    inverse
+                      ? isActive
+                        ? "font-semibold text-white"
+                        : "font-medium text-white/80 hover:text-white"
+                      : isActive
+                        ? "font-semibold text-atlas-ink"
+                        : "font-medium text-atlas-umber hover:text-atlas-ink"
                   }`}
                   aria-current={isActive ? "page" : undefined}
                 >
@@ -183,7 +220,7 @@ export function SiteNav({
           aria-label={open ? "Close menu" : "Open menu"}
           onClick={() => setOpen((value) => !value)}
         >
-          <MenuIcon open={open} />
+          <MenuIcon open={open} inverse={inverse} />
         </button>
 
         {rendered ? (
@@ -196,7 +233,11 @@ export function SiteNav({
             aria-hidden={open ? undefined : true}
             data-open={open ? "true" : "false"}
             data-closing={closing ? "true" : undefined}
-            className="atlas-menu-panel absolute inset-x-0 top-full z-50 border-b border-atlas-border bg-atlas-paper px-6 pt-12 pb-10 tablet:hidden"
+            className={`atlas-menu-panel absolute inset-x-0 top-full z-50 border-b px-6 pt-12 pb-10 tablet:hidden ${
+              inverse
+                ? "border-white/10 bg-atlas-ink-blue"
+                : "border-atlas-border bg-atlas-paper"
+            }`}
           >
             <ul className="m-0 list-none space-y-[1.625rem] p-0">
               {links.map((link) => {
@@ -207,9 +248,13 @@ export function SiteNav({
                       href={link.href}
                       tabIndex={open ? 0 : -1}
                       className={`block font-sans text-sm leading-[1.5] no-underline ${
-                        isActive
-                          ? "font-semibold text-atlas-ink"
-                          : "font-normal text-atlas-ink"
+                        inverse
+                          ? isActive
+                            ? "font-semibold text-white"
+                            : "font-normal text-white"
+                          : isActive
+                            ? "font-semibold text-atlas-ink"
+                            : "font-normal text-atlas-ink"
                       }`}
                       aria-current={isActive ? "page" : undefined}
                       onClick={close}

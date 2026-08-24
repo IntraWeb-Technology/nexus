@@ -3,7 +3,9 @@ import { expect, test } from "@playwright/test";
 import { clickPrimaryNavLink, expectCurrentNavLink } from "./helpers/nav";
 
 test.describe("work index", () => {
-  test("renders primary landmarks and sections", async ({ page }) => {
+  test("renders primary landmarks and full Story-First gallery", async ({
+    page,
+  }) => {
     await page.goto("/work");
 
     await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
@@ -13,22 +15,18 @@ test.describe("work index", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Selected engineering work",
+        name: /A closer look at what I've been building/i,
       }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { level: 2, name: "Portfolio OS" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { level: 2, name: "Additional dimensions." }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", {
-        level: 2,
-        name: "How the work is classified.",
-      }),
-    ).toBeVisible();
-    await expect(page.locator("#contact")).toBeVisible();
+
+    for (const name of [
+      "Atlas",
+      "IntraWeb Automation",
+      "Portfolio OS",
+      "IntraWeb Portal",
+    ]) {
+      await expect(page.getByRole("heading", { level: 3, name })).toBeVisible();
+    }
   });
 
   test("marks Work as the current nav item", async ({ page }, testInfo) => {
@@ -43,7 +41,7 @@ test.describe("work index", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Selected engineering work",
+        name: /A closer look at what I've been building/i,
       }),
     ).toBeVisible();
   });
@@ -57,35 +55,36 @@ test.describe("work index", () => {
     await expect(page.locator("#main")).toBeFocused();
   });
 
-  test("keyboard can reach featured case study CTA", async ({ page }) => {
+  test("keyboard can reach case study CTA", async ({ page }) => {
     await page.goto("/work");
-    const cta = page.getByRole("link", { name: "Read case study" }).first();
+    const cta = page.getByRole("link", { name: "Read the case study →" }).first();
     await cta.focus();
     await expect(cta).toBeFocused();
   });
 
-  test("selected work links only resolve to implemented case studies", async ({
+  test("case study links only resolve to implemented routes", async ({
     page,
   }) => {
     await page.goto("/work");
 
-    await expect(page.getByRole("link", { name: "Read case study" })).toHaveAttribute(
-      "href",
-      "/work/portfolio-os",
-    );
+    const caseLinks = page.getByRole("link", { name: "Read the case study →" });
+    await expect(caseLinks).toHaveCount(2);
+    await expect(caseLinks.first()).toHaveAttribute("href", "/work/portfolio-os");
+    await expect(caseLinks.nth(1)).toHaveAttribute("href", "/work/portfolio-os");
 
     for (const href of [
       "/work/shared-strapi-cms",
       "/work/intraweb-automation",
       "/work/vehicle-maintenance",
+      "/work/intraweb-portal",
     ]) {
       await expect(page.locator(`a[href="${href}"]`)).toHaveCount(0);
     }
   });
 
-  test("portfolio-os case study resolves from featured CTA", async ({ page }) => {
+  test("portfolio-os case study resolves from gallery CTA", async ({ page }) => {
     await page.goto("/work");
-    await page.getByRole("link", { name: "Read case study" }).first().click();
+    await page.getByRole("link", { name: "Read the case study →" }).first().click();
     await expect(page).toHaveURL(/\/work\/portfolio-os$/);
     await expect(
       page.getByRole("heading", { level: 1, name: /Portfolio OS/i }),

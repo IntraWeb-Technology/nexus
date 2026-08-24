@@ -1,5 +1,5 @@
 /**
- * About fixture — Approved — About (Figma production).
+ * About fixture — Story-First About (Figma page 28).
  * Shape kept compatible with assemble-about / Strapi AboutPage.
  */
 
@@ -94,12 +94,12 @@ export const aboutFixture: AboutFixture = {
   },
   opening: {
     chapter: "ABOUT",
-    title:
-      "I’m a senior software engineer working across product development, architecture, testing, and automation.",
-    deck: "John Schibelli",
-    deckCondensed: "John Schibelli",
-    meta: "John Schibelli",
-    metaCondensed: "Senior Software Engineer · IntraWeb Technologies",
+    title: "I build software systems with the reasoning left in.",
+    deck: "I'm a senior software engineer at IntraWeb Technologies, working across product development, architecture, testing, and automation.",
+    deckCondensed:
+      "I'm a senior software engineer at IntraWeb Technologies, working across product development, architecture, testing, and automation.",
+    meta: "Quiet intensity. Written decisions. Few surprises.",
+    metaCondensed: "Quiet intensity. Written decisions. Few surprises.",
     marginNote: {
       label: "ROLE",
       body: "Senior Software Engineer · IntraWeb Technologies",
@@ -169,35 +169,35 @@ export const aboutFixture: AboutFixture = {
     ],
   },
   timeline: {
-    chapter: "CAREER ARC",
-    title: "",
+    chapter: "TIMELINE",
+    title: "What shaped my craft",
     entries: [
       {
-        period: "2005 — 2009",
-        title: "Teaching and program leadership",
-        note: "Developed web-development curriculum and led eight instructors across four campuses.",
+        period: "2005–09",
+        title: "Teaching and curriculum leadership",
+        note: "Led web-development instruction across multiple campuses, helping students and instructors work through complex material clearly.",
       },
       {
-        period: "2009 — 2016",
+        period: "2009–16",
         title: "Agency and client development",
-        note: "Built websites, interfaces, and content systems for small businesses, agencies, financial teams, and pharmaceutical clients.",
+        note: "Shipped websites, interfaces, and content systems for small businesses, agencies, financial teams, and pharmaceutical clients.",
       },
       {
-        period: "2016 — 2020",
+        period: "2016–20",
         title: "Operational web systems",
-        note: "Connected customer booking and front-end experiences to reservation, scheduling, and dispatch systems.",
+        note: "Connected booking, reservation, scheduling, and dispatch workflows into systems people could rely on.",
       },
       {
-        period: "2020 — PRESENT",
+        period: "2020–Present",
         title: "Architecture, automation, and product engineering",
-        note: "At IntraWeb Technologies, I design and build web applications, shared platforms, delivery tooling, and operational automation. My 2024 work at ColorStreet focused on e-commerce, Playwright, CI, API validation, and SQL Server.",
+        note: "At IntraWeb Technologies, I build product systems, shared platforms, delivery tooling, and automation.",
       },
     ],
   },
   focus: {
     chapter: "CURRENT FOCUS",
     title: "",
-    body: "I’m currently focused on product engineering, shared content platforms, automated testing, and operational workflows. I prefer work where technical decisions stay close to implementation and can be reviewed through code, tests, and documentation.",
+    body: "I'm currently focused on product engineering, shared content platforms, automated testing, and operational workflows. I prefer work where technical decisions stay close to implementation and can be reviewed through code, tests, and documentation.",
     bodyCondensed:
       "Product engineering, shared content platforms, automated testing, and operational workflows — with decisions close to implementation.",
     statusLabel: "STATUS",

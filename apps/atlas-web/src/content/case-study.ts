@@ -102,6 +102,21 @@ export type CaseStudyFixture = {
     bodyTablet: string[];
     bodyMobile: string;
   };
+  /** Story-First Under the Hood (Figma 616:13) — optional; preferred over long-form sections. */
+  underTheHood?: {
+    chapter: string;
+    title: string;
+    diagramLabel: string;
+    diagramSrc?: string;
+    diagramWidth?: number;
+    diagramHeight?: number;
+    items: Array<{ label: string; body: string }>;
+  };
+  /** Story-First Outcomes & lessons — short closing band. */
+  storyOutcomes?: {
+    title: string;
+    body: string;
+  };
   problem: {
     chapter: string;
     title: string;

@@ -13,6 +13,14 @@ export const atlasStoryPrimaryButtonClassName =
 export const atlasStorySecondaryButtonClassName =
   "inline-flex items-center justify-center rounded-[2px] border border-atlas-ink/35 bg-transparent px-8 py-4 text-center font-sans text-[15px] font-semibold text-atlas-ink no-underline transition-[background-color,color,opacity,transform] duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] hover:bg-atlas-ink/5 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-atlas-ink disabled:cursor-not-allowed disabled:opacity-60";
 
+/** Story-First secondary on dark hero — cream outline, white text. */
+export const atlasStorySecondaryOnDarkButtonClassName =
+  "inline-flex items-center justify-center rounded-[2px] border border-atlas-cream bg-transparent px-8 py-4 text-center font-sans text-[15px] font-semibold text-white no-underline transition-[background-color,color,opacity,transform] duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] hover:bg-white/10 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60";
+
+/** Story-First contact invite CTA — white fill, rust text on rust band. */
+export const atlasStoryInverseButtonClassName =
+  "inline-flex items-center justify-center rounded-[2px] bg-white px-8 py-4 text-center font-sans text-[15px] font-semibold text-atlas-rust-ink no-underline transition-[background-color,color,opacity,transform] duration-[var(--atlas-motion-fast)] ease-[var(--atlas-motion-ease-standard)] hover:opacity-90 active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white disabled:cursor-not-allowed disabled:opacity-60";
+
 type AtlasPrimaryButtonProps = {
   href: string;
   children: string;

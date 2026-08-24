@@ -1,10 +1,9 @@
 import { Reveal } from "@/components/editorial/reveal";
 import { HomeAbout } from "@/components/sections/home-about";
 import { HomeContact } from "@/components/sections/home-contact";
-import { HomeFeatured } from "@/components/sections/home-featured";
 import { HomeHero } from "@/components/sections/home-hero";
+import { HomeLatestWork } from "@/components/sections/home-latest-work";
 import { HomePhilosophy } from "@/components/sections/home-philosophy";
-import { HomeSelected } from "@/components/sections/home-selected";
 import { HomeWriting } from "@/components/sections/home-writing";
 import { getHomepageContent } from "@/lib/content";
 
@@ -15,35 +14,19 @@ export default async function HomePage() {
     <main id="main" tabIndex={-1} className="outline-none">
       <HomeHero data={data.hero} />
 
-      <div className="h-16" aria-hidden="true" />
-
       <Reveal>
-        <HomeFeatured data={data.featured} />
+        <HomeLatestWork featured={data.featured} selected={data.selected} />
       </Reveal>
-
-      <div className="h-[4.5rem]" aria-hidden="true" />
-
-      <Reveal>
-        <HomeSelected data={data.selected} />
-      </Reveal>
-
-      <div className="h-[4.5rem]" aria-hidden="true" />
 
       <Reveal>
         <HomePhilosophy data={data.philosophy} />
       </Reveal>
 
-      <div className="h-14" aria-hidden="true" />
-
       <Reveal>
         <HomeWriting data={data.writing} />
       </Reveal>
 
-      <div className="h-12" aria-hidden="true" />
-
       <HomeAbout data={data.about} />
-
-      <div className="h-14" aria-hidden="true" />
 
       <HomeContact data={data.contact} />
     </main>

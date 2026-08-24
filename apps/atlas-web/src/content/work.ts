@@ -1,9 +1,6 @@
 /**
- * Work index fixture — mirrors planned Strapi `project` + page composition shape.
- * No live CMS this sprint. Component props should stay stable when Strapi lands.
- *
- * Project fields align with `apps/cms-strapi` Project collection, plus Atlas editorial
- * fields planned in the Build Manifest (featured, taxonomy themes, case-study link).
+ * Work index fixture — Story-First gallery (Figma page 28).
+ * Shape kept compatible with assemble-work / Strapi project mapping.
  */
 
 import type { MetaItem, NavLink } from "@/content/types";
@@ -16,27 +13,24 @@ export type WorkProject = {
   slug: string;
   name: string;
   summary: string;
-  /** Shorter summaries for tablet / mobile compositions */
   summaryTablet?: string;
   summaryMobile?: string;
-  /** Editorial taxonomy eyebrow (not a filter) */
   category: string;
-  /** Atlas editorial themes (map from tags / categories later) */
   themes: string[];
   projectStatus: "completed" | "in-progress" | "planned" | "archived";
   statusLabel: string;
   featured: boolean;
   layout: WorkProjectLayout;
-  /** Present only when production / composed media ships with the project. */
+  /** Alternating gallery: media on left (default) or right. */
+  mediaSide?: "left" | "right";
+  /** Story-First gradient placeholder when no production media. */
+  mediaTone?: "ink-gold" | "moss-clay" | "ink-rust" | "clay-moss";
   mediaLabel?: string;
-  /** Neutral media URL when production evidence exists (M7). */
   mediaSrc?: string;
   mediaWidth?: number;
   mediaHeight?: number;
   mediaSizes?: string;
-  /** Set only when `/work/[slug]` case study is implemented. */
   href?: string;
-  /** Navigation CTA — rendered only when `href` is set. */
   ctaLabel?: string;
   metaNote?: string;
 };
@@ -96,6 +90,10 @@ export type WorkFixture = {
     deck: string;
     projects: WorkProject[];
   };
+  /** Story-First alternating gallery rows (preferred over featured+selected). */
+  gallery: {
+    projects: WorkProject[];
+  };
   taxonomy: {
     chapter: string;
     title: string;
@@ -122,14 +120,14 @@ export const workFixture: WorkFixture = {
   seo: {
     title: "Work",
     description:
-      "Selected engineering work — systems, platforms, and product engineering presented as editorial chapters.",
+      "Selected engineering work — websites, internal tools, content systems, and product workflows presented with the reasoning behind them.",
   },
   intro: {
-    chapter: "WORK",
-    title: "Selected engineering work",
-    deck: "A curated body of systems, platforms, and product engineering — presented as editorial chapters, not a gallery of cards.",
+    chapter: "SELECTED WORK",
+    title: "A closer look at what I've been building.",
+    deck: "A mix of websites, internal tools, content systems, and product workflows. For each one, I try to show what started it, how it came together, and what changed.",
     deckMobile:
-      "A curated body of systems and product engineering — editorial chapters, not a card gallery.",
+      "A mix of websites, tools, and content systems — shown as decisions, not just a list.",
     meta: [
       { label: "Role", value: "Lead Engineer" },
       { label: "Focus", value: "Product systems" },
@@ -137,7 +135,7 @@ export const workFixture: WorkFixture = {
     ],
     editorialNote: {
       label: "EDITORIAL NOTE",
-      body: "Projects are ordered by narrative weight — flagship first, then breadth, then depth. Classification is editorial, not a filter UI.",
+      body: "Projects are ordered by narrative weight — flagship first, then breadth. Classification is editorial, not a filter UI.",
     },
   },
   stageRules: {
@@ -159,7 +157,7 @@ export const workFixture: WorkFixture = {
     timeframe: "2024 — Present",
     role: "Design & Engineering",
     figureAlt:
-      "Portfolio OS architecture diagram on the case-study production surface — request path and delivery tooling",
+      "Portfolio OS architecture diagram on the case-study production surface",
     figureCaption:
       "Fig. 1 — Portfolio OS production surface. Canonical request and delivery path from the live case study.",
     figureCaptionShort: "Fig. 1 — Portfolio OS production surface.",
@@ -167,7 +165,7 @@ export const workFixture: WorkFixture = {
       "/images/case-studies/portfolio-os/portfolio-os-work-featured-desktop.webp",
     figureWidth: 2688,
     figureHeight: 1240,
-    figureSizes: "(min-width: 1440px) 1216px, 100vw",
+    figureSizes: "(min-width: 1440px) 560px, 100vw",
     figureSrcCompact:
       "/images/case-studies/portfolio-os/portfolio-os-work-featured-compact.webp",
     figureWidthCompact: 1536,
@@ -180,72 +178,106 @@ export const workFixture: WorkFixture = {
       "Developer Experience",
     ],
     themesCompact: "Themes · Product · Architecture · Delivery · DX",
-    cta: { label: "Read case study", href: "/work/portfolio-os" },
+    cta: { label: "Read the case study →", href: "/work/portfolio-os" },
     ctaNote: "Full engineering narrative → architecture, decisions, delivery",
   },
   selected: {
     chapter: "SELECTED WORK",
     headline: "Additional dimensions.",
-    deck: "Unequal compositions — media scale, alignment, and density shift with each project. No card grid.",
+    deck: "Unequal compositions — media scale, alignment, and density shift with each project.",
+    projects: [],
+  },
+  gallery: {
     projects: [
       {
-        id: "shared-strapi-cms",
-        slug: "shared-strapi-cms",
-        name: "Shared Strapi CMS / Atlas",
+        id: "atlas",
+        slug: "atlas",
+        name: "Atlas",
         summary:
-          "A multi-site content platform shared across Atlas and sibling properties — one CMS, explicit site boundaries, production content workflows.",
+          "The site you're looking at now. Part portfolio, part publication, part notebook, built to hold the work, the writing, and the thinking behind both.",
         summaryTablet:
-          "Multi-site content platform — one CMS, explicit site boundaries, production workflows.",
-        summaryMobile: "Multi-site CMS with explicit site boundaries.",
-        category: "PLATFORM",
-        themes: ["Architecture", "Platform"],
+          "The site you're looking at now. Part portfolio, part publication, part notebook, built to hold the work and the writing behind it.",
+        summaryMobile:
+          "The site you're looking at now. Part portfolio, part publication, part notebook.",
+        category: "PERSONAL SITE · IN PROGRESS",
+        themes: ["Design", "Engineering", "Writing"],
         projectStatus: "in-progress",
-        statusLabel: "In production",
-        featured: false,
+        statusLabel: "In progress",
+        featured: true,
         layout: "feature",
-        mediaLabel: "Shared Strapi multi-site architecture",
-        mediaSrc: "/images/work/shared-strapi-architecture.svg",
-        mediaWidth: 1520,
-        mediaHeight: 860,
-        mediaSizes: "(min-width: 1440px) 760px, 100vw",
+        mediaSide: "left",
+        mediaTone: "ink-gold",
+        mediaLabel: "Atlas screens / workflow, editorial crop",
+        href: "/work/portfolio-os",
+        ctaLabel: "Read the case study →",
+        metaNote: "Design, engineering, writing · 2026",
       },
       {
         id: "intraweb-automation",
         slug: "intraweb-automation",
-        name: "IntraWeb Automation Platform",
+        name: "IntraWeb Automation",
         summary:
-          "Workflow automation across internal operations — reducing manual process load through reliable, inspectable pipelines.",
+          "A set of n8n workflows for the repetitive internal work that tends to slip through the cracks. Nothing flashy, just time given back and fewer things to chase.",
         summaryTablet:
-          "Workflow automation across internal operations — inspectable pipelines.",
-        summaryMobile: "Inspectable pipelines for internal operations.",
-        category: "AUTOMATION",
-        themes: ["Automation", "Developer Experience"],
+          "A set of n8n workflows for the repetitive internal work that tends to slip through the cracks.",
+        summaryMobile:
+          "A set of n8n workflows for the repetitive internal work that slips through the cracks.",
+        category: "AUTOMATION · IN PRODUCTION",
+        themes: ["Automation", "Workflow"],
         projectStatus: "in-progress",
         statusLabel: "In production",
         featured: false,
         layout: "offset",
-        mediaLabel: "IntraWeb n8n orchestration workflow",
-        mediaSrc: "/images/work/intraweb-automation-workflow.svg",
-        mediaWidth: 1120,
-        mediaHeight: 640,
-        mediaSizes: "(min-width: 1440px) 560px, 100vw",
+        mediaSide: "right",
+        mediaTone: "moss-clay",
+        mediaLabel: "IntraWeb Automation screens / workflow, editorial crop",
+        ctaLabel: "Read the case study →",
+        metaNote: "n8n, automation, workflow design · 2025-Present",
       },
       {
-        id: "vehicle-maintenance",
-        slug: "vehicle-maintenance",
-        name: "Vehicle Maintenance Platform",
+        id: "portfolio-os",
+        slug: "portfolio-os",
+        name: "Portfolio OS",
         summary:
-          "Operational product for tracking maintenance cycles, service history, and scheduling constraints — engineering for real-world reliability.",
-        summaryTablet: undefined,
-        summaryMobile: "Operational product for maintenance cycles.",
-        category: "PRODUCT ENGINEERING",
-        themes: ["Product Engineering"],
-        projectStatus: "completed",
-        statusLabel: "Completed",
+          "A publishing system for people who need to show their work without rebuilding the same portfolio over and over. It keeps projects, case studies, notes, and updates organized so the work stays easier to maintain.",
+        summaryTablet:
+          "A publishing system for showing work without rebuilding the same portfolio over and over.",
+        summaryMobile:
+          "A publishing system so showing your work doesn't mean rebuilding the same portfolio.",
+        category: "PUBLISHING SYSTEM · IN PROGRESS",
+        themes: ["Content systems", "Front-end"],
+        projectStatus: "in-progress",
+        statusLabel: "In progress",
+        featured: true,
+        layout: "feature",
+        mediaSide: "left",
+        mediaTone: "ink-rust",
+        mediaLabel: "Portfolio OS screens / workflow, editorial crop",
+        href: "/work/portfolio-os",
+        ctaLabel: "Read the case study →",
+        metaNote: "Content systems, front-end engineering · 2024-Present",
+      },
+      {
+        id: "intraweb-portal",
+        slug: "intraweb-portal",
+        name: "IntraWeb Portal",
+        summary:
+          "A client-facing home base for project status: what's done, what's in progress, and what's next. Built on one idea: nobody should have to chase an update over email.",
+        summaryTablet:
+          "A client-facing home base for project status — nobody should have to chase an update over email.",
+        summaryMobile:
+          "A client-facing home base — nobody should chase an update over email.",
+        category: "CLIENT PORTAL · IN PRODUCTION",
+        themes: ["Product design", "Client experience"],
+        projectStatus: "in-progress",
+        statusLabel: "In production",
         featured: false,
         layout: "band",
-        // A-05 deferred — no approved production source; intentional no-media band.
-        metaNote: "systems note",
+        mediaSide: "right",
+        mediaTone: "clay-moss",
+        mediaLabel: "IntraWeb Portal screens / workflow, editorial crop",
+        ctaLabel: "Read the case study →",
+        metaNote: "Product design, client experience · 2025",
       },
     ],
   },

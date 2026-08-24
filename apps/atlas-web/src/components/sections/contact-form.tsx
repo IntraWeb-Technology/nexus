@@ -33,6 +33,7 @@ export function ContactForm({ data }: ContactFormProps) {
   const baseId = useId();
   const nameId = `${baseId}-name`;
   const emailId = `${baseId}-email`;
+  const contextId = `${baseId}-context`;
   const messageId = `${baseId}-message`;
   const companyId = `${baseId}-company`;
   const statusId = `${baseId}-status`;
@@ -48,14 +49,24 @@ export function ContactForm({ data }: ContactFormProps) {
 
     const form = event.currentTarget;
     const formData = new FormData(form);
+    const context = String(formData.get("context") ?? "").trim();
+    const rawMessage = String(formData.get("message") ?? "");
+    const message = context
+      ? `Project context: ${context}\n\n${rawMessage}`
+      : rawMessage;
+
     const payload = {
       name: String(formData.get("name") ?? ""),
       email: String(formData.get("email") ?? ""),
-      message: String(formData.get("message") ?? ""),
+      message,
       company: String(formData.get("company") ?? ""),
     };
 
-    const local = localValidate(payload);
+    const local = localValidate({
+      name: payload.name,
+      email: payload.email,
+      message: rawMessage,
+    });
     if (local) {
       setErrors(local);
       setStatus("error");
@@ -103,12 +114,15 @@ export function ContactForm({ data }: ContactFormProps) {
 
   return (
     <form
-      className="relative flex w-full max-w-[30rem] flex-col gap-5"
+      className="relative flex w-full max-w-[46rem] flex-col gap-5"
       onSubmit={onSubmit}
       noValidate
       aria-describedby={status === "error" && formError ? statusId : undefined}
     >
-      <div className="absolute -left-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
+      <div
+        className="absolute -left-[9999px] h-px w-px overflow-hidden"
+        aria-hidden="true"
+      >
         <label htmlFor={companyId}>Company</label>
         <input
           id={companyId}
@@ -179,6 +193,22 @@ export function ContactForm({ data }: ContactFormProps) {
 
       <div className="flex flex-col gap-2">
         <label
+          htmlFor={contextId}
+          className="font-sans text-[13px] font-medium text-atlas-umber"
+        >
+          {data.fields.context.label}
+        </label>
+        <input
+          id={contextId}
+          name="context"
+          type="text"
+          placeholder={data.fields.context.placeholder}
+          className={inputClass}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label
           htmlFor={messageId}
           className="font-sans text-[13px] font-medium text-atlas-umber"
         >
@@ -220,7 +250,10 @@ export function ContactForm({ data }: ContactFormProps) {
         aria-atomic="true"
       >
         {status === "error" && formError ? (
-          <p className="m-0 font-sans text-sm leading-[1.5] text-atlas-rust-ink" role="alert">
+          <p
+            className="m-0 font-sans text-sm leading-[1.5] text-atlas-rust-ink"
+            role="alert"
+          >
             {formError}
           </p>
         ) : null}

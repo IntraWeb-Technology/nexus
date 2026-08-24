@@ -1,63 +1,54 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test.describe("production media (M7)", () => {
+test.describe("production media (M7 / Story-First)", () => {
   test("home hero renders production image with meaningful alt", async ({
     page,
   }) => {
     await page.goto("/");
     const hero = page.locator("main section").first().locator("img").first();
     await expect(hero).toBeVisible();
-    await expect(hero).toHaveAttribute("alt", /handbook|Portfolio OS|Atlas/i);
+    await expect(hero).toHaveAttribute("alt", /handbook|Portfolio OS|Atlas|John|workspace/i);
     await expect(hero).not.toHaveAttribute("alt", /\.webp$/i);
   });
 
-  test("home selected work uses real project identities", async ({ page }) => {
+  test("home latest work uses Story-First project identities", async ({
+    page,
+  }) => {
     await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Atlas" }).first()).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Shared Strapi CMS" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "IntraWeb Automation Platform" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Vehicle Maintenance Platform" }),
+      page.getByRole("heading", { name: "IntraWeb Automation" }),
     ).toBeVisible();
     await expect(page.getByText("Project A")).toHaveCount(0);
   });
 
-  test("work featured figure is production media", async ({ page }) => {
-    await page.goto("/work");
-    const img = page.locator("main figure img:visible").first();
-    await expect(img).toBeVisible();
-    await expect(img).toHaveAttribute("alt", /Portfolio OS|architecture/i);
-    await expect(page.getByText(/^IMG$/)).toHaveCount(0);
-  });
-
-  test("work selected Strapi and Automation media render; Vehicle has intentional no-media", async ({
+  test("work gallery exposes four Story-First media surfaces", async ({
     page,
   }) => {
     await page.goto("/work");
+    for (const name of [
+      "Atlas",
+      "IntraWeb Automation",
+      "Portfolio OS",
+      "IntraWeb Portal",
+    ]) {
+      await expect(page.getByRole("heading", { level: 3, name })).toBeVisible();
+    }
     await expect(
-      page.getByRole("img", { name: /Shared Strapi/i }).first(),
+      page.getByRole("img", { name: /PHOTO — Atlas/i }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("img", { name: /IntraWeb|n8n|orchestration/i }).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: "Vehicle Maintenance Platform" }),
-    ).toBeVisible();
-    // A-05 deferred — no production media, no placeholder img semantics.
-    await expect(
-      page.getByRole("img", { name: /Vehicle Maintenance/i }),
-    ).toHaveCount(0);
+    await expect(page.getByText(/^IMG$/)).toHaveCount(0);
   });
 
-  test("case study hero retires placeholder panels label", async ({ page }) => {
+  test("case study under-the-hood diagram surface is present", async ({
+    page,
+  }) => {
     await page.goto("/work/portfolio-os");
-    const img = page.locator("main figure img:visible").first();
-    await expect(img).toBeVisible();
-    await expect(img).toHaveAttribute("alt", /Portfolio OS/i);
+    await expect(page.locator("#under-the-hood")).toBeVisible();
+    await expect(
+      page.getByText(/DIAGRAM — request\/delivery architecture/i),
+    ).toBeVisible();
     await expect(
       page.getByText("portfolio-os  ·  production surface"),
     ).toHaveCount(0);

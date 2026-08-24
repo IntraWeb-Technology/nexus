@@ -149,6 +149,10 @@ export function assembleWork(
       deck: workPage.selectedDeck,
       projects: selectedProjects,
     },
+    gallery: {
+      // Story-First gallery remains fixture-authored until CMS ships row media sides.
+      projects: workFixture.gallery.projects,
+    },
     taxonomy: {
       chapter: workPage.taxonomy.chapter,
       title: workPage.taxonomy.title,

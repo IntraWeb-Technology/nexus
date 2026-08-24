@@ -11,10 +11,13 @@ test.describe("homepage", () => {
     await expect(page.getByRole("contentinfo")).toBeVisible();
 
     await expect(
-      page.getByRole("heading", { level: 1, name: /I design and build software systems/i }),
+      page.getByRole("heading", {
+        level: 1,
+        name: /This is where I keep the work/i,
+      }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 2, name: "Atlas" }),
+      page.getByRole("heading", { level: 2, name: "Latest work" }),
     ).toBeVisible();
     await expect(page.locator("#selected-work")).toBeVisible();
     await expect(page.locator("#contact")).toBeVisible();
@@ -62,31 +65,17 @@ test.describe("homepage", () => {
 
   test("keyboard can reach primary CTAs", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: "View selected work" }).focus();
-    await expect(
-      page.getByRole("link", { name: "View selected work" }),
-    ).toBeFocused();
+    await page.getByRole("link", { name: "See the work" }).focus();
+    await expect(page.getByRole("link", { name: "See the work" })).toBeFocused();
   });
 
-  test("in-page hero CTAs do not soft-navigate via RSC", async ({ page }) => {
+  test("hero CTAs navigate to work and articles", async ({ page }) => {
     await page.goto("/");
-    await page.waitForLoadState("networkidle");
-
-    const samePageRsc: string[] = [];
-    page.on("request", (req) => {
-      if (req.headers()["rsc"] !== "1") return;
-      const url = new URL(req.url());
-      // Hash CTAs must not RSC-fetch the current route. Prefetch of other
-      // work/case links is expected with Next <Link> and is out of scope.
-      if (url.pathname === "/" || url.pathname === "") {
-        samePageRsc.push(req.url());
-      }
-    });
-
-    await page.getByRole("link", { name: "View selected work" }).click();
-    await expect(page).toHaveURL(/\/#selected-work$/);
-    await page.waitForTimeout(300);
-    expect(samePageRsc, samePageRsc.join("\n")).toEqual([]);
+    await page.getByRole("link", { name: "See the work" }).click();
+    await expect(page).toHaveURL(/\/work$/);
+    await page.goto("/");
+    await page.getByRole("link", { name: "Read the notes" }).click();
+    await expect(page).toHaveURL(/\/articles$/);
   });
 
   test("footer nav order and social links", async ({ page }) => {

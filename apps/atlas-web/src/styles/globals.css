@@ -11,9 +11,16 @@
   --atlas-umber: #5e4a38;
   --atlas-sage: #4a5c56;
   --atlas-border: #d4cec2;
-  /* Story-First rust accents (error markers + primary CTAs) */
+  /* Story-First accents (Figma page 28 primitives — additive) */
   --atlas-rust: #b35232;
   --atlas-rust-ink: #844e34;
+  --atlas-ink-blue: #1d293e;
+  --atlas-moss: #2f4234;
+  --atlas-gold: #bf923e;
+  --atlas-clay: #d48c66;
+  --atlas-cream: #f9f4e9;
+  --atlas-blush: #e1bda9;
+  --atlas-label: #5c4a3a;
 
   --atlas-pad-x: 1.5rem; /* 24 mobile */
   --atlas-nav-h: 3.25rem; /* 52 */
@@ -60,6 +67,13 @@
   --color-atlas-border: var(--atlas-border);
   --color-atlas-rust: var(--atlas-rust);
   --color-atlas-rust-ink: var(--atlas-rust-ink);
+  --color-atlas-ink-blue: var(--atlas-ink-blue);
+  --color-atlas-moss: var(--atlas-moss);
+  --color-atlas-gold: var(--atlas-gold);
+  --color-atlas-clay: var(--atlas-clay);
+  --color-atlas-cream: var(--atlas-cream);
+  --color-atlas-blush: var(--atlas-blush);
+  --color-atlas-label: var(--atlas-label);
 
   --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

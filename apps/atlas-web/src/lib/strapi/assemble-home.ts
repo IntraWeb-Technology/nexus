@@ -51,6 +51,7 @@ export function assembleHomepage(
       title: home.featured.title,
       meta: home.featured.meta ?? "",
       status: home.featured.status ?? "",
+      summary: featuredFallback.summary,
       figureAlt:
         featuredMedia.alt ??
         home.featured.figure?.alt ??
@@ -74,6 +75,9 @@ export function assembleHomepage(
     selected: {
       chapter: "SELECTED WORK",
       headline: "Additional dimensions.",
+      sectionTitle: homepageFixture.selected.sectionTitle,
+      viewAll: homepageFixture.selected.viewAll,
+      deck: homepageFixture.selected.deck,
       projects: home.selected.map((item) => {
         const slug = item.project.slug;
         const full = projectBySlug(projects, slug);
@@ -106,6 +110,9 @@ export function assembleHomepage(
     },
     writing: {
       chapter: home.writingChapter,
+      sectionTitle: homepageFixture.writing.sectionTitle,
+      viewAll: homepageFixture.writing.viewAll,
+      deck: homepageFixture.writing.deck,
       items: home.writingItems.map((item) => ({
         title: item.article.title,
         note: item.note,
@@ -114,7 +121,9 @@ export function assembleHomepage(
     },
     about: {
       chapter: home.aboutTeaser.chapter,
+      title: homepageFixture.about.title,
       summary: home.aboutTeaser.summary ?? home.aboutTeaser.body ?? "",
+      body: homepageFixture.about.body,
       href: home.aboutTeaser.href ?? home.aboutTeaser.cta?.href ?? "/about",
       ctaLabel:
         home.aboutTeaser.ctaLabel ?? home.aboutTeaser.cta?.label ?? "About →",

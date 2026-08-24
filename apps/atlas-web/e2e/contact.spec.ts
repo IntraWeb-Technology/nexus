@@ -19,8 +19,11 @@ test.describe("contact", () => {
 
     await expect(page.getByLabel("NAME")).toBeVisible();
     await expect(page.getByLabel("EMAIL")).toBeVisible();
+    await expect(page.getByLabel("PROJECT CONTEXT")).toBeVisible();
     await expect(page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?")).toBeVisible();
     await expect(page.getByRole("button", { name: "Send inquiry" })).toBeVisible();
+    await expect(page.getByText("GOOD FIT")).toBeVisible();
+    await expect(page.getByText("NEXT STEP")).toBeVisible();
   });
 
   test("marks Contact as the current nav item", async ({ page }, testInfo) => {
