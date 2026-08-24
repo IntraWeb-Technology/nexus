@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/editorial/reveal";
 import { HomeAbout } from "@/components/sections/home-about";
 import { HomeContact } from "@/components/sections/home-contact";
 import { HomeFeatured } from "@/components/sections/home-featured";
@@ -16,19 +17,27 @@ export default async function HomePage() {
 
       <div className="h-16" aria-hidden="true" />
 
-      <HomeFeatured data={data.featured} />
+      <Reveal>
+        <HomeFeatured data={data.featured} />
+      </Reveal>
 
       <div className="h-[4.5rem]" aria-hidden="true" />
 
-      <HomeSelected data={data.selected} />
+      <Reveal>
+        <HomeSelected data={data.selected} />
+      </Reveal>
 
       <div className="h-[4.5rem]" aria-hidden="true" />
 
-      <HomePhilosophy data={data.philosophy} />
+      <Reveal>
+        <HomePhilosophy data={data.philosophy} />
+      </Reveal>
 
       <div className="h-14" aria-hidden="true" />
 
-      <HomeWriting data={data.writing} />
+      <Reveal>
+        <HomeWriting data={data.writing} />
+      </Reveal>
 
       <div className="h-12" aria-hidden="true" />
 

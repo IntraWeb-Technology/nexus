@@ -10,6 +10,7 @@ import type { NavLink } from "@/content/types";
 
 type SiteNavActiveProps = {
   brand: NavLink;
+  brandMark?: string;
   links: NavLink[];
   socialLinks: readonly SocialLink[];
 };
@@ -27,6 +28,7 @@ function activeFromPath(pathname: string): NavActive {
 /** Client island — route-derived aria-current + mobile menu. */
 export function SiteNavActive({
   brand,
+  brandMark,
   links,
   socialLinks,
 }: SiteNavActiveProps) {
@@ -34,6 +36,7 @@ export function SiteNavActive({
   return (
     <SiteNav
       brand={brand}
+      brandMark={brandMark}
       links={links}
       socialLinks={socialLinks}
       active={activeFromPath(pathname)}

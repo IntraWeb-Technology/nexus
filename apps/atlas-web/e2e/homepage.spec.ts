@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { settleMotionReveals } from "./helpers/motion";
 
 test.describe("homepage", () => {
   test("renders primary landmarks and sections", async ({ page }) => {
@@ -23,18 +24,18 @@ test.describe("homepage", () => {
     test.skip(testInfo.project.name !== "mobile", "Menu overlay is mobile-only");
     await page.goto("/");
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
     await expect(
-      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "Work", exact: true }),
+      page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "Work", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "Articles", exact: true }),
+      page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "Articles", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "About", exact: true }),
+      page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "About", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", { name: "Contact", exact: true }),
+      page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "Contact", exact: true }),
     ).toBeVisible();
   });
 
@@ -43,7 +44,7 @@ test.describe("homepage", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
     await expect(page).toHaveScreenshot(`homepage-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,
@@ -98,9 +99,10 @@ test.describe("homepage", () => {
       "Articles",
       "About",
       "Contact",
+      "Docs",
     ]);
-    await expect(footer.getByText(/johnschibelli\.dev/)).toBeVisible();
-    for (const name of ["LinkedIn", "Facebook", "Upwork", "Bluesky"]) {
+    await expect(footer.getByText(/John Schibelli — Atlas/)).toBeVisible();
+    for (const name of ["LinkedIn", "GitHub", "Bluesky", "Upwork"]) {
       await expect(footer.getByRole("link", { name })).toBeVisible();
     }
   });
@@ -110,15 +112,20 @@ test.describe("homepage", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
     await page.getByRole("button", { name: "Open menu" }).click();
-    const menu = page.getByRole("dialog", { name: "Atlas menu" });
+    const menu = page.getByRole("dialog", { name: "Menu" });
     await expect(menu).toBeVisible();
+    await expect(menu.getByText("Navigation")).toHaveCount(0);
     const navLinks = menu.locator("ul").first().getByRole("link");
     await expect(navLinks).toHaveCount(4);
     await expect(navLinks).toHaveText(["Work", "Articles", "About", "Contact"]);
+    for (const name of ["LinkedIn", "GitHub", "Bluesky", "Upwork"]) {
+      await expect(menu.getByRole("link", { name })).toBeVisible();
+    }
   });
 
   test("has no serious accessibility violations", async ({ page }) => {
     await page.goto("/");
+    await settleMotionReveals(page);
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
       .analyze();

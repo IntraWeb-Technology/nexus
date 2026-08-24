@@ -99,7 +99,7 @@ test.describe("article detail — Why We Chose React Server Components", () => {
       contact.getByRole("link", { name: /browse Work/i }),
     ).toHaveAttribute("href", "/work");
     await expect(
-      contact.getByRole("link", { name: /LinkedIn|Facebook|Bluesky|Upwork/i }),
+      contact.getByRole("link", { name: /LinkedIn|GitHub|Bluesky|Upwork/i }),
     ).toHaveCount(0);
   });
 
@@ -173,7 +173,7 @@ test.describe("article detail — Why We Chose React Server Components", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(FEATURED);
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
     await expect(page).toHaveScreenshot("article-detail-mobile-menu-open.png", {
       fullPage: false,
       maxDiffPixelRatio: 0.02,

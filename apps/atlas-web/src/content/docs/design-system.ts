@@ -14,7 +14,8 @@ export const designSystemDoc: DocDetail = {
     { id: "tokens", label: "01 Tokens", href: "#tokens" },
     { id: "type", label: "02 Type", href: "#type" },
     { id: "surfaces", label: "03 Surfaces", href: "#surfaces" },
-    { id: "freeze", label: "04 Freeze", href: "#freeze" },
+    { id: "motion", label: "04 Motion", href: "#motion" },
+    { id: "freeze", label: "05 Freeze", href: "#freeze" },
   ],
   sections: [
     {
@@ -92,8 +93,61 @@ export const designSystemDoc: DocDetail = {
       },
     },
     {
+      id: "motion",
+      chapter: "04 · MOTION",
+      title: "Quietly structural. Evidence-led. Fast enough to disappear.",
+      paragraphs: [
+        "Atlas uses motion as editorial guidance — clarifying structure, hierarchy, state, and evidence. Motion must make the site easier to read. If an animation delays comprehension or feels theatrical, remove it.",
+        "Tokens live as `--atlas-motion-*` CSS variables and `src/lib/motion/tokens.ts`: durations instant/fast/base/slow/page, easings standard/out/inOut, distances xs/sm/md (4/8/16px).",
+        "Reveal wrappers stay visible until the client mounts. Pending hide applies only after mount for below-fold content. Prefer CSS transitions and IntersectionObserver. No Framer Motion in v1.",
+        "`prefers-reduced-motion` removes translate/scale and rule draws, keeps instant state changes, and never hides content pending animation.",
+      ],
+      paragraphsTablet: [
+        "Motion clarifies structure and evidence — never decoration. Tokens: `--atlas-motion-*` and `lib/motion/tokens.ts`.",
+        "Reveal stays visible until mount. Reduced motion is mandatory.",
+      ],
+      callout: {
+        variant: "note",
+        title: "Forbidden motion",
+        body: "No parallax, fake terminal typing, animated code simulation, scroll-jacking, bouncy springs, hover card lifts, letter-splitting headlines, or decorative floating objects.",
+        bodyCompact:
+          "No parallax, fake typing, scroll-jacking, bounce, or decorative floats.",
+      },
+      table: {
+        caption: "Table 2 — Motion primitives shipped for high-value surfaces.",
+        captionCompact: "Table 2 — Motion primitives.",
+        columns: ["Primitive", "Role", "Surfaces"],
+        rows: [
+          {
+            id: "reveal",
+            cells: ["Reveal", "Section settle", "Home + Work major sections"],
+          },
+          {
+            id: "rule",
+            cells: ["RuleReveal", "L→R hairline", "Work intro / taxonomy"],
+          },
+          {
+            id: "evidence",
+            cells: [
+              "EvidenceReveal",
+              "Staggered panels",
+              "Home selected work",
+            ],
+          },
+          {
+            id: "row",
+            cells: [
+              "InteractiveRow",
+              "Anchor affordance",
+              "Articles archive + related",
+            ],
+          },
+        ],
+      },
+    },
+    {
       id: "freeze",
-      chapter: "04 · FREEZE",
+      chapter: "05 · FREEZE",
       title: "Figma pages 15–26 are frozen for v1.",
       paragraphs: [
         "Do not redesign during implementation. If implementation and Figma disagree on visuals, Figma wins. If engineering boundaries disagree with the Build Manifest, update the manifest first.",

@@ -71,7 +71,10 @@ test.describe("contact", () => {
     );
     await page.getByRole("button", { name: "Send inquiry" }).click();
 
-    await expect(page.getByRole("status")).toContainText("Message sent.");
+    await expect(page).toHaveURL(/\/contact\/confirmation/);
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Message received." }),
+    ).toBeVisible();
   });
 
   test("shows failure state when delivery errors", async ({ page }) => {
@@ -95,7 +98,8 @@ test.describe("contact", () => {
 
     await expect(
       page.getByRole("main").getByRole("alert").filter({
-        hasText: "Couldn’t send right now.",
+        hasText:
+          "Your message could not be sent. Please try again, or email me directly if the issue continues.",
       }),
     ).toBeVisible();
   });
@@ -109,7 +113,7 @@ test.describe("contact", () => {
       el.value = "http://spam.example";
     });
     await page.getByRole("button", { name: "Send inquiry" }).click();
-    await expect(page.getByRole("status")).toContainText("Message sent.");
+    await expect(page).toHaveURL(/\/contact\/confirmation/);
   });
 
   test("has no serious accessibility violations", async ({ page }) => {
@@ -138,7 +142,7 @@ test.describe("contact", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/contact");
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
     await expect(page).toHaveScreenshot(`contact-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,

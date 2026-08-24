@@ -59,11 +59,11 @@ export const contactFixture: ContactFixture = {
     },
   ],
   success: {
-    title: "Message sent.",
-    body: "Thanks — I’ll reply with a short next step when I’ve read it carefully.",
+    title: "Message received.",
+    body: "Thanks for reaching out. I’ll review your note and reply if there’s a clear fit.",
   },
   failure: {
     title: "Couldn’t send right now.",
-    body: "Please try again in a moment.",
+    body: "Your message could not be sent. Please try again, or email me directly if the issue continues.",
   },
 };

@@ -71,7 +71,7 @@ test.describe("about", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/about");
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
     await expect(page).toHaveScreenshot(`about-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,

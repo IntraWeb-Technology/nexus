@@ -166,7 +166,7 @@ test.describe("articles index", () => {
     await expect(
       cue.getByRole("link", { name: /browse Work/i }),
     ).toHaveAttribute("href", "/work");
-    await expect(cue.getByRole("link", { name: /LinkedIn|Facebook|Bluesky|Upwork/i })).toHaveCount(0);
+    await expect(cue.getByRole("link", { name: /LinkedIn|GitHub|Bluesky|Upwork/i })).toHaveCount(0);
   });
 
   test("does not advertise fictional archive pagination", async ({ page }) => {
@@ -215,7 +215,7 @@ test.describe("articles index", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/articles");
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
     await expect(page).toHaveScreenshot(`articles-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,

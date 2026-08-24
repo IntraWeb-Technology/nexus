@@ -1,4 +1,5 @@
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
+import { RuleReveal } from "@/components/editorial/rule-reveal";
 import type { WorkFixture } from "@/content/work";
 
 type WorkIntroProps = {
@@ -60,7 +61,7 @@ export function WorkIntro({ data }: WorkIntroProps) {
           </aside>
         </div>
 
-        <hr className="atlas-hairline mt-8 hidden desktop:mt-3 desktop:block" />
+        <RuleReveal className="mt-8 hidden desktop:mt-3 desktop:block" />
       </div>
     </header>
   );

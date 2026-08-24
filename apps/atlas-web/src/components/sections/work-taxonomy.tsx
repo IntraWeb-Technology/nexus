@@ -1,4 +1,5 @@
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
+import { RuleReveal } from "@/components/editorial/rule-reveal";
 import type { WorkFixture } from "@/content/work";
 
 type WorkTaxonomyProps = {
@@ -50,7 +51,7 @@ export function WorkTaxonomy({ data }: WorkTaxonomyProps) {
             </li>
           ))}
         </ol>
-        <hr className="atlas-hairline" />
+        <RuleReveal />
       </div>
 
       {/* Tablet: numbered names only */}

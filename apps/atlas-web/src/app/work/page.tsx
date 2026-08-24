@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Reveal } from "@/components/editorial/reveal";
 import { WorkContact } from "@/components/sections/work-contact";
 import { WorkFeatured } from "@/components/sections/work-featured";
 import { WorkIntro } from "@/components/sections/work-intro";
@@ -24,15 +25,21 @@ export default async function WorkPage() {
       <StageRule label={data.stageRules.afterIntro} />
       <div className="hidden h-12 desktop:block" aria-hidden="true" />
 
-      <WorkFeatured data={data.featured} />
+      <Reveal>
+        <WorkFeatured data={data.featured} />
+      </Reveal>
       <StageRule label={data.stageRules.afterFeatured} />
       <div className="hidden h-16 desktop:block" aria-hidden="true" />
 
-      <WorkSelected data={data.selected} />
+      <Reveal>
+        <WorkSelected data={data.selected} />
+      </Reveal>
       <StageRule label={data.stageRules.afterSelected} />
       <div className="hidden h-14 desktop:block" aria-hidden="true" />
 
-      <WorkTaxonomy data={data.taxonomy} />
+      <Reveal>
+        <WorkTaxonomy data={data.taxonomy} />
+      </Reveal>
       <StageRule label={data.stageRules.afterTaxonomy} />
       <div className="hidden h-10 desktop:block" aria-hidden="true" />
 

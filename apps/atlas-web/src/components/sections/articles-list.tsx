@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
+import {
+  interactiveRowArrowClassName,
+  interactiveRowClasses,
+  interactiveRowTitleClassName,
+} from "@/components/editorial/interactive-row";
 import type { ArticleSummary, ArticlesIndexFixture } from "@/content/article";
 import { archiveMetaLine } from "@/content/articles/summaries";
 
@@ -69,18 +74,29 @@ export function ArticlesListRow({ article }: ArticlesListRowProps) {
     <li className="border-t border-atlas-border">
       <Link
         href={article.href}
-        className="flex items-start gap-4 py-5 no-underline tablet:gap-6 desktop:gap-8"
+        className={interactiveRowClasses({
+          className:
+            "flex items-start gap-4 py-5 tablet:gap-6 desktop:gap-8",
+        })}
       >
         <EvidenceThumb topic={article.topic} />
         <div className="min-w-0 flex-1 space-y-1.5">
-          <p className="m-0 font-display text-lg leading-6 font-semibold text-atlas-ink tablet:text-[1.375rem] tablet:leading-[31px] desktop:text-[1.4375rem]">
+          <p
+            className={`m-0 font-display text-lg leading-6 font-semibold text-atlas-ink tablet:text-[1.375rem] tablet:leading-[31px] desktop:text-[1.4375rem] ${interactiveRowTitleClassName}`}
+          >
             {article.title}
           </p>
           <p className="m-0 font-sans text-[13px] leading-5 text-atlas-body tablet:text-sm tablet:leading-[19px]">
             {article.excerptCompact ?? article.excerpt}
           </p>
-          <p className="m-0 font-sans text-xs leading-4 text-atlas-sage break-words whitespace-normal tablet:whitespace-pre">
-            {archiveMetaLine(article)}
+          <p className="m-0 flex flex-wrap items-center gap-x-2 font-sans text-xs leading-4 text-atlas-sage break-words whitespace-normal tablet:whitespace-pre">
+            <span>{archiveMetaLine(article)}</span>
+            <span
+              aria-hidden="true"
+              className={`text-atlas-umber ${interactiveRowArrowClassName}`}
+            >
+              →
+            </span>
           </p>
         </div>
       </Link>

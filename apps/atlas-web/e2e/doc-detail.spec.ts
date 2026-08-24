@@ -151,9 +151,14 @@ test.describe("documentation detail — Atlas Architecture", () => {
     await expect(
       page.getByText(/Table 1 — Surface roles/i).first(),
     ).toBeVisible();
-    await expect(page.getByRole("table")).toBeVisible();
     await expect(
-      page.getByRole("columnheader", { name: "Surface" }),
+      page.getByRole("columnheader", { name: "Surface", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Table 2 — Motion primitives/i).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("columnheader", { name: "Primitive", exact: true }),
     ).toBeVisible();
   });
 
