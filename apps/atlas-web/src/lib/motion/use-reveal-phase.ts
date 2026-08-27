@@ -11,6 +11,44 @@ type UseRevealPhaseOptions = {
   threshold?: number;
 };
 
+export type RevealEntryClassification = "ignore" | "shown" | "shown-disconnect" | "pending";
+
+export type RevealEntryInput = {
+  once: boolean;
+  alreadyShown: boolean;
+  hasEntry: boolean;
+  isIntersecting: boolean;
+  display: string;
+  visibility: string;
+  rectTop: number;
+  rectBottom: number;
+  viewportHeight: number;
+};
+
+/**
+ * Classifies one IntersectionObserver notification.
+ * Parent (`d0044a4`) never moved `shown` back to `pending`, including `once=false`.
+ */
+export function classifyRevealEntry(input: RevealEntryInput): RevealEntryClassification {
+  if (!input.hasEntry) return "ignore";
+  if (input.alreadyShown && input.once) return "ignore";
+
+  if (input.display === "none" || input.visibility === "hidden") {
+    return "shown";
+  }
+
+  const alreadyVisible =
+    input.rectTop < input.viewportHeight * 0.92 && input.rectBottom > 0;
+
+  if (alreadyVisible || input.isIntersecting) {
+    return input.once ? "shown-disconnect" : "shown";
+  }
+
+  // Parent IO ignored non-intersecting updates after shown, including once=false.
+  if (input.alreadyShown) return "ignore";
+  return "pending";
+}
+
 /**
  * Progressive-enhancement reveal phases:
  * - `ssr`: visible (no hidden styles) until the client wrapper mounts
@@ -42,29 +80,29 @@ export function useRevealPhase(
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (!entry) return;
-        if (shownRef.current && once) return;
-
         const style = window.getComputedStyle(el);
-        if (style.display === "none" || style.visibility === "hidden") {
-          // Hidden breakpoints stay "shown" so they never stick pending.
-          shownRef.current = true;
-          setPhase("shown");
-          return;
-        }
-
         const rect = el.getBoundingClientRect();
-        const alreadyVisible =
-          rect.top < window.innerHeight * 0.92 && rect.bottom > 0;
+        const result = classifyRevealEntry({
+          once,
+          alreadyShown: shownRef.current,
+          hasEntry: Boolean(entry),
+          isIntersecting: Boolean(entry?.isIntersecting),
+          display: style.display,
+          visibility: style.visibility,
+          rectTop: rect.top,
+          rectBottom: rect.bottom,
+          viewportHeight: window.innerHeight,
+        });
 
-        if (alreadyVisible || entry.isIntersecting) {
-          shownRef.current = true;
-          setPhase("shown");
-          if (once) io.disconnect();
+        if (result === "ignore") return;
+        if (result === "pending") {
+          setPhase("pending");
           return;
         }
 
-        setPhase("pending");
+        shownRef.current = true;
+        setPhase("shown");
+        if (result === "shown-disconnect") io.disconnect();
       },
       { threshold, rootMargin: "0px 0px -6% 0px" },
     );
