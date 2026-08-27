@@ -1,0 +1,68 @@
+---
+description: Atlas AI-assisted engineering governance — authority, task contract, stop conditions, evidence
+alwaysApply: true
+---
+
+# Atlas governance (V1)
+
+**Authority:** [`docs/governance/atlas-ai-assisted-engineering-v1.md`](../../docs/governance/atlas-ai-assisted-engineering-v1.md)  
+**Scope:** Atlas-related work — `apps/atlas-web`, `apps/atlas-docs`, `apps/cms-strapi` when Atlas-scoped, `packages/strapi-client` for Atlas, `.cursor/rules/atlas-*`, `docs/governance/**`, `docs/atlas/**`, and any task explicitly authorized for Atlas.
+
+This rule is a pointer and enforcement summary. It does not replace the V1 contract.
+
+## Agent role
+
+Cursor is an **implementation agent**. It is **not** the authority for:
+
+- product scope or user journeys;
+- Figma or design approval;
+- production copy or editorial meaning;
+- CMS schema contracts or migrations;
+- visual-baseline approval;
+- governance exceptions; or
+- production release or promotion.
+
+Humans and authoritative artifacts retain those decisions.
+
+## Before material Atlas work
+
+Material changes (runtime behavior, layout, content contracts, CI/CD, baselines, or production) require an **explicit task contract** with at least: objective, authorized scope, out-of-scope, authoritative references, acceptance criteria, risk class (G0–G4), required verification, permitted subsystems, stop conditions, and required reviewer.
+
+Use [`.github/ISSUE_TEMPLATE/atlas-engineering-task.yml`](../../.github/ISSUE_TEMPLATE/atlas-engineering-task.yml) or an equivalent durable record. Conversational instructions alone are insufficient.
+
+## Stop conditions (concise)
+
+Stop and report when:
+
+- authoritative sources **conflict**;
+- required behavior is **undefined**;
+- the task touches **excluded** files or subsystems;
+- **unexpected overlapping** user changes exist;
+- CMS changes could **orphan or misinterpret** data;
+- visual mismatch needs a **design judgment** without approval;
+- a test appears **stale** vs approved intent;
+- passing requires **weakening a gate** or **updating baselines** without approval;
+- credentials or production access **exceed scope**;
+- a command could **destructively mutate** data or external systems;
+- required verification **cannot run** or is not representative; or
+- release evidence refers to a **different commit** than the candidate.
+
+Do not silently pick the easiest authority. See V1 §6 for full wording.
+
+## Evidence
+
+- Run repository-defined verification for the task's risk class; do not invent substitutes.
+- Record commands, exit status, environment/data mode, and candidate commit.
+- Skipped, unavailable, flaky, or subset-only checks are **not passes**.
+- Visual parity requires human or automated proof at governed viewports — not source inspection alone.
+
+## Prohibited without explicit human authorization
+
+- Weakening, skipping, or bypassing tests, lint, typecheck, or CI gates;
+- Updating Playwright visual baselines (`test:e2e:update`) or approving baseline churn;
+- Production deployment or promotion;
+- Self-approving exceptions (register in [`docs/governance/exceptions.md`](../../docs/governance/exceptions.md)).
+
+## Related Atlas rules
+
+Domain rules remain authoritative within their domains when aligned with V1: `atlas-product`, `atlas-design`, `atlas-frontend`, `atlas-strapi`, `atlas-testing`, `atlas-definition-of-done`, `atlas-documentation`, `no-overengineering`. On conflict with V1, **stop** and report. Domain map: [`docs/governance/authority-map.md`](../../docs/governance/authority-map.md).
