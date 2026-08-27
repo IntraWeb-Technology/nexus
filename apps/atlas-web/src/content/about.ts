@@ -45,7 +45,19 @@ export type AboutFixture = {
   timeline: {
     chapter: string;
     title: string;
-    entries: Array<{ period: string; title: string; note: string }>;
+    entries: Array<{
+      period: string;
+      title: string;
+      note: string;
+      noteCondensed: string;
+    }>;
+  };
+  workingNotes: {
+    chapter: string;
+    title: string;
+    body: string;
+    observations: Array<{ label: string; body: string }>;
+    closing: string;
   };
   focus: {
     chapter: string;
@@ -176,23 +188,55 @@ export const aboutFixture: AboutFixture = {
         period: "2005–09",
         title: "Teaching and curriculum leadership",
         note: "Led web-development instruction across multiple campuses, helping students and instructors work through complex material clearly.",
+        noteCondensed:
+          "Led web-development instruction across multiple campuses.",
       },
       {
         period: "2009–16",
         title: "Agency and client development",
         note: "Shipped websites, interfaces, and content systems for small businesses, agencies, financial teams, and pharmaceutical clients.",
+        noteCondensed:
+          "Shipped websites and content systems for agencies and clients.",
       },
       {
         period: "2016–20",
         title: "Operational web systems",
         note: "Connected booking, reservation, scheduling, and dispatch workflows into systems people could rely on.",
+        noteCondensed:
+          "Connected booking and dispatch workflows people could rely on.",
       },
       {
         period: "2020–Present",
         title: "Architecture, automation, and product engineering",
         note: "At IntraWeb Technologies, I build product systems, shared platforms, delivery tooling, and automation.",
+        noteCondensed: "Product systems, shared platforms, and automation.",
       },
     ],
+  },
+  workingNotes: {
+    chapter: "WORKING NOTES",
+    title: "What the work keeps teaching me",
+    body: "Teaching, client work, operational systems, and product engineering all pushed me toward the same habit: make the reasoning visible before the work gets hard to untangle.",
+    observations: [
+      {
+        label: "WRITTEN REASONING",
+        body: "Decisions age better when the thinking behind them is visible.",
+      },
+      {
+        label: "AI WITH JUDGMENT",
+        body: "AI can speed up the development process, but it does not replace judgment, testing, review, or knowing why the work matters.",
+      },
+      {
+        label: "SYSTEMS AFTER LAUNCH",
+        body: "The work should be possible to pick up later without a guided tour.",
+      },
+      {
+        label: "PROOF WHERE IT MATTERS",
+        body: "The riskiest parts need proof before everyone is relying on memory.",
+      },
+    ],
+    closing:
+      "That is usually the standard I’m working toward: interfaces that make the system underneath easier to understand.",
   },
   focus: {
     chapter: "CURRENT FOCUS",

@@ -1,5 +1,5 @@
 import type { AboutPage } from "@repo/strapi-client";
-import type { AboutFixture } from "@/content/about";
+import { aboutFixture, type AboutFixture } from "@/content/about";
 
 /** CMS AboutPage → AboutFixture domain model. */
 export function assembleAbout(about: AboutPage): AboutFixture {
@@ -51,8 +51,15 @@ export function assembleAbout(about: AboutPage): AboutFixture {
     timeline: {
       chapter: about.timeline.chapter,
       title: about.timeline.title,
-      entries: about.timeline.entries,
+      entries: about.timeline.entries.map((entry, index) => ({
+        period: entry.period,
+        title: entry.title,
+        note: entry.note,
+        noteCondensed:
+          aboutFixture.timeline.entries[index]?.noteCondensed ?? entry.note,
+      })),
     },
+    workingNotes: aboutFixture.workingNotes,
     focus: {
       chapter: about.focus.chapter,
       title: about.focus.title,

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AboutOpening } from "@/components/sections/about-opening";
 import { AboutTimeline } from "@/components/sections/about-timeline";
+import { AboutWorkingNotes } from "@/components/sections/about-working-notes";
 import { getAboutContent } from "@/lib/content";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-/** Story-First About — Opening + Timeline only. */
+/** Story-First About — narrative, career evidence, Working Notes. */
 export default async function AboutPage() {
   const data = await getAboutContent();
 
@@ -19,6 +20,7 @@ export default async function AboutPage() {
     <main id="main" tabIndex={-1} className="outline-none">
       <AboutOpening data={data.opening} />
       <AboutTimeline data={data.timeline} />
+      <AboutWorkingNotes data={data.workingNotes} />
     </main>
   );
 }
