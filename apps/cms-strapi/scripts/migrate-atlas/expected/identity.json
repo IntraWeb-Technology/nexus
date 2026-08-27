@@ -5,6 +5,18 @@
     "intraweb-automation",
     "vehicle-maintenance"
   ],
+  "workFeaturedSlug": "portfolio-os",
+  "workGallerySlugs": [
+    "atlas",
+    "intraweb-automation",
+    "portfolio-os",
+    "intraweb-portal"
+  ],
+  "homeSelectedIds": [
+    "intraweb-automation",
+    "portfolio-os",
+    "intraweb-portal"
+  ],
   "caseStudySlugs": ["portfolio-os"],
   "writingArticleSlugs": [
     "why-we-chose-react-server-components",
