@@ -102,33 +102,38 @@ export function SiteNav({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const close = useCallback(() => {
+  const requestClose = useCallback(() => {
     setOpen(false);
-    queueMicrotask(() => triggerRef.current?.focus());
-  }, []);
-
-  useEffect(() => {
-    if (open) {
-      setRendered(true);
-      setClosing(false);
-      return;
-    }
-
-    if (!rendered) return;
-
     if (reducedMotion) {
       setRendered(false);
       setClosing(false);
       return;
     }
-
     setClosing(true);
+  }, [reducedMotion]);
+
+  const close = useCallback(() => {
+    requestClose();
+    queueMicrotask(() => triggerRef.current?.focus());
+  }, [requestClose]);
+
+  const openMenu = useCallback(() => {
+    setOpen(true);
+    setRendered(true);
+    setClosing(false);
+  }, []);
+
+  // Keep the panel mounted through the close transition; unmount after the
+  // CSS duration. setState belongs in the timer callback, not the effect body.
+  useEffect(() => {
+    if (open || !rendered || !closing) return;
+
     const timeout = window.setTimeout(() => {
       setRendered(false);
       setClosing(false);
     }, motionDurations.fast);
     return () => window.clearTimeout(timeout);
-  }, [open, reducedMotion, rendered]);
+  }, [open, rendered, closing]);
 
   useEffect(() => {
     if (!open || !rendered) return;
@@ -180,7 +185,9 @@ export function SiteNav({
           className={`inline-flex items-center gap-2.5 font-sans text-[13px] font-semibold tracking-[0.4px] no-underline tablet:text-[14px] desktop:text-[15px] ${
             inverse ? "text-white" : "text-atlas-ink"
           }`}
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            if (open) requestClose();
+          }}
         >
           <BrandMark mark={brandMark} inverse={inverse} />
           <span>{brand.label}</span>
@@ -218,7 +225,13 @@ export function SiteNav({
           aria-expanded={open}
           aria-controls={menuId}
           aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => {
+            if (open) {
+              requestClose();
+              return;
+            }
+            openMenu();
+          }}
         >
           <MenuIcon open={open} inverse={inverse} />
         </button>

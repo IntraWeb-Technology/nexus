@@ -37,37 +37,34 @@ export function useRevealPhase(
 
     if (prefersReduced || reduced) {
       shownRef.current = true;
-      setPhase("shown");
       return;
     }
-
-    const style = window.getComputedStyle(el);
-    if (style.display === "none" || style.visibility === "hidden") {
-      // Hidden breakpoints stay "shown" so they never stick pending.
-      shownRef.current = true;
-      setPhase("shown");
-      return;
-    }
-
-    const alreadyVisible = (() => {
-      const rect = el.getBoundingClientRect();
-      return rect.top < window.innerHeight * 0.92 && rect.bottom > 0;
-    })();
-
-    if (alreadyVisible) {
-      shownRef.current = true;
-      setPhase("shown");
-      return;
-    }
-
-    setPhase("pending");
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (!entry?.isIntersecting) return;
-        shownRef.current = true;
-        setPhase("shown");
-        if (once) io.disconnect();
+        if (!entry) return;
+        if (shownRef.current && once) return;
+
+        const style = window.getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") {
+          // Hidden breakpoints stay "shown" so they never stick pending.
+          shownRef.current = true;
+          setPhase("shown");
+          return;
+        }
+
+        const rect = el.getBoundingClientRect();
+        const alreadyVisible =
+          rect.top < window.innerHeight * 0.92 && rect.bottom > 0;
+
+        if (alreadyVisible || entry.isIntersecting) {
+          shownRef.current = true;
+          setPhase("shown");
+          if (once) io.disconnect();
+          return;
+        }
+
+        setPhase("pending");
       },
       { threshold, rootMargin: "0px 0px -6% 0px" },
     );
@@ -76,5 +73,6 @@ export function useRevealPhase(
     return () => io.disconnect();
   }, [ref, reduced, once, threshold]);
 
+  if (reduced) return "shown";
   return phase;
 }
