@@ -49,7 +49,7 @@ _Complete when this PR touches Atlas (`apps/atlas-web`, Atlas-scoped CMS/client,
 **Known failures or unverified checks:**
 
 
-**Exceptions (link to [`docs/governance/exceptions.md`](../docs/governance/exceptions.md) entry, or "none"):**
+**Exceptions (link to `docs/governance/exceptions.md` entry, or "none"):**
 
 
 **Candidate commit SHA:**

@@ -1,6 +1,6 @@
 # Atlas AI-Assisted Engineering Governance — V1
 
-**Status:** Adopted V1 contract  
+**Status:** Approved V1 policy; repository enforcement in progress
 **Scope:** Atlas (`johnschibelli.dev`) design, application, content, CMS, testing, CI/CD, and release workflow  
 **Applies to:** Human contributors, Cursor, ChatGPT, code-generation agents, review agents, and automation  
 **Owner:** John Schibelli  
@@ -331,7 +331,7 @@ An exception must be explicit, narrow, time-bounded, owned, and visible in the r
 
 ## 15. Repository Enforcement Requirements
 
-V1 is adopted only when the repository implements these controls:
+V1 is fully enforced only when the repository implements these controls:
 
 - a versioned governance document under `docs/governance/`;
 - a concise Cursor rule that points to this contract and enforces scope, stop conditions, and evidence requirements;
