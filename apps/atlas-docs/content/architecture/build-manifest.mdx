@@ -1,9 +1,11 @@
 # Atlas Build Manifest
 
 **Status:** Approved — implementation contract  
-**As of:** 2026-08-13  
+**As of:** 2026-08-13 (milestones); design-authority addendum **2026-08-27**.
+
 **Frontend architecture:** **v1.0 frozen** — core routes proven; see [Architecture Freeze](/docs/architecture/architecture-freeze)  
-**Design status:** Atlas Design v1.0 frozen (Editorial Brand System + page family); **Approval Polish (Page 27 / §29) implemented in frontend** — see [M9D Art Direction](/docs/architecture/m9d-art-direction)  
+**Design status:** Atlas Design v1.0 remains the frozen Editorial Brand System for unsuperseded surfaces. **Effective 2026-08-27**, Figma **Page 28 / Story-First** is the controlling visual authority for Home, Work index, Portfolio OS case study, Contact, Articles index, and shared chrome (see Authority). This records **design direction only** — not implementation parity, visual-baseline approval, or Figma-complete implementation.
+
 **Canonical Figma:** Atlas Design System (`6r1KqLmwiB8TUXjyedezom`)  
 **Homepage pilot:** Implemented — see [Homepage Pilot](/docs/architecture/homepage-pilot)  
 **Work route:** Implemented — see [Work Route](/docs/architecture/work-route)  
@@ -34,7 +36,7 @@
 | **M9 — Hardening** | **In progress** — **M9D Art Direction** implemented ([report](/docs/architecture/m9d-art-direction)); remaining hardening gates continue |
 | **M10 — Launch** | Planned |
 
-**Program posture:** **Atlas v1 content architecture is hybrid** — see [V1 Content Architecture](/docs/architecture/v1-content-architecture). Articles (and Documentation handbook pages) are Strapi-managed when CMS mode is active (fail-closed). Homepage, Work, case studies, About, Contact, and chrome are **always** code-managed from committed content; Strapi outage must not break those builds. Full-site CMS is deferred. M8 implemented schemas, client contract, assemblers, and integration code for CMS surfaces. **M9D** brings Approval Polish into `atlas-web` chrome, Articles, and shared CTAs. Fixture mode (`ATLAS_CONTENT_SOURCE=fixture`) remains the Playwright / local demo path for CMS surfaces. **A-05 Vehicle Maintenance** media remains **deferred**.
+**Program posture:** **Atlas v1 content architecture is hybrid** — see [V1 Content Architecture](/docs/architecture/v1-content-architecture). Articles (and Documentation handbook pages) are Strapi-managed when CMS mode is active (fail-closed). Homepage, Work, case studies, About, Contact, and chrome are **always** code-managed from committed content; Strapi outage must not break those builds. Full-site CMS is deferred. M8 implemented schemas, client contract, assemblers, and integration code for CMS surfaces. **M9D** recorded Approval Polish (Page 27) for chrome, Articles, and shared CTAs; **as of 2026-08-27** Page 28 / Story-First supersedes that polish **only** on the scoped surfaces in Authority below. Fixture mode (`ATLAS_CONTENT_SOURCE=fixture`) remains the Playwright / local demo path for CMS surfaces. **A-05 Vehicle Maintenance** media remains **deferred**.
 
 ### Milestone scheme note
 
@@ -46,28 +48,73 @@ Earlier implementation reports used an implementation-local numbering (**M0 Foun
 
 | Layer | Source of truth |
 | --- | --- |
-| Visual identity & page composition | Figma pages 15–26 (frozen) + **Page 27 Approval Polish (§29)** for M9D chrome/Articles polish |
+| Visual identity & page composition | **Effective 2026-08-27:** Figma **Page 28 / Story-First** for the scoped surfaces below. Pages 15–26 (frozen) + **Page 27 Approval Polish (§29)** remain controlling where they do not overlap that scope. See also [`docs/governance/authority-map.md`](../../../../docs/governance/authority-map.md). |
 | Product / CMS / frontend rules | Nexus Cursor rules (`atlas-*`, `no-overengineering`, `nexus-architecture`) |
 | Implementation contract | **This Build Manifest** |
 | Monorepo CI / deploy | `/docs/architecture/*` |
 
-If implementation and Figma disagree, **Figma wins** for visuals. If implementation and this manifest disagree on engineering boundaries, **update the manifest first**.
+If implementation and Figma disagree, **Figma wins** for visuals (Page 28 on scoped Story-First surfaces; Pages 15–26 / 27 otherwise). If implementation and this manifest disagree on engineering boundaries, **update the manifest first**.
 
-### Frozen design pages (do not redesign)
+### Page 28 / Story-First design authority (effective 2026-08-27)
+
+**Human engineering authority:** John Schibelli (V1 product and release owner).
+
+**Kind:** Explicit design-authority supersession — not an exception or waiver.
+
+Page 28 / Story-First is the controlling visual authority for:
+
+- Home (`/`)
+- Work index (`/work`)
+- Portfolio OS case study (`/work/portfolio-os`)
+- Contact (`/contact`)
+- Articles index (`/articles`)
+- Shared Atlas chrome: navigation, brand treatment, footer, social links, and mobile menu
+
+For those surfaces and overlapping elements only, Page 28 **supersedes** previously frozen Figma Pages 15–26 and Page 27 Approval Polish.
+
+**Body composition retains prior authority** (Pages 15–26 / 27) for:
+
+- About (`/about`)
+- Documentation (`/docs`, `/docs/[…slug]`)
+- Article-detail (`/articles/[slug]`)
+
+Shared chrome governed by Page 28 may appear on those routes; their body composition does not move to Page 28.
+
+This supersession does **not** extend to CMS schemas, fixtures, or content contracts; viewport policy; visual-regression tolerances; or production / deployment configuration.
+
+**This decision approves Story-First design direction only.** It does **not** approve:
+
+- current implementation as Page 28–complete or Figma-parity verified
+- any visual snapshot (Windows or Linux), including About snapshots from `b5df90c`
+- Story-First work-gallery gradient PHOTO placeholders as final media
+- opacity-zero or unsettled `Reveal` captures as representative evidence
+- snapshot replacement or visual CI readiness
+- 768-pixel tablet width as a substitute for V1 §7.3 1024-pixel width
+
+Homepage visual evidence must settle `Reveal` content before it can be considered representative. Tracked Playwright snapshots remain unapproved. Canonical viewport definitions remain missing.
+
+### Frozen design pages (limited supersession)
+
+The table below is the **prior freeze**. Do not redesign those pages during implementation **except** where Page 28 / Story-First is the recorded controlling authority above.
 
 | Figma page | Role |
 | --- | --- |
 | 01 Design Language · 12 Identity · 14 IA | Foundations |
-| 15 Homepage | Reference implementation |
-| 16 Editorial Brand System | Tokens, type, surfaces, motion, annotation |
-| 17 Visual Regression Board | Completeness gate |
-| 18 Work · 19 Case Study · 20 About | Page family |
-| 21 Case Study Template | Canonical article structure |
-| 22 Documentation · 23 Contact | Page family |
-| 24 Navigation System · 25 Editorial Image Direction | Chrome & evidence imagery |
-| 26 Editorial Publishing System | **Canonical editorial publishing patterns** (figures, callouts, evidence, metadata, code, tables) — primary source for M5/M6 |
+| 15 Homepage | Superseded by Page 28 for Home composition |
+| 16 Editorial Brand System | Tokens, type, surfaces, motion, annotation (unsuperseded except overlapping Story-First chrome/token use on scoped surfaces) |
+| 17 Visual Regression Board | Completeness gate — not a baseline-approval record |
+| 18 Work | Superseded by Page 28 for Work index |
+| 19 Case Study · 21 Case Study Template | Superseded by Page 28 for **Portfolio OS** only; other case-study bodies retain prior authority until recorded otherwise |
+| 20 About | **Retained** for About **body** composition |
+| 22 Documentation | **Retained** for Documentation **bodies** |
+| 23 Contact | Superseded by Page 28 for Contact |
+| 24 Navigation System | Superseded by Page 28 for shared chrome (nav, brand, footer, socials, mobile menu) |
+| 25 Editorial Image Direction | Evidence imagery; Story-First PHOTO gradient placeholders are **not** approved final media |
+| 26 Editorial Publishing System | **Retained** for article-detail and Documentation **bodies** (M5/M6 primitives) |
+| 27 Approval Polish (§29) | Superseded where it overlaps Page 28 scoped chrome / Articles index / Home / Work / Contact / Portfolio OS |
+| **28 Story-First** | **Controlling** for the scoped surfaces listed above |
 
-Page 26 is the visual authority for the reusable Editorial Publishing System exercised in M5 and reused in M6.
+Page 26 remains the visual authority for reusable Editorial Publishing System primitives on article-detail and Documentation bodies.
 
 ---
 
@@ -80,7 +127,7 @@ Atlas is the greenfield rebuild of **johnschibelli.dev**: an **engineering publi
 ### Goals
 
 - Ship core journeys: Home, Work, Case Study, Articles, About, Contact, Documentation.
-- Match frozen editorial design (type, color, surfaces, nav, publishing patterns).
+- Match approved editorial design (Page 28 / Story-First on scoped surfaces; frozen Pages 15–26 / 27 otherwise).
 - Prove the Editorial Publishing System (Page 26) via Articles before Documentation depends on it.
 - Prove engineering through evidence (figures, diagrams, CI, repos) — never decoration.
 - Use shared `apps/cms-strapi` with site key `personal` **at M8** after the frontend contract is proven; isolate from IntraWeb (`intraweb`).
@@ -100,7 +147,7 @@ Atlas is the greenfield rebuild of **johnschibelli.dev**: an **engineering publi
 - Generic page builder / unrestricted dynamic zones.
 - Plugin system, DSL, runtime layout engine, universal section registry.
 - Extracting shared UI packages without a second real consumer.
-- Redesigning frozen Figma pages during implementation.
+- Redesigning frozen Figma pages during implementation, except where Page 28 / Story-First is the recorded controlling authority (see Authority).
 
 ### Definition of Done (launch)
 
@@ -253,17 +300,17 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 ### Notes
 
 - **`/projects` → `/work`:** prefer `/work` to match Figma; add redirects from legacy URLs (§10).
-- **Articles (`/articles`, `/articles/[slug]`):** **M5 COMPLETE** — first production proving ground for the Atlas Editorial Publishing System (Figma Page 26). See [Editorial Publishing (M5)](/docs/architecture/editorial-publishing).
+- **Articles (`/articles`, `/articles/[slug]`):** **M5 COMPLETE** for publishing primitives. **As of 2026-08-27:** Articles **index** visual authority is Page 28 / Story-First; **article-detail bodies** remain Figma Page 26. See [Editorial Publishing (M5)](/docs/architecture/editorial-publishing).
 - **Documentation (`/docs`, `/docs/[…slug]`):** **M6 COMPLETE** — category-driven handbook on PROVEN publishing primitives. See [Documentation System (M6)](/docs/architecture/documentation-system). Documentation Freeze **PASSED**.
-- **About / Contact:** **Implemented under M4** (Figma pages 20 / 23; `/about`, `/contact`, contact API, associated content/components, Playwright coverage). Do not reopen M4. Do not move these routes into M5. Do not describe M4 as pending or “cleared to start.”
+- **About / Contact:** **Implemented under M4** (`/about`, `/contact`, contact API, associated content/components, Playwright coverage). Do not reopen M4 as a milestone. **As of 2026-08-27:** Contact **body** is under Page 28 / Story-First; About **body** retains Page 20 / prior freeze. Shared chrome on both routes follows Page 28. Implementation parity is unverified.
 - **Search on `/docs`:** **Resolved in M6** — fixture-scoped client filter (`DocsLandingClient`); Clear + empty states; no Pagefind/Algolia/AI. Scale later only if content volume requires it (M9).
-- **Anti-generic-blog guardrail:** `/articles` must not regress into a conventional developer-blog card-grid aesthetic. Atlas is an editorial engineering publication — preserve approved hierarchy, metadata, restrained topic navigation, and selective imagery. Figma remains visual authority; do not invent a new index design from this manifest.
+- **Anti-generic-blog guardrail:** `/articles` must not regress into a conventional developer-blog card-grid aesthetic. Atlas is an editorial engineering publication — preserve approved hierarchy, metadata, restrained topic navigation, and selective imagery. **Articles index** visual authority is Page 28 / Story-First as of 2026-08-27; **article-detail bodies** remain Page 26. Do not invent a parallel index design from this manifest.
 
 ---
 
 ## 4. Component inventory
 
-Only components justified by Pages 15–26. **Frontend owns layout.** Props are contracts — not an invitation to genericize.
+Only components justified by approved Figma (Page 28 for scoped Story-First surfaces; Pages 15–26 / 27 otherwise). **Frontend owns layout.** Props are contracts — not an invitation to genericize.
 
 ### Chrome
 
@@ -631,7 +678,7 @@ Update docs when architecture, CMS, or testing materially changes.
 | **M1 — Foundations & Identity** | Visual / communication / system direction | M0 | Figma identity & foundation work | Identity established in Atlas Design System | **COMPLETE** |
 | **M2 — Information Architecture** | Site IA & narrative decisions | M1 | Approved IA | Proof-before-biography; featured + curated breadth; small primary nav (Work / About / Contact); Articles in publishing system; homepage narrative stages set | **COMPLETE** — do not reopen |
 | **M3 — Layout Architecture** | Homepage layout across breakpoints | M2 | Desktop / Tablet / Mobile homepage architecture | Narrative structure approved at 1440 / 768 / 390 | **COMPLETE** — no pending prerequisite decisions |
-| **M4 — Editorial Brand / Core Route Implementation** | Brand system + core frontend routes | M0–M3, design freeze | Editorial Brand System in Figma; `/`, `/work`, `/work/[slug]`, `/about`, `/contact` (+ contact API) implemented fixture-first | Matches frozen brand + pages 15/18/20/21/23; architecture freeze | **COMPLETE** — do not restart |
+| **M4 — Editorial Brand / Core Route Implementation** | Brand system + core frontend routes | M0–M3, design freeze | Editorial Brand System in Figma; `/`, `/work`, `/work/[slug]`, `/about`, `/contact` (+ contact API) implemented fixture-first | Historical freeze pages 15/18/20/21/23; **Page 28 now controls overlapping Home / Work index / Portfolio OS / Contact** (2026-08-27). About body retains prior authority. | **COMPLETE** — do not restart |
 | **M5 — Articles / Editorial Publishing** | Prove Editorial Publishing System in production UI | M4 complete | `/articles`, `/articles/[slug]`, representative fixtures, reusable primitives | See **M5 expectations** below + Editorial System Freeze Gate | **COMPLETE** |
 | *Editorial System Freeze Gate* | Acceptance gate only (not a milestone) | M5 implementation | Primitive classification + visual/a11y/responsive sign-off | See **Editorial System Freeze Gate** below | **PASSED** |
 | **M6 — Documentation** | Handbook IA on proven publishing primitives | Freeze Gate passed | `/docs`, `/docs/[…slug]`, category-driven fixtures | Docs reuse PROVEN primitives; no second publishing system | **COMPLETE** |
@@ -692,7 +739,7 @@ These may remain fixture-driven and need not all be final production articles.
 
 #### `/articles` index guardrail
 
-The Articles index must preserve Atlas editorial hierarchy (e.g. featured writing, chronological writing, editorial metadata, restrained topic/category navigation, selective imagery). **Forbidden shortcut:** regressing into a generic developer-blog / card-grid aesthetic. Figma remains the visual authority.
+The Articles index must preserve Atlas editorial hierarchy (e.g. featured writing, chronological writing, editorial metadata, restrained topic/category navigation, selective imagery). **Forbidden shortcut:** regressing into a generic developer-blog / card-grid aesthetic. **As of 2026-08-27** the Articles index visual authority is Page 28 / Story-First; article-detail bodies remain Page 26.
 
 #### Opportunistic assets during M5
 
@@ -779,7 +826,7 @@ Program foundations through **M8** are complete; Editorial System Freeze Gate **
 
 | # | Item | YES/NO |
 | --- | --- | --- |
-| 1 | Design frozen (Figma 15–26) | YES |
+| 1 | Design frozen (Figma 15–26; Page 28 / Story-First supersedes overlapping scoped surfaces as of 2026-08-27 — design direction only, parity unverified) | YES (authority recorded; implementation parity **not** verified) |
 | 2 | Routes defined (§3) | YES |
 | 3 | Components documented (§4) | YES |
 | 4 | Assets tracked (§7) | YES — M7 production/composed/deferred classifications recorded |
@@ -895,7 +942,7 @@ Validated only after production implementation, accessibility, responsive, and v
 - ✓ Documentation handbook IA (categories + freshness + client search filter)
 - ✓ About + Contact routes + Resend contact API — [report](/docs/architecture/about-contact-route)
 - ✓ RSC default · client islands only where interaction requires (nav, progress, docs search, contact)
-- ✓ Playwright D/T/M + axe + visual baselines (win32 + linux)
+- ✓ Playwright D/T/M + axe + visual baselines (win32 + linux) — **historical presence only; snapshots remain unapproved** (Page 28 does not approve baselines; homepage captures must settle `Reveal` before they are representative)
 - ✓ Architecture freeze for core routes — [report](/docs/architecture/architecture-freeze)
 - ✓ Editorial System Freeze Gate — [report](/docs/architecture/editorial-publishing)
 - ✓ Documentation Freeze — [report](/docs/architecture/documentation-system)
