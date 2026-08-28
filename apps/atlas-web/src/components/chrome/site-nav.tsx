@@ -93,10 +93,13 @@ export function SiteNav({
   active = null,
   tone = "paper",
 }: SiteNavProps) {
-  const inverse = tone === "inverse";
   const [open, setOpen] = useState(false);
   const [rendered, setRendered] = useState(false);
   const [closing, setClosing] = useState(false);
+  // Inverse is the closed Home header over the hero. While the mobile menu is
+  // mounted, reuse the paper path (Figma 705:33 / 705:67) so the open panel
+  // and its controls do not inherit ink-blue.
+  const inverse = tone === "inverse" && !rendered;
   const reducedMotion = usePrefersReducedMotion();
   const menuId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
