@@ -1,10 +1,10 @@
 # Atlas Build Manifest
 
 **Status:** Approved — implementation contract  
-**As of:** 2026-08-13 (milestones); design-authority addendum **2026-08-27**.
+**As of:** 2026-08-13 (milestones); design-authority addendum **2026-08-27**; Page 28 parity decisions **2026-08-27**.
 
 **Frontend architecture:** **v1.0 frozen** — core routes proven; see [Architecture Freeze](/docs/architecture/architecture-freeze)  
-**Design status:** Atlas Design v1.0 remains the frozen Editorial Brand System for unsuperseded surfaces. **Effective 2026-08-27**, Figma **Page 28 / Story-First** is the controlling visual authority for Home, Work index, Portfolio OS case study, Contact, Articles index, and shared chrome (see Authority). This records **design direction only** — not implementation parity, visual-baseline approval, or Figma-complete implementation.
+**Design status:** Atlas Design v1.0 remains the frozen Editorial Brand System for unsuperseded surfaces. **Effective 2026-08-27**, Figma **Page 28 / Story-First** is the controlling visual authority for Home, Work index, Portfolio OS case study, Contact, Articles index, and shared chrome (see Authority). Parity decisions of the same date record accepted responsive interpretation, accepted media direction, rejected Work PHOTO tiles, open corrections C1–C9, and viewport **policy** (not yet implemented). This is **not** implementation-parity verification, visual-baseline approval, or Figma-complete implementation.
 
 **Canonical Figma:** Atlas Design System (`6r1KqLmwiB8TUXjyedezom`)  
 **Homepage pilot:** Implemented — see [Homepage Pilot](/docs/architecture/homepage-pilot)  
@@ -48,7 +48,7 @@ Earlier implementation reports used an implementation-local numbering (**M0 Foun
 
 | Layer | Source of truth |
 | --- | --- |
-| Visual identity & page composition | **Effective 2026-08-27:** Figma **Page 28 / Story-First** for the scoped surfaces below. Pages 15–26 (frozen) + **Page 27 Approval Polish (§29)** remain controlling where they do not overlap that scope. See also [`docs/governance/authority-map.md`](../../../../docs/governance/authority-map.md). |
+| Visual identity & page composition | **Effective 2026-08-27:** Figma **Page 28 / Story-First** for the scoped surfaces below, plus the same-date [Page 28 parity decisions](../../../../docs/governance/decisions/2026-08-27-page-28-parity-decisions.md). Pages 15–26 (frozen) + **Page 27 Approval Polish (§29)** remain controlling where they do not overlap that scope. See also [`docs/governance/authority-map.md`](../../../../docs/governance/authority-map.md). |
 | Product / CMS / frontend rules | Nexus Cursor rules (`atlas-*`, `no-overengineering`, `nexus-architecture`) |
 | Implementation contract | **This Build Manifest** |
 | Monorepo CI / deploy | `/docs/architecture/*` |
@@ -80,7 +80,7 @@ For those surfaces and overlapping elements only, Page 28 **supersedes** previou
 
 Shared chrome governed by Page 28 may appear on those routes; their body composition does not move to Page 28.
 
-This supersession does **not** extend to CMS schemas, fixtures, or content contracts; viewport policy; visual-regression tolerances; or production / deployment configuration.
+This supersession does **not** extend to CMS schemas, fixtures, or content contracts; visual-regression tolerances; or production / deployment configuration. Viewport **policy** is a separate 2026-08-27 decision (below); it is **not** implemented by this supersession.
 
 **This decision approves Story-First design direction only.** It does **not** approve:
 
@@ -91,7 +91,57 @@ This supersession does **not** extend to CMS schemas, fixtures, or content contr
 - snapshot replacement or visual CI readiness
 - 768-pixel tablet width as a substitute for V1 §7.3 1024-pixel width
 
-Homepage visual evidence must settle `Reveal` content before it can be considered representative. Tracked Playwright snapshots remain unapproved. Canonical viewport definitions remain missing.
+Homepage visual evidence must settle `Reveal` content before it can be considered representative. Tracked Playwright snapshots remain unapproved.
+
+### Page 28 parity decisions (effective 2026-08-27)
+
+**Human engineering authority:** John Schibelli. **Record:** [`docs/governance/decisions/2026-08-27-page-28-parity-decisions.md`](../../../../docs/governance/decisions/2026-08-27-page-28-parity-decisions.md). Figma file `6r1KqLmwiB8TUXjyedezom`, page `616:2`.
+
+These decisions tell implementation agents **what to omit, what not to add, which media directions are accepted, and which corrections remain open**. They do **not** approve current captures, any snapshot, or visual CI.
+
+**Responsive content to omit (Page 28 interpretation):**
+
+- Home **mobile** (`616:18`): abbreviated composition; **omit Writing**.
+- Articles **tablet/mobile** (`632:5`, `632:10`): **omit** the fifth Turborepo card.
+- Work **tablet/mobile** (`632:3`, `616:19`): use Page 28 **reduced CTA density**.
+
+**Rejected additions (must be removed):**
+
+- Articles **Topics** chips and **CONTINUE** cue — not accepted Story-First additions (all in-scope viewports).
+
+**Accepted media direction (not baseline approval):**
+
+- Home production photography — final media direction, subject to Page 28 crop, placement, and responsive parity.
+- Articles cover photograph — final replacement for the COVER placeholder, subject to crop and placement parity.
+- Live Portfolio OS schematic — final replacement for the DIAGRAM placeholder.
+
+**Temporary Work media (baseline blocker):**
+
+- Work gradient PHOTO tiles are **rejected as final media**. They may remain temporarily. **Work is blocked from baseline approval** until final imagery is supplied and approved.
+
+**Open corrections (C1–C9; unimplemented):**
+
+| ID | Required correction |
+| --- | --- |
+| C1 | Home mobile open menu uses warm paper, not inverse ink-blue (`705:33`, `705:67`) |
+| C2 | Remove Articles Topics and CONTINUE |
+| C3 | Tablet Home uses photo-then-copy and one CTA (`632:2`) |
+| C4 | Tablet Portfolio OS stacks Overview (`632:4`) |
+| C5 | Restore Contact invitation body copy |
+| C6 | Title-case Contact field labels |
+| C7 | Home writing title is “Why We Chose React Server Components.” |
+| C8 | Rust-filled primary Home CTA; omit “Read the notes” on tablet |
+| C9 | Correct tablet footer wrapping/crowding before baseline approval |
+
+**Viewport and breakpoint evidence (policy decided, control unimplemented):**
+
+- Retain V1 §7.3.
+- Permanent visual coverage widths: **1440, 1024, 768, 390**.
+- Targeted breakpoint evidence: **767/769** and **1439/1441**.
+- Full stored baselines are not required at all four boundary widths unless the changed task affects that breakpoint.
+- Canonical viewport values must eventually live in one versioned repository location. That file does **not** exist yet. Playwright still uses 1440 / 768 / 390 only. Do not treat this policy sentence as implemented coverage.
+
+**No baseline is approved.** Current Home, Articles, Work, Contact, Portfolio OS, and chrome captures are not approved. Compare-only CI must not be enforced until approved Linux baselines exist after a new Page 28 review.
 
 ### Frozen design pages (limited supersession)
 
@@ -109,7 +159,7 @@ The table below is the **prior freeze**. Do not redesign those pages during impl
 | 22 Documentation | **Retained** for Documentation **bodies** |
 | 23 Contact | Superseded by Page 28 for Contact |
 | 24 Navigation System | Superseded by Page 28 for shared chrome (nav, brand, footer, socials, mobile menu) |
-| 25 Editorial Image Direction | Evidence imagery; Story-First PHOTO gradient placeholders are **not** approved final media |
+| 25 Editorial Image Direction | Evidence imagery. Home photography and the Articles cover photograph are accepted **media direction** (crop/placement/responsive parity still required). Work gradient PHOTO tiles remain **temporary** and **block Work baseline approval**. |
 | 26 Editorial Publishing System | **Retained** for article-detail and Documentation **bodies** (M5/M6 primitives) |
 | 27 Approval Polish (§29) | Superseded where it overlaps Page 28 scoped chrome / Articles index / Home / Work / Contact / Portfolio OS |
 | **28 Story-First** | **Controlling** for the scoped surfaces listed above |
@@ -280,14 +330,14 @@ App Router under `app/(site)/…`. No auth middleware for v1 public site. Option
 
 ## 3. Route inventory
 
-Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none** (public).
+Breakpoints required for every page: Figma named frames remain **1440 / 768 / 390**. Repository visual coverage **policy** (2026-08-27) also requires **1024-pixel width** and breakpoint evidence at **767/769** and **1439/1441**; that coverage is **not yet implemented**. Auth: **none** (public).
 
 | Route | Purpose | Layout | Required sections (Figma) | Key components | CMS? | SEO | Structured data | Tests | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `/` | Homepage | Site chrome | Recognition, Featured, Selected, Philosophy, Writing, About teaser, Contact | Nav, Footer, figures, chapter markers | Partial | Site + page | `WebSite` | Journey + a11y + visual | **Implemented** (pilot) |
+| `/` | Homepage | Site chrome | Recognition, Featured, Selected, Philosophy, Writing (omit on **mobile** per Page 28 `616:18`), About teaser, Contact | Nav, Footer, figures, chapter markers | Partial | Site + page | `WebSite` | Journey + a11y + visual | **Implemented** (pilot) |
 | `/work` | Work index | Site chrome | Intro, Featured, Selected, Taxonomy, Contact | Project sections, taxonomy list | Fixture | Collection | `CollectionPage` | Journey + visual | **Implemented** (fixture-first) |
 | `/work/[slug]` | Case study | Site chrome + TOC/progress | Header, TOC, Hero, Overview… Contact (template 21) | Article header, TOC, figures, diagrams, evidence, related | Fixture | Article | `Article` / `TechArticle` | Journey + visual | **Implemented** (Portfolio OS fixture-first) |
-| `/articles` | Editorial writing index | Site chrome | Featured writing, chronological writing, editorial metadata, restrained topic nav (Figma authority) | Editorial hierarchy — **not** a card-grid blog | Fixture (M5) | Collection | `CollectionPage` | Journey + visual | **Implemented** (M5) |
+| `/articles` | Editorial writing index | Site chrome | Featured writing, chronological writing, editorial metadata; **no** Topics chips or CONTINUE cue (rejected 2026-08-27) | Editorial hierarchy — **not** a card-grid blog | Fixture (M5) | Collection | `CollectionPage` | Journey + visual | **Implemented** (M5) |
 | `/articles/[slug]` | Article / publishing proving ground | Site chrome + TOC/progress as designed | Header, title/deck, metadata, prose, figures, code, callouts, evidence, tables, related, prev/next | Page 26 primitives | Fixture (M5) | Article | `Article` / `TechArticle` | Journey + a11y + visual | **Implemented** (M5) |
 | `/about` | Editorial profile | Site chrome | Opening, Philosophy, Approach, Style, Principles, Timeline, Focus, Reading, Architecture, Notes, Contact | Pull quote, timeline, diagrams | Fixture | Profile | `ProfilePage` / `Person` | Journey + visual | **Implemented** (M4) |
 | `/docs` | Handbook landing | Site chrome | Header, Search UI, Categories, Recently Updated, Progress note | Search field, category cards, list rows | Fixture → CMS at M8 | Collection | `CollectionPage` | Journey + a11y + visual | **Implemented** (M6) |
@@ -300,11 +350,11 @@ Breakpoints required for every page: **1440 / 768 / 390** (Figma). Auth: **none*
 ### Notes
 
 - **`/projects` → `/work`:** prefer `/work` to match Figma; add redirects from legacy URLs (§10).
-- **Articles (`/articles`, `/articles/[slug]`):** **M5 COMPLETE** for publishing primitives. **As of 2026-08-27:** Articles **index** visual authority is Page 28 / Story-First; **article-detail bodies** remain Figma Page 26. See [Editorial Publishing (M5)](/docs/architecture/editorial-publishing).
+- **Articles (`/articles`, `/articles/[slug]`):** **M5 COMPLETE** for publishing primitives. **As of 2026-08-27:** Articles **index** visual authority is Page 28 / Story-First; **article-detail bodies** remain Figma Page 26. Page 28 parity decisions: remove Topics and CONTINUE; tablet/mobile omit the fifth Turborepo card. See [Editorial Publishing (M5)](/docs/architecture/editorial-publishing) and [Page 28 parity decisions](../../../../docs/governance/decisions/2026-08-27-page-28-parity-decisions.md).
 - **Documentation (`/docs`, `/docs/[…slug]`):** **M6 COMPLETE** — category-driven handbook on PROVEN publishing primitives. See [Documentation System (M6)](/docs/architecture/documentation-system). Documentation Freeze **PASSED**.
 - **About / Contact:** **Implemented under M4** (`/about`, `/contact`, contact API, associated content/components, Playwright coverage). Do not reopen M4 as a milestone. **As of 2026-08-27:** Contact **body** is under Page 28 / Story-First; About **body** retains Page 20 / prior freeze. Shared chrome on both routes follows Page 28. Implementation parity is unverified.
 - **Search on `/docs`:** **Resolved in M6** — fixture-scoped client filter (`DocsLandingClient`); Clear + empty states; no Pagefind/Algolia/AI. Scale later only if content volume requires it (M9).
-- **Anti-generic-blog guardrail:** `/articles` must not regress into a conventional developer-blog card-grid aesthetic. Atlas is an editorial engineering publication — preserve approved hierarchy, metadata, restrained topic navigation, and selective imagery. **Articles index** visual authority is Page 28 / Story-First as of 2026-08-27; **article-detail bodies** remain Page 26. Do not invent a parallel index design from this manifest.
+- **Anti-generic-blog guardrail:** `/articles` must not regress into a conventional developer-blog card-grid aesthetic. Atlas is an editorial engineering publication — preserve approved hierarchy, metadata, and selective imagery. **Do not** restore Topics chips or CONTINUE; those additions were **rejected** on 2026-08-27. **Articles index** visual authority is Page 28 / Story-First; **article-detail bodies** remain Page 26. Do not invent a parallel index design from this manifest.
 
 ---
 
@@ -739,7 +789,7 @@ These may remain fixture-driven and need not all be final production articles.
 
 #### `/articles` index guardrail
 
-The Articles index must preserve Atlas editorial hierarchy (e.g. featured writing, chronological writing, editorial metadata, restrained topic/category navigation, selective imagery). **Forbidden shortcut:** regressing into a generic developer-blog / card-grid aesthetic. **As of 2026-08-27** the Articles index visual authority is Page 28 / Story-First; article-detail bodies remain Page 26.
+The Articles index must preserve Atlas editorial hierarchy (e.g. featured writing, chronological writing, editorial metadata, selective imagery). **Forbidden shortcut:** regressing into a generic developer-blog / card-grid aesthetic. **As of 2026-08-27** the Articles index visual authority is Page 28 / Story-First; article-detail bodies remain Page 26. Topics chips and CONTINUE are **rejected** and must be removed; tablet/mobile omit the fifth Turborepo card.
 
 #### Opportunistic assets during M5
 
@@ -826,7 +876,7 @@ Program foundations through **M8** are complete; Editorial System Freeze Gate **
 
 | # | Item | YES/NO |
 | --- | --- | --- |
-| 1 | Design frozen (Figma 15–26; Page 28 / Story-First supersedes overlapping scoped surfaces as of 2026-08-27 — design direction only, parity unverified) | YES (authority recorded; implementation parity **not** verified) |
+| 1 | Design frozen (Figma 15–26; Page 28 / Story-First supersedes overlapping scoped surfaces as of 2026-08-27 — design direction plus 2026-08-27 parity decisions; parity **not** verified; **no** baseline approved) | YES (authority and parity decisions recorded; implementation corrections C1–C9 **open**; snapshots **not** approved) |
 | 2 | Routes defined (§3) | YES |
 | 3 | Components documented (§4) | YES |
 | 4 | Assets tracked (§7) | YES — M7 production/composed/deferred classifications recorded |
@@ -942,7 +992,7 @@ Validated only after production implementation, accessibility, responsive, and v
 - ✓ Documentation handbook IA (categories + freshness + client search filter)
 - ✓ About + Contact routes + Resend contact API — [report](/docs/architecture/about-contact-route)
 - ✓ RSC default · client islands only where interaction requires (nav, progress, docs search, contact)
-- ✓ Playwright D/T/M + axe + visual baselines (win32 + linux) — **historical presence only; snapshots remain unapproved** (Page 28 does not approve baselines; homepage captures must settle `Reveal` before they are representative)
+- ✓ Playwright D/T/M + axe + visual baselines (win32 + linux) — **historical presence only; snapshots remain unapproved** (Page 28 and 2026-08-27 parity decisions do not approve baselines; Work is blocked until final imagery replaces PHOTO tiles; viewport policy is decided but not implemented)
 - ✓ Architecture freeze for core routes — [report](/docs/architecture/architecture-freeze)
 - ✓ Editorial System Freeze Gate — [report](/docs/architecture/editorial-publishing)
 - ✓ Documentation Freeze — [report](/docs/architecture/documentation-system)
