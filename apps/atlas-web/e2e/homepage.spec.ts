@@ -128,6 +128,7 @@ test.describe("homepage", () => {
   test("visual regression — full page", async ({ page }, testInfo) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
+    await settleMotionReveals(page);
     await expect(page).toHaveScreenshot(`homepage-${testInfo.project.name}.png`, {
       fullPage: true,
       maxDiffPixelRatio: 0.02,

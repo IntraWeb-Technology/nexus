@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { settleMotionReveals } from "./helpers/motion";
 import { clickPrimaryNavLink, expectCurrentNavLink } from "./helpers/nav";
 
 test.describe("work index", () => {
@@ -106,6 +107,7 @@ test.describe("work index", () => {
   test("visual regression — full page", async ({ page }, testInfo) => {
     await page.goto("/work");
     await page.waitForLoadState("networkidle");
+    await settleMotionReveals(page);
     await expect(page).toHaveScreenshot(`work-${testInfo.project.name}.png`, {
       fullPage: true,
       maxDiffPixelRatio: 0.02,
