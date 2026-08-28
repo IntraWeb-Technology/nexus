@@ -16,7 +16,7 @@ test.describe("articles index", () => {
         name: "Writing on architecture, testing, and the craft of building.",
       }),
     ).toBeVisible();
-    await expect(page.getByLabel("Topics")).toBeVisible();
+    await expect(page.getByLabel("Topics")).toHaveCount(0);
     await expect(
       page.getByRole("heading", {
         level: 2,
@@ -31,7 +31,7 @@ test.describe("articles index", () => {
         level: 2,
         name: "Prefer a conversation over a list.",
       }),
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 
   test("marks Articles as the current nav item", async ({ page }, testInfo) => {
@@ -87,14 +87,16 @@ test.describe("articles index", () => {
     ).toBeVisible();
   });
 
-  test("topic labels are noninteractive taxonomy", async ({ page }) => {
+  test("does not render Topics or CONTINUE cue", async ({ page }) => {
     await page.goto("/articles");
-    const topics = page.getByLabel("Topics");
-    await expect(topics).toBeVisible();
-    await expect(topics.getByRole("button")).toHaveCount(0);
-    await expect(topics.getByRole("link")).toHaveCount(0);
-    await expect(topics.locator("li")).toHaveCount(6);
-    await expect(topics.locator("li").first()).toContainText("All");
+    await expect(page.getByLabel("Topics")).toHaveCount(0);
+    await expect(page.getByText("CONTINUE", { exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: "Prefer a conversation over a list.",
+      }),
+    ).toHaveCount(0);
   });
 
   test("featured metadata has no Published status", async ({ page }) => {
@@ -152,21 +154,23 @@ test.describe("articles index", () => {
     ).toBeVisible();
   });
 
-  test("lower CTA has primary button and Work secondary — no social", async ({
+  test("does not render CONTINUE contact cue on the index", async ({
     page,
   }) => {
     await page.goto("/articles");
-    const cue = page.getByRole("heading", {
-      level: 2,
-      name: "Prefer a conversation over a list.",
-    }).locator("xpath=ancestor::section[1]");
+    const main = page.getByRole("main");
     await expect(
-      cue.getByRole("link", { name: "Start a conversation" }),
-    ).toHaveAttribute("href", "/contact");
+      main.getByRole("heading", {
+        level: 2,
+        name: "Prefer a conversation over a list.",
+      }),
+    ).toHaveCount(0);
     await expect(
-      cue.getByRole("link", { name: /browse Work/i }),
-    ).toHaveAttribute("href", "/work");
-    await expect(cue.getByRole("link", { name: /LinkedIn|GitHub|Bluesky|Upwork/i })).toHaveCount(0);
+      main.getByRole("link", { name: "Start a conversation" }),
+    ).toHaveCount(0);
+    await expect(main.getByRole("link", { name: /browse Work/i })).toHaveCount(
+      0,
+    );
   });
 
   test("does not advertise fictional archive pagination", async ({ page }) => {
