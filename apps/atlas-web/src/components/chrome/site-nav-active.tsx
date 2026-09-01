@@ -10,6 +10,7 @@ import type { NavLink } from "@/content/types";
 
 type SiteNavActiveProps = {
   brand: NavLink;
+  brandMark?: string;
   links: NavLink[];
   socialLinks: readonly SocialLink[];
 };
@@ -24,19 +25,24 @@ function activeFromPath(pathname: string): NavActive {
   return null;
 }
 
-/** Client island — route-derived aria-current + mobile menu. */
+/** Client island — route-derived aria-current + mobile menu + homepage inverse tone. */
 export function SiteNavActive({
   brand,
+  brandMark,
   links,
   socialLinks,
 }: SiteNavActiveProps) {
   const pathname = usePathname();
+  const tone = pathname === "/" ? "inverse" : "paper";
+
   return (
     <SiteNav
       brand={brand}
+      brandMark={brandMark}
       links={links}
       socialLinks={socialLinks}
       active={activeFromPath(pathname)}
+      tone={tone}
     />
   );
 }

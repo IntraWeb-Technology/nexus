@@ -3,29 +3,104 @@ import { expect, test } from "@playwright/test";
 import { expectCurrentNavLink } from "./helpers/nav";
 
 const APPROVED_HEADLINE =
-  "I’m a senior software engineer working across product development, architecture, testing, and automation.";
+  "I build software systems with the reasoning left in.";
+
+const WORKING_NOTE_LABELS = [
+  "WRITTEN REASONING",
+  "AI WITH JUDGMENT",
+  "SYSTEMS AFTER LAUNCH",
+  "PROOF WHERE IT MATTERS",
+] as const;
 
 test.describe("about", () => {
-  test("renders primary landmarks and approved sections", async ({ page }) => {
+  test("renders primary landmarks and approved Story First sections", async ({
+    page,
+  }) => {
     await page.goto("/about");
 
     await expect(page.getByRole("navigation", { name: "Primary" })).toBeVisible();
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("contentinfo")).toBeVisible();
 
-    await expect(page.getByRole("heading", { level: 1, name: APPROVED_HEADLINE })).toBeVisible();
-
-    await expect(page.getByText("CAREER ARC", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("HOW I WORK", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("CURRENT FOCUS", { exact: true }).first()).toBeVisible();
-    await expect(page.locator("#contact")).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Start a conversation" }),
+      page.getByRole("heading", { level: 1, name: APPROVED_HEADLINE }),
     ).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", { level: 2, name: "What shaped my craft" }),
+    ).toBeVisible();
+
+    await expect(page.getByText("WORKING NOTES", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: "What the work keeps teaching me",
+      }),
+    ).toBeVisible();
+
+    for (const label of WORKING_NOTE_LABELS) {
+      await expect(
+        page.getByRole("heading", { level: 3, name: label }),
+      ).toBeVisible();
+    }
+
+    await expect(
+      page.getByText(
+        "That is usually the standard I’m working toward: interfaces that make the system underneath easier to understand.",
+      ),
+    ).toBeVisible();
+
+    await expect(
+      page.locator("main img").locator("visible=true"),
+    ).toHaveAttribute(
+      "alt",
+      "John Schibelli standing with arms crossed in a sunlit room, wearing glasses and a striped shirt.",
+    );
+  });
+
+  test("opening row uses the page gutter on desktop and insets copy below desktop", async ({
+    page,
+  }, testInfo) => {
+    await page.goto("/about");
+
+    const heading = page.getByRole("heading", {
+      level: 1,
+      name: APPROVED_HEADLINE,
+    });
+    const opening = page.locator("header").filter({ has: heading });
+    const row = opening.locator(":scope > div");
+    const copy = heading.locator("xpath=..");
+
+    const rowPad = testInfo.project.name === "desktop" ? "64px" : "0px";
+    const copyPad =
+      testInfo.project.name === "desktop"
+        ? "0px"
+        : testInfo.project.name === "tablet"
+          ? "40px"
+          : "24px";
+
+    await expect(row).toHaveCSS("padding-left", rowPad);
+    await expect(row).toHaveCSS("padding-right", rowPad);
+    await expect(copy).toHaveCSS("padding-left", copyPad);
+    await expect(copy).toHaveCSS("padding-right", copyPad);
+  });
+
+  test("does not restore obsolete How I Work or numbered-principles copy", async ({
+    page,
+  }) => {
+    await page.goto("/about");
+
+    await expect(page.getByText("How I Work", { exact: false })).toHaveCount(0);
+    await expect(page.getByText("HOW I WORK", { exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "ARCHITECTURE" }),
+    ).toHaveCount(0);
+    await expect(page.getByText("01", { exact: true })).toHaveCount(0);
   });
 
   test("marks About as the current nav item", async ({ page }, testInfo) => {
     await page.goto("/about");
+    await page.waitForLoadState("networkidle");
     await expectCurrentNavLink(page, "About", testInfo.project.name);
   });
 
@@ -36,13 +111,6 @@ test.describe("about", () => {
     await expect(skip).toBeFocused();
     await skip.press("Enter");
     await expect(page.locator("#main")).toBeFocused();
-  });
-
-  test("keyboard can reach contact CTA", async ({ page }) => {
-    await page.goto("/about");
-    const cta = page.getByRole("link", { name: "Start a conversation" });
-    await cta.focus();
-    await expect(cta).toBeFocused();
   });
 
   test("has no serious accessibility violations", async ({ page }) => {
@@ -70,11 +138,15 @@ test.describe("about", () => {
     test.skip(testInfo.project.name !== "mobile", "Mobile hamburger only");
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/about");
+    await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
-    await expect(page).toHaveScreenshot(`about-mobile-menu-open-${testInfo.project.name}.png`, {
-      fullPage: false,
-      maxDiffPixelRatio: 0.02,
-    });
+    await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
+    await expect(page).toHaveScreenshot(
+      `about-mobile-menu-open-${testInfo.project.name}.png`,
+      {
+        fullPage: false,
+        maxDiffPixelRatio: 0.02,
+      },
+    );
   });
 });

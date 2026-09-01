@@ -81,6 +81,7 @@ export default function RootLayout({
       <body className="min-h-dvh bg-atlas-paper font-sans text-atlas-body antialiased">
         <SiteNavActive
           brand={siteChrome.brand}
+          brandMark={siteChrome.brandMark}
           links={siteChrome.navLinks}
           socialLinks={siteChrome.socialLinks}
         />

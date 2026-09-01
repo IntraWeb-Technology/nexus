@@ -1,0 +1,57 @@
+# Atlas Motion System
+
+**Status:** ACTIVE — foundation + high-value wiring  
+**Date:** 2026-08-21  
+**Applies to:** `apps/atlas-web`
+
+## Position
+
+Atlas uses motion as an editorial guidance system. Motion clarifies structure, hierarchy, state, and evidence. It must not decorate the site, perform for attention, or make Atlas feel like a typical animated portfolio.
+
+## Principles
+
+1. Evidence moves before claims.
+2. Structure over drama.
+3. Reading comes first — content is readable immediately; motion never gates access.
+4. Restraint is the brand — opacity, rule reveal, subtle position, state transition.
+5. No fake activity — no typing, simulated loaders, or invented busy effects.
+
+## Progressive enhancement
+
+Reveal primitives render **visible by default**. The pending (hidden-for-reveal) state applies only after the client wrapper mounts, and only when the element is below the fold. SSR and no-JS remain fully readable.
+
+## Tokens
+
+| Token group | Values |
+| --- | --- |
+| Durations | instant 80 · fast 140 · base 200 · slow 320 · page 420 (ms) |
+| Easings | standard / out / inOut cubic-beziers |
+| Distances | xs 4 · sm 8 · md 16 (px) |
+
+Source of truth: `apps/atlas-web/src/styles/globals.css` (`--atlas-motion-*`) and `apps/atlas-web/src/lib/motion/tokens.ts`.
+
+## Shipped this pass
+
+| Primitive | Wiring |
+| --- | --- |
+| `Reveal` | Home (featured, selected, philosophy, writing) + Work (featured, selected, taxonomy) |
+| `RuleReveal` | Work intro + taxonomy hairlines |
+| `EvidenceReveal` | Home selected-work project group |
+| `InteractiveRow` | Articles archive rows + article related links (keeps `<Link>` semantics) |
+| Mobile menu motion | Overlay fade + panel settle in `site-nav` |
+| CTA / form polish | Primary button + contact focus/error transitions |
+
+## Deferred
+
+- `PageTransition` route fades
+- `DiagramReveal` node/line choreography
+- Case-study / long article body section reveals
+- Framer Motion (only if route/diagram complexity later justifies it)
+
+## Reduced motion
+
+`prefers-reduced-motion: reduce` is mandatory. Translate/scale and rule draws are removed; instant opacity/state changes may remain. Manual verification: mobile menu, Home/Work reveals, archive row hover/focus.
+
+## Forbidden
+
+Parallax, animated gradients, floating decoration, letter-splitting headlines, fake terminal typing, animated code simulation, scroll-jacking, bouncy springs, heavy hover card lifts, excessive stagger, fake loading progress.

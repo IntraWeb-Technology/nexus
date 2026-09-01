@@ -20,11 +20,11 @@ export const articlesIndexFixture: ArticlesIndexFixture = {
       "Engineering writing — chronological notes on architecture, delivery, tooling, and production decisions. Distinct from the Documentation handbook.",
   },
   intro: {
-    chapter: "ARTICLES",
-    title: "Engineering writing.",
-    dek: "Chronological notes on architecture, delivery, tooling, and the decisions that survive production. Distinct from the Documentation handbook.",
+    chapter: "THE ATLAS JOURNAL",
+    title: "Writing on architecture, testing, and the craft of building.",
+    dek: "Notes on systems, delivery, and the decisions that survive production — distinct from the Documentation handbook.",
     dekCompact:
-      "Chronological notes on architecture, delivery, tooling, and production decisions. Distinct from Documentation.",
+      "Notes on architecture, testing, and the craft of building — distinct from Documentation.",
   },
   topics: {
     label: "TOPICS",

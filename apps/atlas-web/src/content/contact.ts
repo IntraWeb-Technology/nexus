@@ -1,5 +1,5 @@
 /**
- * Contact fixture — Approved — Contact (Figma production).
+ * Contact fixture — Story-First Contact (Figma page 28).
  * Form delivery is handled by `/api/contact` (Resend); no CMS.
  */
 
@@ -8,6 +8,7 @@ export type ContactFixture = {
   chapter: string;
   title: string;
   body: string;
+  bodyMobile: string;
   fields: {
     name: { label: string; placeholder: string };
     email: { label: string; placeholder: string };
@@ -25,21 +26,23 @@ export const contactFixture: ContactFixture = {
   seo: {
     title: "Contact",
     description:
-      "Start a conversation about product systems, architecture, content infrastructure, automation, and design-to-build implementation.",
+      "Start a conversation about product systems, CMS architecture, automation, or design-to-build work.",
   },
   chapter: "CONTACT",
   title: "Start a conversation.",
   body: "Use this form for product systems, content infrastructure, technical architecture, or design-to-build implementation work.",
+  bodyMobile:
+    "Use this form for product systems, content infrastructure, or technical architecture work.",
   fields: {
-    name: { label: "NAME", placeholder: "Your name" },
-    email: { label: "EMAIL", placeholder: "you@example.com" },
+    name: { label: "Name", placeholder: "Your name" },
+    email: { label: "Email", placeholder: "you@company.com" },
     context: {
-      label: "PROJECT CONTEXT",
-      placeholder: "Existing stack, current bottleneck, desired outcome",
+      label: "Project context",
+      placeholder: "Product, platform, or architecture",
     },
     message: {
-      label: "WHAT ARE YOU TRYING TO IMPROVE?",
-      placeholder: "What is already built, and where is it getting stuck?",
+      label: "What are you trying to improve?",
+      placeholder: "Tell me a bit about it…",
     },
   },
   submitLabel: "Send inquiry",
@@ -47,23 +50,19 @@ export const contactFixture: ContactFixture = {
   panels: [
     {
       label: "GOOD FIT",
-      body: "Product systems, CMS and content infrastructure, technical architecture, design-to-build implementation.",
-    },
-    {
-      label: "HELPFUL CONTEXT",
-      body: "A useful note usually includes the product context, what is already built, where the system is getting stuck, and what kind of outcome you need.",
+      body: "Product systems, content platforms, technical architecture.",
     },
     {
       label: "NEXT STEP",
-      body: "If there is a fit, expect a short reply with a suggested path forward — not a pitch deck.",
+      body: "A short reply, usually within one business day.",
     },
   ],
   success: {
-    title: "Message sent.",
-    body: "Thanks — I’ll reply with a short next step when I’ve read it carefully.",
+    title: "Message received.",
+    body: "Thanks for reaching out. I’ll review your note and reply if there’s a clear fit.",
   },
   failure: {
     title: "Couldn’t send right now.",
-    body: "Please try again in a moment.",
+    body: "Your message could not be sent. Please try again, or email me directly if the issue continues.",
   },
 };

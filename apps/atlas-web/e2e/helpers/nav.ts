@@ -16,7 +16,7 @@ export async function expectCurrentNavLink(
       await open.click();
     }
     await expect(
-      page.getByRole("dialog", { name: "Atlas menu" }).getByRole("link", {
+      page.getByRole("dialog", { name: "Menu" }).getByRole("link", {
         name: label,
         exact: true,
       }),
@@ -43,7 +43,7 @@ export async function clickPrimaryNavLink(
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole("button", { name: "Open menu" }).click();
     await page
-      .getByRole("dialog", { name: "Atlas menu" })
+      .getByRole("dialog", { name: "Menu" })
       .getByRole("link", { name: label, exact: true })
       .click();
     return;

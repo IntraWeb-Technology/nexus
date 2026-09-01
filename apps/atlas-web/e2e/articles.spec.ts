@@ -13,10 +13,10 @@ test.describe("articles index", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Engineering writing.",
+        name: "Writing on architecture, testing, and the craft of building.",
       }),
     ).toBeVisible();
-    await expect(page.getByLabel("Topics")).toBeVisible();
+    await expect(page.getByLabel("Topics")).toHaveCount(0);
     await expect(
       page.getByRole("heading", {
         level: 2,
@@ -24,14 +24,14 @@ test.describe("articles index", () => {
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 2, name: "Newest first." }),
+      page.getByRole("heading", { level: 2, name: "More writing" }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", {
         level: 2,
         name: "Prefer a conversation over a list.",
       }),
-    ).toBeVisible();
+    ).toHaveCount(0);
   });
 
   test("marks Articles as the current nav item", async ({ page }, testInfo) => {
@@ -46,7 +46,7 @@ test.describe("articles index", () => {
     await expect(
       page.getByRole("heading", {
         level: 1,
-        name: "Engineering writing.",
+        name: "Writing on architecture, testing, and the craft of building.",
       }),
     ).toBeVisible();
   });
@@ -62,7 +62,7 @@ test.describe("articles index", () => {
     await expect(page.getByRole("main")).not.toContainText(/Publication Shape/i);
   });
 
-  test("lists fixture articles newest-first", async ({ page }) => {
+  test("lists fixture articles newest-first", async ({ page }, testInfo) => {
     await page.goto("/articles");
     await expect(
       page.getByRole("link", { name: /Playwright at Scale/i }).first(),
@@ -80,21 +80,26 @@ test.describe("articles index", () => {
         .getByRole("link", { name: /AI-Assisted Engineering Workflows/i })
         .first(),
     ).toBeVisible();
-    await expect(
-      page
-        .getByRole("link", { name: /Turborepo Build Optimization/i })
-        .first(),
-    ).toBeVisible();
+    const turborepo = page.getByRole("link", {
+      name: /Turborepo Build Optimization/i,
+    });
+    if (testInfo.project.name === "desktop") {
+      await expect(turborepo.first()).toBeVisible();
+    } else {
+      await expect(turborepo).toHaveCount(0);
+    }
   });
 
-  test("topic labels are noninteractive taxonomy", async ({ page }) => {
+  test("does not render Topics or CONTINUE cue", async ({ page }) => {
     await page.goto("/articles");
-    const topics = page.getByLabel("Topics");
-    await expect(topics).toBeVisible();
-    await expect(topics.getByRole("button")).toHaveCount(0);
-    await expect(topics.getByRole("link")).toHaveCount(0);
-    await expect(topics.locator("li")).toHaveCount(6);
-    await expect(topics.locator("li").first()).toContainText("All");
+    await expect(page.getByLabel("Topics")).toHaveCount(0);
+    await expect(page.getByText("CONTINUE", { exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", {
+        level: 2,
+        name: "Prefer a conversation over a list.",
+      }),
+    ).toHaveCount(0);
   });
 
   test("featured metadata has no Published status", async ({ page }) => {
@@ -114,11 +119,11 @@ test.describe("articles index", () => {
     page,
   }) => {
     await page.goto("/articles");
-    const list = page.getByRole("heading", { level: 2, name: "Newest first." })
+    const list = page.getByRole("heading", { level: 2, name: "More writing" })
       .locator("xpath=ancestor::section[1]");
     await expect(list).not.toContainText(/Read article/i);
     await expect(list).not.toContainText(/Proof:/i);
-    await expect(list).toContainText(/Testing\s+·\s+11 min\s+·\s+Essay/);
+    await expect(list).toContainText(/Testing/);
   });
 
   test("article list links resolve to detail routes", async ({ page }) => {
@@ -152,21 +157,23 @@ test.describe("articles index", () => {
     ).toBeVisible();
   });
 
-  test("lower CTA has primary button and Work secondary — no social", async ({
+  test("does not render CONTINUE contact cue on the index", async ({
     page,
   }) => {
     await page.goto("/articles");
-    const cue = page.getByRole("heading", {
-      level: 2,
-      name: "Prefer a conversation over a list.",
-    }).locator("xpath=ancestor::section[1]");
+    const main = page.getByRole("main");
     await expect(
-      cue.getByRole("link", { name: "Start a conversation" }),
-    ).toHaveAttribute("href", "/contact");
+      main.getByRole("heading", {
+        level: 2,
+        name: "Prefer a conversation over a list.",
+      }),
+    ).toHaveCount(0);
     await expect(
-      cue.getByRole("link", { name: /browse Work/i }),
-    ).toHaveAttribute("href", "/work");
-    await expect(cue.getByRole("link", { name: /LinkedIn|Facebook|Bluesky|Upwork/i })).toHaveCount(0);
+      main.getByRole("link", { name: "Start a conversation" }),
+    ).toHaveCount(0);
+    await expect(main.getByRole("link", { name: /browse Work/i })).toHaveCount(
+      0,
+    );
   });
 
   test("does not advertise fictional archive pagination", async ({ page }) => {
@@ -215,7 +222,7 @@ test.describe("articles index", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/articles");
     await page.getByRole("button", { name: "Open menu" }).click();
-    await expect(page.getByRole("dialog", { name: "Atlas menu" })).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
     await expect(page).toHaveScreenshot(`articles-mobile-menu-open-${testInfo.project.name}.png`, {
       fullPage: false,
       maxDiffPixelRatio: 0.02,

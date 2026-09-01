@@ -1,4 +1,3 @@
-import { ChapterMarker } from "@/components/editorial/chapter-marker";
 import { ContactForm } from "@/components/sections/contact-form";
 import type { ContactFixture } from "@/content/contact";
 
@@ -6,44 +5,47 @@ type ContactMainProps = {
   data: ContactFixture;
 };
 
+/**
+ * Story-First contact — split invitation (rust→gold) + paper form panel.
+ */
 export function ContactMain({ data }: ContactMainProps) {
   return (
     <section
       aria-labelledby="contact-page-title"
-      className="mx-auto max-w-[var(--atlas-page)]"
+      className="min-h-[calc(100dvh-var(--atlas-nav-h))]"
     >
-      <div className="atlas-pad-x flex flex-col gap-6 py-14 tablet:gap-7 tablet:py-20 desktop:gap-7 desktop:py-[7.5rem]">
-        <ChapterMarker>{data.chapter}</ChapterMarker>
-        <h1
-          id="contact-page-title"
-          className="m-0 max-w-[45rem] font-display text-[2rem] leading-tight font-semibold text-atlas-ink tablet:text-[2.75rem] tablet:leading-[52px] desktop:text-[2.75rem]"
-        >
-          {data.title}
-        </h1>
-        <p className="m-0 max-w-[35rem] font-sans text-[15px] leading-7 text-atlas-body tablet:text-[17px]">
-          {data.body}
-        </p>
+      <div className="mx-auto grid max-w-[var(--atlas-page)] desktop:grid-cols-[minmax(0,35rem)_minmax(0,1fr)]">
+        <aside className="flex flex-col justify-between bg-gradient-to-br from-atlas-rust to-atlas-gold px-6 py-14 text-white tablet:px-10 tablet:py-16 desktop:min-h-[46rem] desktop:px-16 desktop:py-[7.5rem]">
+          <div className="flex max-w-[27.5rem] flex-col gap-5">
+            <h1
+              id="contact-page-title"
+              className="m-0 font-display text-[2rem] leading-tight font-semibold tablet:text-[2.5rem] desktop:text-[2.75rem]"
+            >
+              {data.title}
+            </h1>
+            <p className="m-0 hidden font-sans text-[15px] leading-relaxed text-white/90 tablet:block tablet:text-base">
+              {data.body}
+            </p>
+            <p className="m-0 font-sans text-[15px] leading-relaxed text-white/90 tablet:hidden">
+              {data.bodyMobile}
+            </p>
+            <div className="mt-4 flex flex-col gap-6">
+              {data.panels.map((panel) => (
+                <div key={panel.label}>
+                  <p className="m-0 font-sans text-[11px] font-medium tracking-[0.08em] text-atlas-cream uppercase">
+                    {panel.label}
+                  </p>
+                  <p className="mt-2 mb-0 font-sans text-sm leading-[22px] text-white/85">
+                    {panel.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
 
-        <div className="flex flex-col gap-12 desktop:flex-row desktop:items-start desktop:gap-[6.25rem]">
+        <div className="bg-atlas-paper px-6 py-14 tablet:px-10 tablet:py-16 desktop:px-16 desktop:py-[7.5rem]">
           <ContactForm data={data} />
-
-          <aside className="flex w-full max-w-[28.75rem] flex-col gap-8 desktop:pt-1">
-            {data.panels.map((panel, i) => (
-              <div
-                key={panel.label}
-                className={
-                  i > 0 ? "border-t border-atlas-border pt-8" : undefined
-                }
-              >
-                <p className="m-0 font-mono text-[11px] tracking-[0.08em] text-atlas-sage uppercase">
-                  {panel.label}
-                </p>
-                <p className="mt-2.5 mb-0 font-sans text-sm leading-[22px] text-atlas-body">
-                  {panel.body}
-                </p>
-              </div>
-            ))}
-          </aside>
         </div>
       </div>
     </section>

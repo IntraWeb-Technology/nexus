@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { ChapterMarker } from "@/components/editorial/chapter-marker";
+import {
+  interactiveRowArrowClassName,
+  interactiveRowClasses,
+  interactiveRowTitleClassName,
+} from "@/components/editorial/interactive-row";
 import type { ArticleDetail } from "@/content/article";
 
 type ArticleRelatedProps = {
@@ -24,13 +29,17 @@ export function ArticleRelated({ data }: ArticleRelatedProps) {
         <ul className="m-0 list-none p-0">
           {data.items.map((item) => (
             <li key={item.slug} className="border-t border-atlas-border">
-              {/* Desktop: title+meta | Read → */}
               <Link
                 href={item.href}
-                className="hidden items-center justify-between gap-6 py-4 no-underline desktop:flex"
+                className={interactiveRowClasses({
+                  className:
+                    "hidden items-center justify-between gap-6 py-4 desktop:flex",
+                })}
               >
                 <div className="min-w-0 space-y-1">
-                  <p className="m-0 font-display text-lg leading-6 font-semibold text-atlas-ink">
+                  <p
+                    className={`m-0 font-display text-lg leading-6 font-semibold text-atlas-ink ${interactiveRowTitleClassName}`}
+                  >
                     {item.title}
                   </p>
                   <p className="m-0 font-mono text-[11px] text-atlas-sage whitespace-pre">
@@ -39,21 +48,27 @@ export function ArticleRelated({ data }: ArticleRelatedProps) {
                     {item.readingTime}
                   </p>
                 </div>
-                <span className="shrink-0 font-sans text-[13px] font-medium text-atlas-umber">
+                <span
+                  className={`shrink-0 font-sans text-[13px] font-medium text-atlas-umber ${interactiveRowArrowClassName}`}
+                >
                   Read →
                 </span>
               </Link>
 
-              {/* Tablet + mobile: stacked with meta · Read → */}
               <Link
                 href={item.href}
-                className="block space-y-1.5 py-3.5 no-underline desktop:hidden"
+                className={interactiveRowClasses({
+                  className: "block space-y-1.5 py-3.5 desktop:hidden",
+                })}
               >
-                <p className="m-0 font-display text-base leading-[22px] font-semibold text-atlas-ink tablet:text-lg tablet:leading-[22px]">
+                <p
+                  className={`m-0 font-display text-base leading-[22px] font-semibold text-atlas-ink tablet:text-lg tablet:leading-[22px] ${interactiveRowTitleClassName}`}
+                >
                   {item.title}
                 </p>
                 <p className="m-0 font-mono text-[11px] text-atlas-sage">
-                  {item.topic} · {item.readingTime} · Read →
+                  {item.topic} · {item.readingTime} ·{" "}
+                  <span className={interactiveRowArrowClassName}>Read →</span>
                 </p>
               </Link>
             </li>

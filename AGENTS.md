@@ -2,6 +2,10 @@
 
 pnpm + Turborepo monorepo. See `README.md` for the canonical setup/dev/build/test/lint commands and app overview. Node `22.x`, pnpm `10.33.0` (already provisioned in Cursor Cloud).
 
+## Atlas (when applicable)
+
+When work touches Atlas-scoped paths (`apps/atlas-web`, `apps/atlas-docs`, Atlas CMS/client packages, `docs/governance`, or an explicitly authorized Atlas task), it is governed by `docs/governance/atlas-ai-assisted-engineering-v1.md`. Authority conflicts require stopping for human resolution. This does not apply to unrelated monorepo applications.
+
 ## Cursor Cloud specific instructions
 
 The update script runs `pnpm install`. After that, everything below works with no extra setup.

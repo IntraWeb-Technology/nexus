@@ -651,7 +651,14 @@ export function buildAtlasMigrationPlan(fixtures: AtlasFixtures, batchId: string
       },
       style: about.style,
       principles: about.principles,
-      timeline: about.timeline,
+      timeline: {
+        chapter: String((about.timeline as { chapter?: string }).chapter ?? ""),
+        title: String((about.timeline as { title?: string }).title ?? ""),
+        entries: (
+          (about.timeline as { entries?: Array<{ period: string; title: string; note: string }> })
+            .entries ?? []
+        ).map(({ period, title, note }) => ({ period, title, note })),
+      },
       focus: about.focus,
       reading: about.reading,
       architecture: {

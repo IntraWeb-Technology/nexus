@@ -1,0 +1,111 @@
+name: Atlas engineering task
+description: Task contract for Atlas work per AI-Assisted Engineering Governance V1
+title: "[Atlas] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Material Atlas changes require a durable task contract per `docs/governance/atlas-ai-assisted-engineering-v1.md`.
+        Risk classes: G0 read-only · G1 isolated · G2 integrated · G3 release-sensitive · G4 production/destructive.
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What this task must achieve and why
+    validations:
+      required: true
+
+  - type: textarea
+    id: authorized_scope
+    attributes:
+      label: Authorized scope
+      description: Files, routes, subsystems, and behaviors in scope
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Explicitly out of scope
+      description: What must not change in this task
+    validations:
+      required: true
+
+  - type: textarea
+    id: authoritative_references
+    attributes:
+      label: Authoritative references
+      description: Issue links, Figma nodes, Build Manifest sections, CMS contracts, ADRs
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current behavior
+      description: What happens today (evidence-backed)
+    validations:
+      required: true
+
+  - type: textarea
+    id: required_behavior
+    attributes:
+      label: Required behavior
+      description: What must be true when the task is complete
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance criteria
+      description: Testable conditions of done
+    validations:
+      required: true
+
+  - type: dropdown
+    id: risk_class
+    attributes:
+      label: V1 risk class
+      description: Highest applicable class controls verification and approval
+      options:
+        - G0 — Read-only (audit, inventory, explanation)
+        - G1 — Isolated (copy/style/docs with no runtime contract change)
+        - G2 — Integrated (component, route, token, fixture contract)
+        - G3 — Release-sensitive (CMS schema, CI, baselines, dependencies, deploy config)
+        - G4 — Production/destructive (production data, secrets, DNS, promotion)
+    validations:
+      required: true
+
+  - type: textarea
+    id: required_verification
+    attributes:
+      label: Required verification
+      description: Exact commands, environments, and data modes (fixture vs live CMS)
+    validations:
+      required: true
+
+  - type: textarea
+    id: permitted_subsystems
+    attributes:
+      label: Permitted files or subsystems
+      description: Paths or packages the implementer may touch
+    validations:
+      required: true
+
+  - type: textarea
+    id: stop_conditions
+    attributes:
+      label: Stop conditions
+      description: Task-specific reasons to halt (in addition to V1 §6)
+    validations:
+      required: false
+
+  - type: input
+    id: required_reviewer
+    attributes:
+      label: Required reviewer or approval
+      description: Named human reviewer; required for G2+ material work
+    validations:
+      required: true

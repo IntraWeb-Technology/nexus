@@ -1,15 +1,17 @@
-# CLAUDE.md
+# CLAUDE.md — `apps/atlas-docs` only
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file governs the **Atlas product documentation site** (`apps/atlas-docs`). It does **not** govern `apps/atlas-web` (production frontend). For Atlas engineering governance, see [`docs/governance/atlas-ai-assisted-engineering-v1.md`](../../docs/governance/atlas-ai-assisted-engineering-v1.md) and [`apps/atlas-web/CLAUDE.md`](../atlas-web/CLAUDE.md).
 
-## Project Overview
+## Project overview
 
-This is a **Next.js 16 + Mantine 9 + Nextra 4** template used as the documentation site foundation for the Mantine Extensions ecosystem. It serves as a reusable starter for building docs sites with integrated Mantine components.
+Atlas product architecture, Build Manifest, and milestone reports live in this app's `content/` (Nextra MDX). The site is **Next.js 16 + Mantine 9 + Nextra 4**, excluded from the pnpm workspace; use **Yarn 4** here (not pnpm).
+
+> **Obsolete (do not use):** Earlier versions of this file described a generic "Mantine Extensions ecosystem" starter. That identity is wrong for this repo — this app hosts **Atlas** product documentation. Stack/commands below remain valid for `apps/atlas-docs`.
 
 ## Commands
 
 | Command | Purpose |
-|---------|---------|
+| --- | --- |
 | `yarn dev` | Start Next.js dev server |
 | `yarn build` | Production build (Next.js + pagefind search index) |
 | `yarn test` | Full suite: typegen, oxfmt, lint, typecheck, jest |
@@ -25,51 +27,42 @@ This is a **Next.js 16 + Mantine 9 + Nextra 4** template used as the documentati
 
 ## Architecture
 
-### Routing & Content
+### Routing & content
 
-- **App Router** (`app/`): Next.js 16 app router with Nextra integration
-- **Docs content** (`content/`): MDX files rendered via Nextra at `/docs/[[...mdxPath]]`
-- Nextra is configured with `contentDirBasePath: '/docs'` — all MDX content is served under `/docs`
-- `content/_meta.ts` controls sidebar navigation order and labels
+- **App Router** (`app/`): Next.js app router with Nextra integration
+- **Docs content** (`content/`): MDX rendered at `/docs/[[...mdxPath]]`
+- Nextra `contentDirBasePath: '/docs'`
+- `content/_meta.ts` controls sidebar navigation
 
-### Layout & Theme Integration
+### Layout & theme
 
-- `app/layout.tsx` wraps the entire app in both `MantineProvider` and Nextra's `Layout`
-- Dark mode sync between Mantine and Nextra is handled by `MantineNextraThemeObserver`
-- Mantine theme overrides go in `theme.ts` (client-side `createTheme`)
-- Global site configuration (metadata, GitHub API, search, Nextra layout) lives in `config/index.ts`
+- `app/layout.tsx`: `MantineProvider` + Nextra `Layout`
+- Dark mode: `MantineNextraThemeObserver`
+- Theme overrides: `theme.ts`
+- Site config: `config/index.ts`
 
-### Key Components (`components/`)
+### Key components
 
-- `MantineNavBar` / `MantineFooter` — custom Nextra layout replacements
-- `ColorSchemeControl` / `ColorSchemeToggle` — dark mode toggle
-- `ReleaseNotes` — fetches GitHub releases via `/api/github-releases`
-- `Logo`, `Welcome`, `Content` — branding and landing page components
+- `MantineNavBar` / `MantineFooter` — Nextra layout chrome
+- `ColorSchemeControl` / `ColorSchemeToggle`
+- `ReleaseNotes`, `Logo`, `Welcome`, `Content`
 
-### API Routes (`app/api/`)
+### API routes
 
-- `version/` — returns current package version
-- `github-releases/` — proxies GitHub releases API (configured in `config/index.ts`)
-- `search/` — pagefind-based search endpoint
+- `app/api/version/` — package version
+- `app/api/github-releases/` — GitHub releases proxy
+- `app/api/search/` — pagefind search
 
 ### Search
 
-Search uses [pagefind](https://pagefind.app/). The index is built post-build (`yarn build:pagefind`) into `public/_pagefind/`. The search API route reads this index.
+[pagefind](https://pagefind.app/) index built post-build into `public/_pagefind/`.
 
-### CSS Import Order
+### Tooling
 
-In `app/layout.tsx`, CSS imports must follow this order:
-1. `@mantine/core/styles.css`
-2. Mantine extension styles (e.g., marquee, text-animate)
-3. Global styles
+- **Formatter:** oxfmt (`.oxfmtrc.json`)
+- **Linter:** oxlint + stylelint
+- **Package manager:** Yarn 4 (Berry) — do not use pnpm in this app
 
-### Build Pipeline
+## Atlas product docs authority
 
-Next.js config (`next.config.mjs`) chains: `nextra()` → `bundleAnalyzer()`. Turbopack is configured with inline SVG loader for SVGs under ~4KB.
-
-## Tooling
-
-- **Formatter**: oxfmt (`.oxfmtrc.json`)
-- **Linter**: oxlint + stylelint
-- **TypeScript**: 6.x
-- **Package Manager**: Yarn 4 (Berry). Do not use npm or pnpm.
+Authoritative Atlas **product and architecture** content is under `content/architecture/` (Build Manifest, M8 contract, freeze reports, etc.). Nexus-wide standards remain in root [`docs/architecture/`](../../docs/architecture/). Do not duplicate governance across both — link instead (see `atlas-documentation.mdc`).

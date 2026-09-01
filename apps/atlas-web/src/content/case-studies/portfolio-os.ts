@@ -20,7 +20,7 @@ export const portfolioOsCaseStudy: CaseStudyFixture = {
       "Engineering case study — building a production portfolio platform that treats content, case studies, and engineering proof as a single operating system.",
   },
   hero: {
-    chapter: "CASE STUDY",
+    chapter: "FLAGSHIP · DESIGN & ENGINEERING · 2024–PRESENT",
     title: "Portfolio OS",
     deck: "Building a production portfolio platform that treats content, case studies, and engineering proof as a single operating system — not a brochure.",
     deckTablet:
@@ -28,15 +28,15 @@ export const portfolioOsCaseStudy: CaseStudyFixture = {
     deckMobile:
       "A production portfolio platform — content, case studies, and engineering proof as one system.",
     meta: [
-      { label: "YEAR", value: "2024 — Present" },
+      { label: "TIMELINE", value: "2024 – Present" },
       { label: "ROLE", value: "Design & Engineering" },
       { label: "STATUS", value: "In production" },
-      { label: "STACK", value: "Next.js · Strapi · Turborepo · Playwright" },
+      { label: "STACK", value: "Next.js · Strapi · Turborepo" },
     ],
-    metaLineTablet: "2024 — Present  ·  Design & Engineering  ·  In production",
-    metaLineMobileYear: "2024 — Present",
+    metaLineTablet: "2024 – Present  ·  Design & Engineering  ·  In production",
+    metaLineMobileYear: "2024 – Present",
     metaLineMobileRole: "Design & Engineering · In production",
-    stackLine: "Next.js · Strapi · Turborepo · Playwright",
+    stackLine: "Next.js · Strapi · Turborepo",
   },
   toc: [
     { id: "overview", label: "01 Overview", href: "#overview" },
@@ -128,32 +128,60 @@ export const portfolioOsCaseStudy: CaseStudyFixture = {
     },
   },
   overview: {
-    chapter: "01  ·  OVERVIEW",
-    title: "What was built, why it mattered, and what I owned.",
-    titleMobile: "What was built.",
+    chapter: "OVERVIEW",
+    title: "Overview",
+    titleMobile: "Overview",
     columns: [
       {
         id: "built",
-        label: "WHAT WAS BUILT?",
-        body: "A greenfield portfolio platform (Atlas) replacing a legacy personal site — with shared Strapi CMS, case-study narrative structure, and production delivery tooling.",
+        label: "What was built",
+        body: "A single production surface that unifies Atlas's content, case studies, and delivery evidence — content authored in Strapi, rendered through a shared editorial system.",
       },
       {
         id: "mattered",
-        label: "WHY IT MATTERED?",
-        body: "The previous surface could not express engineering depth. Recruiters and technical leaders needed proof of systems thinking, not a template gallery.",
+        label: "Why it mattered",
+        body: "Engineering portfolios usually stop at screenshots. This one shows the reasoning: the decisions, tradeoffs, and the testing that back each project up.",
       },
       {
         id: "owned",
-        label: "WHAT WAS OWNED?",
-        body: "Product direction, editorial design system, frontend architecture, CMS content model, CI/testing strategy, and the case-study information architecture.",
+        label: "What I owned",
+        body: "End-to-end: architecture, the Strapi content model, the editorial design system, and the CI/testing pipeline that keeps it all provably correct.",
       },
     ],
     bodyTablet: [
-      "Greenfield Atlas platform with shared Strapi, editorial case-study structure, and production delivery tooling.",
-      "Owned product direction, brand system, frontend architecture, CMS model, and testing strategy.",
+      "A single production surface that unifies Atlas's content, case studies, and delivery evidence.",
+      "End-to-end ownership of architecture, content model, editorial system, and CI/testing.",
     ],
     bodyMobile:
-      "Greenfield Atlas with shared Strapi and production delivery. Owned direction, brand, architecture, and testing.",
+      "A production surface for Atlas content and case studies — architecture, content model, and delivery owned end-to-end.",
+  },
+  underTheHood: {
+    chapter: "UNDER THE HOOD",
+    title: "Architecture, constraints, and implementation evidence",
+    diagramLabel:
+      "DIAGRAM — request/delivery architecture (Next.js → Strapi → CDN → CI)",
+    diagramSrc:
+      "/images/case-studies/portfolio-os/portfolio-os-case-hero-desktop.webp",
+    diagramWidth: 2400,
+    diagramHeight: 1350,
+    items: [
+      {
+        label: "CONSTRAINT",
+        body: "Single Strapi instance must serve multiple sites without content bleed — solved with explicit site-scoped content types.",
+      },
+      {
+        label: "DECISION",
+        body: "Fixture-first case study data during early milestones, migrated to live CMS once the content model was proven.",
+      },
+      {
+        label: "DELIVERY",
+        body: "Playwright E2E + visual regression gates every merge; Vercel preview deploys back every PR.",
+      },
+    ],
+  },
+  storyOutcomes: {
+    title: "Outcomes & lessons",
+    body: "A production-credible portfolio surface with a provable content pipeline — and a clear template for the next Atlas-family site to reuse.",
   },
   problem: {
     chapter: "02  ·  PROBLEM",

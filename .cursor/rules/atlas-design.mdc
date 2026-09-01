@@ -12,7 +12,7 @@ alwaysApply: false
 
 ## Source of truth (mandatory)
 
-- **Approved Figma is the visual source of truth.** If implementation and Figma disagree on visuals, Figma wins.
+- **Approved Figma frames govern visual intent.** If implementation disagrees with approved Figma on visuals, follow Figma. If Figma conflicts with governed tokens, another approved artifact, or an explicit task contract, stop and request human resolution. Do not silently choose an authority.
 - Canonical file: Atlas Design System (see Build Manifest for file key and frozen page list).
 - **Atlas Design v1.0 is frozen.** Do not redesign frozen pages during implementation.
 - **Editorial Publishing System (Figma Page 26) is frozen.** Reuse approved patterns; do not invent parallel publishing chrome.
