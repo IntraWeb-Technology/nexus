@@ -69,13 +69,35 @@ test.describe("homepage", () => {
     await expect(page.getByRole("link", { name: "See the work" })).toBeFocused();
   });
 
-  test("hero CTAs navigate to work and articles", async ({ page }) => {
+  test("hero CTAs navigate to work and articles", async ({ page }, testInfo) => {
     await page.goto("/");
     await page.getByRole("link", { name: "See the work" }).click();
     await expect(page).toHaveURL(/\/work$/);
     await page.goto("/");
-    await page.getByRole("link", { name: "Read the notes" }).click();
+    const notes = page.getByRole("link", { name: "Read the notes" });
+    if (testInfo.project.name === "tablet") {
+      await expect(notes).toBeHidden();
+      return;
+    }
+    await notes.click();
     await expect(page).toHaveURL(/\/articles$/);
+  });
+
+  test("tablet hero is photo then copy with one CTA", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "tablet", "C3 tablet composition only");
+    await page.goto("/");
+    const hero = page.locator("main section").first();
+    const photo = hero.locator("img").first();
+    const title = page.getByRole("heading", { level: 1 });
+    const photoBox = await photo.boundingBox();
+    const titleBox = await title.boundingBox();
+    expect(photoBox, "hero photo bounding box").toBeTruthy();
+    expect(titleBox, "hero title bounding box").toBeTruthy();
+    expect(photoBox!.y).toBeLessThan(titleBox!.y);
+    await expect(hero.getByRole("link", { name: "See the work" })).toBeVisible();
+    await expect(hero.getByRole("link", { name: "Read the notes" })).toBeHidden();
   });
 
   test("footer nav order and social links", async ({ page }) => {
