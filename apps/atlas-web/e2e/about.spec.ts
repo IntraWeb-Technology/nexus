@@ -58,6 +58,33 @@ test.describe("about", () => {
     );
   });
 
+  test("opening row uses the page gutter on desktop and insets copy below desktop", async ({
+    page,
+  }, testInfo) => {
+    await page.goto("/about");
+
+    const heading = page.getByRole("heading", {
+      level: 1,
+      name: APPROVED_HEADLINE,
+    });
+    const opening = page.locator("header").filter({ has: heading });
+    const row = opening.locator(":scope > div");
+    const copy = heading.locator("xpath=..");
+
+    const rowPad = testInfo.project.name === "desktop" ? "64px" : "0px";
+    const copyPad =
+      testInfo.project.name === "desktop"
+        ? "0px"
+        : testInfo.project.name === "tablet"
+          ? "40px"
+          : "24px";
+
+    await expect(row).toHaveCSS("padding-left", rowPad);
+    await expect(row).toHaveCSS("padding-right", rowPad);
+    await expect(copy).toHaveCSS("padding-left", copyPad);
+    await expect(copy).toHaveCSS("padding-right", copyPad);
+  });
+
   test("does not restore obsolete How I Work or numbered-principles copy", async ({
     page,
   }) => {

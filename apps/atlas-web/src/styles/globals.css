@@ -83,6 +83,10 @@
   --breakpoint-desktop: 1440px;
 }
 
+@utility atlas-pad-x {
+  padding-inline: var(--atlas-pad-x);
+}
+
 *,
 *::before,
 *::after {
@@ -135,11 +139,6 @@ body {
     transition: none !important;
     transform: none !important;
   }
-}
-
-.atlas-pad-x {
-  padding-left: var(--atlas-pad-x);
-  padding-right: var(--atlas-pad-x);
 }
 
 .atlas-chapter {
