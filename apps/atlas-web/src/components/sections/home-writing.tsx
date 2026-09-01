@@ -17,6 +17,7 @@ const coverToneClass: Record<
 /**
  * Story-First writing strip — Newsreader head + rust publication link,
  * 3-col cover cards with colored cover blocks.
+ * Mobile (Figma 616:18): omitted from the abbreviated Home composition.
  */
 export function HomeWriting({ data }: HomeWritingProps) {
   const sectionTitle = data.sectionTitle ?? "Latest writing";
@@ -30,7 +31,7 @@ export function HomeWriting({ data }: HomeWritingProps) {
   return (
     <section
       aria-labelledby="writing-heading"
-      className="mx-auto max-w-[var(--atlas-page)]"
+      className="mx-auto hidden max-w-[var(--atlas-page)] tablet:block"
     >
       <div className="atlas-pad-x space-y-4 pt-14 pb-8 tablet:pt-16 desktop:pt-20">
         <div className="flex flex-wrap items-baseline justify-between gap-3">

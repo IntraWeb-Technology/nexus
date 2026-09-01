@@ -19,6 +19,7 @@ const tabletMediaFrameClassName =
  * white Newsreader title, cream deck, rust + cream-outline CTAs,
  * media on the right (desktop) with gradient fallback.
  * Tablet (Figma 632:2 / C3): photo then copy, one rust primary CTA.
+ * Mobile (Figma 616:18): abbreviated hero — primary CTA only.
  */
 export function HomeHero({ data }: HomeHeroProps) {
   const hasMedia = Boolean(data.mediaSrc && data.mediaWidth && data.mediaHeight);
@@ -51,7 +52,7 @@ export function HomeHero({ data }: HomeHeroProps) {
             </AppLink>
             <AppLink
               href={data.secondaryCta.href}
-              className={`${atlasStorySecondaryOnDarkButtonClassName} tablet:hidden desktop:inline-flex`}
+              className={`${atlasStorySecondaryOnDarkButtonClassName} max-desktop:hidden`}
             >
               {data.secondaryCta.label}
             </AppLink>

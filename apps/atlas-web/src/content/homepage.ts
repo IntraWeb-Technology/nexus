@@ -260,7 +260,7 @@ export const homepageFixture: HomepageFixture = {
     deck: "Notes on the work, and what it's teaching me.",
     items: [
       {
-        title: "Why We Chose RSC",
+        title: "Why We Chose React Server Components",
         note: "The tradeoffs — and why the simplest server-first model won.",
         topic: "ARCHITECTURE",
         coverTone: "rust",

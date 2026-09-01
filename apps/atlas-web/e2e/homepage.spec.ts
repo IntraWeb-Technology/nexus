@@ -75,12 +75,38 @@ test.describe("homepage", () => {
     await expect(page).toHaveURL(/\/work$/);
     await page.goto("/");
     const notes = page.getByRole("link", { name: "Read the notes" });
-    if (testInfo.project.name === "tablet") {
+    if (testInfo.project.name !== "desktop") {
       await expect(notes).toBeHidden();
       return;
     }
     await notes.click();
     await expect(page).toHaveURL(/\/articles$/);
+  });
+
+  test("omits Latest writing on mobile", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile", "616:18 omits Writing on mobile");
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", { level: 2, name: "Latest writing" }),
+    ).toHaveCount(0);
+  });
+
+  test("home writing card uses the full RSC title", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name === "mobile",
+      "Writing is omitted from the mobile Home composition",
+    );
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", {
+        name: "Why We Chose React Server Components",
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Why We Chose RSC", exact: true }),
+    ).toHaveCount(0);
   });
 
   test("tablet hero is photo then copy with one CTA", async ({
@@ -98,6 +124,29 @@ test.describe("homepage", () => {
     expect(photoBox!.y).toBeLessThan(titleBox!.y);
     await expect(hero.getByRole("link", { name: "See the work" })).toBeVisible();
     await expect(hero.getByRole("link", { name: "Read the notes" })).toBeHidden();
+  });
+
+  test("tablet footer keeps all chrome without a crowded row", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "tablet", "C9 tablet footer only");
+    await page.goto("/");
+    const footer = page.getByRole("contentinfo");
+    const copyright = footer.getByText(/John Schibelli — Atlas/);
+    const docs = footer.getByRole("navigation", { name: "Footer" }).getByRole(
+      "link",
+      { name: "Docs" },
+    );
+    const copyrightBox = await copyright.boundingBox();
+    const docsBox = await docs.boundingBox();
+    expect(copyrightBox, "copyright bounding box").toBeTruthy();
+    expect(docsBox, "Docs link bounding box").toBeTruthy();
+    expect(docsBox!.y).toBeGreaterThan(copyrightBox!.y);
+    const overflow = await page.evaluate(() => {
+      const doc = document.documentElement;
+      return doc.scrollWidth > doc.clientWidth + 1;
+    });
+    expect(overflow, "horizontal overflow from tablet footer").toBe(false);
   });
 
   test("footer nav order and social links", async ({ page }) => {
