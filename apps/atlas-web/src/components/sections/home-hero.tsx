@@ -18,8 +18,8 @@ const tabletMediaFrameClassName =
  * Story-First homepage hero — full-bleed ink-blue band, gold chapter,
  * white Newsreader title, cream deck, rust + cream-outline CTAs,
  * media on the right (desktop) with gradient fallback.
- * Tablet (Figma 632:2 / C3): photo then copy, one rust primary CTA.
- * Mobile (Figma 616:18): abbreviated hero — primary CTA only.
+ * Tablet (Figma 632:2 / C3 / C8): photo then copy, one rust primary CTA.
+ * Desktop and mobile retain both CTAs (C3/C8).
  */
 export function HomeHero({ data }: HomeHeroProps) {
   const hasMedia = Boolean(data.mediaSrc && data.mediaWidth && data.mediaHeight);
@@ -52,7 +52,7 @@ export function HomeHero({ data }: HomeHeroProps) {
             </AppLink>
             <AppLink
               href={data.secondaryCta.href}
-              className={`${atlasStorySecondaryOnDarkButtonClassName} max-desktop:hidden`}
+              className={`${atlasStorySecondaryOnDarkButtonClassName} tablet:hidden desktop:inline-flex`}
             >
               {data.secondaryCta.label}
             </AppLink>

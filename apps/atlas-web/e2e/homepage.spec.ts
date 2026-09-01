@@ -75,7 +75,7 @@ test.describe("homepage", () => {
     await expect(page).toHaveURL(/\/work$/);
     await page.goto("/");
     const notes = page.getByRole("link", { name: "Read the notes" });
-    if (testInfo.project.name !== "desktop") {
+    if (testInfo.project.name === "tablet") {
       await expect(notes).toBeHidden();
       return;
     }
