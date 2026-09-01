@@ -37,6 +37,18 @@ describe("classifyRevealEntry (parent d0044a4 contract)", () => {
     );
   });
 
+  it("mount snapshot (no IO intersection yet) uses layout rect for in-view shown", () => {
+    assert.equal(
+      classifyRevealEntry({
+        once: true,
+        alreadyShown: false,
+        ...inView,
+        isIntersecting: false,
+      }),
+      "shown-disconnect",
+    );
+  });
+
   it("entering the viewport is shown and disconnects when once=true", () => {
     assert.equal(
       classifyRevealEntry({ once: true, alreadyShown: false, ...inView }),

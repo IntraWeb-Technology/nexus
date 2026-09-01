@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 
 export type RevealPhase = "ssr" | "pending" | "shown";
@@ -49,11 +49,36 @@ export function classifyRevealEntry(input: RevealEntryInput): RevealEntryClassif
   return "pending";
 }
 
+function classifyElement(
+  el: HTMLElement,
+  once: boolean,
+  alreadyShown: boolean,
+  isIntersecting: boolean,
+): RevealEntryClassification {
+  const style = window.getComputedStyle(el);
+  const rect = el.getBoundingClientRect();
+  return classifyRevealEntry({
+    once,
+    alreadyShown,
+    hasEntry: true,
+    isIntersecting,
+    display: style.display,
+    visibility: style.visibility,
+    rectTop: rect.top,
+    rectBottom: rect.bottom,
+    viewportHeight: window.innerHeight,
+  });
+}
+
 /**
  * Progressive-enhancement reveal phases:
  * - `ssr`: visible (no hidden styles) until the client wrapper mounts
  * - `pending`: only after mount, when the element is below the fold
  * - `shown`: revealed (or reduced-motion / already in view)
+ *
+ * Classify from layout on mount. Waiting for IntersectionObserver leaves
+ * below-fold nodes at `ssr` (visible) until a later frame, and the opacity
+ * transition on `.atlas-reveal` then fades them out before scroll-in.
  */
 export function useRevealPhase(
   ref: RefObject<HTMLElement | null>,
@@ -64,7 +89,7 @@ export function useRevealPhase(
   const [phase, setPhase] = useState<RevealPhase>("ssr");
   const shownRef = useRef(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
 
@@ -78,31 +103,39 @@ export function useRevealPhase(
       return;
     }
 
+    const commit = (
+      result: RevealEntryClassification,
+      observer?: IntersectionObserver,
+    ) => {
+      if (result === "ignore") return;
+      if (result === "pending") {
+        setPhase("pending");
+        return;
+      }
+
+      shownRef.current = true;
+      setPhase("shown");
+      if (result === "shown-disconnect") observer?.disconnect();
+    };
+
+    // Layout snapshot, not the first IO callback — IO is async.
+    const initial = classifyElement(el, once, shownRef.current, false);
+    commit(initial);
+    if (initial === "shown" || initial === "shown-disconnect") {
+      return;
+    }
+
     const io = new IntersectionObserver(
       ([entry]) => {
-        const style = window.getComputedStyle(el);
-        const rect = el.getBoundingClientRect();
-        const result = classifyRevealEntry({
-          once,
-          alreadyShown: shownRef.current,
-          hasEntry: Boolean(entry),
-          isIntersecting: Boolean(entry?.isIntersecting),
-          display: style.display,
-          visibility: style.visibility,
-          rectTop: rect.top,
-          rectBottom: rect.bottom,
-          viewportHeight: window.innerHeight,
-        });
-
-        if (result === "ignore") return;
-        if (result === "pending") {
-          setPhase("pending");
-          return;
-        }
-
-        shownRef.current = true;
-        setPhase("shown");
-        if (result === "shown-disconnect") io.disconnect();
+        commit(
+          classifyElement(
+            el,
+            once,
+            shownRef.current,
+            Boolean(entry?.isIntersecting),
+          ),
+          io,
+        );
       },
       { threshold, rootMargin: "0px 0px -6% 0px" },
     );

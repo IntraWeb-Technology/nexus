@@ -161,21 +161,27 @@ body {
 /* —— Motion primitives —— */
 
 .atlas-reveal {
-  transition:
-    opacity var(--atlas-motion-base) var(--atlas-motion-ease-out),
-    transform var(--atlas-motion-base) var(--atlas-motion-ease-out);
   will-change: opacity, transform;
 }
 
-.atlas-reveal[data-phase="ssr"],
+.atlas-reveal[data-phase="ssr"] {
+  opacity: 1;
+  transform: translateY(0);
+  transition: none;
+}
+
 .atlas-reveal[data-phase="shown"] {
   opacity: 1;
   transform: translateY(0);
+  transition:
+    opacity var(--atlas-motion-base) var(--atlas-motion-ease-out),
+    transform var(--atlas-motion-base) var(--atlas-motion-ease-out);
 }
 
 .atlas-reveal[data-phase="pending"] {
   opacity: 0;
   transform: translateY(var(--atlas-reveal-distance, var(--atlas-motion-distance-sm)));
+  transition: none;
 }
 
 .atlas-reveal[data-distance="xs"] {
@@ -198,37 +204,46 @@ body {
   margin: 0;
   background: var(--atlas-border);
   transform-origin: left center;
+}
+
+.atlas-rule-reveal[data-phase="ssr"] {
+  opacity: 1;
+  transform: scaleX(1);
+  transition: none;
+}
+
+.atlas-rule-reveal[data-phase="shown"] {
+  opacity: 1;
+  transform: scaleX(1);
   transition:
     opacity var(--atlas-motion-base) var(--atlas-motion-ease-standard),
     transform var(--atlas-motion-base) var(--atlas-motion-ease-standard);
 }
 
-.atlas-rule-reveal[data-phase="ssr"],
-.atlas-rule-reveal[data-phase="shown"] {
-  opacity: 1;
-  transform: scaleX(1);
-}
-
 .atlas-rule-reveal[data-phase="pending"] {
   opacity: 0;
   transform: scaleX(0);
+  transition: none;
 }
 
-.atlas-evidence-item {
+.atlas-evidence-item[data-phase="ssr"] {
+  opacity: 1;
+  transform: translateY(0);
+  transition: none;
+}
+
+.atlas-evidence-item[data-phase="shown"] {
+  opacity: 1;
+  transform: translateY(0);
   transition:
     opacity var(--atlas-motion-base) var(--atlas-motion-ease-out),
     transform var(--atlas-motion-base) var(--atlas-motion-ease-out);
 }
 
-.atlas-evidence-item[data-phase="ssr"],
-.atlas-evidence-item[data-phase="shown"] {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .atlas-evidence-item[data-phase="pending"] {
   opacity: 0;
   transform: translateY(var(--atlas-motion-distance-sm));
+  transition: none;
 }
 
 .atlas-interactive-row {
