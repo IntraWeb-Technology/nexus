@@ -21,13 +21,14 @@ const COVER_CLASS: Record<CoverTone, string> = {
 
 type ArticlesListRowProps = {
   article: ArticleSummary;
+  className?: string;
 };
 
-export function ArticlesListRow({ article }: ArticlesListRowProps) {
+export function ArticlesListRow({ article, className }: ArticlesListRowProps) {
   const tone = TOPIC_COVER[article.topic] ?? "clay";
 
   return (
-    <li>
+    <li className={className}>
       <Link href={article.href} className="group flex flex-col gap-3 no-underline">
         <div
           className={`min-h-[140px] rounded-[2px] ${COVER_CLASS[tone]} transition-[filter] duration-[var(--atlas-motion-base)] group-hover:brightness-[1.05] group-focus-visible:brightness-[1.05] desktop:min-h-[180px]`}
@@ -49,6 +50,9 @@ type ArticlesListProps = {
   data: ArticlesIndexFixture["list"];
 };
 
+/** Page 28 tablet/mobile omit the fifth Turborepo card (632:5, 632:10). */
+const COMPACT_OMITTED_SLUG = "turborepo-build-optimization";
+
 /**
  * Story-First articles list — cover cards with topic eyebrows.
  */
@@ -68,7 +72,15 @@ export function ArticlesList({ data }: ArticlesListProps) {
 
         <ul className="m-0 grid list-none grid-cols-1 gap-8 p-0 tablet:grid-cols-2 desktop:grid-cols-3 desktop:gap-8">
           {data.articles.map((article) => (
-            <ArticlesListRow key={article.id} article={article} />
+            <ArticlesListRow
+              key={article.id}
+              article={article}
+              className={
+                article.slug === COMPACT_OMITTED_SLUG
+                  ? "hidden desktop:block"
+                  : undefined
+              }
+            />
           ))}
         </ul>
       </div>

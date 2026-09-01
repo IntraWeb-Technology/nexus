@@ -62,7 +62,7 @@ test.describe("articles index", () => {
     await expect(page.getByRole("main")).not.toContainText(/Publication Shape/i);
   });
 
-  test("lists fixture articles newest-first", async ({ page }) => {
+  test("lists fixture articles newest-first", async ({ page }, testInfo) => {
     await page.goto("/articles");
     await expect(
       page.getByRole("link", { name: /Playwright at Scale/i }).first(),
@@ -80,11 +80,14 @@ test.describe("articles index", () => {
         .getByRole("link", { name: /AI-Assisted Engineering Workflows/i })
         .first(),
     ).toBeVisible();
-    await expect(
-      page
-        .getByRole("link", { name: /Turborepo Build Optimization/i })
-        .first(),
-    ).toBeVisible();
+    const turborepo = page.getByRole("link", {
+      name: /Turborepo Build Optimization/i,
+    });
+    if (testInfo.project.name === "desktop") {
+      await expect(turborepo.first()).toBeVisible();
+    } else {
+      await expect(turborepo).toHaveCount(0);
+    }
   });
 
   test("does not render Topics or CONTINUE cue", async ({ page }) => {
