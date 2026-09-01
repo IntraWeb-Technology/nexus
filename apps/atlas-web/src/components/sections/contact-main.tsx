@@ -23,8 +23,11 @@ export function ContactMain({ data }: ContactMainProps) {
             >
               {data.title}
             </h1>
-            <p className="m-0 font-sans text-[15px] leading-relaxed text-white/90 tablet:text-base">
+            <p className="m-0 hidden font-sans text-[15px] leading-relaxed text-white/90 tablet:block tablet:text-base">
               {data.body}
+            </p>
+            <p className="m-0 font-sans text-[15px] leading-relaxed text-white/90 tablet:hidden">
+              {data.bodyMobile}
             </p>
             <div className="mt-4 flex flex-col gap-6">
               {data.panels.map((panel) => (

@@ -8,6 +8,7 @@ export type ContactFixture = {
   chapter: string;
   title: string;
   body: string;
+  bodyMobile: string;
   fields: {
     name: { label: string; placeholder: string };
     email: { label: string; placeholder: string };
@@ -29,7 +30,9 @@ export const contactFixture: ContactFixture = {
   },
   chapter: "CONTACT",
   title: "Start a conversation.",
-  body: "For product systems, CMS architecture, automation, or design-to-build work, send a little context and what you're hoping to improve.",
+  body: "Use this form for product systems, content infrastructure, technical architecture, or design-to-build implementation work.",
+  bodyMobile:
+    "Use this form for product systems, content infrastructure, or technical architecture work.",
   fields: {
     name: { label: "NAME", placeholder: "Your name" },
     email: { label: "EMAIL", placeholder: "you@company.com" },

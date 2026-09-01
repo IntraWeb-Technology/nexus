@@ -12,6 +12,8 @@ export function assembleContact(contact: ContactPage): ContactFixture {
     chapter: contact.chapter,
     title: contact.title,
     body: contact.body,
+    // ContactPage has no mobile body — preserve Page 28 abbreviation from the fixture.
+    bodyMobile: contactFixture.bodyMobile,
     fields: {
       name: { label: contact.nameLabel, placeholder: contact.namePlaceholder },
       email: {
