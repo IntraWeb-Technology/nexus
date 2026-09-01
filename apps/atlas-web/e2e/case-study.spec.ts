@@ -31,6 +31,53 @@ test.describe("case study — Portfolio OS", () => {
     await expect(page.getByRole("navigation", { name: "Case study contents" })).toHaveCount(0);
   });
 
+  test("tablet overview stacks the three columns", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== "tablet", "C4 tablet composition only");
+    await page.goto("/work/portfolio-os");
+
+    const built = page.getByRole("heading", { name: "What was built" });
+    const mattered = page.getByRole("heading", { name: "Why it mattered" });
+    const owned = page.getByRole("heading", { name: "What I owned" });
+    const builtBox = await built.boundingBox();
+    const matteredBox = await mattered.boundingBox();
+    const ownedBox = await owned.boundingBox();
+
+    expect(builtBox, "What was built bounding box").toBeTruthy();
+    expect(matteredBox, "Why it mattered bounding box").toBeTruthy();
+    expect(ownedBox, "What I owned bounding box").toBeTruthy();
+    expect(builtBox!.y).toBeLessThan(matteredBox!.y);
+    expect(matteredBox!.y).toBeLessThan(ownedBox!.y);
+    expect(Math.abs(builtBox!.x - matteredBox!.x)).toBeLessThan(2);
+    expect(Math.abs(matteredBox!.x - ownedBox!.x)).toBeLessThan(2);
+  });
+
+  test("desktop overview keeps the three-column triptych", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "desktop",
+      "Desktop triptych regression only",
+    );
+    await page.goto("/work/portfolio-os");
+
+    const built = page.getByRole("heading", { name: "What was built" });
+    const mattered = page.getByRole("heading", { name: "Why it mattered" });
+    const owned = page.getByRole("heading", { name: "What I owned" });
+    const builtBox = await built.boundingBox();
+    const matteredBox = await mattered.boundingBox();
+    const ownedBox = await owned.boundingBox();
+
+    expect(builtBox, "What was built bounding box").toBeTruthy();
+    expect(matteredBox, "Why it mattered bounding box").toBeTruthy();
+    expect(ownedBox, "What I owned bounding box").toBeTruthy();
+    expect(builtBox!.x).toBeLessThan(matteredBox!.x);
+    expect(matteredBox!.x).toBeLessThan(ownedBox!.x);
+    expect(Math.abs(builtBox!.y - matteredBox!.y)).toBeLessThan(2);
+    expect(Math.abs(matteredBox!.y - ownedBox!.y)).toBeLessThan(2);
+  });
+
   test("marks Work as the current nav item", async ({ page }, testInfo) => {
     await page.goto("/work/portfolio-os");
     await expectCurrentNavLink(page, "Work", testInfo.project.name);
