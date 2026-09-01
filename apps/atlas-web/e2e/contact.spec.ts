@@ -17,10 +17,10 @@ test.describe("contact", () => {
       }),
     ).toBeVisible();
 
-    await expect(page.getByLabel("NAME")).toBeVisible();
-    await expect(page.getByLabel("EMAIL")).toBeVisible();
-    await expect(page.getByLabel("PROJECT CONTEXT")).toBeVisible();
-    await expect(page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?")).toBeVisible();
+    await expect(page.getByLabel("Name")).toBeVisible();
+    await expect(page.getByLabel("Email")).toBeVisible();
+    await expect(page.getByLabel("Project context")).toBeVisible();
+    await expect(page.getByLabel("What are you trying to improve?")).toBeVisible();
     await expect(page.getByRole("button", { name: "Send inquiry" })).toBeVisible();
     await expect(page.getByText("GOOD FIT")).toBeVisible();
     await expect(page.getByText("NEXT STEP")).toBeVisible();
@@ -42,11 +42,11 @@ test.describe("contact", () => {
 
   test("keyboard can reach form controls", async ({ page }) => {
     await page.goto("/contact");
-    const name = page.getByLabel("NAME");
+    const name = page.getByLabel("Name");
     await name.focus();
     await expect(name).toBeFocused();
     await page.keyboard.press("Tab");
-    await expect(page.getByLabel("EMAIL")).toBeFocused();
+    await expect(page.getByLabel("Email")).toBeFocused();
   });
 
   test("shows validation errors on empty submit", async ({ page }) => {
@@ -67,9 +67,9 @@ test.describe("contact", () => {
     });
 
     await page.goto("/contact");
-    await page.getByLabel("NAME").fill("Test Visitor");
-    await page.getByLabel("EMAIL").fill("visitor@example.com");
-    await page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?").fill(
+    await page.getByLabel("Name").fill("Test Visitor");
+    await page.getByLabel("Email").fill("visitor@example.com");
+    await page.getByLabel("What are you trying to improve?").fill(
       "Hello — checking the Atlas contact path.",
     );
     await page.getByRole("button", { name: "Send inquiry" }).click();
@@ -94,9 +94,9 @@ test.describe("contact", () => {
     });
 
     await page.goto("/contact");
-    await page.getByLabel("NAME").fill("Test Visitor");
-    await page.getByLabel("EMAIL").fill("visitor@example.com");
-    await page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?").fill("Force failure path.");
+    await page.getByLabel("Name").fill("Test Visitor");
+    await page.getByLabel("Email").fill("visitor@example.com");
+    await page.getByLabel("What are you trying to improve?").fill("Force failure path.");
     await page.getByRole("button", { name: "Send inquiry" }).click();
 
     await expect(
@@ -109,9 +109,9 @@ test.describe("contact", () => {
 
   test("honeypot submission does not show an error", async ({ page }) => {
     await page.goto("/contact");
-    await page.getByLabel("NAME").fill("Bot");
-    await page.getByLabel("EMAIL").fill("bot@example.com");
-    await page.getByLabel("WHAT ARE YOU TRYING TO IMPROVE?").fill("Spam payload");
+    await page.getByLabel("Name").fill("Bot");
+    await page.getByLabel("Email").fill("bot@example.com");
+    await page.getByLabel("What are you trying to improve?").fill("Spam payload");
     await page.locator('input[name="company"]').evaluate((el: HTMLInputElement) => {
       el.value = "http://spam.example";
     });

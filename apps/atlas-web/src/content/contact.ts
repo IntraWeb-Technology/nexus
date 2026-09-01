@@ -34,14 +34,14 @@ export const contactFixture: ContactFixture = {
   bodyMobile:
     "Use this form for product systems, content infrastructure, or technical architecture work.",
   fields: {
-    name: { label: "NAME", placeholder: "Your name" },
-    email: { label: "EMAIL", placeholder: "you@company.com" },
+    name: { label: "Name", placeholder: "Your name" },
+    email: { label: "Email", placeholder: "you@company.com" },
     context: {
-      label: "PROJECT CONTEXT",
+      label: "Project context",
       placeholder: "Product, platform, or architecture",
     },
     message: {
-      label: "WHAT ARE YOU TRYING TO IMPROVE?",
+      label: "What are you trying to improve?",
       placeholder: "Tell me a bit about it…",
     },
   },
