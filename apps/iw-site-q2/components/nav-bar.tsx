@@ -125,7 +125,7 @@ export function NavBar({ links }: Props = {}) {
                 <p className="nav-mobile-panel__eyebrow">Next step</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, pointerEvents: "auto" }}>
                   <Btn variant="primary" href={systemsCallUrl} onClick={close}>
-                    Book a Systems Call
+                    Start a Conversation
                   </Btn>
                 </div>
               </div>
@@ -203,7 +203,7 @@ export function NavBar({ links }: Props = {}) {
                 Sign in
               </a>
               <a className="btn btn-outline-accent" href={systemsCallUrl}>
-                <span>Book a Systems Call</span>
+                <span>Start a Conversation</span>
                 <span className="arrow" aria-hidden>
                   →
                 </span>

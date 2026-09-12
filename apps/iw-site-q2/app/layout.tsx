@@ -20,14 +20,14 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "IntraWeb | Operational Infrastructure for Scaling Teams",
+    default: "IntraWeb | Senior-Led Software Engineering",
     template: "%s | IntraWeb",
   },
   description:
-    "Operational infrastructure that connects how you work to how you scale — systems integration, workflow clarity, and implementation for growing teams.",
+    "Senior-led software engineering that builds, integrates, modernizes, and stabilizes production systems.",
   openGraph: {
     title: "IntraWeb",
-    description: "Operational infrastructure for teams scaling past workflow friction.",
+    description: "Software engineering for systems that have to work in production.",
     type: "website",
   },
 };

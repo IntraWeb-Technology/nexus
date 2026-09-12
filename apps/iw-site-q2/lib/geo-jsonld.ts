@@ -13,7 +13,7 @@ export const organizationJsonLd = {
   url: SITE_URL,
   logo: `${SITE_URL}/IW-logo-q2.png`,
   description:
-    "IntraWeb builds operational infrastructure — connecting systems, removing workflow friction, and implementing how growing teams operate at scale.",
+    "IntraWeb Technology is a senior-led software engineering company that builds, integrates, modernizes, and stabilizes production systems.",
   foundingDate: "2020",
   founders: [
     {
@@ -59,7 +59,7 @@ export const webSiteJsonLd = {
   "@id": siteId,
   name: "IntraWeb Technologies",
   url: SITE_URL,
-  description: "Operational infrastructure for teams connecting how they work to how they scale.",
+  description: "Senior-led software engineering for systems that have to work in production.",
   publisher: { "@id": orgId },
   potentialAction: {
     "@type": "SearchAction",
@@ -73,7 +73,7 @@ export const webPageJsonLd = {
   "@type": "WebPage",
   "@id": `${SITE_URL}/#webpage`,
   url: SITE_URL,
-  name: "IntraWeb Technologies | Operational infrastructure for scaling teams",
+  name: "IntraWeb Technologies | Senior-led software engineering",
   isPartOf: { "@id": siteId },
   about: { "@id": orgId },
 } as const;

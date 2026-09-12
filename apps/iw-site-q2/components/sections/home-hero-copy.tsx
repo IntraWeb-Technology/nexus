@@ -22,7 +22,7 @@ export function HomeHeroCopy() {
             marginBottom: "1rem",
           }}
         >
-          Operational infrastructure. Real results.
+          Senior-led software engineering
         </p>
       </HeroRise>
       <HeroRise delay={staggerMs} duration={durationMs} y={y}>
@@ -36,7 +36,7 @@ export function HomeHeroCopy() {
             marginBottom: "1.25rem",
           }}
         >
-          We build the operational infrastructure that connects how you work to how you scale.
+          Software engineering for systems that have to work in production.
         </h1>
       </HeroRise>
       <HeroRise delay={staggerMs * 2} duration={durationMs} y={y}>
@@ -48,8 +48,7 @@ export function HomeHeroCopy() {
             marginBottom: "2rem",
           }}
         >
-          We remove workflow friction, eliminate operational inefficiency, and connect your systems so your
-          organization can operate with clarity and scale.
+          We build, integrate, modernize, and stabilize production software.
         </p>
       </HeroRise>
       <HeroRise delay={staggerMs * 3} duration={durationMs} y={y}>
@@ -62,10 +61,10 @@ export function HomeHeroCopy() {
           }}
         >
           <Btn variant="primary" href={systemsCallUrl}>
-            Book a Systems Call
+            Start a Conversation
           </Btn>
           <Link
-            href="/#model"
+            href="/#proof"
             style={{
               fontSize: 15,
               fontWeight: 600,
@@ -75,7 +74,7 @@ export function HomeHeroCopy() {
               gap: 6,
             }}
           >
-            See How We Work <span aria-hidden>↓</span>
+            See the Work <span aria-hidden>↓</span>
           </Link>
         </div>
       </HeroRise>

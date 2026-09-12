@@ -13,9 +13,8 @@ export const privacyEmail = "privacy@intrawebtech.com";
 export const companyLegalName = "IntraWeb Technologies, LLC.";
 
 export const navLinks = [
-  { label: "How We Work", href: "/#model" },
+  { label: "Capabilities", href: "/#capabilities" },
   { label: "Proof", href: "/#proof" },
-  { label: "Who It’s For", href: "/#fit" },
   { label: "About", href: "/about" },
 ] as const;
 

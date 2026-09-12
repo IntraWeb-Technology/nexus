@@ -57,21 +57,21 @@ export function pageMetadata(p: PageMeta, opts?: { titleAbsolute?: boolean }): M
 }
 
 export const homeSeo: PageMeta = {
-  title: "IntraWeb | Operational Infrastructure for Scaling Teams",
+  title: "IntraWeb | Senior-Led Software Engineering",
   description:
-    "IntraWeb builds the operational infrastructure that connects how you work to how you scale — workflow clarity, systems integration, and implementation grounded in operations. Based in NJ, serving teams nationwide.",
+    "IntraWeb Technology builds, integrates, modernizes, and stabilizes production software. Senior-led software engineering for systems that have to work in production.",
   keywords: [
-    "operational infrastructure",
-    "workflow friction",
+    "software engineering",
+    "production systems",
     "systems integration",
-    "RevOps infrastructure",
-    "operations consulting implementation",
-    "business process infrastructure",
-    "NJ operations consulting",
+    "software modernization",
+    "product engineering",
+    "production reliability",
+    "NJ software engineering",
   ],
   path: "",
   ogFilename: "home",
-  ogAlt: "IntraWeb Technologies — operational infrastructure for scaling organizations",
+  ogAlt: "IntraWeb Technology — senior-led software engineering for production systems",
 };
 
 export const servicesSeo: PageMeta = {

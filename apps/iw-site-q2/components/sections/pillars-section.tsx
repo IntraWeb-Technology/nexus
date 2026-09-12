@@ -1,160 +1,142 @@
 import type { CSSProperties } from 'react';
+import { SectionWrapper } from '@/components/layout/SectionWrapper';
+import { SectionReveal } from '@/components/motion/section-reveal';
+import { SECTION_GRADIENT_SEAM } from '@/lib/section-seam';
 
-const PILLARS = [
+const TERRITORIES = [
   {
-    variant: 'memory' as const,
-    condition: 'The process depends on memory.',
-    description: 'Someone knows what happens next, but the system does not.',
+    title: 'Product Engineering',
+    description: 'From design or partial build to working software.',
+    offset: 'md:max-w-[28rem]',
   },
   {
-    variant: 'handoff' as const,
-    condition: 'The handoff depends on availability.',
-    description: 'Work moves when the right person notices, replies, or checks.',
+    title: 'Systems Integration',
+    description: 'Connect the tools and software that need to work together.',
+    offset: 'md:ml-10 md:max-w-[30rem] lg:ml-16',
   },
   {
-    variant: 'assembly' as const,
-    condition: 'The report depends on assembly.',
-    description: 'The number exists only after someone gathers it from the places it lives.',
+    title: 'Modernization & Rescue',
+    description: 'Fix software that has become hard to change, maintain, or finish.',
+    offset: 'md:ml-4 md:max-w-[32rem] lg:ml-8',
+  },
+  {
+    title: 'Automation & AI',
+    description: 'Use automation or AI where it removes repetitive steps or adds useful capability.',
+    offset: 'md:ml-14 md:max-w-[31rem] lg:ml-20',
+  },
+  {
+    title: 'Production Reliability',
+    description: 'Make releases safer and software more dependable.',
+    offset: 'md:ml-6 md:max-w-[28rem] lg:ml-12',
   },
 ] as const;
 
-type PillarVariant = (typeof PILLARS)[number]['variant'];
-
-const CARD_BG = 'rgba(14, 20, 30, 0.72)';
 const ACCENT = '#ff8c00';
-const LINE_MUTED = 'rgba(141, 154, 167, 0.55)';
-const LINE_SLATE = 'rgba(51, 72, 92, 0.85)';
+const LINE_MUTED = 'rgba(141, 154, 167, 0.45)';
 
-function cardShellStyle(variant: PillarVariant): CSSProperties {
-  if (variant === 'memory') {
-    return {
-      background: CARD_BG,
-      border: '1px dashed rgba(255, 255, 255, 0.14)',
-      borderRadius: 0,
-    };
-  }
-
-  return {
-    background: CARD_BG,
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    borderRadius: 8,
-  };
-}
-
-function accentRailStyle(variant: PillarVariant): CSSProperties {
-  const base: CSSProperties = {
-    position: 'absolute',
-    left: 0,
-    top: 4,
-    bottom: 4,
-    width: 2,
-    borderRadius: 1,
-  };
-
-  if (variant === 'assembly') {
-    return {
-      ...base,
-      background: `linear-gradient(to bottom, ${ACCENT} 0%, ${ACCENT} 42%, ${LINE_MUTED} 42%, ${LINE_MUTED} 100%)`,
-    };
-  }
-
-  if (variant === 'handoff') {
-    return {
-      ...base,
-      background: `linear-gradient(to bottom, ${LINE_SLATE} 0%, ${LINE_SLATE} 46%, ${LINE_MUTED} 46%, ${LINE_MUTED} 100%)`,
-    };
-  }
-
-  return {
-    ...base,
-    background: LINE_MUTED,
-  };
-}
-
-function separatorStyle(variant: PillarVariant): CSSProperties {
-  return {
-    width: 28,
-    height: 1,
-    margin: '0.85em 0 0.95em',
-    background: variant === 'assembly' ? ACCENT : LINE_MUTED,
-  };
-}
-
-function PillarCard({
-  variant,
-  condition,
+function TerritoryRow({
+  title,
   description,
-  className,
+  offset,
+  index,
 }: {
-  variant: PillarVariant;
-  condition: string;
+  title: string;
   description: string;
-  className?: string;
+  offset: string;
+  index: number;
 }) {
+  const railStyle: CSSProperties =
+    index % 2 === 0
+      ? {
+          position: 'absolute',
+          left: 0,
+          top: 4,
+          bottom: 4,
+          width: 2,
+          background: ACCENT,
+          borderRadius: 1,
+        }
+      : {
+          position: 'absolute',
+          left: 0,
+          top: 4,
+          bottom: 4,
+          width: 2,
+          background: `linear-gradient(to bottom, ${LINE_MUTED} 0%, ${LINE_MUTED} 55%, ${ACCENT} 55%, ${ACCENT} 100%)`,
+          borderRadius: 1,
+        };
+
   return (
-    <article className={className} style={{ ...cardShellStyle(variant), padding: 'clamp(1.35rem, 2.2vw, 1.85rem)' }}>
-      {variant === 'memory' ? (
-        <div
-          aria-hidden
-          style={{
-            width: 22,
-            height: 2,
-            marginBottom: '1.1rem',
-            background: ACCENT,
-            borderRadius: 1,
-          }}
-        />
-      ) : null}
-
-      <div style={{ position: 'relative', paddingLeft: '1.15rem' }}>
-        <div aria-hidden style={accentRailStyle(variant)} />
-
-        <p
-          style={{
-            fontFamily: 'var(--font-dm-sans), var(--iw-display), sans-serif',
-            fontSize: 'clamp(1.05rem, 1.35vw, 1.25rem)',
-            fontWeight: 600,
-            letterSpacing: '-0.02em',
-            lineHeight: 1.3,
-            color: 'var(--color-fg-primary)',
-            margin: 0,
-          }}
-        >
-          {condition}
-        </p>
-
-        <div aria-hidden style={separatorStyle(variant)} />
-
-        <p
-          style={{
-            fontSize: 'clamp(0.9rem, 1.05vw, 1rem)',
-            fontWeight: 400,
-            lineHeight: 1.6,
-            color: 'var(--iw-fg-2)',
-            margin: 0,
-          }}
-        >
-          {description}
-        </p>
-      </div>
+    <article className={offset} style={{ position: 'relative', paddingLeft: '1.15rem' }}>
+      <div aria-hidden style={railStyle} />
+      <h3
+        style={{
+          fontFamily: 'var(--font-dm-sans), var(--iw-display), sans-serif',
+          fontSize: 'clamp(1.1rem, 1.4vw, 1.3rem)',
+          fontWeight: 650,
+          letterSpacing: '-0.02em',
+          lineHeight: 1.3,
+          color: '#ffffff',
+          margin: '0 0 0.55rem',
+        }}
+      >
+        {title}
+      </h3>
+      <p
+        style={{
+          fontSize: 'clamp(0.95rem, 1.05vw, 1.05rem)',
+          fontWeight: 400,
+          lineHeight: 1.6,
+          color: 'var(--iw-fg-2)',
+          margin: 0,
+        }}
+      >
+        {description}
+      </p>
     </article>
   );
 }
 
-export function ArgumentPillarsGrid() {
-  const [memory, handoff, assembly] = PILLARS;
-
+/** Five overlapping capability territories — editorial stagger, not a service catalog. */
+export function CapabilityTerritorySection() {
   return (
-    <div
-      id="pillars"
-      className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:gap-6"
-    >
-      <PillarCard
-        {...memory}
-        className="md:row-span-2 md:flex md:flex-col md:justify-center"
-      />
-      <PillarCard {...handoff} />
-      <PillarCard {...assembly} />
-    </div>
+    <SectionWrapper id="pillars" spacing="pillars">
+      <div
+        className="container"
+        style={{ paddingTop: 'var(--spacing-pillars)', paddingBottom: 'var(--spacing-pillars)' }}
+      >
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] lg:gap-x-12 lg:items-start">
+          <SectionReveal>
+            <div>
+              <h2
+                id="capabilities-heading"
+                className="mono"
+                style={{
+                  fontSize: 11,
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  color: ACCENT,
+                  fontWeight: 600,
+                  margin: '0 0 0.75rem',
+                }}
+              >
+                What we take on
+              </h2>
+            </div>
+          </SectionReveal>
+
+          <div
+            id="capabilities"
+            className="flex flex-col gap-8 md:gap-9"
+            aria-labelledby="capabilities-heading"
+          >
+            {TERRITORIES.map((t, i) => (
+              <TerritoryRow key={t.title} {...t} index={i} />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div aria-hidden style={{ height: 1, backgroundImage: SECTION_GRADIENT_SEAM }} />
+    </SectionWrapper>
   );
 }

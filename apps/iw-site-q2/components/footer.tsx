@@ -191,13 +191,13 @@ export function Footer({ links }: FooterProps = {}) {
               <CalendarIcon className="mt-0.5 size-9 shrink-0 text-[#f5a623]" />
               <span className="ml-5 min-w-0 flex-1">
                 <span className="flex items-center justify-between gap-4 text-[15px] font-semibold text-[#f5a623]">
-                  <span>Book a Systems Call</span>
+                  <span>Start a Conversation</span>
                   <span className="transition-transform duration-200 group-hover:translate-x-1" aria-hidden>
                     →
                   </span>
                 </span>
                 <span className="mt-2 block max-w-[260px] text-sm leading-relaxed text-[#c8d1da]">
-                  A focused conversation about your systems and where friction lives.
+                  A new build, something that needs fixing, or software that needs to change.
                 </span>
               </span>
             </a>
