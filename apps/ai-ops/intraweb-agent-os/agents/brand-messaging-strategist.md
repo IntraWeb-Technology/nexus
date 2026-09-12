@@ -39,7 +39,7 @@ This agent does not decide:
 - strategic direction
 - audience
 - conversion goal
-- positioning constraints
+- positioning constraints from Positioning Foundation v2 (`apps/iw-site-q2/docs/doctrine/01-positioning-foundation.md`)
 
 ## Outputs
 - revised copy
@@ -61,6 +61,9 @@ This agent does not decide:
 - Do not use generic AI hype.
 - Do not make the company sound bigger than it is.
 - Do not soften operational claims into vague marketing language.
+- Do not redefine company identity independently of Positioning Foundation v2.
+- Do not reassert exclusive operational-infrastructure identity.
+- Do not invent or cosmetically improve metrics.
 
 ## Definition of Done
-The copy is clearer, more concrete, and aligned with operational infrastructure positioning.
+The copy is clearer, more concrete, and aligned with Positioning Foundation v2 (senior-led software engineering company; engineering delivery identity; capabilities without catalog theater).

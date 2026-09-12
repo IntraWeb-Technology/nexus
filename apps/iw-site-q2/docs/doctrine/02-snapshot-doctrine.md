@@ -1,7 +1,8 @@
 # 02 — Snapshot Doctrine
 **IntraWeb Technologies — Diagnostic Snapshot System**
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Governing — applies to all operational evidence artifacts
+**Authority:** Level 3 (Artifact Doctrine). Inherits company identity from Positioning Foundation v2.
 
 ---
 
@@ -9,13 +10,13 @@
 
 This document defines the diagnostic snapshot system used in the Proof section and wherever operational evidence artifacts appear across the site. It governs snapshot philosophy, visual grammar, annotation grammar, and the recognition calibration system that governs both.
 
-This document does not govern layout, spacing, or section-level production behavior. See `05-proof-section-governance.md` for production constraints.
+This document does not govern layout, spacing, or section-level production behavior. See `05-proof-section-governance.md` for production constraints. Company identity and buyer definition reside in `01-positioning-foundation.md` (v2).
 
 ---
 
 ## Snapshot Philosophy
 
-A diagnostic snapshot is a visual artifact that isolates a single operational friction condition and renders it in a form that produces immediate recognition in an operator who has experienced that condition.
+A diagnostic snapshot is a visual artifact that isolates a single engineering or operational friction condition and renders it in a form that produces immediate recognition in someone who has experienced that condition.
 
 A snapshot is not:
 - A case study
@@ -29,7 +30,7 @@ A snapshot is a captured fragment of organizational friction. It renders one con
 
 The distinction between a snapshot and a case study: a case study says "here is what we did for Company X." A snapshot says "here is an operational condition you recognize because your organization behaves this way too."
 
-That shift moves the trust mechanism from social proof to operational recognition. Recognition is the stronger mechanism for this buyer.
+That shift moves the trust mechanism from social proof to engineering recognition. Recognition is the stronger mechanism for this buyer.
 
 ---
 
@@ -37,13 +38,19 @@ That shift moves the trust mechanism from social proof to operational recognitio
 
 Every snapshot must operate within a recognition corridor defined by two walls.
 
-**Floor — operational recognizability**
-The minimum specificity required for a visitor to see their organization in the artifact. Below this floor, the snapshot is too abstract to trigger recognition. It reads as theoretical.
+**Floor — engineering / operational recognizability**
+The minimum specificity required for a visitor to see their situation in the artifact. Below this floor, the snapshot is too abstract to trigger recognition. It reads as theoretical.
 
 **Ceiling — structural universality**
 The maximum specificity allowed before the artifact starts feeling like a specific client's situation. Above this ceiling, the snapshot reads as a case study or testimonial.
 
 The corridor between these walls is narrow. Both walls must be actively maintained. Snapshots drift toward the ceiling under pressure to be specific. They drift toward the floor under pressure to be elegant or consistent.
+
+### Valid recognition territory (v2)
+
+Snapshots may depict conditions across the expanded recognition territory in Positioning Foundation v2, including (non-exhaustive): product delivery friction; fragile applications; systems dangerous to change; brittle integrations; disconnected applications; conflicting data; manual reconciliation; modernization pressure; implementation debt; testing gaps; risky releases; deployment friction; production instability; approved designs stuck before production; unreliable cross-system APIs; institutional-memory workflows; legitimate AI/automation opportunities requiring production integration.
+
+Operational workflow friction remains valid. It is no longer the exclusive recognition domain.
 
 ---
 
@@ -52,10 +59,12 @@ The corridor between these walls is narrow. Both walls must be actively maintain
 Recognition Calibration is the governing authority over Visual Grammar and Annotation Grammar. It is a perceptual test, not a compliance checklist.
 
 **Primary test**
-Would someone who runs operations at a 20–150 person company look at this artifact and feel located?
+Would someone facing a real engineering or operational condition — regardless of company headcount — look at this artifact and feel located?
 
 Located means: "That's the exact condition we keep running into."
 Not: impressed, educated, or intellectually stimulated. Located.
+
+Company size is not a recognition gate. Engineering condition outranks headcount.
 
 **Secondary test**
 Does this artifact feel experienced or conceptualized?

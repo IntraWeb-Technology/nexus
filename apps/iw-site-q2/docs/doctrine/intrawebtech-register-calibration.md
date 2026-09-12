@@ -1,7 +1,7 @@
 # IntraWeb Technologies — Register Calibration Samples
 **Phase:** Pre-copywriting tonal calibration. Reference-only.**  
-**Version:** 4.0 — May 2026  
-**Authority:** Active reference during all copywriting sessions. Apply alongside Governance v3.0.  
+**Version:** 4.1 — Doctrine v2 reconciliation  
+**Authority:** Active reference during all copywriting sessions. Apply alongside Governance v3.x and Positioning Foundation v2. Sentence-level register only — does not redefine company identity.  
 **Use:** Before writing any section, read the relevant calibration examples. After writing, compare against them before running the Governance QA checklist.
 
 ---
@@ -10,13 +10,15 @@
 
 Each calibration entry is labeled CORRECT or AVOID. Every entry is annotated with a one-line reason. The reason is as important as the example — it explains what creates or breaks the register, not just what the register sounds like.
 
-The target register has one name: **clear operational competence.**
+The target register has one name: **clear engineering competence.**
 
 It lives between two failure modes:
 - **Sterile operational writing** — correct but lifeless. Reads like a system description.
 - **Polished agency writing** — fluent but empty. Reads like a brochure.
 
-Every CORRECT example demonstrates the middle: operationally grounded, human, direct, and confident without performing confidence.
+Every CORRECT example demonstrates the middle: engineering-grounded, human, direct, and confident without performing confidence.
+
+Engineering language territory (v2) may include product delivery, integration, modernization/rescue, automation & AI as capability, testing/validation, and production reliability — without collapsing into capability-catalog theater.
 
 ---
 
@@ -200,7 +202,7 @@ Relief language describes the specific removal of operational burden. The regist
 
 ## Section 4: Proof Summary Register
 
-Proof summaries anchor metrics in operational context. The register is forensic — describing what happened, not announcing that it was impressive.
+Proof summaries may use verified metrics when Positioning Foundation v2 HC-03 is satisfied. The register is forensic — describing what happened, not announcing that it was impressive. Unsupported, floating, or cosmetically improved numbers remain forbidden.
 
 ---
 
@@ -225,6 +227,14 @@ Proof summaries anchor metrics in operational context. The register is forensic 
 > Report assembly dropped from four hours of manual work to zero. It now runs automatically at 6am every Monday.
 
 *Why it works: "Four hours of manual work" is the operational cost. "Zero" is the relief. "6am every Monday" names the operational moment — it's specific enough to be credible.*
+
+---
+
+**AVOID — unsupported or cosmetically improved metric:**
+
+> 94% faster.
+
+*Why it fails: Even if a related improvement exists, an exaggerated or provenance-uncertain percentage is prohibited under HC-03. Prefer the defensible before/after with cause, or qualitative structural evidence.*
 
 ---
 
@@ -263,6 +273,22 @@ Proof summaries anchor metrics in operational context. The register is forensic 
 ## Section 5: Process Description Register
 
 Process descriptions name what IntraWeb does and what the visitor gets or stops doing at each stage. The register is matter-of-fact — describing a real engagement, not selling a methodology.
+
+---
+
+**CORRECT — engineering responsibility without capability theater:**
+
+> We build the production Next.js application from the approved design and keep change safe at the system boundaries.
+
+*Why it works: "We build" identifies meaningful engineering responsibility. The sentence names the artifact and the production constraint. It is not generic "we build solutions" theater.*
+
+---
+
+**AVOID — generic capability theater (even with "we build"):**
+
+> We build innovative digital solutions that transform your business.
+
+*Why it fails: "We build" does not redeem breadth theater. No engineering condition, no artifact, no production responsibility.*
 
 ---
 

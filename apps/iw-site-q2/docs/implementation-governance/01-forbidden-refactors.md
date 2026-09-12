@@ -18,6 +18,24 @@ recognition, not because of taste. Every entry below has a doctrine reference.
 If you cannot find the doctrine reference, the rule is wrong and should be
 revised through governance, not bypassed.
 
+### Explicit allowance — approved Positioning Foundation v2
+
+Changes required to reconcile the codebase or governance documents with
+an **approved** Positioning Foundation revision (currently v2) are not
+forbidden solely because they alter previously frozen positioning language.
+
+This allowance does **not** authorize:
+
+- redesigning the website or IA under the cover of doctrine reconciliation
+- normalizing load-bearing visual/content asymmetry
+- inventing new top-level capability categories without reporting first
+- silently modifying Schibelli.com positioning
+- weakening CRITICAL snapshot/structure rules without doctrine review
+
+When a forbidden-refactor rule and an approved Positioning Foundation v2
+requirement appear to conflict, stop and ask (see `07-when-to-stop-and-ask.md`).
+Do not invent a resolution.
+
 ---
 
 ## Forbidden refactors — snapshot system

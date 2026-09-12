@@ -10,9 +10,18 @@ modifying, or reviewing any file under `src/components/snapshots/`.
 ## What a snapshot is
 
 A snapshot is a hand-authored visual artifact that expresses one specific
-operational failure condition. The seven snapshots SN-01 through SN-07 are
-the proof layer of the homepage — they are what the visitor encounters
-when the page asks them to recognize their own operational territory.
+engineering or operational failure condition. The seven snapshots SN-01
+through SN-07 are the proof layer of the homepage — they are what the
+visitor encounters when the page asks them to recognize their own territory.
+
+Valid recognition territory inherits from Positioning Foundation v2 and
+includes product delivery friction, fragile applications, dangerous-to-change
+systems, brittle integrations, conflicting data, modernization pressure,
+implementation debt, testing gaps, risky releases, deployment friction,
+production instability, designs stuck before production, unreliable
+cross-system APIs, institutional-memory workflows, and legitimate
+AI/automation opportunities requiring production integration — in addition
+to classic operational workflow friction.
 
 A snapshot is not a diagram, a chart, a visualization, or a graphic.
 The doctrine treats those words as drift signals (see `inverted-vocabulary.md`).

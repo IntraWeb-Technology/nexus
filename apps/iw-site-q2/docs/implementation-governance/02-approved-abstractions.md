@@ -4,6 +4,8 @@
 **Severity:** STRUCTURAL — adding to this list requires governance review
 **Authority:** This document is the complete and exclusive list of permitted
 shared constructs in the codebase. Anything not listed here is not approved.
+Positioning Foundation v2 does not expand this code-abstraction list by itself.
+Identity language changes belong in doctrine, not in new shared components.
 
 ---
 
@@ -25,6 +27,13 @@ property.
 This list is not aspirational. It is operational. If a contribution requires
 a sixth abstraction, the contribution is wrong about what it requires until
 proven otherwise.
+
+### v2 note
+
+Expanded engineering recognition territory (product delivery, integration,
+modernization/rescue, automation & AI capability, production reliability)
+does not authorize new shared snapshot/renderer abstractions. New recognition
+conditions are authored inside individual snapshot artifacts per protocol.
 
 ---
 

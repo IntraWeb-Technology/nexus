@@ -1,12 +1,16 @@
-# Implementation Execution Contract v1.1
+# Implementation Execution Contract v1.2
 
 **Audience:** Cursor and any implementation contributor.
-**Authority:** This document governs what may be built. It does not explain why.
+**Authority:** This document governs what may be built structurally. It does not explain why. It does **not** define company identity or positioning.
 **Reading time:** 15 minutes. Read completely before opening any file.
 
-When this document conflicts with an instinct to improve, clean up, or optimize: this document wins.
+When this document conflicts with an instinct to improve, clean up, or optimize: this document wins for build constraints.
+
+When this document conflicts with Positioning Foundation v2 (`docs/doctrine/01-positioning-foundation.md`) on company identity, buyer definition, capability territory, commercial boundaries, or Schibelli.com relationship: **Positioning Foundation v2 wins.**
 
 **v1.1 amendment (post-audit):** Path references updated from `src/components/` to `components/` and `src/lib/` to `lib/` to match the existing repository layout. No constraints changed. The directory prefix is not load-bearing; the structural rules are. References to "Phase 1" remain in the document; in the convergence retrofit, treat these as describing the scaffolding state the codebase is being brought toward, applied incrementally per the approved remediation plan rather than as a clean-slate build phase.
+
+**v1.2 amendment (Doctrine v2):** Authority relationship clarified. Positioning Foundation v2 is sole active IntraWeb positioning authority. This contract remains authoritative for implementation constraints where compatible.
 
 ---
 
@@ -25,7 +29,7 @@ If a required behavior is not explicitly stated, leave a placeholder comment and
 
 If a section of this document seems wrong for your specific case, stop and ask. Do not resolve it yourself.
 
-The governance files referenced throughout this document are authoritative. This contract summarizes them for build execution. When the summary is insufficient, read the referenced file.
+The governance files referenced throughout this document are authoritative for build execution. This contract summarizes them for build execution. When the summary is insufficient, read the referenced file. Positioning and identity questions defer to Positioning Foundation v2.
 
 ---
 

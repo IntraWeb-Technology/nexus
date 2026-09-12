@@ -1,7 +1,7 @@
 # IntraWeb Technologies — Realism Hierarchy and Compression Discipline
 **Phase:** Foundational evaluation layer. Governs all copy, visual, and implementation decisions.
-**Version:** 5.0 — May 2026
-**Authority:** Active enforcement during all writing, design, and implementation sessions. Apply alongside Governance v3.0 and Register Calibration v4.0.
+**Version:** 5.1 — Doctrine v2 reconciliation
+**Authority:** Active enforcement during all writing, design, and implementation sessions. Apply alongside Governance v3.x, Register Calibration v4.x, and Positioning Foundation v2. Does **not** define company identity.
 **Use:** This document is the evaluative layer that determines whether a line, metric, visual, or implementation choice preserves the operational trust system. It is not stylistic guidance. It is enforcement doctrine.
 
 ---
@@ -409,20 +409,23 @@ Severity 3 violations under v5.0 require full structural rewriting, including po
 
 ## Governance Document Cross-Reference
 
-This document (v5.0) operates in conjunction with:
-- **Blueprint v1.0** — Strategic direction, identity, what must not change
+This document (v5.1) operates in conjunction with:
+- **Positioning Foundation v2** — Company identity, buyer, capability territory, commercial boundaries
+- **Blueprint v1.0** — Execution guidance only where compatible with Positioning Foundation v2; **not** identity authority
 - **Architecture v2.0** — Page-by-page structure, section order, visitor states
-- **Governance v3.0** — Proof density doctrine, compression rules, QA enforcement
-- **Register Calibration v4.0** — Sentence-level CORRECT/AVOID examples
+- **Governance v3.x** — Proof density doctrine, compression rules, QA enforcement
+- **Register Calibration v4.x** — Sentence-level CORRECT/AVOID examples
 
 ### Document Hierarchy in Conflicts
 
-In any conflict between documents, the most specific document governs for its domain:
-- **Identity and positioning conflicts:** Blueprint v1.0 governs
-- **Structural and sequencing conflicts:** Architecture v2.0 governs
-- **Proof density and compression rule conflicts:** Governance v3.0 governs
-- **Sentence-level tonal conflicts:** Register Calibration v4.0 governs
-- **Realism level, failure mode, compression type, beneficiary framing, or visual realism conflicts:** This document (v5.0) governs
+In any conflict between documents, the most specific document governs for its domain — except identity/positioning, which always defer to Positioning Foundation v2:
+- **Identity and positioning conflicts:** Positioning Foundation v2 governs
+- **Structural and sequencing conflicts:** Architecture v2.0 governs (subject to later content-architecture review under v2)
+- **Proof density and compression rule conflicts:** Governance v3.x governs
+- **Sentence-level tonal conflicts:** Register Calibration v4.x governs
+- **Realism level, failure mode, compression type, beneficiary framing, or visual realism conflicts:** This document (v5.1) governs
+
+Verified metrics remain subject to Positioning Foundation v2 HC-03. Unsupported quantitative proof is prohibited; contextual verified metrics are not automatically forbidden by this document.
 
 The Beneficiary Anti-Drift principle (Part 6) takes precedence in any conflict involving beneficiary framing, regardless of which other document offers competing guidance.
 
@@ -432,7 +435,7 @@ The Beneficiary Anti-Drift principle (Part 6) takes precedence in any conflict i
 
 The Realism Hierarchy and the Beneficiary Anti-Drift principle together protect against the system's most dangerous drift patterns:
 
-- Agency language (addressed by Register Calibration v4.0, reinforced here)
+- Agency language (addressed by Register Calibration v4.x, reinforced here)
 - Strategist authorship (Level 4 drift)
 - Interpretive compression (Failure Mode 2)
 - Management-efficiency framing (Beneficiary Anti-Drift)
@@ -445,6 +448,6 @@ The system is pro-operation, pro-clarity, pro-stability, pro-human coordination.
 
 ---
 
-*IntraWeb Technologies — Realism Hierarchy and Compression Discipline v5.0*
-*Status: Governance complete. Active enforcement during all writing, design, and implementation sessions.*
-*Apply this document alongside Blueprint v1.0, Architecture v2.0, Governance v3.0, and Register Calibration v4.0 at the start of every session.*
+*IntraWeb Technologies — Realism Hierarchy and Compression Discipline v5.1*
+*Status: Active under Positioning Foundation v2.*
+*Apply this document alongside Positioning Foundation v2, Architecture v2.0, Governance v3.x, and Register Calibration v4.x. Blueprint is execution-only for identity conflicts.*

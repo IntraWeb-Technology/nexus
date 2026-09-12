@@ -4,6 +4,27 @@
 **Audience:** Anyone opening a PR against this repository.
 **Authority:** This document summarizes. Full governance documents are authoritative.
 When this document conflicts with a full governance document, the full document wins.
+When any document conflicts with Positioning Foundation v2 on identity/positioning,
+Positioning Foundation v2 wins.
+**This file is not competing doctrine.**
+
+---
+
+## Positioning Foundation v2 (one-line)
+
+IntraWeb Technology is a senior-led software engineering company that builds,
+integrates, modernizes, and stabilizes production systems.
+
+Canonical: `/docs/doctrine/01-positioning-foundation.md`  
+Legacy v1 (historical only): `/docs/doctrine/legacy/01-positioning-foundation-v1.md`
+
+Superseded as identity doctrine: exclusive operational-infrastructure company,
+absolute “not a technology problem,” categorical “we build” ban, fixed 20–150
+headcount gate, and “defined projects = agency drift.”
+
+Proof: HC-03 — no unsupported quantitative proof (verified contextual metrics OK).
+
+Cross-property: Schibelli.com positioning is separate — stop and ask if both change.
 
 ---
 
@@ -13,7 +34,7 @@ This page makes visitors feel located, not impressed. Every constraint in this
 repository exists to preserve that feeling against the normalization pressure
 of standard engineering practice. When a rule feels arbitrary, the question
 to ask is: does removing this constraint make the visitor feel more located,
-or does it make the page feel more like every other SaaS homepage?
+or does it make the page feel more like every other SaaS / generic agency homepage?
 
 ---
 
@@ -78,6 +99,8 @@ scanner and require doctrine justification:
 These words describe engineering maturity in most repositories.
 In this repository they frequently describe operational erosion.
 See `inverted-vocabulary.md` for the full explanation.
+Legitimate engineering terms (`build`, `integrate`, `product`, `API`, etc.)
+are not inverted.
 
 ---
 
@@ -105,6 +128,9 @@ Open a governance issue and wait for review when:
 - Any change to the annotation primitive API
 - Any change to a governance or doctrine document
 - Any rule in this document seems wrong for your specific case
+- Cross-property IntraWeb ↔ Schibelli.com positioning would change (T-11)
+- Active instructions conflict with Positioning Foundation v2 (T-12)
+- Competing positioning authority is detected (T-13)
 
 Do not resolve governance questions unilaterally. Open the issue.
 
@@ -133,7 +159,7 @@ Nothing else is shared. Duplication outside this list is acceptable.
 | Hero | Do not center. Asymmetric weight is intentional | [C-05] |
 | Friction | List item line lengths are irregular. Do not balance | [C-05] |
 | Argument | Dark band is structural rupture. No smooth transition | [C-08] |
-| Proof | Governed by `/docs/governance/05-proof-section-governance.md` | [C-01–C-06] |
+| Proof | Governed by `/docs/doctrine/05-proof-section-governance.md` (HC-03) | [C-01–C-06] |
 | Filter | Not For column is heavier. Do not equalize | [C-07] |
 | All snapshots | Governed by `05-snapshot-authoring-protocol.md` | [C-01–C-06] |
 
@@ -151,13 +177,15 @@ Read these when the quick reference is insufficient for your decision:
 | `implementation-governance/03-normalization-danger-signs.md` | Code smell detection |
 | `implementation-governance/04-section-specific-warnings.md` | Per-section build rules |
 | `implementation-governance/05-snapshot-authoring-protocol.md` | Snapshot construction rules |
-| `implementation-governance/06-review-checklist.md` | Pre-merge review process |
-| `implementation-governance/07-when-to-stop-and-ask.md` | Escalation procedures |
+| `implementation-governance/06-review-checklist.md` | Pre-merge review process (+ v2 checks) |
+| `implementation-governance/07-when-to-stop-and-ask.md` | Escalation procedures (+ cross-property) |
 | `implementation-governance/inverted-vocabulary.md` | Why normal words mean erosion here |
 | `implementation-governance/acceptable-inconsistency.md` | Load-bearing vs accidental unevenness |
-| `/docs/doctrine/01-positioning-foundation.md` | What IntraWeb is and what the page communicates |
+| `implementation-governance/implementation-execution-contract.md` | Build authority (subordinate to Positioning Foundation v2 on identity) |
+| `/docs/doctrine/01-positioning-foundation.md` | **Level 1** — What IntraWeb is (v2) |
+| `/docs/doctrine/intrawebtech-site-architecture.md` | Canonical Site Architecture v2 — page/content architecture |
 | `/docs/doctrine/02-snapshot-doctrine.md` | Snapshot system accuracy rules |
 | `/docs/doctrine/03-environmental-doctrine.md` | Page atmosphere and spacing behavior |
 | `/docs/doctrine/04-scroll-psychology.md` | Tension, decompression, scroll arc |
-| `/docs/doctrine/05-proof-section-governance.md` | Proof section production spec |
+| `/docs/doctrine/05-proof-section-governance.md` | Proof section production spec (HC-03) |
 | `/docs/doctrine/06-acceptable-inconsistency.md` | Inconsistency as architecture |

@@ -1,7 +1,8 @@
 # 05 — Proof Section Governance
 **IntraWeb Technologies — Production Governance: Proof Section**
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Governing — applies to all production work on the Proof section
+**Authority:** Level 3 (Artifact Doctrine). Quantitative proof policy inherits from Positioning Foundation v2.
 
 ---
 
@@ -9,7 +10,7 @@
 
 This document governs production of the Proof section. It defines what is allowed, what is forbidden, and how to evaluate whether the section is drifting from its intended register.
 
-This document does not explain why these rules exist. For the reasoning behind these constraints, see `02-snapshot-doctrine.md` and `03-environmental-doctrine.md`.
+This document does not explain why these rules exist. For the reasoning behind these constraints, see `02-snapshot-doctrine.md`, `03-environmental-doctrine.md`, and `01-positioning-foundation.md` (v2 proof rules).
 
 This document is written for use by frontend designers and implementation agents. Every rule is observable, reviewable, and enforceable without reference to doctrine philosophy.
 
@@ -49,7 +50,7 @@ These cannot be violated under any circumstance. No exceptions. No overrides.
 
 **HC-02** No background color variation used to separate artifacts. Separation is achieved through space only. No background color shift between artifacts, however subtle.
 
-**HC-03** No metric callouts. No percentages, no time savings numbers, no efficiency figures presented as proof. Consequence lines name structural changes, not measurements.
+**HC-03** No unsupported quantitative proof. Quantitative claims may appear only when the underlying evidence is known and defensible. Metrics must be contextual rather than decorative. Never invent, extrapolate, imply, or cosmetically improve an outcome. When provenance is uncertain, use qualitative structural evidence instead. Do not automatically add metrics. Floating percentages, unsupported time-savings claims, and decorative statistics remain forbidden.
 
 **HC-04** No artifact header labels in category or icon-plus-label format. No category badge above an artifact. No colored dot plus label. No category tag of any kind.
 
@@ -93,7 +94,7 @@ These elements have fixed behavior. They cannot be restyled, repositioned, or re
 Appears once. Above first artifact. Full section width. Typographic treatment distinct from all other text elements on the page. Cannot be moved inside an artifact. Cannot be removed for visual cleanliness.
 
 **PE-02 — Consequence line per artifact**
-One per artifact. Typographically dominant within its artifact. Must be the first element the eye lands on within the artifact at scan speed. Cannot be subordinated to the diagram visually. Cannot be replaced by a metric.
+One per artifact. Typographically dominant within its artifact. Must be the first element the eye lands on within the artifact at scan speed. Cannot be subordinated to the diagram visually. Cannot be replaced by a floating or unsupported metric. A verified, contextual metric may support a consequence line only when Positioning Foundation v2 HC-03 is satisfied; the structural consequence remains primary.
 
 **PE-03 — Operational asymmetry within each diagram**
 The specific irregularity defined for each artifact in the per-artifact compression hierarchy document. Cannot be normalized during responsive scaling. Cannot be corrected during QA for visual consistency. It is not an error.
@@ -204,10 +205,11 @@ Detection: any annotation label containing a past tense verb.
 
 **AR-04** Each artifact has exactly one consequence line. Not two. Not zero. One dominant consequence statement naming what structurally changed or what is structurally absent.
 
-**AR-05** Consequence lines name structural changes in operational terms.
+**AR-05** Consequence lines name structural changes in operational or engineering terms.
 - Correct: "onboarding runs without Sarah in the loop"
+- Correct (verified metric with context, when evidence exists): "cycle time moved from nine days to about 48 hours after ownership changes were replaced by one routing decision"
 - Failing toward abstraction: "single point of failure eliminated"
-- Failing toward metrics: "onboarding time reduced 60%"
+- Failing toward unsupported metrics: "onboarding time reduced 60%" / "94% faster" without provenance
 
 **AR-06** Maximum annotation label count per diagram: eight. Beyond eight, either the diagram scope is too broad or annotation discipline has broken down. Reduce diagram scope or reduce label count before build.
 
@@ -273,7 +275,7 @@ If any of the following are present at review, the section is returned for revis
 
 **PR-01** Any card border or card container treatment present
 **PR-02** Any past tense annotation label present
-**PR-03** Any metric callout presented as consequence
+**PR-03** Any unsupported, floating, or decorative metric presented as consequence
 **PR-04** Any category label present above or within an artifact
 **PR-05** Node sizing consistent across all diagrams
 **PR-06** All artifact spacing identical

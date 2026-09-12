@@ -203,6 +203,19 @@ For each Tier C trigger, a doctrine reviewer applies the following:
 - [ ] **C-05** — The "located, not impressed" governing principle has
   been applied. The change makes the visitor feel more located, or at
   minimum does not move toward "impressed."
+- [ ] **C-06** — Positioning Foundation v2 compliance: the change does
+  not reassert exclusive operational-infrastructure identity, mandate
+  20–150 headcount as a gate, treat all technology diagnoses as invalid,
+  categorically ban meaningful "we build" language, or treat defined
+  engineering projects as automatic agency drift.
+- [ ] **C-07** — Proof/evidence compliance: any quantitative claim
+  satisfies HC-03 (evidence known and defensible; contextual; not
+  invented, extrapolated, implied, or cosmetically improved). Unsupported
+  metrics are rejected.
+- [ ] **C-08** — Cross-property check: the change does not silently
+  alter Schibelli.com positioning, and does not import Schibelli.com
+  positioning authority into IntraWeb. If both properties are materially
+  affected, a stop-and-ask governance issue exists.
 
 ---
 

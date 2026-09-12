@@ -4,6 +4,13 @@
 **Purpose:** Index and architecture of the governance layer.
 Explains what each document is for and how they relate.
 
+**Positioning authority (Doctrine v2):**
+Company identity, buyer, capability territory, and commercial boundaries
+are defined solely by `/docs/doctrine/01-positioning-foundation.md`
+(Positioning Foundation v2). This governance directory does not redefine
+positioning. Historical Positioning Foundation v1 is at
+`/docs/doctrine/legacy/01-positioning-foundation-v1.md` and is not active.
+
 ---
 
 ## What this directory is
@@ -18,6 +25,9 @@ what the system is trying to communicate. These are different responsibilities.
 - Governance answers: what is the codebase allowed to become?
 
 Both are required. Neither substitutes for the other.
+
+Level 1 positioning (Positioning Foundation v2) outranks Levels 2–5.
+A lower level may never silently redefine a higher level.
 
 ---
 
@@ -52,6 +62,8 @@ this governance layer is only warranted when:
 - A governance contradiction appears between two documents
 - Survivability testing fails on a specific artifact
 - SN-01 or another snapshot reveals an unanticipated normalization vector
+- An approved Positioning Foundation change (e.g. Doctrine v2) requires
+  governance compatibility updates — explicitly authorized reconciliation
 
 Do not open governance architecture discussions during active implementation.
 Open a tagged issue, defer it, and address it at a phase boundary.

@@ -1,6 +1,7 @@
 # IntraWeb Technologies — Site Execution Blueprint
-**Status:** Strategic planning. Pre-copywriting. Visitor-centered.**  
-**Version:** 1.0 — May 2026
+**Status:** Execution guidance. Pre-copywriting. Visitor-centered.**  
+**Version:** 1.1 — Doctrine v2 reconciliation  
+**Authority:** Execution guidance only. **Not** authoritative for company identity, category, buyer definition, or positioning. Positioning Foundation v2 (`01-positioning-foundation.md`) wins all identity conflicts.
 
 ---
 
@@ -15,13 +16,15 @@ This blueprint covers five execution areas in sequence:
 
 Each section specifies: **what changes**, **why**, **structural direction**, and **what must not change**.
 
+Where passages below retain historical "operational infrastructure" language as a problem-domain reinforcement tactic, treat that as execution sequencing guidance — not as the company category. IntraWeb's identity is the locked v2 software-engineering definition.
+
 ---
 
 ## Section 1: Homepage Restructuring
 
 ### The Core Problem to Solve
 
-The current homepage leads with worldview and asks the visitor to earn their way to the practical value. The fix is sequencing, not repositioning. The operational infrastructure framing stays — it moves to a reinforcement position, not the opening position.
+The current homepage leads with worldview and asks the visitor to earn their way to the practical value. The fix is sequencing, not repositioning. Engineering-consequence framing leads; operational-infrastructure language (where used) may remain as a reinforcement domain, not the exclusive opening identity.
 
 ### Required Sequence Shift
 
@@ -92,9 +95,9 @@ The four steps (Diagnose, Design, Implement, Optimize) are currently invisible a
 
 ### Who We Work With Direction
 
-- Add one sentence per fit indicator that makes the consequence concrete
-  - "Teams of 20-150 people" is a filter, not a reason to care
-  - Direction: "Teams of 20-150 people — large enough for operational complexity to hurt, small enough that adding headcount to fix it isn't realistic"
+- Fit indicators should describe engineering condition, not mandate headcount.
+  - Historical "Teams of 20-150 people" language is superseded as root qualification (Positioning Foundation v2). Size may remain useful targeting color, not a doctrine gate.
+  - Direction: describe conditions such as production complexity outrunning systems, insufficient internal engineering capacity, or systems that are dangerous to change — regardless of headcount band.
 - The animated workflow diagram needs a one-line label identifying what it represents
   - Direction: a small caption — "A lead intake workflow built for a services company with three routing paths" — transforms it from tech theater into proof of implementation
 
@@ -113,7 +116,7 @@ The current "No sales pitch / Strategic conversation / Clarity on next steps" tr
 
 ### The Strategic Gap
 
-The Work page is currently an empty placeholder while every other page on the site links to it. This is the site's most urgent structural problem. Beyond filling it, the proof architecture needs a narrative format that supports the operational infrastructure positioning — traditional case studies don't.
+The Work page is currently an empty placeholder while every other page on the site links to it. This is the site's most urgent structural problem. Beyond filling it, the proof architecture needs a narrative format that supports engineering-delivery positioning under Positioning Foundation v2 — traditional generic case studies don't.
 
 ### Proposed Proof Narrative Structure
 
@@ -309,14 +312,18 @@ Ordered by visitor impact and implementation effort ratio:
 
 ## What Must Not Change
 
-- The operational infrastructure positioning and its vocabulary
-- The "before it's yours to own" diagnostic approach
+- Positioning Foundation v2 company identity (senior-led software engineering company…) — Blueprint must not redefine this
+- Recognition-before-persuasion and "located, not impressed"
+- The "before it's yours to own" diagnostic approach where still used
 - The restraint and anti-hype register throughout
 - The "What Changed" structure in proof cards
 - The "It's not for you if" qualifier on the Diagnostic page
 - The "no account management layer" trust statement (elevate it, don't remove it)
 - The comparison table on About (Why the Approach is Different)
 - The e-commerce section on Services — it is the writing model for the rest of the site
+- Visual/content system principles (asymmetry, density, restrained motion, anti-generic aesthetics)
+
+Note: Exclusive "operational infrastructure company" identity is superseded. Operational infrastructure remains a legitimate problem domain.
 
 ---
 
@@ -326,11 +333,13 @@ Three risks to actively manage as copy gets written:
 
 **Risk 1: Manifesto drift.** Every section that explains the "why" behind the approach risks becoming philosophical. The test: if a sentence can be removed without losing a concrete fact, it is probably manifesto material. Cut it or convert it.
 
-**Risk 2: AI agency collapse.** As operational relief messaging gets written, there is a gravitational pull toward "AI automation" language. The differentiator is not that IntraWeb uses AI — everyone does. The differentiator is the diagnostic-first, infrastructure-layer, operational-understanding approach. That framing must survive every rewrite.
+**Risk 2: AI-identity collapse.** As messaging gets written, there is a gravitational pull toward "AI automation" language. AI is a capability territory, not company identity. The differentiator is senior-led engineering delivery with systems thinking and production responsibility.
 
-**Risk 3: Simplification past the credibility floor.** Some complexity is load-bearing. The operational infrastructure framing, the diagnostic-precedes-scope model, the "running systems not frameworks" distinction — these are not jargon. They are what makes IntraWeb specific. Simplify the delivery. Preserve the substance.
+**Risk 3: Simplification past the credibility floor.** Some complexity is load-bearing. Engineering-condition specificity, evidence before assertion, and "running systems not frameworks" distinctions are not jargon. Simplify the delivery. Preserve the substance.
+
+**Risk 4: Generic agency theater.** Reject undifferentiated "digital solutions / transform your business" language. Defined engineering projects are legitimate; package-driven agency positioning is not.
 
 ---
 
 *Document prepared for IntraWeb Technologies — execution planning phase.*  
-*Next step: section-by-section copywriting pass, working in priority order.*
+*Identity authority: Positioning Foundation v2. Next step after human doctrine review: content-architecture review, then section-by-section copywriting.*

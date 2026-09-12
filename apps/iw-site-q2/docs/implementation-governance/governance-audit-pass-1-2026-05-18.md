@@ -1,8 +1,13 @@
 # Governance Audit — Pass 1 (2026-05-18)
 
+> **HISTORICAL GOVERNANCE AUDIT — MAY 18, 2026**
+>
+> Findings reflect the doctrine authoritative at the time of the audit and do not define current positioning authority.
+> Current positioning authority: `docs/doctrine/01-positioning-foundation.md` (Positioning Foundation v2).
+
 **Scope:** `apps/iw-site-q2` within the Nexus monorepo  
 **Mode:** Read-only audit (no code changes)  
-**Authority:** Implementation Execution Contract v1.0 and governance files listed below
+**Authority:** Implementation Execution Contract v1.0 and governance files listed below (historical)
 
 ---
 

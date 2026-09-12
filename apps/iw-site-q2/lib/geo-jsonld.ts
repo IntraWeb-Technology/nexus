@@ -40,6 +40,7 @@ export const organizationJsonLd = {
     contactType: "customer service",
   },
   sameAs: ["https://linkedin.com/company/intrawebtech"],
+  // DEFERRED METADATA — Organization knowsAbout is still weighted to the v1 Diagnostic/automation model. Preserve until the next approved metadata pass. Do not rewrite in place.
   knowsAbout: [
     "Workflow Automation",
     "AI Integration",
@@ -181,6 +182,7 @@ export const personJsonLd = {
     addressRegion: "NJ",
     addressCountry: "US",
   },
+  // DEFERRED METADATA — Person knowsAbout still mixes v1 automation terms. Preserve until the next approved metadata pass. Do not rewrite in place.
   knowsAbout: [
     "Workflow Automation",
     "AI Systems Architecture",

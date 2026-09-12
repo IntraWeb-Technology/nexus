@@ -137,6 +137,29 @@ something authored, the change becomes a Tier C doctrine review
 (per `06-review-checklist.md`). Stop the merge and route to doctrine
 review.
 
+### T-11 — Cross-property positioning decision (IntraWeb ↔ Schibelli.com)
+
+If a contemplated change would materially alter positioning for both
+IntraWeb and Schibelli.com, or would silently import positioning
+authority from one property into the other: stop. Shared facts/evidence
+may cross the boundary when accurate; positioning authority may not.
+Open a governance issue tagged for cross-property review.
+
+### T-12 — Unresolved positioning conflict with Positioning Foundation v2
+
+If active documents, Agent OS instructions, copy drafts, or implementation
+plans conflict with Positioning Foundation v2 on company identity, buyer
+definition, capability territory, commercial boundaries, "we build"
+legitimacy, headcount gates, metric policy, or engagement legitimacy:
+stop. Do not invent a resolution. Positioning Foundation v2 wins when
+authority is clear; when interpretation is ambiguous, ask.
+
+### T-13 — Competing active positioning authority detected
+
+If any corpus other than `/docs/doctrine/01-positioning-foundation.md`
+is being treated as an independent redefinition of IntraWeb identity:
+stop and report the competing authority.
+
 ---
 
 ## Procedure — what to do after stopping
@@ -152,7 +175,7 @@ trigger by changing the change. The trigger fires for a reason.
 Create a GitHub issue tagged `governance-question`. The issue
 includes:
 
-- Which trigger fired (T-01 through T-10)
+- Which trigger fired (T-01 through T-13)
 - A description of the change being contemplated
 - A reference to the relevant doctrine and governance documents
 - The specific question the contributor needs answered

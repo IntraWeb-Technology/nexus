@@ -2,6 +2,23 @@
 
 **Onboarding tier:** 5-minute understanding
 **If you read nothing else, read this file.**
+**This file summarizes. It is not competing doctrine.**
+
+---
+
+## Positioning authority (Doctrine v2)
+
+Canonical company identity lives in:
+
+`/docs/doctrine/01-positioning-foundation.md` (Positioning Foundation v2)
+
+Locked definition:
+
+> IntraWeb Technology is a senior-led software engineering company that builds, integrates, modernizes, and stabilizes production systems.
+
+Historical v1 (non-authoritative): `/docs/doctrine/legacy/01-positioning-foundation-v1.md`
+
+A lower doctrine/governance level may never silently redefine Positioning Foundation v2.
 
 ---
 
@@ -13,6 +30,9 @@ standard frontend best practice in specific layers. The homepage has authored
 decisions — in spacing, visual weight, component architecture, and section
 boundaries — that must not be normalized. Preserving those decisions under
 engineering pressure is the primary constraint of this codebase.
+
+Website redesign and content-architecture remapping are out of scope until
+human review of Doctrine v2 completes.
 
 ---
 
@@ -38,8 +58,9 @@ Per-section spacing variance, annotation placement, visual weight imbalance,
 and snapshot geometry asymmetry are authored decisions. They are not
 technical debt. Do not normalize them.
 
-See `/implementation-governance/06-acceptable-inconsistency.md` for the
-full boundary between load-bearing inconsistency and accidental drift.
+See `/implementation-governance/acceptable-inconsistency.md` (mirror of
+`/docs/doctrine/06-acceptable-inconsistency.md`) for the full boundary
+between load-bearing inconsistency and accidental drift.
 
 ---
 
@@ -62,15 +83,16 @@ These are not optional. They cannot be bypassed by skipping the checklist.
 | Role | Primary layer | What they need to read |
 |------|--------------|----------------------|
 | CI systems | Layer 1 only | Nothing — runs automatically |
-| AI implementation agents (Cursor) | Layer 1 + Layer 2 | `implementation-execution-contract.md` first. Then `QUICK-REFERENCE.md`. Do not read doctrine files — they are not implementation guidance. |
+| AI implementation agents (Cursor) | Layer 1 + Layer 2 | `implementation-execution-contract.md` first. Then `QUICK-REFERENCE.md`. Positioning questions → Positioning Foundation v2. |
 | Junior maintainers | Layer 1 + Layer 2 | This file + QUICK-REFERENCE.md |
 | Frontend contributors | Layer 2 | This file + QUICK-REFERENCE.md + relevant section governance doc |
 | Governance reviewers | Layer 2 + Layer 3 | All of Layer 2 + relevant doctrine files |
 | Doctrine authors | Layer 3 | All doctrine files + governance documents |
 
-You do not need to read the doctrine files to work safely on most sections.
+You do not need to read the full doctrine set to work safely on most sections.
 Layer 1 enforcement and the quick reference are sufficient for most contributions.
-Reach for the doctrine files when the quick reference is ambiguous.
+Reach for Positioning Foundation v2 when identity, buyer, proof metrics, or
+cross-property (Schibelli.com) questions arise.
 
 ---
 
@@ -81,16 +103,19 @@ Reach for the doctrine files when the quick reference is ambiguous.
 3. Open a GitHub issue tagged `governance-question`.
 4. Do not resolve it yourself unless you are the doctrine reviewer.
 
-The procedure exists so that uncertain decisions produce a paper trail
-instead of silent drift.
+Especially stop for: Positioning Foundation conflicts, unsupported metrics,
+and IntraWeb ↔ Schibelli.com cross-property decisions
+(see `07-when-to-stop-and-ask.md` T-11–T-13).
 
 ---
 
 ## Where to go next
 
-- **Before any implementation work (including Phase 1 scaffolding):** Read `implementation-execution-contract.md`
+- **Before any implementation work:** Read `implementation-execution-contract.md`
 - **Before any PR:** Read `QUICK-REFERENCE.md`
 - **Before touching a snapshot:** Read `05-snapshot-authoring-protocol.md`
-- **Before touching the Proof section:** Read `/docs/doctrine/05-proof-section-governance.md`
+- **Before touching the Proof section:** Read `/docs/doctrine/05-proof-section-governance.md` (HC-03: no unsupported quantitative proof)
 - **If a rule seems wrong for your case:** Read `07-when-to-stop-and-ask.md`
-- **Full doctrine (when needed):** `/docs/doctrine/01` through `06`
+- **Company identity / positioning:** `/docs/doctrine/01-positioning-foundation.md`
+- **Site architecture:** `/docs/doctrine/intrawebtech-site-architecture.md` (canonical Site Architecture v2)
+- **Full doctrine (when needed):** `/docs/doctrine/01` through `06` plus realism/register/governance docs

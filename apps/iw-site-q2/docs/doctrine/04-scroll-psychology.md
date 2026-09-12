@@ -1,7 +1,8 @@
 # 04 — Scroll Psychology
 **IntraWeb Technologies — Emotional and Cognitive Scroll Progression**
-**Version:** 1.0
+**Version:** 1.1
 **Status:** Governing — applies to page sequencing, pacing, and section-level communication logic
+**Authority:** Level 2 (Experience Doctrine). Recognition territory inherits from Positioning Foundation v2.
 
 ---
 
@@ -9,25 +10,31 @@
 
 This document defines the emotional and cognitive experience of scrolling through the IntraWeb homepage. It governs how tension accumulates, where decompression occurs, and how the visitor progresses from orientation to action.
 
-This document does not govern visual production behavior (see `03-environmental-doctrine.md`) or section-level build constraints (see `05-proof-section-governance.md`).
+This document does not govern visual production behavior (see `03-environmental-doctrine.md`) or section-level build constraints (see `05-proof-section-governance.md`). Company identity resides in `01-positioning-foundation.md` (v2).
 
 ---
 
 ## The Core Distinction: Recognition vs. Persuasion
 
-The page does not attempt to persuade the visitor. It attempts to accurately describe the visitor's operational situation.
+The page does not attempt to persuade the visitor. It attempts to accurately describe the visitor's engineering or operational situation.
 
 Persuasion requires the company to argue for its position. Recognition requires the company to describe the visitor's position with enough accuracy that the visitor feels understood before they are sold to.
 
 When recognition is working, the visitor does not reach the CTA because they were convinced. They reach it because they have been accurately described, structurally clarified, and procedurally directed.
 
-The page is not a funnel. It is a progressive disclosure of operational reality.
+The page is not a funnel. It is a progressive disclosure of engineering reality.
+
+### Expanded recognition conditions (v2)
+
+Recognition may attach to product delivery friction, fragile applications, dangerous-to-change systems, brittle integrations, disconnected applications, conflicting data, modernization pressure, implementation debt, testing gaps, risky releases, deployment friction, production instability, designs stuck before production, unreliable cross-system APIs, institutional-memory workflows, and legitimate AI/automation opportunities requiring production integration — in addition to classic operational workflow friction.
+
+The scroll arc remains: recognition → consequence → resolution.
 
 ---
 
 ## Why the Visitor Must Never Feel Emotionally Manipulated
 
-The target buyer operates at a systems level. They have pattern recognition for persuasion mechanics. If the page feels engineered — if the emotional progression feels deliberate rather than natural — it triggers skepticism.
+The target buyer operates at a systems / engineering level. They have pattern recognition for persuasion mechanics. If the page feels engineered — if the emotional progression feels deliberate rather than natural — it triggers skepticism.
 
 The emotional progression must feel like: natural realization. Not: engineered psychological sequencing.
 
@@ -125,7 +132,7 @@ The visitor has been recognizing symptoms. Proof shows what those symptoms cost 
 The pressure is not urgency. It is specificity. "Here is what you are currently living without" — stated in operational terms specific enough to land.
 
 **Target response:** "This is what we are currently living without."
-**Risk if executed wrong:** Drifts into case study register (social proof rather than consequence evidence), or drifts into abstract metrics that feel like marketing claims.
+**Risk if executed wrong:** Drifts into case study register (social proof rather than consequence evidence), or drifts into unsupported abstract metrics that feel like marketing claims. Verified contextual metrics remain permissible under Positioning Foundation v2 HC-03.
 
 ---
 

@@ -110,6 +110,7 @@ export function Footer({ links }: FooterProps = {}) {
               <div className="mb-6">
                 <IntraWebLogo height={30} />
               </div>
+              {/* DEFERRED COPY — v1/exclusive operational-infrastructure footer line. Preserve until the next approved copy pass. Do not rewrite in place. */}
               <p className="max-w-[320px] text-[15px] leading-relaxed text-[#c8d1da]">
                 We build the operational infrastructure that connects how you work to how you scale.
               </p>
@@ -143,6 +144,7 @@ export function Footer({ links }: FooterProps = {}) {
           </div>
 
           <div className="max-w-[560px] lg:border-r lg:border-[#1f2b36]/70 lg:pr-12">
+            {/* DEFERRED COPY — remaining v1/exclusive operational-infrastructure footer copy. Preserve until the next approved copy pass. Do not rewrite in place. */}
             <p className="mono text-xs font-medium uppercase tracking-[0.22em] text-[#f5a623]">
               Infrastructure. Alignment. Scale.
             </p>
@@ -212,6 +214,7 @@ export function Footer({ links }: FooterProps = {}) {
                   <Ic.shield width={28} height={28} />
                 </div>
                 <div className="grid min-w-0 gap-3 md:grid-cols-[max-content_minmax(0,1fr)] md:items-center md:gap-6 lg:gap-8">
+                  {/* DEFERRED COPY — v1 operations-leader / operational-performance footer band. Preserve until the next approved copy pass. Do not rewrite in place. */}
                   <p className="mono max-w-[420px] text-[10px] uppercase leading-relaxed tracking-[0.16em] text-[#c8d1da]">
                     Trusted by operations leaders
                     <br />

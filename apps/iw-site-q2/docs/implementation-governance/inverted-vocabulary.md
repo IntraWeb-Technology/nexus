@@ -59,6 +59,19 @@ If a commit message says "standardized focus ring behavior," that is normal.
 If it says "standardized snapshot layout," that is erosion.
 The word is the same. The layer determines the meaning.
 
+### Legitimate engineering terminology is not inverted
+
+Positioning Foundation v2 affirms IntraWeb as a software engineering company.
+Words such as `build`, `integrate`, `modernize`, `stabilize`, `product`,
+`application`, `API`, `frontend`, `backend`, `full-stack`, `rescue`,
+`testing`, and `production` are legitimate engineering language when they
+identify real responsibility.
+
+This inverted-vocabulary list does **not** prohibit those terms.
+It prohibits normalization vocabulary when used to erase authored unevenness
+in protected perceptual layers. Do not treat anti-jargon discipline as a ban
+on engineering nouns.
+
 ---
 
 ## How to proceed when the scanner flags your commit

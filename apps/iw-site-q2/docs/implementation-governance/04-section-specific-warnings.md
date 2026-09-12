@@ -215,12 +215,16 @@ change is aware of.
 **Doctrine:** `/docs/doctrine/01-positioning-foundation.md`,
 `/docs/doctrine/03-environmental-doctrine.md`
 
-**Primary risk:** drift toward services list.
+**Primary risk:** drift toward services list / capability catalog.
 
 The Model section presents a structured sequence — what changes when
-the operational infrastructure is in place. The risk is that the
-section reads as a feature list, capabilities catalog, or services
-menu, all of which are anti-positioning per the foundation doctrine.
+engineering responsibility is in place for the recognized condition.
+The risk is that the section reads as a feature list, capabilities catalog,
+or services menu, all of which remain anti-positioning under Positioning
+Foundation v2 (capabilities must not become an undifferentiated catalog).
+
+Operational-infrastructure language may appear as problem-domain context.
+It must not reassert exclusive company identity.
 
 **Forbidden patterns:**
 
@@ -255,9 +259,10 @@ toward observation. The doctrine register is observational.
 
 **Primary risk:** drift toward retainer pitch.
 
-Continuity describes that the operational infrastructure runs continuously
-after delivery. The risk is that this becomes a pricing pitch for monthly
-retainers, which converts operational positioning into agency positioning.
+Continuity describes that production systems and the systems around them
+require ongoing engineering responsibility after delivery. The risk is that
+this becomes a pricing pitch for monthly retainers, which converts
+engineering-delivery positioning into agency positioning.
 
 **Forbidden patterns:**
 

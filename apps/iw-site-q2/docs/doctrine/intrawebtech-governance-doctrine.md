@@ -1,7 +1,7 @@
 # IntraWeb Technologies — Proof Density Doctrine & Implementation Compression Rules
 **Phase:** Pre-copywriting governance. Final constraint layer before execution.**  
-**Version:** 3.0 — May 2026  
-**Authority:** Governs all copywriting, visual decisions, and implementation choices across the site.  
+**Version:** 3.1 — Doctrine v2 reconciliation  
+**Authority:** Governs compression, density, and enforcement decisions for copywriting, visual decisions, and implementation choices. Does **not** define company identity.  
 **Use:** Apply this document as a QA filter at the end of every copywriting session and before any section goes to implementation.
 
 ---
@@ -81,7 +81,7 @@ Proof is not evenly distributed across the site. It escalates as the visitor mov
 
 ### Repetition Fatigue Rules
 
-- A specific metric (e.g., "94% faster cycle time") appears in one location on the site — the proof card or the Operational Record it belongs to. It does not migrate to other sections as supporting evidence.
+- A specific verified metric (e.g., "cycle time from 9 days to 48 hours") appears in one location on the site — the proof card or the Operational Record it belongs to. It does not migrate to other sections as supporting evidence. Unsupported percentages such as "94% faster" remain prohibited under Positioning Foundation v2 HC-03.
 - A pain point named in the Friction Grid does not need to be re-named in the proof section, the services section, or the CTA. Name it once in the recognition layer. Let the proof resolve it without restating it.
 - The 62 workflows stat appears once on the homepage (in the stat bar) and once on the About page (in the operator context). It does not appear on Services, Diagnostic, or individual record pages.
 - If a visitor reads the homepage and then the About page sequentially, they should encounter no identical sentences. Parallel meaning is acceptable. Identical copy is not.
@@ -420,14 +420,26 @@ A section that fails any of these five tests does not proceed to implementation.
 
 ## Governance Document Cross-Reference
 
-This document (v3.0) operates in conjunction with:
-- **Blueprint v1.0** — Strategic direction, what must not change, anti-drift principles
-- **Architecture v2.0** — Page-by-page structure, section order, visitor state mapping, conversion flow
+This document (v3.1) operates in conjunction with:
+- **Positioning Foundation v2** (`01-positioning-foundation.md`) — sole authority for company identity, buyer, capability territory, commercial boundaries, and Schibelli.com relationship
+- **Blueprint v1.0** — Execution guidance only where compatible with Positioning Foundation v2; **not** authoritative for identity or positioning
+- **Architecture v2.0** — Page-by-page structure, section order, visitor state mapping, conversion flow (review flags may apply post-v2)
 
-In any conflict between documents, the most specific document governs. This document (v3.0) governs all compression, density, and enforcement decisions. Architecture v2.0 governs all structural and sequencing decisions. Blueprint v1.0 governs all positioning and identity decisions.
+### Document Hierarchy in Conflicts
+
+A lower level may never silently redefine a higher level:
+
+1. Positioning Foundation v2 governs identity and positioning
+2. Experience / artifact doctrine (this document, realism, register, scroll, environmental, snapshots, proof) governs their domains
+3. Implementation governance governs build constraints
+4. Page/content implementation is subordinate
+
+In conflicts within Level 2–3 enforcement domains, the most specific document governs for its domain. This document (v3.1) governs compression, density, and enforcement decisions. Architecture v2.0 governs structural and sequencing decisions where still compatible with v2. Blueprint v1.0 does **not** govern positioning or identity.
+
+Quantitative proof follows Positioning Foundation v2 HC-03 (no unsupported quantitative proof). Decorative metrics remain prohibited.
 
 ---
 
-*IntraWeb Technologies — Proof Density Doctrine & Implementation Compression Rules v3.0*  
-*Status: Governance complete. Ready to begin section-by-section copywriting.*  
-*First copywriting target: Homepage Hero and Friction Grid (Priority 3 and 5 from Blueprint v1.0).*
+*IntraWeb Technologies — Proof Density Doctrine & Implementation Compression Rules v3.1*  
+*Status: Active under Positioning Foundation v2.*  
+*Identity conflicts: Positioning Foundation v2 wins.*

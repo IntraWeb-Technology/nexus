@@ -1,636 +1,1057 @@
-# IntraWeb Technologies — Site Execution Architecture
-**Phase:** Structural execution planning. Pre-copywriting. Pre-implementation.**  
-**Version:** 2.0 — May 2026  
-**Authority:** Supersedes blueprint Section 1 sequencing with full implementation-grade spec.
+# IntraWeb Technology — Site Execution Architecture
+**Phase:** Approved content architecture. Copy remains separately governed.  
+**Version:** 3.0 — September 2026  
+**Authority:** Page/content architecture subordinate to Positioning Foundation v2, Experience Doctrine, Artifact Doctrine, and Implementation Governance.  
+**Status:** Canonical. Approved Site Architecture v2.
+
+> This is the single active Site Architecture document.
+> The prior architecture is historical only: [`legacy/intrawebtech-site-architecture-prior.md`](./legacy/intrawebtech-site-architecture-prior.md).
 
 ---
 
 ## How to Use This Document
 
-This document is the handoff-ready spec for Cursor implementation. Each section defines exact structure, purpose, visitor cognitive state, and constraints. No copy is written. No aesthetic decisions are made here. Every section answers: what does the visitor need to understand here, and how is the structure engineered to deliver that?
+This document defines what each major site section and page must accomplish under Positioning Foundation v2. It is an execution architecture for content responsibility, visitor state, sequencing, proof placement, and conversion logic.
+
+It does **not**:
+
+- write final website copy
+- authorize React, CMS, route, style, test, or deployment changes
+- redesign Environmental Doctrine
+- modify snapshot doctrine or implementation governance
+- redefine IntraWeb's company identity
+
+Where this document conflicts with Positioning Foundation v2 or higher-level doctrine, the higher-level doctrine wins.
+
+The governing migration strategy is:
+
+> Preserve the experience system. Replace obsolete commercial assumptions. Expand recognition territory.
 
 ---
 
-## Part 1: Homepage Wireframe Architecture
+# Part 1 — Homepage Experience Architecture
 
-### Governing Principle
+## Governing Principle
 
-The homepage must create a single progressive experience: friction recognition → proof of removal → trust in the operator → confidence to act. Each scroll threshold advances one of these states. No section creates cognitive load without immediately resolving it.
+The homepage must answer two questions in sequence:
 
----
+1. **Do they understand the engineering condition we are dealing with?**
+2. **Can they take responsibility for resolving it in production?**
 
-### Section 1 — Above the Fold (Hero)
+The homepage is not a service catalog and not a funnel built around one mandatory engagement type. It is a progressive recognition system.
 
-**Purpose:** Deliver immediate practical orientation. The visitor must understand what disappears from their operation before they understand anything about the company.
+The authoritative homepage sequence is:
 
-**Visitor enters knowing:** nothing  
-**Visitor exits knowing:** what problem this company solves and for whom
+1. Hero — Category / responsibility
+2. Recognition — Engineering conditions
+3. Argument — Structural reorientation
+4. Capability Territory — Scope of engineering responsibility
+5. Proof — Evidence of responsibility carried
+6. Engagement Model — How work can begin
+7. Senior-Led Responsibility — How judgment stays close to implementation
+8. Qualification — Engineering-condition fit
+9. CTA — Procedural next step
 
-**Content architecture:**
-- Label line (small, above headline): 2-4 words identifying the category of work. "Operational systems" or "Workflow infrastructure" — not a tagline
-- Primary headline: one sentence. Names the operational burden removed. Subject is the visitor's operation, not the company. No abstract nouns as the first word.
-- Secondary line: one sentence. Names the mechanism (systems, automation, infrastructure). This is where the worldview language earns its place — after the consequence has landed.
-- CTA pair: primary action (Book a Systems Call) + secondary action (See What Changed). The secondary CTA is proof-directed — it sends trust-seekers to the evidence before asking for conversion.
+The emotional arc remains:
 
-**What is forbidden above the fold:**
-- Company philosophy as the primary statement
-- Any sentence beginning with "We build"
-- Abstract nouns: "operational infrastructure," "systems thinking," "alignment"
-- More than two sentences of body text
-- Any mention of AI, automation, or technology in the first visible viewport
+**orientation → recognition → reorientation → validation → consequence → relief → confidence → qualification → permission**
 
-**Scan behavior:** Visitor eye path is: label → headline → secondary → CTA pair. Four stops. No paragraph blocks. No decorative subheads.
-
-**Visual pacing:** Hero image is supporting, not dominant. The text carries the weight. Image reinforces operational reality (not tech abstraction).
-
-**Cognitive load:** Minimal. One decision point: do I recognize this problem? If yes, they scroll. If the secondary CTA is visible, they may click proof first — that is acceptable and should be designed for.
+No section should behave like a generic development-agency module merely because software engineering is now named directly.
 
 ---
 
-### Section 2 — Friction Recognition Grid
+## Section 1 — Hero / Orientation
 
-**Purpose:** Confirm the visitor is in the right place. Create tension by naming the pain with consequence. Set up proof by making the problem feel real and costly.
+### Purpose
 
-**Visitor enters knowing:** this company removes operational burden  
-**Visitor exits knowing:** my specific friction is named here, and it has a cost
+Establish IntraWeb's company category and production responsibility immediately.
 
-**Content architecture:**
-- Section label: brief, direct. "What we see every day" or "The patterns" — not "Our expertise" or "Common challenges"
-- Grid layout: 3x3 static grid (not animated ticker). Nine pain points.
-- Each cell: two lines maximum. Line 1: the pain label (existing copy is correct — do not genericize). Line 2: one consequence sentence. The consequence is the cost of the pain, not a description of it.
-- No icons. No decorative elements. The words do the work.
+### Visitor enters knowing
 
-**Consequence sentence model:**  
-Pain label + "Every [time period], someone [manual action] to keep it moving."  
-Or: Pain label + "The [function] cannot happen until [person/system] is available."  
-Not: Pain label + "This slows down your team." (too generic)
+Nothing.
 
-**Scan behavior:** Grid scans as a matrix. Visitor pattern-matches across cells. One cell recognition is enough to continue scrolling. Design for recognition, not sequential reading.
+### Visitor exits knowing
 
-**Cognitive load:** Low. Grid format distributes load. Visitor selects what's relevant and ignores what isn't. No section should require reading all nine.
+- IntraWeb is a senior-led software engineering company.
+- The work concerns production systems.
+- IntraWeb can build new systems and intervene in existing ones.
+- Senior engineering responsibility remains close to the work.
 
-**Relief setup:** The consequence sentences create tension. This tension is not resolved in this section — it carries into the proof section. Do not add resolution language here.
+### Content architecture
 
-**Transition to next section:** Natural. "Here is what changed" is the implicit bridge. No explicit transition copy needed.
+- Optional compact category label.
+- One primary positioning statement.
+- One supporting line that clarifies production responsibility or engineering territory.
+- At most one primary CTA plus one low-emphasis proof path if needed.
 
----
+The hero does **not** need to enumerate all five capability territories.
 
-### Section 3 — Proof (What Changed)
+### Allowed under v2
 
-**Purpose:** Deliver evidence that the friction named above has been removed in real environments. Establish that the outcomes are measured, specific, and earned.
+- Direct software-engineering language.
+- Technical language when it increases clarity.
+- “We build” when it names meaningful engineering responsibility.
+- A production-oriented category statement.
 
-**Visitor enters knowing:** my specific friction is real and costly  
-**Visitor exits knowing:** this company has removed exactly this kind of friction for organizations like mine
+### Forbidden
 
-**Content architecture:**
-- Section label: "What changed" — already used in current proof cards. Extend it. Do not rename.
-- Three proof cards minimum. Each card carries:
-  - Anonymous context line: company type, size, vertical. One sentence. No name required.
-  - Process title: what the engagement covered (Request to Fulfillment, Monthly Reporting, Onboarding)
-  - "What Was Breaking": 3-4 bullet points. Specific, enumerated. Existing cards are close — add one more specificity layer.
-  - Impact stat: large, prominent. The number is the anchor.
-  - Relief sentence: one sentence after the stat. Names what operationally changed, not just the metric. "The team stopped manually chasing status and started seeing it in real time."
-- "See all records" link below cards — directs to Work/Operational Records page
+- Framework or logo parade.
+- Capability laundry list.
+- AI-led identity.
+- Generic “custom software solutions” language.
+- Hero copy that could belong to hundreds of agencies unchanged.
+- Company philosophy as the primary communication.
+- Photography or decorative hero illustration on the homepage.
 
-**What is forbidden:**
-- Client quotes or attributed testimonials in this section (they belong on About or a dedicated trust section, if used at all)
-- Percentage improvements without an operational description of what changed
-- Stats that float without anchoring context
+### Scan behavior
 
-**Scan behavior:** Cards are scanned horizontally, then vertically within the selected card. Impact stat is the anchor — largest visual element. Context line is read first. Bullet breakdown is read second. Relief sentence completes the card.
+Three-second scan must answer: **what kind of engineering company is this?**
 
-**Cognitive load:** Medium. Three cards is the right ceiling for this position in the scroll. More creates fatigue. Less underproves.
+### Cognitive load
 
-**Conversion signal:** This is the first section where a high-intent visitor considers booking a call. The CTA is not placed here — but the proof section should end with a micro-signal: "All of this starts with a Diagnostic." One line. No button. The button appears in the CTA section.
+Minimal.
 
----
+### Target response
 
-### Section 4 — Operational Infrastructure Framing (The Model)
-
-**Purpose:** Explain how IntraWeb approaches the work — now that the visitor understands what gets fixed. This is where the worldview earns its position.
-
-**Visitor enters knowing:** this company has fixed these problems before  
-**Visitor exits knowing:** I understand how they approach it and why it's different from other options I've considered
-
-**Content architecture:**
-- Section label: "How we work" or "The model" — minimal
-- Brief framing paragraph: 2-3 sentences maximum. The worldview lands here as reinforcement, not introduction. "Operational infrastructure" language is appropriate now.
-- Four-step process: Diagnose → Design → Implement → Optimize
-- Each step carries:
-  - Step number and name
-  - One sentence: what IntraWeb does at this step
-  - One sentence: what the visitor receives or stops doing at this step
-  - Output label: what physically exists at the end of this step that did not before
-- Visitor role note: one line per step — what access or input the client provides at this stage. This begins building operational imagination without a separate section.
-
-**What is forbidden:**
-- Generic consulting language ("holistic," "collaborative," "tailored")
-- Steps without named outputs
-- Any step description that could apply to any other firm
-
-**Scan behavior:** Steps scan vertically. Step numbers create anchor points. Visitor eye path: number → name → output label → description. Design for this order.
-
-**Cognitive load:** Medium. The four-step structure manages load by providing clear chunking. Each step is a unit. No step should contain more than 40 words.
-
-**Differentiation moment:** The "what the visitor receives" line per step is the differentiator. No other firm structures its process description around what the client gets at each stage. This needs to be visible in the layout — not buried in paragraph text.
+> “I know what kind of engineering company this is.”
 
 ---
 
-### Section 5 — Who This Is For (Fit)
+## Section 2 — Recognition / Engineering Conditions
 
-**Purpose:** Give the visitor the information to self-qualify. Accelerate commitment for the right prospect. Honestly redirect the wrong one.
+### Purpose
 
-**Visitor enters knowing:** I understand what this company does and how  
-**Visitor exits knowing:** whether they are the right fit
+Make the visitor recognize the engineering condition that brought them to the site.
 
-**Content architecture:**
-- Section label: "Who we work with" — existing label is fine
-- Two-column or stacked layout: "This is a fit" and "This is not a fit"
-- Fit indicators: each one carries a consequence clause (not just the filter)
-  - "Teams of 20-150 people" is a filter. "Teams where operational complexity has grown faster than the systems that support it" is a reason.
-- Not-a-fit indicators: brief, honest, no apology. This section builds trust by demonstrating selectivity.
-- Industry tags: Logistics, Manufacturing, Distribution, Services — only if at least one of these is tied to a proof card. If not, remove them or anchor them to the Operational Records page.
-- The animated workflow diagram: if retained, add a visible caption identifying what engagement or use case it represents. If the caption cannot be made specific, replace with a static representation that is captioned.
+### Visitor enters knowing
 
-**What is forbidden:**
-- Vague fit language ("companies ready to grow")
-- Any claim about verticals not supported by proof elsewhere on the site
-- Apologetic framing in the not-a-fit section
+IntraWeb is a production-oriented software engineering company.
 
-**Scan behavior:** Two-column layout scans as a comparison. Visitor quickly locates their column. Fit indicators are read sequentially within each column.
+### Visitor exits knowing
 
-**Cognitive load:** Low. Binary structure manages load. Visitor is relieved of ambiguity.
+Their specific condition belongs inside IntraWeb's territory.
 
----
+### Recognition territory
 
-### Section 6 — Trust Signal Bar (Operational Credibility)
+The section may include operational and technical/software conditions such as:
 
-**Purpose:** One compact trust density moment before the CTA. Provides implementation credibility without a full section.
+- a product exists but has become difficult to change safely
+- a frontend or full-stack implementation is incomplete or structurally weak
+- a production system is brittle or unreliable
+- systems need to exchange data but integration is incomplete or fragile
+- workflows still depend on manual coordination
+- an application requires modernization without a full rewrite
+- a partially implemented project has stalled
+- architecture decisions are producing recurring defects
+- release confidence is weak because testing is insufficient
+- an automation or AI capability is not production-ready
+- a team lacks enough senior engineering capacity for the work in front of it
+- a design exists but production implementation is still missing
+- a system works in the happy path but fails under real operating conditions
 
-**Visitor enters knowing:** whether they fit  
-**Visitor exits knowing:** that the operational depth is real and specific
+### Architecture rule
 
-**Content architecture:**
-- Three to four brief stats or operational facts, displayed horizontally
-- Drawn from real operational data: 62 production workflows, 8 operational categories, workflow cycle time reductions, years in production engineering
-- One line per stat: number + descriptor. No sentences needed here.
-- No icons. Numbers do the work.
+Conditions are the primary unit. Departments, technologies, and service categories are not.
 
-**What is forbidden:**
-- Generic credibility stats (years in business, clients served) without specificity
-- Made-up round numbers
-- Any stat not grounded in an operational reality described elsewhere on the site
+Internal architecture may group recognition around **Build / Integrate / Modernize / Stabilize**, but these are not approved public headings and do not replace the five commercial capability territories.
 
-**Note:** This section can be omitted if the proof cards already carry sufficient credibility weight. It is a density amplifier, not a requirement.
+### Preserve
 
----
+- accumulating recognition
+- irregular item length where meaningful
+- observational register
+- no decorative icons
+- no generic “common challenges” treatment
+- no crisis inflation
+- operator/technical decision-maker assembles the meaning
 
-### Section 7 — CTA
+### Forbidden
 
-**Purpose:** Convert accumulated trust and clarity into a first action. The visitor should feel that booking a call is the obvious next step, not a commitment.
+- Frontend / Backend / API / AI problem buckets as the public organizing structure.
+- Generic pain statements such as “your team needs to move faster.”
+- Resolution language inside the recognition section.
 
-**Visitor enters knowing:** this company is the right fit, the approach is credible, the outcomes are documented  
-**Visitor exits having:** booked a call or left with intent to return
+### Target response
 
-**Content architecture:**
-- Brief positioning line: where the visitor is in their decision — not a pitch
-- One outcome promise: what they will understand after the call that they don't understand now
-- One honest expectation line: what the call is (working session, not pitch)
-- Primary CTA: "Book a Systems Call" or "Start with a Diagnostic" — one button, not two competing CTAs
-- Secondary: email or link for visitors not ready to book
-
-**What is forbidden:**
-- Three-bullet process reassurances (current format — replace it)
-- Generic CTAs: "Let's talk," "Get started," "Learn more"
-- Urgency inflation: "Limited spots," "Apply now"
-
-**Cognitive load:** Minimal. The work is done. This section should feel inevitable, not like a close.
+> “They are describing the condition we are actually in.”
 
 ---
 
-### Homepage Visual Pacing Summary
+## Section 3 — Argument / Structural Reorientation
 
-| Section | Density | Cognitive Load | Primary Job |
-|---------|---------|----------------|-------------|
-| Hero | Low | Minimal | Orient |
-| Friction Grid | Medium | Low | Recognize |
-| Proof Cards | High | Medium | Trust |
-| Model | Medium | Medium | Understand |
-| Fit | Low | Low | Self-qualify |
-| Trust Bar | Low | Minimal | Confirm |
-| CTA | Low | Minimal | Act |
+### Purpose
 
-**Pacing rule:** No two adjacent high-density sections. Proof Cards (high) is followed by Model (medium) — not another high-density section. The density rhythm is: low → medium → high → medium → low → low → low.
+Interrupt recognition accumulation with one structural idea that explains why these conditions become production problems.
 
----
+### Visitor enters knowing
 
-## Part 2: Operational Records System Governance
+Their condition has been recognized accurately.
 
-### System Name
+### Visitor exits knowing
 
-"Operational Records" — not Case Studies, not Portfolio, not Work. The name signals: these are documented operational outcomes, not marketing collateral.
+IntraWeb sees the broader production responsibility underneath the condition.
 
-### Governing Tone
+### Content responsibility
 
-Forensic and operational. The voice is that of someone describing what they found, what they built, and what changed — not someone narrating a success story. Past tense throughout. No superlatives. No outcome inflation.
+The Argument no longer claims that every problem is really an operational-infrastructure problem.
 
-### Mandatory Section Structure
+The new responsibility is to make one structural point about production engineering: implementation, integration, reliability, operational use, and maintainability cannot always be treated as separate concerns.
 
-Every Operational Record follows this exact seven-section structure. No sections are optional. No sections are added.
+The exact public statement is deferred to copywriting.
 
-**1. Operational Situation** (60-90 words)  
-Anonymous context: company type, headcount range, industry vertical, and operational environment at time of engagement. Written as a factual description of the organization, not a complaint or problem statement. This section answers: who were they, and what did their operation look like?
+### Structure
 
-**2. What Was Breaking** (4-6 bullets, ≤15 words each)  
-Specific, enumerated breakpoints. Not "inefficiency" — named points where: ownership transferred unexpectedly, data was re-entered manually, a single person held a critical dependency, cycle times extended due to waiting, or errors compounded across handoffs. Each bullet names one specific failure point.
+- One idea.
+- Singular dark-band rupture.
+- Low visual density, high semantic weight.
+- No five-territory capability content inside the rupture.
 
-**3. Root Cause** (1-2 sentences, ≤40 words total)  
-The infrastructure gap beneath the surface symptoms. This is the diagnostic layer — it shows IntraWeb identified the structural problem, not just the visible friction. This section is what separates a vendor from a diagnostician.
+### Preserve absolutely
 
-**4. What Changed** (3-5 bullets)  
-What was built. Specific systems, connections, logic, and automations. Tools can be named (n8n, HubSpot, Stripe). Each bullet describes one system or connection implemented. Not "we automated the process" — the actual logic: trigger → condition → action → output.
+- one environmental rupture only
+- abrupt entry and exit
+- cognitive reorientation rather than escalation
+- no smooth transition effects
+- no second dark band elsewhere
 
-**5. What Was Removed** (4-6 bullets, ≤15 words each)  
-The operational relief section. Each bullet names one specific manual step, dependency, or process that no longer exists. This is written from the client's operational reality: "The weekly manual export from [System A] to [System B] no longer happens." Specific and enumerated.
+### Forbidden
 
-**6. Measured Impact** (1-3 metrics)  
-The quantified outcomes. Each metric: the number, what it measures, and the baseline it's measured against. No floating percentages. "Cycle time reduced from 9 days to 48 hours" — not "94% improvement."
+- capability grid inside the Argument band
+- manifesto stack
+- technology-is-never-the-problem claims
+- a services pitch disguised as philosophy
 
-**7. Current Operational State** (1-2 sentences)  
-What the environment looks like now, on a recurring basis. Written as present-tense operational description: "The reporting cycle runs automatically every Monday. No one assembles it." This section delivers the relief resolution — the emotional close of the record.
+### Target response
 
-### Metadata Structure
-
-Each record carries visible metadata displayed as tags or a compact header:
-- Industry: [Logistics / Manufacturing / Distribution / Services / Other]
-- Company size: [20-50 / 51-100 / 101-150]
-- Engagement type: [Automation / Integration / Platform / Diagnostic Only]
-- Primary friction resolved: [Reporting / Onboarding / Lead Intake / Fulfillment / Other]
-- Implementation timeline: [2-4 weeks / 1-2 months / 3-6 months]
-
-### What Is Forbidden in Operational Records
-
-- Client names or logos without explicit written permission
-- Direct quotes or attributed testimonials (the record itself is the evidence)
-- Outcome claims not grounded in a described operational situation
-- Superlatives: fastest, best, most, unprecedented
-- Any sentence that begins with "IntraWeb helped" — the record describes what changed, not who helped
-- Before/after photos or decorative imagery
-- Generic outcome language: "transformed," "optimized," "revolutionized"
-- Section headings that editorialize: "The Results" or "The Win" are not permitted
-
-### What Creates Trust in an Operational Record
-
-- Specific numbers with specific contexts
-- Named tools and systems
-- Bullet breakdowns of what specifically was removed
-- A root cause diagnosis that names a structural gap, not just a symptom
-- An ongoing operational state description that sounds like a real Monday morning
-
-### What Creates Fluff
-
-- Outcome stats without operational context
-- Passive language that avoids saying what the system does
-- Excessive process description without naming outputs
-- Any sentence that could appear unchanged in a competitor's record
-
-### Operational Records Page Architecture
-
-- Page label: "Operational Records"
-- Sub-label: one sentence — the governing principle of the system ("Documented operational outcomes from completed engagements")
-- Filter bar: metadata tags as filters (industry, engagement type, friction type)
-- Record grid: two columns on desktop, single column on mobile
-- Record card in grid: context line + friction type + impact stat + link to full record
-- Full record page: single column, generous white space, seven sections in order
+> “These problems are connected by how production engineering is being handled.”
 
 ---
 
-## Part 3: Services Page Restructuring
+## Section 4 — Capability Territory / Engineering Responsibility
 
-### Governing Question
+### Purpose
 
-How should services be organized? The four options:  
-a) Operational problems  
-b) Engagement types  
-c) Implementation depth  
-d) Business maturity
+Show the range of engineering responsibility IntraWeb can assume without becoming a service catalog.
 
-**Recommendation: Engagement types, with operational problem framing at the entry point.**
+### Approved territories
 
-**Rationale:** IntraWeb's differentiated positioning is about how the work is engaged, not what category of tool is deployed. A visitor who arrives with a "reporting problem" needs to first understand what kind of engagement resolves it — not select from a menu of service categories. Organizing by operational problem first creates the frame, then engagement type delivers the path.
+1. Product Engineering
+2. Systems Integration
+3. Modernization & Rescue
+4. Automation & AI
+5. Production Reliability
 
-The current page fails because it organizes by deliverable type (websites, automation, SaaS builds, e-commerce) with no bridging logic. The visitor who has a lead intake problem cannot tell which tier or offering applies to them.
+These territories intentionally overlap.
 
-### Proposed Services Page Information Hierarchy
+### Visitor enters knowing
 
-**Entry level — Operational Problem Framing**
+IntraWeb understands the structural nature of production engineering.
 
-Three to four operational problem clusters, presented as entry points before any service is named:
-- "Manual work that shouldn't require a human"
-- "Systems that don't talk to each other"
-- "Reporting that depends on someone assembling it"
-- "Growth that has exposed your operational limits"
+### Visitor exits knowing
 
-Each cluster links or expands to the engagement path that addresses it. This is not navigation — it is qualification. A visitor selects the problem that applies, which surfaces the relevant engagement type.
+The work they need is clearly inside IntraWeb's engineering territory.
 
-**Level 2 — Engagement Types (not service categories)**
+### Content architecture
 
-Four engagement types, presented in order of operational readiness:
-1. Diagnostic — understand the problem before committing to a solution
-2. Systems and Automation — remove manual processes and connect existing tools
-3. Web and Platform — build the client-facing or internal-facing layer
-4. SaaS and Product — build the product itself
+Each territory should answer:
 
-Each engagement type gets:
-- A one-sentence purpose statement
-- A concrete example of what the output looks like
-- A scope signal (not full pricing, but scale indicator: "typically 4-8 weeks" or "project-based or retainer")
-- A self-qualification test: "This is the right engagement if..." — one or two conditions
+- What condition makes this responsibility relevant?
+- What kind of engineering responsibility does IntraWeb assume?
+- What adjacent territories commonly overlap?
 
-**Level 3 — Tiers within engagement types**
+### Structural requirement
 
-Tiers (Standard, Advanced) appear within the engagement type, not as top-level navigation. A visitor who selects "Systems and Automation" then sees Standard vs. Advanced with specific scope differentiators — not just name distinctions.
+Do not force the five territories into five equal cards, five equal columns, or a choose-a-service grid.
 
-**What is abolished:**
-- "IntraWeb isn't a menu of services. It's a system." as the opening line — replace with a one-line operational context statement
-- Website packages as the first service described
-- Any tier listed without a concrete scope example
-- The e-commerce section as a standalone module (integrate it as examples within the automation section)
+Site Architecture may use an asymmetric, sequential, clustered, or otherwise content-driven structure that preserves overlap and Environmental Doctrine.
 
-**What is preserved:**
-- The website package descriptions (Starter, Growth, Advanced) — they are already concrete and scannable
-- The Diagnostic as the primary entry-point CTA throughout the page
-- The FAQ section — it is strong and should remain
+### Forbidden
 
-### Cognitive Branching Reduction
+- pricing
+- packages
+- “choose a service” language
+- icon-led capability grid
+- technology-logo proof
+- mutually exclusive one-territory-per-project framing
 
-The current page creates seven to eight competing decision points before a visitor can identify their path. Target: two decision points before a clear path is established.
+### Target response
 
-Decision point 1: Which operational problem applies to me?  
-Decision point 2: What engagement type addresses that problem?
-
-Everything else is detail within a chosen path.
+> “The thing we need is clearly inside their engineering territory.”
 
 ---
 
-## Part 4: Visual Trust System
+## Section 5 — Proof / Evidence of Responsibility
 
-### Governing Doctrine
+### Purpose
 
-Every visual element either adds operational credibility or it does not belong on the page. There is no neutral visual on a trust-critical site. If a visual could appear on any other agency website, it does not help IntraWeb.
+Demonstrate that IntraWeb has carried meaningful engineering responsibility and can show what changed.
 
-### Visuals That Create Trust
+### Visitor enters knowing
 
-- Workflow diagrams that are labeled, captioned, and clearly representing a specific real system
-- Before/after data comparisons (cycle time, step count, headcount dependency)
-- Document representations: a screenshot of an actual operational deliverable, an actual workflow canvas (anonymized), an actual diagnostic report structure
-- System architecture maps that name tools and connections — if they are real, not generic
-- Plain data displays: a table of metrics from an engagement, presented without decoration
+The required capability falls inside IntraWeb's territory.
 
-### Visuals That Create Tech Theater (Avoid)
+### Visitor exits knowing
 
-- Animated connection lines between abstract nodes with no labels
-- Dark-mode dashboards with no real data
-- Generic stock imagery of people in meetings or looking at laptops
-- AI-generated abstract imagery (gradient orbs, neural network patterns, floating geometry)
-- Full-bleed hero images that are decorative without operational content
-- Workflow diagrams with generic node labels (INPUT → PROCESS → OUTPUT)
+IntraWeb has done work at the level of responsibility the visitor would need them to own.
 
-### The Animated Workflow Diagram (Current Site)
+### Evidence modes
 
-The INBOX → CRM → PARSE → AGENT → RULES → APPROVE → DATABASE → ALERT → AUDIT LOG diagram on the current homepage is close to trust-building but is currently tech theater because it lacks a caption connecting it to a real engagement.
+The proof system may contain two distinct evidence modes:
 
-Fix: Add a one-sentence caption identifying the engagement type, industry, and what this workflow does. This transforms it from a visual demonstration of technical capability into implementation proof.
+#### A. Recognition evidence
 
-If a real caption cannot be written because the workflow is generic/illustrative rather than based on an actual engagement, replace it with a static workflow screenshot from an actual n8n canvas, anonymized, with a caption.
+Diagnostic snapshots that show recognizable operational or production conditions.
 
-### What Imagery Should Communicate
+These remain governed by Snapshot Doctrine and Proof Governance.
 
-- Operational environments: documents on desks, audit materials, workflow maps, system interfaces — things that exist in the operational world where the work happens
-- The operator working: not a posed headshot, but someone in the context of systems work — review materials, code, documentation
-- Clarity of process: visual organization, structure, named systems — not chaos imagery
+#### B. Delivery evidence
 
-### What Imagery Must Avoid
+Specific records of what was engineered, integrated, modernized, stabilized, automated, validated, or shipped.
 
-- Stock team collaboration imagery (generic)
-- "AI brain" or neural network aesthetics
-- Dark tech surfaces with glowing elements
-- Abstract representations of "connection" or "flow"
-- Any imagery that could appear on an unrelated SaaS product page
+Delivery evidence is not forced into snapshot format.
 
-### Diagrams: When They Help vs. Hurt
+### Proof questions
 
-Diagrams help when:
-- They represent a real system that was built
-- They are captioned with the operational context
-- They make a process visible that is otherwise difficult to describe in text
-- They reduce the word count of a process explanation
+A proof item should answer some combination of:
 
-Diagrams hurt when:
-- They are decorative representations of abstract concepts
-- They require explanation to understand
-- They imply technical sophistication without demonstrating operational specificity
-- They could be lifted unchanged and placed on a competitor's site
+- What condition existed?
+- What engineering responsibility did IntraWeb assume?
+- What changed in the system?
+- What was removed, stabilized, integrated, or made reliable?
+- How was the work verified?
+- What production state existed afterward?
 
-### Operational Relief Visualization
+### Metric policy
 
-Operational relief should not be visualized with before/after imagery or illustrated contrast. It should be delivered textually with enough specificity that the visitor constructs the mental image themselves.
+Verified metrics are permitted when evidence and context exist.
 
-Exception: a simple before/after data table (step count, cycle time, dependency count) is appropriate and trust-building when anchored to a specific engagement. This is data visualization, not conceptual illustration.
+Metrics are not required.
 
----
+Do not add numbers for visual credibility.
 
-## Part 5: About Page Operator Trust Architecture
+### Preserve
 
-### Governing Principle
+- evidence before assertion
+- specificity
+- no invented outcomes
+- no decorative stats
+- no testimonial dependency
+- no forced equal-height card system
+- no generic case-study storytelling theater
 
-The About page sells the relationship before it sells the company. For a one-operator firm, the visitor's primary trust question is: "Is this someone I trust to understand and work inside my operation?" The page must answer this question before it answers any other.
+### Forbidden
 
-### Proposed Section Order
+- floating percentages
+- anonymous claims with no inspectable context
+- decorative client-logo grids presented as proof
+- collapsing recognition snapshots and delivery records into one generic card template
 
-**1. Operator Identity (above fold)**  
-Purpose: establish who the visitor is trusting before they learn what the company offers.  
-Content: name, photo, one-sentence professional identity. Not a bio. Not a list of credentials. One sentence that names what John sees, what he has spent time understanding, and what he built IntraWeb to address.  
-Visual: a photo. Real, current, in a working context. Not a formal headshot. Not a logo placeholder.
+### Target response
 
-**2. Origin Narrative**  
-Purpose: give the visitor the specific professional experience that created this approach.  
-Length: 2-3 short paragraphs.  
-Structure: name the frustration first, then the observation, then the decision. Avoid career timeline format — this is not a resume section. The frustration should be specific enough that a reader who has experienced the same problem recognizes it immediately.  
-What it must not become: a founder story with narrative arc and climax. It is an operational origin — a clear-eyed description of a problem seen repeatedly from the inside, and a practice built around solving it correctly.
-
-**3. What IntraWeb Builds (condensed)**  
-Purpose: connect the operator context to the service reality.  
-Length: one short paragraph plus the six service area labels.  
-Direction: let the operator section do the trust work, then deliver the service summary briefly. No repositioning needed here — the origin narrative has already done the framing.
-
-**4. Why the Approach Is Different (comparison table — preserve)**  
-Purpose: make the methodological distinction explicit.  
-The current table is accurate and well-structured. Preserve it exactly. The only addition: a one-line introductory sentence before the table naming what most engagements get wrong.
-
-**5. How Engagements Work (with engagement reality)**  
-Purpose: enable operational imagination — the visitor should be able to picture what working together involves.  
-Content: the five-step flow (intake → diagnostic → design → implementation → continuity) with additions:  
-- Each step names what the client provides (access, time, information)  
-- Each step names what the client receives at the end  
-- Each step carries an approximate timeline signal  
-- One or two sentences after the steps describe what the engagement relationship feels like over time — this is the emotional grounding
-
-**6. What to Expect (elevated)**  
-Purpose: honest, direct calibration of the working relationship. This section already exists and is well-written. Additions needed:  
-- Elevate the "no account management layer" statement to the first bullet — it is the most trust-dense line in this section  
-- Add one concrete description of how progress is communicated during active work  
-- Add one line about what happens when something in the system breaks after delivery
-
-**7. The 62 Workflows Statement**  
-Purpose: implementation proof in the operator context.  
-One line: "The systems I build for clients are the same systems I run internally. [n] production workflows currently running across [n] operational categories."  
-This grounds the operator as a practitioner, not a consultant — someone who lives inside the operational systems they build.
-
-**8. CTA**  
-One line + one button. No pitch. No summary. "If this is the kind of engagement you're looking for, start with a conversation."
-
-### Emotional Pacing
-
-The About page should move through three emotional states:
-1. Recognition (this is someone who has seen my problem from the inside)
-2. Confidence (this person knows exactly how to approach it)
-3. Readiness (I understand what working together involves, and I want to start)
-
-The origin narrative delivers state 1. The comparison table and process section deliver state 2. The engagement reality and "what to expect" sections deliver state 3.
-
-### What Should Remain Restrained
-
-- Do not expand the origin narrative into a personal story with emotional beats
-- Do not add client testimonials to the About page — the Operational Records handle that function
-- Do not add credentials, certifications, or awards sections — they shift the trust signal from operational depth to credential performance
-- Do not add a mission statement or values section
-
-### What Should Become More Human
-
-- The photo (currently absent)
-- The origin narrative (currently five flat sentences)
-- The engagement reality layer (currently five process-description bullets)
-- The working relationship description (currently absent)
+> “They have actually done work at the level I would need them to own.”
 
 ---
 
-## Part 6: Conversion Flow Architecture
+## Section 6 — Engagement Model
 
-### Governing Model
+### Purpose
 
-The visitor's progressive trust journey has four states. The site must be designed to advance the visitor through all four before presenting a conversion moment.
+Explain how IntraWeb can enter an engineering problem at the point justified by evidence.
 
-State 1: Clarity — I understand what this company removes from my operation  
-State 2: Recognition — My specific friction is named here  
-State 3: Confidence — I have seen evidence that it has been removed in real environments  
-State 4: Imagination — I can picture what working with this company would involve
+### Visitor enters knowing
 
-Conversion is natural at State 4. Attempting conversion before State 3 is premature and produces low-quality leads. The conversion architecture below maps each page to which states it delivers and where conversion moments are placed.
+IntraWeb has credible evidence of engineering responsibility.
 
----
+### Visitor exits knowing
 
-### Homepage → Diagnostic (Primary Conversion Path)
+The company can meet the problem where it actually is instead of forcing one commercial funnel.
 
-| Scroll Position | State Delivered | Conversion Signal |
-|----------------|-----------------|-------------------|
-| Hero | Clarity | None — too early |
-| Friction Grid | Recognition | Micro-signal only |
-| Proof Cards | Confidence | Implicit only ("This starts with a Diagnostic") |
-| Model | Understanding | None |
-| Fit | Self-qualification | State 4 begins here |
-| Trust Bar | Confirmation | State 4 deepens |
-| CTA | State 4 complete | Primary conversion moment |
+### Governing principle
 
-**Conversion logic:** The first CTA button the visitor is asked to act on in earnest should be at or after the Fit section — not before. Any CTA placed earlier should be present but not designed to attract attention. The primary CTA placement should be the last section before the footer.
+> Scope follows evidence.
 
----
+### Legitimate starting points
 
-### Homepage → Work/Proof (Trust-Seeking Path)
+- defined engineering project
+- technical assessment
+- rescue / stabilization
+- systems integration
+- product implementation
+- ongoing engineering support
+- larger systems initiative
 
-Visitors who click "See What Changed" from the hero or proof section are in recognition mode — they want more evidence before committing to a call.
+### Architecture examples
 
-The Work page must deliver:
-- Evidence that the problems they recognized are documented in full operational detail
-- Enough implementation specificity to establish that IntraWeb builds real systems (not just advises)
-- A path back to booking a call from within each individual record
+The public structure may distinguish conditions such as:
 
-Conversion logic for this path: the Operational Record page (individual record view) carries a CTA after the "Current Operational State" section — at the emotional close of the record, when the relief has been delivered. This is the highest-intent conversion moment on the entire site for a trust-seeking visitor.
+- **Known build:** the required outcome is sufficiently defined.
+- **Existing-system problem:** investigation is needed before scope is credible.
+- **Rescue:** production or delivery is compromised and stabilization comes first.
+- **Ongoing responsibility:** continued engineering capacity is needed after an initial intervention.
 
----
+These are architecture examples, not approved public labels.
 
-### Homepage → Services (Scope-Seeking Path)
+### Forbidden
 
-Visitors who navigate to Services are trying to understand scope and cost before committing to a call. The current Services page fails this visitor because it cannot be self-navigated to a specific answer.
+- mandatory Diagnose → Design → Implement → Optimize funnel for every engagement
+- mandatory Diagnostic purchase
+- pretending requirements are unknown when they are known
+- Basic / Standard / Enterprise tiers
+- transformation-program inflation
+- fixed package logic as the default commercial model
 
-Post-restructuring, the Services page should deliver:
-- State 1 and 2 quickly (the operational problem framing does this)
-- Enough scope signal per engagement type to allow budget estimation
-- A clear path to the Diagnostic as the appropriate next step for scoping
+### Target response
 
-Conversion logic: Services → Diagnostic is the target path. "Not sure which fits? Start with a Diagnostic" is the right bridge and is already present in the current copy. It should appear at the end of each engagement type section, not only at the bottom of the page.
+> “They can meet the problem where it actually is.”
 
 ---
 
-### About → Trust Reinforcement
+## Section 7 — Senior-Led Responsibility
 
-Visitors who navigate to About before booking a call are in a verification state — they are close to conversion but need to confirm that the operator is credible and that the relationship makes sense for their situation.
+### Purpose
 
-The About page delivers trust reinforcement by:
-- Providing a face and origin narrative (human confirmation)
-- Providing the engagement reality layer (operational imagination)
-- Providing the 62 workflows statement (practitioner confirmation)
+Make clear what “senior-led” means in the delivery relationship.
 
-Conversion logic: the CTA on About is the lowest-pressure conversion point on the site. The visitor is already close. The CTA should acknowledge this: "If the approach makes sense for your situation, a conversation is the right next step." The button is present but does not need to be prominent — a visitor who has read to the end of the About page is already highly motivated.
+### Visitor enters knowing
 
----
+There is a credible path into an engagement.
 
-### Services → Diagnostic (Scope to Clarity Path)
+### Visitor exits knowing
 
-A visitor who has reviewed the Services page and cannot self-qualify should be routed to the Diagnostic, not left to guess. The current "Not sure which fits? Start with a Diagnostic" language is the right bridge.
+Senior engineering judgment remains close to both the problem and implementation.
 
-Reinforcement: this bridge should appear in three positions on the Services page — at the top (after the opening framing), after the automation/systems section, and at the bottom. The current version only appears at the bottom.
+### Senior-led means
 
----
+- senior judgment close to diagnosis
+- senior judgment close to architecture
+- senior judgment close to implementation
+- senior judgment close to validation and production decisions
+- visible technical accountability
 
-### Conversion Architecture Anti-Patterns (Forbidden)
+### Senior-led does not mean
 
-- CTA before State 3 (Confidence) has been established — do not place a prominent booking button before proof
-- Multiple competing CTAs on the same page — one primary, one secondary maximum per page
-- Exit pop-ups, urgency timers, or any manufactured scarcity
-- Generic CTAs: "Let's talk," "Get in touch," "Start your journey"
-- Any CTA that requires the visitor to explain themselves before a path is clear (no "Tell us about your project" forms without a qualifying question first)
+- freelancer identity
+- John must write every line of code
+- IntraWeb must remain one person
+- inability to scale delivery
 
----
+### Cross-property boundary
 
-## Implementation Notes for Cursor
+This section may establish John's role as engineering leadership evidence.
 
-The following are architectural constraints that must be preserved across all implementation work:
+It must not become John's personal career biography. Schibelli.com answers who John is as an engineer; IntraWeb answers what engineering work the company can take responsibility for delivering.
 
-**Navigation:** Standardize to a single nav structure across all pages. The homepage currently uses a different nav from Services and Diagnostic. Pick one — the Services/Diagnostic nav (Services / Work / About / Blog / Diagnostic / Contact) is more operationally complete.
+### Environmental role
 
-**Page identity language:** All page meta descriptions, OG titles, and on-page positioning language must use a single consistent descriptor. Current inconsistency: homepage says "operational infrastructure," About meta says "AI-First Engineering Studio," Services footer says "AI systems and automation infrastructure for SMBs." Choose one master descriptor and apply globally.
+This section occupies the low-density settling position that v1 assigned to Continuity. The pacing function remains; the obsolete commercial claim that every engagement is an ongoing condition does not.
 
-**The Q2 availability badge:** Either update to a rolling availability indicator ("Currently accepting new engagements" with no quarter reference) or remove it. A stale quarter reference creates distrust faster than any missing content.
+### Target response
 
-**The Work page:** The placeholder "Coming soon" copy must be replaced immediately. Even a single Operational Record in the correct format is preferable to an empty page that every other page on the site links to.
-
-**The Diagnostic page calendar embed:** Verify the Cal.com embed renders and is functional. If it does not render on the live page, the primary conversion path on the highest-intent page is broken. This is a P0 fix.
+> “Senior engineering judgment will actually stay involved in the work.”
 
 ---
 
-## Anti-Drift Reference (Operational During Implementation)
+## Section 8 — Qualification / Fit
 
-Three tests to apply to every section during copywriting:
+### Purpose
 
-**Test 1 — Specificity Test:** Can this sentence be removed without losing a specific operational fact? If yes, it is likely manifesto material. Cut it or replace it with a fact.
+Allow visitors to self-qualify by engineering condition and responsibility fit.
 
-**Test 2 — Attribution Test:** Could this sentence appear unchanged on any other operational consulting or AI agency website? If yes, it is not differentiated. Rewrite it with IntraWeb-specific specificity.
+### Visitor enters knowing
 
-**Test 3 — Visitor State Test:** Does this content advance the visitor from their current state (Clarity / Recognition / Confidence / Imagination) to the next state? If not, what state is it serving? If it serves no state, it should not be on the page.
+How IntraWeb operates and how senior responsibility stays involved.
+
+### Visitor exits knowing
+
+Whether this is the right engineering relationship for their situation.
+
+### Good-fit conditions may include
+
+- something important must actually be engineered, not merely advised on
+- an existing production system needs experienced intervention
+- internal capacity is insufficient for the engineering responsibility required
+- integration or workflow failures exist at system boundaries
+- a product must move from design or partial implementation into production
+- reliability or maintainability is preventing safe progress
+- the team needs senior implementation judgment rather than commodity execution
+
+### Potential non-fit conditions may include
+
+- staff augmentation with no engineering ownership
+- lowest-cost commodity implementation
+- speculative AI theater without a production problem
+- strategy artifacts with no implementation responsibility
+- a prepackaged generic product or fixed service bundle
+
+These conditions require tone review during copywriting.
+
+### Headcount rule
+
+Company size may appear as context when useful. It is not root qualification.
+
+### Structural asymmetry
+
+The existing heavier “Not For” treatment is not automatically removed or equalized. Its underlying content must first be rewritten under v2. Preserve asymmetry only when it still carries a valid perceptual effect.
+
+### Forbidden
+
+- arbitrary 20–150 gate
+- unsupported vertical exclusion
+- “sophisticated clients only” posture
+- project-minimum posturing used to manufacture exclusivity
+- arrogant fit/not-fit copy
+
+### Target response
+
+> “This matches how we need an engineering company to operate.”
 
 ---
 
-*IntraWeb Technologies — Site Execution Architecture v2.0*  
-*Status: Implementation-ready. Proceed to section-by-section copywriting in priority order.*  
-*Priority order defined in Blueprint v1.0, Execution Priorities table.*
+## Section 9 — CTA / Procedural Next Step
+
+### Purpose
+
+Offer one low-friction way to bring the engineering condition to IntraWeb without claiming every engagement begins the same way.
+
+### Visitor enters knowing
+
+They are a plausible fit and understand how IntraWeb operates.
+
+### Visitor exits having
+
+Taken or clearly understood the next procedural step.
+
+### Content responsibility
+
+The CTA should communicate that the visitor brings the condition and the appropriate first step follows from evidence.
+
+Possible outcomes of the initial conversation may include:
+
+- scoped implementation
+- technical investigation
+- rescue / stabilization
+- integration
+- assessment
+- additional technical discussion
+
+### Preserve
+
+- one primary action
+- low density
+- procedural tone
+- no urgency
+- no new proof claims
+
+### Forbidden
+
+- mandatory Diagnostic framing
+- mandatory Systems Call framing if it misstates the actual entry model
+- “Let's build something amazing” language
+- generic “Get started” language
+- scarcity or urgency
+- multiple competing conversion paths
+
+### Target response
+
+> “I can bring them the situation and determine the right next engineering step.”
+
+---
+
+## Homepage Density and Pacing Summary
+
+| Section | Density | Primary Cognitive Job |
+|---|---|---|
+| Hero | Moderate | Orient |
+| Recognition | Increasing | Recognize |
+| Argument | Low visual / high semantic | Reorient |
+| Capability Territory | Moderate | Validate scope |
+| Proof | Highest | Establish consequence and credibility |
+| Engagement Model | Reducing | Create structural relief |
+| Senior-Led Responsibility | Low | Establish delivery confidence |
+| Qualification | Moderate | Self-qualify |
+| CTA | Lowest | Act |
+
+### Pacing rules
+
+- Proof remains the highest-density zone.
+- Engagement Model must reduce complexity after Proof.
+- Senior-Led Responsibility must settle rather than re-escalate.
+- Qualification closes the decision; CTA only directs action.
+- No two adjacent sections should feel like catalogs or high-density grids.
+
+---
+
+# Part 2 — Work / Proof System Architecture
+
+## System Purpose
+
+The Work surface is the primary container for evidence of actual engineering responsibility.
+
+It should allow a technical, product, operations, or business buyer to determine:
+
+- what existed
+- what needed intervention
+- what IntraWeb owned
+- what was implemented or changed
+- how the work was verified
+- what production state resulted
+
+## Naming
+
+“Operational Records” may remain as a content pattern where it accurately describes an artifact, but it is **not** mandatory as the universal public name for the Work system.
+
+Final public naming is a copy/IA decision and remains deferred.
+
+## Evidence taxonomy
+
+Records may carry multiple capability tags:
+
+- Product Engineering
+- Systems Integration
+- Modernization & Rescue
+- Automation & AI
+- Production Reliability
+
+Multiple tags are expected. Do not force one-record-one-service classification.
+
+## Delivery Record Structure
+
+A delivery record should support, when evidence exists:
+
+1. **Context / Situation** — what environment or system existed
+2. **Condition** — what was failing, missing, incomplete, risky, or constrained
+3. **Engineering Responsibility** — what IntraWeb owned
+4. **Implementation / Change** — what was built, integrated, modernized, automated, or stabilized
+5. **Validation** — how the work was tested or verified
+6. **Evidence / Impact** — qualitative or verified quantitative evidence
+7. **Production State** — what now exists or behaves differently
+
+This is a responsibility/evidence structure, not a marketing story arc.
+
+## Quantitative proof
+
+Quantitative evidence may appear only when provenance exists and context explains what the number measures.
+
+Do not require a metric in every record.
+
+## Record metadata
+
+Permitted metadata may include:
+
+- capability territory or territories
+- system / product type
+- technical scope
+- engagement starting condition
+- implementation context
+- technologies when materially relevant
+
+Do **not** encode obsolete root assumptions such as fixed 20–150 company-size bands or Diagnostic-only engagement types.
+
+## Grid / Index behavior
+
+The index should make evidence browsable without converting it into an agency portfolio wall.
+
+Cards/rows may include:
+
+- concise context
+- engineering condition
+- responsibility carried
+- one evidence signal
+- link to the full record
+
+Do not require impact-stat anchors for every item.
+
+## Recognition evidence vs delivery evidence
+
+Diagnostic snapshots remain recognition artifacts.
+
+Delivery records remain implementation evidence.
+
+Do not merge these into one generic component or one generic narrative form.
+
+---
+
+# Part 3 — Capability Architecture
+
+## Governing Question
+
+How does the site make capability breadth legible without becoming a generic services site?
+
+## Approved answer
+
+Organize around the five approved capability territories, but explain each through **engineering conditions and responsibility**, not packages.
+
+### Territory 1 — Product Engineering
+
+Architecture responsibility: conditions in which production software must be built, completed, extended, or moved from design into working implementation.
+
+### Territory 2 — Systems Integration
+
+Architecture responsibility: conditions where software boundaries, APIs, data movement, or system coordination are incomplete or unreliable.
+
+### Territory 3 — Modernization & Rescue
+
+Architecture responsibility: conditions where an existing system must be stabilized, completed, untangled, upgraded, or made safer to change.
+
+### Territory 4 — Automation & AI
+
+Architecture responsibility: conditions where automation or AI can perform real system work and can be validated for production use.
+
+AI remains a capability, not company identity.
+
+### Territory 5 — Production Reliability
+
+Architecture responsibility: testing, validation, release confidence, observability, production hardening, and ongoing reliability work where those are the actual engineering need.
+
+## Territory overlap
+
+Every capability page/section must assume overlap is normal.
+
+Examples:
+
+- Product Engineering may require Systems Integration and Production Reliability.
+- Modernization & Rescue may include Product Engineering and testing.
+- Automation & AI may depend on integration and production hardening.
+
+Do not force clean taxonomy when the engineering work is not cleanly separable.
+
+## Dedicated capability page
+
+If a Capabilities route exists or is later authorized, each territory should contain:
+
+1. recognition conditions
+2. engineering responsibility
+3. typical implementation territory
+4. relevant evidence
+5. boundaries / what it is not
+6. legitimate engagement starts
+
+### Forbidden
+
+- price cards
+- package tiers
+- service-selection wizard
+- logo wall as proof
+- five top-level nav links merely because five territories exist
+
+---
+
+# Part 4 — About Page Architecture
+
+## Governing Question
+
+Why does IntraWeb operate this way, and what does senior-led mean here?
+
+The About page does **not** answer the full question “Who is John Schibelli as an engineer?” That belongs to Schibelli.com.
+
+## Recommended sequence
+
+### 1. Company operating premise
+
+Establish the engineering standard the company works under without repeating the homepage hero.
+
+### 2. Senior-led responsibility
+
+Explain what remains close to senior judgment: diagnosis, architecture, implementation, validation, and production decisions.
+
+### 3. Engineering decisions stay close to implementation
+
+Show how IntraWeb avoids the account-management / handoff problem without implying that John must personally execute every task.
+
+### 4. Breadth without breadth theater
+
+Explain the five territories as overlapping production responsibilities, not departments or packages.
+
+### 5. Working with internal/client teams
+
+Describe how IntraWeb can operate with founders, product leaders, engineering leaders, technical decision-makers, operations leaders, and existing delivery teams.
+
+### 6. Company/operator credibility
+
+Use relevant factual evidence. John's experience may support IntraWeb; the page must not become his personal portfolio.
+
+### 7. CTA
+
+Procedural next step only.
+
+## About proof discipline
+
+- Practitioner credibility is appropriate.
+- Personal biography is restrained.
+- Credentials are used only when they actually strengthen engineering trust.
+- No mission/values theater.
+- No AI-founder narrative.
+- No mandatory workflow-count statistic.
+
+---
+
+# Part 5 — Conversion Architecture
+
+## Governing Model
+
+Conversion follows confidence, not one predetermined engagement product.
+
+The homepage and supporting pages should move visitors through:
+
+1. **Category clarity** — I understand what kind of engineering company this is.
+2. **Recognition** — My actual condition is represented.
+3. **Scope confidence** — The work is inside their responsibility.
+4. **Evidence confidence** — They have carried meaningful responsibility before.
+5. **Engagement imagination** — I understand how they could enter my situation.
+6. **Fit** — This is the kind of engineering relationship I need.
+7. **Action** — I can bring them the condition and determine the next step.
+
+## Homepage conversion path
+
+| Section | State Delivered | Conversion Behavior |
+|---|---|---|
+| Hero | Category clarity | Low-emphasis action may exist; do not over-weight |
+| Recognition | Recognition | No hard conversion pressure |
+| Argument | Reorientation | None |
+| Capability Territory | Scope confidence | Optional proof path |
+| Proof | Evidence confidence | Work/deeper-proof path appropriate |
+| Engagement Model | Engagement imagination | No forced Diagnostic |
+| Senior-Led Responsibility | Delivery confidence | None required |
+| Qualification | Fit | Primary action becomes appropriate |
+| CTA | Action | Primary conversion moment |
+
+## Work / Proof conversion path
+
+A visitor reading evidence should be able to act after the evidence has reached a production-state conclusion.
+
+The CTA should not force a Diagnostic. It should invite the visitor to bring a comparable condition for discussion.
+
+## Capability conversion path
+
+Capability pages, if used, should route visitors toward the appropriate first conversation or evidence, not into package selection.
+
+## About conversion path
+
+About reinforces trust. Its CTA remains low-pressure because a visitor reaching the bottom has already done substantial verification.
+
+## Conversion anti-patterns
+
+- Diagnostic as universal first step
+- prominent CTA before enough evidence exists
+- three repeated “Start with a Diagnostic” bridges on one page
+- exit popups
+- scarcity
+- generic contact copy
+- long project-intake form before the visitor understands the likely path
+
+---
+
+# Part 6 — Navigation and Information Architecture Constraints
+
+## Navigation principle
+
+Do not automatically create five top-level navigation entries for the five capability territories.
+
+Taxonomy must not control the experience.
+
+Primary IA should remain compact and may include destinations such as:
+
+- Work
+- Capabilities (if justified)
+- About
+- Contact / Start
+
+Existing routes must be inspected before any route change is authorized.
+
+## Route changes
+
+This document does not authorize route additions, deletions, or renames.
+
+Any route change requires a separate IA/implementation decision after architecture review.
+
+## Cross-property boundary
+
+- IntraWeb answers: **What engineering work can this company take responsibility for delivering?**
+- Schibelli.com answers: **Who is John Schibelli as an engineer?**
+
+Shared factual evidence may cross when accurate. Positioning authority does not.
+
+---
+
+# Part 7 — Visual and Environmental Constraints
+
+Environmental Doctrine remains preserved and authoritative.
+
+This architecture does not rewrite it.
+
+## Preserve
+
+- dominant left-rail / asymmetric behavior
+- content-driven spacing
+- deliberate density variation
+- singular Argument rupture
+- restrained or near-zero motion
+- no homepage photography or decorative illustration
+- operational artifacts over tech theater
+- authored snapshot asymmetry
+- anti-generic-SaaS aesthetics
+- anti-generic-development-agency aesthetics
+
+## Capability Territory visual constraint
+
+The five territories must fit inside the existing environmental system without forcing Environmental Doctrine to change.
+
+If a proposed layout requires a uniform five-card grid to make the territories understandable, the layout is wrong.
+
+## Senior-Led section visual constraint
+
+Use the low-density settling role formerly associated with Continuity without restoring Continuity's obsolete universal commercial meaning.
+
+## Qualification visual constraint
+
+Do not mechanically equalize the old For / Not For structure. Re-evaluate the content first. Preserve asymmetry only where the revised content still justifies it.
+
+---
+
+# Part 8 — Proof and Artifact Constraints
+
+## Snapshot system
+
+Snapshots remain independently authored recognition artifacts.
+
+Their governance is not relaxed by v2.
+
+## Delivery evidence
+
+Delivery records may include code, interfaces, architecture, test evidence, integration evidence, workflow evidence, and production outcomes when real and reviewable.
+
+## Visual trust rule
+
+A visual belongs only when it adds inspectable engineering or operational credibility.
+
+### Trust-building visuals may include
+
+- real product/interface captures
+- real architecture excerpts
+- real workflow or integration artifacts
+- test/validation evidence
+- anonymized implementation artifacts
+- data tables grounded in evidence
+
+### Avoid
+
+- generic abstract node art
+- fake dashboards
+- glowing AI imagery
+- unlabeled technical diagrams
+- decorative “system” animations
+- visuals that imply sophistication without showing actual responsibility
+
+The homepage remains subject to Environmental Doctrine's stricter visual restrictions.
+
+---
+
+# Part 9 — Anti-Drift Tests
+
+Apply these tests during all future copywriting and implementation work.
+
+## Test 1 — Recognition
+
+Does the visitor recognize a real engineering condition, or are we advertising capability?
+
+## Test 2 — Responsibility
+
+Is it clear what IntraWeb can actually take responsibility for?
+
+## Test 3 — Specificity
+
+Could this content appear unchanged on hundreds of software-agency sites?
+
+If yes, it is too generic.
+
+## Test 4 — Breadth
+
+Is breadth demonstrated through credible engineering responsibility, or by naming more technologies?
+
+## Test 5 — Production
+
+Is the section anchored in software and systems that have to work in production?
+
+## Test 6 — Senior-led
+
+Does “senior-led” communicate judgment proximity rather than freelancer identity?
+
+## Test 7 — Evidence
+
+Is every claim supported at the level it is presented?
+
+## Test 8 — Cross-property
+
+Is this explaining IntraWeb, or drifting into John's personal portfolio?
+
+## Test 9 — Environmental compatibility
+
+Does the architecture fit Environmental Doctrine without changing it to accommodate a new marketing pattern?
+
+## Test 10 — Scope follows evidence
+
+Is the site forcing a predefined engagement model where the actual condition should determine the first step?
+
+---
+
+# Part 10 — Explicitly Superseded Site-Architecture Assumptions
+
+The following assumptions from prior Site Architecture are no longer authoritative:
+
+- hero must avoid technology or software-engineering language
+- “We build” is categorically forbidden
+- visitor must understand what disappears from operations before company category
+- homepage sequence is Hero → Friction → Proof → Model → Fit → Trust Bar → CTA
+- Proof requires three metric-led cards
+- Proof ends with “All of this starts with a Diagnostic”
+- Diagnose → Design → Implement → Optimize is the universal engagement model
+- 20–150 employee count is root fit criteria
+- homepage Trust Signal Bar is required
+- Diagnostic is the primary or mandatory first conversion path
+- Services should be organized around Diagnostic / Systems and Automation / Web and Platform / SaaS and Product
+- Standard / Advanced tiers are a default service architecture
+- Operational Records require fixed company-size bands or Diagnostic-only metadata
+- every engagement is fundamentally ongoing rather than legitimately project-based
+
+These assumptions may survive only where separately supported by current evidence and higher-level doctrine. They may not return by habit.
+
+---
+
+# Part 11 — Remaining Authorization Boundaries
+
+This document is approved and canonical. The items below remain separately governed.
+
+## Authorized as architecture (copy still required)
+
+- section-by-section copy architecture
+- copy drafting under Register Calibration and Realism Hierarchy
+- evidence inventory and proof mapping
+
+## Still not authorized by this document alone
+
+- React/component changes
+- CMS changes
+- route changes
+- visual redesign
+- Environmental Doctrine changes
+- snapshot-governance changes
+- deployment
+
+Before implementation begins, final page copy and evidence mapping must be reviewed against Positioning Foundation v2 and the existing governance stack.
+
+---
+
+# Site Architecture Verdict
+
+The existing IntraWeb experience system remains structurally valuable.
+
+The v2 site should therefore **not** be rebuilt as a broader services site.
+
+The correct architecture is:
+
+> **Preserve recognition, pacing, realism, asymmetry, proof discipline, and procedural conversion. Broaden the engineering conditions recognized. Make production responsibility explicit. Allow multiple legitimate engagement starts. Keep senior judgment close to implementation.**
+
+---
+
+*IntraWeb Technology — Site Execution Architecture v3.0*  
+*Status: Canonical. Approved Site Architecture v2.*

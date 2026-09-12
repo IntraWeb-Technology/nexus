@@ -32,8 +32,3 @@ export const MOTION_APPEAR = {
   durationMs: 320,
   staggerMs: 60,
 } as const;
-
-/** Ken Burns on hero photography */
-export const MOTION_HERO_KEN_BURNS = {
-  durationSec: 22,
-} as const;
